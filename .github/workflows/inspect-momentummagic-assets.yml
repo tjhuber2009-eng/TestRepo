@@ -35,8 +35,9 @@ jobs:
           git pull --rebase origin dual-signal-audit-2026-09 || true
           mkdir -p audit_results_momentummagic
           cp momentummagic_public_inspection.json audit_results_momentummagic/
+          cp MomentumMagicSettingsPanel_crop.b64 audit_results_momentummagic/
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add audit_results_momentummagic/momentummagic_public_inspection.json
+          git add audit_results_momentummagic/momentummagic_public_inspection.json audit_results_momentummagic/MomentumMagicSettingsPanel_crop.b64
           git diff --cached --quiet || git commit -m 'Publish MomentumMagic public inspection'
           git push origin HEAD:dual-signal-audit-2026-09
