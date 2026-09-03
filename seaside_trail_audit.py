@@ -10,7 +10,7 @@ COMMISSION=0.005  # exact Pine source: 0.5% of transacted value, per fill
 TICK=0.01
 HEAD_START=pd.Timestamp('2017-08-17',tz='UTC')
 PUB=pd.Timestamp('2021-06-07',tz='UTC')
-END=pd.Timestamp('2026-08-31',tz='UTC')
+END=pd.Timestamp('2026-07-31',tz='UTC')  # latest complete Binance monthly archive at audit time
 BASE='https://data.binance.vision/data/spot/monthly/klines/BTCUSDT'
 
 
@@ -37,7 +37,6 @@ def fetch_interval(interval,start,end):
                     name=z.namelist()[0]
                     raw=z.read(name)
                 d=pd.read_csv(io.BytesIO(raw),header=None)
-                # Binance kline 12 cols; recent archives may use microsecond timestamps.
                 d=d.iloc[:,:12]
                 d.columns=['open_time','Open','High','Low','Close','Volume','close_time','quote_volume','trades','tb_base','tb_quote','ignore']
                 ot=pd.to_numeric(d.open_time,errors='coerce')
@@ -56,12 +55,10 @@ def fetch_interval(interval,start,end):
 
 
 def path_points(o,h,l,c):
-    # TradingView default broker-emulator assumption.
     return [o,h,l,c] if abs(o-h)<abs(o-l) else [o,l,h,c]
 
 
 def trail_exit_from_points(side, entry, points, best=None):
-    # Exact one-tick activation and one-tick trailing offset, stepped over OHLC path segments.
     if side==1:
         activation=entry+TICK
         active=best is not None
@@ -69,14 +66,11 @@ def trail_exit_from_points(side, entry, points, best=None):
         cur=points[0]
         for nxt in points[1:]:
             if not active:
-                # activation occurs only on upward segment crossing entry+tick
                 if nxt>cur and nxt>=activation:
                     active=True
                     b=nxt
-                    # segment ends at favorable extreme; future reversal may stop us
                 cur=nxt
                 continue
-            # active trailing long
             if nxt>cur:
                 b=max(b,nxt)
             elif nxt<cur:
@@ -108,7 +102,6 @@ def trail_exit_from_points(side, entry, points, best=None):
 
 
 def apply_fill(equity, side, entry, exitp, extra_slip=0.0):
-    # 50% equity notional. Commission percent on entry and exit. Extra slippage worsens both fills.
     epx=entry*(1+extra_slip*side)
     xpx=exitp*(1-extra_slip*side)
     notional=equity*ALLOC
@@ -121,7 +114,6 @@ def apply_fill(equity, side, entry, exitp, extra_slip=0.0):
 
 
 def signal_for_day(daily,i):
-    # Script calculates at close of bar i: open_i > open_{i-1} => entry order fills next day open.
     if i<=0: return 0
     if daily.Open.iloc[i]>daily.Open.iloc[i-1]: return 1
     if daily.Open.iloc[i]<daily.Open.iloc[i-1]: return -1
@@ -129,7 +121,6 @@ def signal_for_day(daily,i):
 
 
 def run_daily_emulator(daily,start,end,extra_slip=0.0):
-    # Mirrors TradingView's default daily OHLC broker assumptions as closely as practical.
     eq=INITIAL; curve=[]; trades=[]
     d=daily[(daily.Date>=start-pd.Timedelta(days=2))&(daily.Date<=end)].reset_index(drop=True)
     for j in range(1,len(d)-1):
@@ -139,7 +130,6 @@ def run_daily_emulator(daily,start,end,extra_slip=0.0):
         row=d.iloc[entrybar]; entry=float(row.Open)
         pts=path_points(entry,float(row.High),float(row.Low),float(row.Close))
         exitp,best,active=trail_exit_from_points(sig,entry,pts,None)
-        # With a 1-tick trail, essentially all daily bars exit. If not, walk subsequent daily bars.
         k=entrybar
         while exitp is None and k+1<len(d):
             k+=1; rr=d.iloc[k]
@@ -154,18 +144,14 @@ def run_daily_emulator(daily,start,end,extra_slip=0.0):
 
 
 def run_hourly_magnifier(daily,hourly,start,end,extra_slip=0.0):
-    # Daily signals/orders, but use hourly OHLC after the daily open. This approximates TradingView's 1D Bar Magnifier,
-    # for which TradingView documents 60-minute intrabars.
     eq=INITIAL; trades=[]; curve=[]
     d=daily[(daily.Date>=start-pd.Timedelta(days=2))&(daily.Date<=end)].reset_index(drop=True)
-    h=hourly.set_index('Date')
     for j in range(1,len(d)-1):
         sig=signal_for_day(d,j); entrybar=j+1
         if sig==0: continue
         day=d.Date.iloc[entrybar]
         if day<start or day>end: continue
         entry=float(d.Open.iloc[entrybar]); best=None; active=False; exitp=None; exittime=None
-        # process hours from day entry until exit; allow carry max 72h for corner cases
         hs=hourly[(hourly.Date>=day)&(hourly.Date<day+pd.Timedelta(hours=72))]
         for _,rr in hs.iterrows():
             pts=path_points(float(rr.Open),float(rr.High),float(rr.Low),float(rr.Close))
@@ -194,7 +180,6 @@ def main():
     daily=fetch_interval('1d',HEAD_START-pd.Timedelta(days=3),END)
     hourly=fetch_interval('1h',HEAD_START,END+pd.Timedelta(days=1))
     daily.to_csv('audit_output_seaside/binance_daily.csv',index=False)
-    # hourly omitted from artifact to keep size modest; independently fetched from Binance Data Vision.
     cases=[]
     for name,start,end in [('headline',HEAD_START,PUB),('forward',PUB+pd.Timedelta(days=1),END),('2023_2026',pd.Timestamp('2023-01-01',tz='UTC'),END)]:
         for slipname,slip in [('exact_commission_only',0.0),('plus_5bps_side',0.0005),('plus_10bps_side',0.001)]:
@@ -213,7 +198,6 @@ def main():
     print('\n=== SEASIDE420 EXACT SOURCE ECONOMICS ===')
     print('initial_capital',INITIAL,'alloc_pct',ALLOC*100,'commission_pct_each_fill',COMMISSION*100,'trail_activation_ticks',1,'trail_offset_ticks',1,'assumed_tick_usd',TICK)
     print(out.to_string(index=False,float_format=lambda x:f'{x:.4f}'))
-    # quantify first-hour capture vs whole-day extreme in headline hourly trades
     ht=pd.read_csv('audit_output_seaside/headline_hourly_trades.csv')
     if len(ht):
         print('HEADLINE_HOURLY_EXIT_SAME_DAY_PCT',100*(pd.to_datetime(ht.exit_date).dt.date==pd.to_datetime(ht.entry_date).dt.date).mean())
