@@ -1,0 +1,99 @@
+name: NFI Continuous Audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/nfi-continuous-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  continuous:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone frozen NFI
+        run: |
+          git clone --depth 1 https://github.com/iterativv/NostalgiaForInfinity.git nfi
+          cd nfi
+          git fetch --depth 1 origin 51c689ab25012f7111a27c38a3e95481e749ca94
+          git checkout 51c689ab25012f7111a27c38a3e95481e749ca94
+
+      - name: Patch offline-ish static pair validation
+        working-directory: nfi
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('configs/proxy-binance.json')
+          d=json.loads(p.read_text())
+          d.setdefault('exchange', {})['skip_pair_validation']=True
+          p.write_text(json.dumps(d))
+          p=Path('configs/pairlist-backtest-static-binance-futures-usdt.json')
+          d=json.loads(p.read_text())
+          d['pairlists']=[{'method':'StaticPairList','allow_inactive':True}]
+          p.write_text(json.dumps(d))
+          PY
+
+      - name: Add continuous audit test
+        working-directory: nfi
+        run: |
+          cat > tests/backtests/test_continuous_audit.py <<'PY'
+          import pytest
+          from tests.backtests.helpers import Backtest
+
+          @pytest.fixture
+          def backtest(request):
+              return Backtest(request)
+
+          @pytest.mark.parametrize('start_date,end_date', [
+              ('20250101','20260101'),
+              ('20260101','20260801'),
+          ])
+          def test_continuous(backtest, start_date, end_date):
+              ret = backtest(start_date=start_date, end_date=end_date,
+                             exchange='binance', trading_mode='futures')
+              print('AUDIT_RESULT', start_date, end_date, ret._stats_pct)
+          PY
+
+      - name: Pull test engine and market data
+        working-directory: nfi
+        run: |
+          docker pull ghcr.io/iterativv/ci-strategy-backtesting:latest
+          docker pull ghcr.io/iterativv/market-data:binance-futures
+          mkdir -p user_data/data artifacts
+          chmod 777 artifacts
+          docker run --rm -v "$PWD/user_data/data:/host_data" ghcr.io/iterativv/market-data:binance-futures bash -c "cp -r /data/* /host_data/"
+
+      - name: Run continuous backtests
+        working-directory: nfi
+        run: |
+          docker run -v "$PWD:/testing" \
+            -v "$PWD/user_data/data:/testing/user_data/data" \
+            --rm -w /testing --entrypoint "" \
+            -e COLUMNS=240 \
+            ghcr.io/iterativv/ci-strategy-backtesting:latest \
+            python -m pytest tests/backtests/test_continuous_audit.py \
+            -ra -vv -s --log-cli-level=info --artifacts-path=artifacts/ \
+            -p no:cacheprovider --junitxml=artifacts/continuous-report.xml
+
+      - name: Summarize
+        if: always()
+        working-directory: nfi
+        run: |
+          ls -lah artifacts || true
+          for f in artifacts/backtest-output-binance-futures-*.txt; do
+            echo "===== $f ====="
+            grep -E 'Backtesting from|Backtesting to|Starting balance|Final balance|Total/Daily Avg Trades|CAGR %|Profit factor|Absolute drawdown|Total trade volume' "$f" || true
+          done
+
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfi-continuous-audit
+          path: nfi/artifacts/
