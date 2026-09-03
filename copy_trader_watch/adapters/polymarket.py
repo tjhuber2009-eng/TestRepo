@@ -9,7 +9,7 @@ import requests
 from models import AdapterResult, TraderSnapshot, score_snapshot
 
 BASE_URL = "https://data-api.polymarket.com"
-USER_AGENT = "copy-trader-watch/3.1 (+https://github.com/)"
+USER_AGENT = "copy-trader-watch/3.3 (+https://github.com/)"
 
 
 def _num(value: Any) -> float | None:
@@ -98,7 +98,6 @@ def position_stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
     concentration = max(wins) / sum(wins) * 100.0 if wins and sum(wins) > 0 else None
     age_days = None
     if len(timestamps) >= 2:
-        # Polymarket timestamps are seconds in the Data API response.
         age_days = max(timestamps) - min(timestamps)
         age_days = max(0.0, age_days / 86_400.0)
     activity = len(rows) / max(age_days, 1.0) if age_days is not None else None
@@ -124,13 +123,9 @@ def open_concentration(rows: list[dict[str, Any]]) -> tuple[float | None, float 
     return weights[0], sum(weights[:2])
 
 
-def copyability_score(stats: dict[str, Any], top1: float | None, persistent: bool) -> float:
-    score = 75.0 + (10.0 if persistent else 0.0)
-    n = int(stats.get("closed_positions") or 0)
-    if n < 25:
-        score -= 25
-    elif n < 75:
-        score -= 10
+def copyability_score(stats: dict[str, Any], top1: float | None, persistent: bool | None = None) -> float:
+    """Execution copyability only; sample count/persistence do not affect it."""
+    score = 75.0
     activity = _num(stats.get("closed_positions_per_day"))
     if activity is not None:
         if activity > 50:
@@ -195,6 +190,8 @@ def normalize_candidate(
         copyability_score=copyability,
         actionable=False,
         actionable_reason="Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.",
+        forward_test_eligible=True,
+        forward_test_reason="Admitted from monthly rank regardless of closed-position sample size or all-time persistence.",
         metadata={
             "monthly_rank": row.get("rank"),
             "monthly_pnl": _num(row.get("pnl")),
@@ -236,11 +233,10 @@ def collect(config: dict[str, Any]) -> AdapterResult:
         if wallet:
             all_ranks[wallet] = rank
 
-    # Prefer traders that are top-PnL both monthly and all-time, then fill with
-    # remaining monthly leaders. This avoids selecting only one-month spikes.
-    persistent = [r for r in monthly if str(r.get("proxyWallet") or "").lower() in all_ranks]
-    transient = [r for r in monthly if str(r.get("proxyWallet") or "").lower() not in all_ranks]
-    candidates = (persistent + transient)[:candidate_limit]
+    # Candidate admission follows current monthly P&L rank only. All-time persistence
+    # remains evidence context, never a gate that can exclude a new high-performing wallet.
+    candidates = monthly[:candidate_limit]
+    persistent_count = sum(1 for r in candidates if str(r.get("proxyWallet") or "").lower() in all_ranks)
 
     records: list[TraderSnapshot] = []
     errors: list[str] = []
@@ -261,10 +257,11 @@ def collect(config: dict[str, Any]) -> AdapterResult:
         metadata={
             "monthly_leaderboard_rows": len(monthly),
             "all_time_leaderboard_rows": len(all_time),
-            "persistent_candidates_in_monthly_top": len(persistent),
+            "persistent_candidates_in_monthly_top": persistent_count,
             "candidates_requested": len(candidates),
             "candidates_resolved": len(records),
             "max_closed_positions_per_candidate": max_closed,
             "metric_warning": "cost ROI is not directly comparable to account return",
+            "sample_policy": "no minimum closed-position count or persistence requirement for admission",
         },
     )
