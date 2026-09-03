@@ -18,6 +18,14 @@
     "top1_concentration_pct": 50.0,
     "top2_concentration_pct": 75.0,
     "concentration_jump_pct_points": 20.0,
-    "copier_drop_pct": -50.0
+    "copier_drop_pct": -50.0,
+    "missing_consecutive_runs": 2,
+    "candidate_source_max_age_hours": 36.0
+  },
+  "scoring": {
+    "min_observations": 5
+  },
+  "data_quality": {
+    "census_fallback_refresh_days": 7
   }
 }
