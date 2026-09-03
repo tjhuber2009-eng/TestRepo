@@ -1,0 +1,42 @@
+name: TrendFusion Independent Audit
+
+on:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - trendfusion_audit.py
+      - .github/workflows/trendfusion-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pandas numpy requests
+      - run: python trendfusion_audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trendfusion-audit-results
+          path: audit_output_trendfusion/
+      - name: Publish compact results to audit branch
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_trendfusion_repro
+          cp audit_output_trendfusion/summary.json audit_results_trendfusion_repro/
+          cp audit_output_trendfusion/sensitivity.csv audit_results_trendfusion_repro/
+          cp audit_output_trendfusion/fresh_windows.csv audit_results_trendfusion_repro/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_trendfusion_repro
+          git diff --cached --quiet || git commit -m 'Publish TrendFusion reproduction results'
+          git push origin HEAD:dual-signal-audit-2026-09
