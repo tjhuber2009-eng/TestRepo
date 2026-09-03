@@ -26,3 +26,8 @@ def test_fill_stats():
 
 def test_current_leverage():
     assert hl._current_leverage({"marginSummary": {"accountValue": "100", "totalNtlPos": "600"}}) == 6.0
+
+
+def test_nonrolling_forward_primitives():
+    assert hl._latest_value([[1, "12"], [2, "15"]]) == 15.0
+    assert hl._current_account_value({"marginSummary": {"accountValue": "250", "totalNtlPos": "0"}}) == 250.0
