@@ -1,0 +1,29 @@
+{
+  "platforms": {
+    "etoro": {"enabled": true},
+    "hyperliquid": {
+      "enabled": true,
+      "research_only": true,
+      "wallets": [
+        {"address": "0x838d8e13ec1010e7851b3dc333699db885f2520c", "label": "HL-838d"},
+        {"address": "0xdc5289909be4f3ce2604806bdd1448fd307f19f5", "label": "HL-dc528"},
+        {"address": "0x80fb5880f38185661962e475ac1557817dc9faea", "label": "HL-80fb"},
+        {"address": "0x28839a9fc4a6465000c5c5775983742545ce5ca5", "label": "HL-28839"},
+        {"address": "0xf517639a8872e756ac98d3c65507d2ebc25cc032", "label": "HL-NMTD"}
+      ]
+    },
+    "mql5": {
+      "enabled": true,
+      "list_url": "https://www.mql5.com/en/signals/mt5/list",
+      "max_pages": 4,
+      "include_paid_research": true,
+      "keep_top": 30,
+      "actionable_free_only": true
+    },
+    "zulutrade": {"enabled": false, "status": "adapter planned"},
+    "collective2": {"enabled": false, "status": "adapter planned"},
+    "polymarket": {"enabled": false, "status": "adapter planned"},
+    "binance_bybit_okx": {"enabled": false, "status": "research adapters planned"}
+  },
+  "report": {"top_n": 20}
+}
