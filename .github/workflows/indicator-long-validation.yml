@@ -24,9 +24,29 @@ jobs:
         run: python indicator_validation/run_boto_long.py
       - name: Run simple source-informed survivors
         run: python indicator_validation/run_simple_survivors.py
+      - name: Export validated OHLC CSV
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from pathlib import Path
+          p=next(Path('indicator_validation/output').glob('btcusdt_30m_kline_*.parquet'))
+          d=pd.read_parquet(p)
+          d.columns=[str(c).lower() for c in d.columns]
+          t=next(c for c in ['datetime','timestamp','open_time','ts'] if c in d.columns)
+          s=d[t]
+          if pd.api.types.is_numeric_dtype(s):
+              x=pd.to_numeric(s); med=float(x.abs().median()); unit='ns' if med>1e17 else ('us' if med>1e14 else ('ms' if med>1e11 else 's'))
+              dt=pd.to_datetime(x,unit=unit,utc=True)
+          else:
+              dt=pd.to_datetime(s,utc=True)
+          out=pd.DataFrame({'datetime':dt})
+          for c in ['open','high','low','close']:
+              out[c]=pd.to_numeric(d[c],errors='coerce')
+          out.dropna().sort_values('datetime').drop_duplicates('datetime').to_csv('indicator_validation/btcusdt_30m_20200101_20260902_ohlc.csv.gz',index=False,compression='gzip')
+          PY
       - name: Hash outputs
         run: |
-          sha256sum indicator_validation/run_boto_long.py indicator_validation/run_simple_survivors.py indicator_validation/output/* indicator_validation/output_survivors/* > indicator_validation/SHA256SUMS_ALL.txt
+          sha256sum indicator_validation/run_boto_long.py indicator_validation/run_simple_survivors.py indicator_validation/output/* indicator_validation/output_survivors/* indicator_validation/btcusdt_30m_20200101_20260902_ohlc.csv.gz > indicator_validation/SHA256SUMS_ALL.txt
       - name: Upload audit artifact
         uses: actions/upload-artifact@v4
         with:
@@ -34,6 +54,7 @@ jobs:
           path: |
             indicator_validation/output/
             indicator_validation/output_survivors/
+            indicator_validation/btcusdt_30m_20200101_20260902_ohlc.csv.gz
             indicator_validation/SHA256SUMS_ALL.txt
           if-no-files-found: error
           retention-days: 7
