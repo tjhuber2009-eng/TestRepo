@@ -1,8 +1,16 @@
 [
   {
     "benchmarks": {
-      "QQQ": 718.6699829101562,
-      "SPY": 773.8150024414062
+      "QQQ": {
+        "as_of": "2026-09-03",
+        "close": 718.6901245117188,
+        "source": "yahoo"
+      },
+      "SPY": {
+        "as_of": "2026-09-03",
+        "close": 773.760009765625,
+        "source": "yahoo"
+      }
     },
     "candidates": {
       "Luisitoalana": {
@@ -16,17 +24,21 @@
         "positions_count": 20,
         "present": true,
         "risk_score": 5,
+        "source": "etoro-census-public-user-api",
+        "source_timestamp": "2026-09-03T18:25:32.308Z",
         "top1_concentration_pct": 13.0794,
         "top2_concentration_pct": 23.4961,
-        "trades": 238,
+        "trades": 237,
         "unique_instruments": 10,
         "username": "Luisitoalana",
-        "win_ratio_pct": 71.85
+        "win_ratio_pct": 71.73
       },
       "WilEscobar": {
+        "lookup_error": "per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback did not contain candidate",
         "present": false
       },
       "bgsully111": {
+        "lookup_error": "per-user lookup failed: 404 Client Error: Not Found for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback did not contain candidate",
         "present": false
       },
       "jonathandm25": {
@@ -40,6 +52,8 @@
         "positions_count": 22,
         "present": true,
         "risk_score": 4,
+        "source": "etoro-census-public-user-api",
+        "source_timestamp": "2026-09-03T18:24:58.631Z",
         "top1_concentration_pct": 8.0934,
         "top2_concentration_pct": 15.924,
         "trades": 135,
@@ -49,6 +63,6 @@
       }
     },
     "date": "2026-09-03",
-    "source_collected_at": "2026-09-03T18:13:07.206147Z"
+    "source_collected_at": "2026-09-03T18:24:47.479044Z"
   }
 ]

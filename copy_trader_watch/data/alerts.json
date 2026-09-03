@@ -1,17 +1,4 @@
 {
-  "alerts": [
-    {
-      "candidate": "bgsully111",
-      "key": "bgsully111::missing",
-      "message": "Candidate could not be resolved by the configured public data sources; this does not by itself prove the eToro account is unavailable to copy.",
-      "type": "missing"
-    },
-    {
-      "candidate": "WilEscobar",
-      "key": "wilescobar::missing",
-      "message": "Candidate could not be resolved by the configured public data sources; this does not by itself prove the eToro account is unavailable to copy.",
-      "type": "missing"
-    }
-  ],
+  "alerts": [],
   "date": "2026-09-03"
 }

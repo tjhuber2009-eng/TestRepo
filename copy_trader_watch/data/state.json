@@ -1,8 +1,6 @@
 {
-  "active_alert_keys": [
-    "bgsully111::missing",
-    "wilescobar::missing"
-  ],
+  "active_alert_keys": [],
+  "last_census_fallback_attempt_date": "2026-09-03",
   "last_run_date": "2026-09-03",
   "new_alert_count": 0
 }
