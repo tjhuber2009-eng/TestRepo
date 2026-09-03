@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import yfinance as yf
 
-OUT=Path('indicator_validation/output_sentinel_broad'); OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path('indicator_validation/output_sentinel_broad63'); OUT.mkdir(parents=True,exist_ok=True)
 CRYPTO=['BTC-USD','ETH-USD','BNB-USD','SOL-USD','XRP-USD','ADA-USD','DOGE-USD','LTC-USD','BCH-USD','LINK-USD','DOT-USD','AVAX-USD']
 ETF=['SPY','QQQ','IWM','GLD','TLT','EEM','EFA']
-LOOKBACK=65; THRESH=0.5; COST=0.0007
+LOOKBACK=63; THRESH=0.5; COST=0.0007
 END='2026-09-03'
 
 def fetch(sym,start):
@@ -43,30 +42,28 @@ def bt(df,n=LOOKBACK,thr=THRESH,cost=COST):
     years=max((df.datetime.iloc[-1]-df.datetime.iloc[0]).total_seconds()/(365.25*86400),1/365.25)
     gp=tr.loc[tr.ret_pct>0,'ret_pct'].sum() if len(tr) else 0.; gl=-tr.loc[tr.ret_pct<=0,'ret_pct'].sum() if len(tr) else 0.
     bh_curve=df.close/float(df.open.iloc[0]); annual=e.resample('YE').last().pct_change().dropna()*100
-    return {
-      'net_pct':(eq-1)*100,'cagr_pct':(eq**(1/years)-1)*100 if eq>0 else -100.,'pf':gp/gl if gl else (99. if gp else 0.),
-      'win_pct':float((tr.ret_pct>0).mean()*100) if len(tr) else 0.,'trades':len(tr),'maxdd_pct':float((e/e.cummax()-1).min()*100),
-      'exposure_pct':exposed/max(len(df)-1,1)*100,'mar':((eq**(1/years)-1)*100)/abs(float((e/e.cummax()-1).min()*100)) if float((e/e.cummax()-1).min())<0 else np.nan,
-      'bnh_pct':(float(df.close.iloc[-1])/float(df.open.iloc[0])-1)*100,'bnh_cagr_pct':((float(df.close.iloc[-1])/float(df.open.iloc[0]))**(1/years)-1)*100,
-      'bnh_maxdd_pct':float((bh_curve/bh_curve.cummax()-1).min()*100),'positive_years':int((annual>0).sum()),'years_count':int(len(annual)),
-      'start':str(df.datetime.iloc[0]),'end':str(df.datetime.iloc[-1]),'rows':len(df)
-    },tr,e
+    dd=float((e/e.cummax()-1).min()*100); cagr=(eq**(1/years)-1)*100 if eq>0 else -100.
+    return {'net_pct':(eq-1)*100,'cagr_pct':cagr,'pf':gp/gl if gl else (99. if gp else 0.),'win_pct':float((tr.ret_pct>0).mean()*100) if len(tr) else 0.,'trades':len(tr),'maxdd_pct':dd,'exposure_pct':exposed/max(len(df)-1,1)*100,'mar':cagr/abs(dd) if dd<0 else np.nan,'bnh_pct':(float(df.close.iloc[-1])/float(df.open.iloc[0])-1)*100,'bnh_cagr_pct':((float(df.close.iloc[-1])/float(df.open.iloc[0]))**(1/years)-1)*100,'bnh_maxdd_pct':float((bh_curve/bh_curve.cummax()-1).min()*100),'positive_years':int((annual>0).sum()),'years_count':int(len(annual)),'start':str(df.datetime.iloc[0]),'end':str(df.datetime.iloc[-1]),'rows':len(df)},tr,e
 
 def main():
-    rows=[]; stress=[]
+    rows=[]; surface=[]; coststress=[]
     for domain,symbols,start in [('crypto',CRYPTO,'2020-01-01'),('etf',ETF,'2010-01-01')]:
       for sym in symbols:
         df=fetch(sym,start)
         if len(df)<200: continue
-        m,tr,e=bt(df); rows.append({'domain':domain,'symbol':sym,**m}); tr.to_csv(OUT/f"{sym.replace('-','')}_trades.csv",index=False)
-        for n in [50,60,65,70,80]:
+        m,tr,e=bt(df); rows.append({'domain':domain,'symbol':sym,'lookback':LOOKBACK,'threshold':THRESH,**m}); tr.to_csv(OUT/f"{sym.replace('-','')}_trades.csv",index=False)
+        for n in [50,60,63,65,70,80]:
           for thr in [.4,.5,.6]:
-            mm,_,_=bt(df,n,thr); stress.append({'domain':domain,'symbol':sym,'lookback':n,'threshold':thr,**mm})
-    r=pd.DataFrame(rows); s=pd.DataFrame(stress)
-    r.to_csv(OUT/'sentinel_broad.csv',index=False); s.to_csv(OUT/'sentinel_broad_robustness.csv',index=False)
+            mm,_,_=bt(df,n,thr); surface.append({'domain':domain,'symbol':sym,'lookback':n,'threshold':thr,**mm})
+        if domain=='crypto':
+          for bps in [7,25,50,100]:
+            mm,_,_=bt(df,LOOKBACK,THRESH,bps/10000); coststress.append({'symbol':sym,'oneway_bps':bps,**mm})
+    r=pd.DataFrame(rows); s=pd.DataFrame(surface); c=pd.DataFrame(coststress)
+    r.to_csv(OUT/'sentinel_current63.csv',index=False); s.to_csv(OUT/'sentinel_current63_surface.csv',index=False); c.to_csv(OUT/'sentinel_current63_coststress.csv',index=False)
+    print('CURRENT 63')
     print(r.to_string(index=False))
-    print('\nDOMAIN SUMMARY')
-    print(r.groupby('domain').agg(assets=('symbol','size'),positive=('net_pct',lambda x:int((x>0).sum())),beat_bh=('net_pct',lambda x:0),median_cagr=('cagr_pct','median'),median_dd=('maxdd_pct','median'),median_pf=('pf','median')).to_string())
-    print('\nROBUSTNESS')
+    print('\nSURFACE')
     print(s.groupby(['domain','symbol']).agg(cells=('net_pct','size'),positive_cells=('net_pct',lambda x:int((x>0).sum())),median_cagr=('cagr_pct','median'),worst_cagr=('cagr_pct','min'),median_pf=('pf','median'),worst_dd=('maxdd_pct','min')).to_string())
+    print('\nCRYPTO COST STRESS')
+    print(c.pivot(index='symbol',columns='oneway_bps',values='cagr_pct').to_string())
 if __name__=='__main__': main()
