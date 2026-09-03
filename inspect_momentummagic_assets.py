@@ -1,4 +1,4 @@
-import re, json, html, requests, subprocess
+import re, json, html, requests, subprocess, base64
 from PIL import Image, ImageOps, ImageEnhance
 
 URL='https://www.sergeybuzz.com/momentummagic-trading-system-free-setup-guide'
@@ -8,31 +8,24 @@ r=s.get(URL,timeout=30,allow_redirects=True); r.raise_for_status(); raw=r.text
 clean=re.sub(r'<script\b[^>]*>.*?</script>',' ',raw,flags=re.I|re.S)
 clean=re.sub(r'<style\b[^>]*>.*?</style>',' ',clean,flags=re.I|re.S)
 clean=re.sub(r'<[^>]+>',' ',clean); clean=html.unescape(clean).replace('\\/','/').replace('\\u0026','&'); clean=re.sub(r'\s+',' ',clean).strip()
-
-# Preserve substantial public prose surrounding parameter definitions so the audit can recover
-# rule semantics without copying the downloadable Pine source.
 contexts={}
-for pat in [
-    'BTC/ETH default: 6','default: 6','Trend MA','Trend MA Period','Trend MA Type',
-    'RSI Period','RSI Trend','MACD Signal Period','Signal Smooth','Signal Line Type',
-    'Entry Filters','Exit Filters','positions close','opposite signal','Parameter Explanation',
-    'Troubleshooting Common Issues'
-]:
+for pat in ['BTC/ETH default: 6','default: 6','Trend MA','Trend MA Period','Trend MA Type','RSI Period','RSI Trend','MACD Signal Period','Signal Smooth','Signal Line Type','Entry Filters','Exit Filters','positions close','opposite signal','Parameter Explanation','Troubleshooting Common Issues']:
     vals=[]
-    for m in list(re.finditer(re.escape(pat),clean,re.I))[:20]:
-        vals.append(clean[max(0,m.start()-900):min(len(clean),m.end()+2200)])
+    for m in list(re.finditer(re.escape(pat),clean,re.I))[:20]: vals.append(clean[max(0,m.start()-900):min(len(clean),m.end()+2200)])
     contexts[pat]=vals
-
-# Also isolate the public Parameter Explanation section if headings survived text extraction.
+a=clean.lower().find('parameter explanation'); b=clean.lower().find('troubleshooting common issues',a+1) if a>=0 else -1
 section=''
-a=clean.lower().find('parameter explanation')
-b=clean.lower().find('troubleshooting common issues',a+1) if a>=0 else -1
 if a>=0:
     if b<0: b=min(len(clean),a+12000)
     section=clean[a:b][:12000]
 
 ir=s.get(IMG,timeout=30); ir.raise_for_status(); open('MomentumMagicSettingsPanel.png','wb').write(ir.content)
 im=Image.open('MomentumMagicSettingsPanel.png').convert('RGB'); w,h=im.size
+# Export the visible settings modal at native resolution so it can be inspected directly rather than inferred from OCR.
+panel=im.crop((int(w*.43),0,w,h)); panel.save('MomentumMagicSettingsPanel_crop.png')
+with open('MomentumMagicSettingsPanel_crop.png','rb') as f, open('MomentumMagicSettingsPanel_crop.b64','w') as o:
+    o.write(base64.b64encode(f.read()).decode('ascii'))
+
 crops={'right55':(int(w*.43),int(h*.02),int(w*.99),int(h*.99)),'center65':(int(w*.32),int(h*.02),int(w*.97),int(h*.99)),'right70':(int(w*.28),0,w,h)}
 ocr={}
 for name,box in crops.items():
