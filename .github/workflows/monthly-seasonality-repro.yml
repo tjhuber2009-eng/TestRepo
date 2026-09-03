@@ -8,12 +8,17 @@ on:
       - .github/workflows/monthly-seasonality-repro.yml
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   reproduce:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -25,3 +30,23 @@ jobs:
           name: monthly-seasonality-repro-results
           path: audit_output_monthly_seasonality/
           if-no-files-found: warn
+      - name: Publish compact audit outputs to audit branch
+        if: success()
+        run: |
+          rm -rf audit_results_monthly_seasonality
+          mkdir -p audit_results_monthly_seasonality
+          cp audit_output_monthly_seasonality/summary.json audit_results_monthly_seasonality/
+          cp audit_output_monthly_seasonality/claim_matches.csv audit_results_monthly_seasonality/
+          cp audit_output_monthly_seasonality/phase_month_average_table.csv audit_results_monthly_seasonality/
+          cp audit_output_monthly_seasonality/forward_results.csv audit_results_monthly_seasonality/
+          cp audit_output_monthly_seasonality/best_match_trades.csv audit_results_monthly_seasonality/
+          cp audit_output_monthly_seasonality/causal_expanding_trades.csv audit_results_monthly_seasonality/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_monthly_seasonality
+          if git diff --cached --quiet; then
+            echo 'No audit output changes to publish.'
+          else
+            git commit -m 'Publish Monthly Seasonality audit outputs'
+            git push origin HEAD:dual-signal-audit-2026-09
+          fi
