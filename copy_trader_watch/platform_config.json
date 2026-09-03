@@ -15,9 +15,9 @@
     "mql5": {
       "enabled": true,
       "list_url": "https://www.mql5.com/en/signals/mt5/list",
-      "max_pages": 4,
+      "max_pages": 20,
       "include_paid_research": true,
-      "keep_top": 30,
+      "keep_top": 50,
       "actionable_free_only": true
     },
     "polymarket": {
@@ -40,5 +40,5 @@
     "zulutrade": {"enabled": false, "status": "adapter planned"},
     "binance_bybit_okx": {"enabled": false, "status": "research adapters planned"}
   },
-  "report": {"top_n": 30}
+  "report": {"top_n": 40}
 }
