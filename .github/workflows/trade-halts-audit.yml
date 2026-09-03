@@ -1,0 +1,157 @@
+name: Trade Halts Independent Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - .github/workflows/trade-halts-audit.yml
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Clone frozen upstream
+        run: |
+          git clone https://github.com/gilbertknight-star/Trade-Halts.git /tmp/halts
+          cd /tmp/halts
+          git checkout ec68b9581a32c51dce9fb5b65adc97b22861255f
+          git rev-parse HEAD
+      - name: Install audit deps
+        run: python -m pip install pandas numpy
+      - name: Independent ledger and stress audit
+        run: |
+          python - <<'PY'
+          import json, math, os
+          import numpy as np
+          import pandas as pd
+          from pathlib import Path
+
+          P=Path('/tmp/halts/research/data/halt_trades_rvol.csv')
+          df=pd.read_csv(P,parse_dates=['entry_ts','exit_ts'])
+          df['date']=pd.to_datetime(df['date']).dt.date
+          df=df.sort_values(['date','entry_ts']).reset_index(drop=True)
+
+          START=900.0; FRACTION=.10; CAP=100000.0; MINPOS=5.0
+          def comm(shares,price):
+              return max(1.0,min(shares*.005,shares*price*.01))
+
+          def simulate(extra_entry_bps=0,extra_exit_bps=0,dedup=False,win_cap=None,start=START,cap=CAP,commission_mode='reported'):
+              eq=float(start); daily=[]; logs=[]
+              use=df.copy()
+              if dedup:
+                  use=use.drop_duplicates(['date','symbol'],keep='first')
+              for date,g in use.groupby('date',sort=True):
+                  bod=eq; avail=bod; daypnl=0.0
+                  for _,t in g.sort_values('entry_ts').iterrows():
+                      if avail < MINPOS: continue
+                      pos=min(bod*FRACTION,cap,avail)
+                      entry=float(t.entry_px)*(1+extra_entry_bps/10000)
+                      exit=float(t.exit_px)*(1-extra_exit_bps/10000)
+                      r=exit/entry-1
+                      if win_cap is not None: r=min(r,win_cap)
+                      shares=pos/entry
+                      if commission_mode=='reported':
+                          cin=comm(shares,entry); cout=comm(shares,exit)
+                      elif commission_mode=='flat1pct':
+                          cin=cout=pos*.01
+                      elif commission_mode=='zero':
+                          cin=cout=0.0
+                      net=pos*r-cin-cout
+                      daypnl+=net; avail-=pos
+                      logs.append((date,t.symbol,r,pos,net,entry,exit))
+                  eq+=daypnl
+                  daily.append((pd.Timestamp(date),eq,bod,daypnl))
+              d=pd.DataFrame(daily,columns=['date','equity','bod','pnl'])
+              vals=d.equity.to_numpy(float)
+              rm=np.maximum.accumulate(vals); dd=vals/rm-1
+              years=(d.date.iloc[-1]-d.date.iloc[0]).days/365.25
+              cagr=(eq/start)**(1/years)-1
+              return {'final':eq,'total_return_pct':(eq/start-1)*100,'cagr_pct':cagr*100,'max_dd_pct':dd.min()*100,'days':len(d),'trades':len(logs),'curve':d,'logs':logs}
+
+          base=simulate()
+          # Dataset consistency
+          calc=(df.exit_px/df.entry_px-1)*100
+          ret_abs_err=(calc-df.ret_pct).abs()
+          dup_exact=int(df.duplicated(['date','symbol','entry_ts']).sum())
+          repeat_symbol_day=int(len(df)-len(df.drop_duplicates(['date','symbol'])))
+          # Distribution / concentration
+          ret=df.ret_pct.astype(float)
+          byyear={str(y):{'trades':int(len(g)),'median_ret_pct':float(g.ret_pct.median()),'mean_ret_pct':float(g.ret_pct.mean()),'win_rate':float((g.ret_pct>0).mean())} for y,g in df.assign(year=df.entry_ts.dt.year).groupby('year')}
+          entry=df.entry_px.astype(float)
+          price_diag={'min_entry':float(entry.min()),'median_entry':float(entry.median()),'max_entry':float(entry.max()),'entry_gt_1000':int((entry>1000).sum()),'entry_gt_100000':int((entry>100000).sum())}
+
+          scenarios={}
+          for eb,xb in [(0,0),(50,25),(100,50),(200,100),(500,250),(1000,500),(2000,1000),(5000,2500)]:
+              r=simulate(extra_entry_bps=eb,extra_exit_bps=xb)
+              scenarios[f'extra_{eb}in_{xb}out']={k:v for k,v in r.items() if k not in ('curve','logs')}
+          for capret in [2.0,1.0,.5,.25]:
+              r=simulate(win_cap=capret)
+              scenarios[f'win_cap_{int(capret*100)}pct']={k:v for k,v in r.items() if k not in ('curve','logs')}
+          r=simulate(dedup=True)
+          scenarios['first_halt_per_symbol_day']={k:v for k,v in r.items() if k not in ('curve','logs')}
+          for st in [900,10000,100000,1000000]:
+              r=simulate(start=st)
+              scenarios[f'start_{st}']={k:v for k,v in r.items() if k not in ('curve','logs')}
+          for capv in [10000,25000,50000,100000]:
+              r=simulate(cap=capv)
+              scenarios[f'cap_{capv}']={k:v for k,v in r.items() if k not in ('curve','logs')}
+          r=simulate(commission_mode='flat1pct')
+          scenarios['commission_1pct_each_side']={k:v for k,v in r.items() if k not in ('curve','logs')}
+
+          # Calendar-year portfolio returns preserving strategy state.
+          curve=base['curve'].copy(); curve['year']=curve.date.dt.year
+          yr={}
+          prev=START
+          for y,g in curve.groupby('year'):
+              end=float(g.equity.iloc[-1]); yr[str(y)]={'start_equity':prev,'end_equity':end,'return_pct':(end/prev-1)*100}; prev=end
+
+          # Rolling 12m changes from daily strategy curve, no interpolation.
+          roll=[]
+          for i,row in curve.iterrows():
+              target=row.date-pd.Timedelta(days=365)
+              prior=curve[curve.date<=target]
+              if len(prior):
+                  b=float(prior.iloc[-1].equity); roll.append((float(row.equity)/b-1)*100)
+          rolling={'n':len(roll),'median_12m_pct':float(np.median(roll)) if roll else None,'min_12m_pct':float(np.min(roll)) if roll else None,'max_12m_pct':float(np.max(roll)) if roll else None}
+
+          out={
+            'upstream_commit':'ec68b9581a32c51dce9fb5b65adc97b22861255f',
+            'advertised':{'cagr_pct':717.0,'max_dd_pct':-13.0,'trades':550,'win_rate_pct':69.6,'median_trade_pct':30.3},
+            'independent_base':{k:v for k,v in base.items() if k not in ('curve','logs')},
+            'ledger_checks':{'rows':len(df),'ret_formula_max_abs_error_pct':float(ret_abs_err.max()),'ret_formula_median_abs_error_pct':float(ret_abs_err.median()),'exact_duplicate_signals':dup_exact,'repeat_same_symbol_same_day':repeat_symbol_day,**price_diag},
+            'trade_distribution':{'win_rate_pct':float((ret>0).mean()*100),'median_ret_pct':float(ret.median()),'mean_ret_pct':float(ret.mean()),'min_ret_pct':float(ret.min()),'max_ret_pct':float(ret.max()),'p95_ret_pct':float(ret.quantile(.95)),'p99_ret_pct':float(ret.quantile(.99))},
+            'trade_stats_by_year':byyear,
+            'portfolio_year_returns':yr,
+            'rolling_12m':rolling,
+            'scenarios':scenarios,
+            'limitations':['raw ~5GB minute bars absent from repo; ledger audit cannot independently verify source bar extraction','entry/exit prices are split-adjusted; per-share commission economics may differ from historical raw shares','no post-publication forward sample in committed trade ledger']
+          }
+          os.makedirs('/tmp/trade-halts-audit',exist_ok=True)
+          Path('/tmp/trade-halts-audit/summary.json').write_text(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trade-halts-audit
+          path: /tmp/trade-halts-audit/summary.json
+      - name: Publish compact result
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_trade_halts
+          cp /tmp/trade-halts-audit/summary.json audit_results_trade_halts/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_trade_halts/summary.json
+          git diff --cached --quiet || git commit -m 'Publish Trade-Halts independent audit'
+          git push origin HEAD:dual-signal-audit-2026-09
