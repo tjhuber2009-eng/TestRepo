@@ -1,0 +1,132 @@
+//@version=5
+strategy("Bitcoin Monthly Seasonality — Independent Reconstruction",
+     overlay=true,
+     initial_capital=10000,
+     pyramiding=0,
+     default_qty_type=strategy.percent_of_equity,
+     default_qty_value=100,
+     process_orders_on_close=false)
+
+// Independently reconstructed from publicly stated methodology and
+// independently calculated BITSTAMP:BTCUSD monthly open->close returns.
+// This is NOT the author's paid Pine source.
+//
+// Historical lookup table construction used by the published method:
+//   - Bitstamp BTC/USD monthly open->close returns, 2012-2024
+//   - group years by four-year cycle phase
+//   - average each calendar month inside each phase
+//   - long if average > 0; cash otherwise
+//
+// Cycle mapping: year % 4
+//   0 = halving year      (2012, 2016, 2020, 2024, ...)
+//   1 = post-halving year (2013, 2017, 2021, 2025, ...)
+//   2 = bear year         (2014, 2018, 2022, 2026, ...)
+//   3 = consolidation     (2011, 2015, 2019, 2023, ...)
+
+startTime = input.time(timestamp("18 Aug 2011 00:00 +0000"), "Backtest start")
+endTime   = input.time(timestamp("31 Jan 2025 23:59 +0000"), "Backtest end")
+showSeasonality = input.bool(true, "Plot cycle-month average")
+
+f_avg_return(_cycle, _month) =>
+    float r = na
+    if _cycle == 0
+        r := switch _month
+            1 => 8.05
+            2 => 10.85
+            3 => -3.75
+            4 => 7.41
+            5 => 11.01
+            6 => 10.71
+            7 => 15.40
+            8 => -1.24
+            9 => 6.54
+            10 => 10.93
+            11 => 24.90
+            12 => 20.26
+    else if _cycle == 1
+        r := switch _month
+            1 => 22.86
+            2 => 41.79
+            3 => 68.83
+            4 => 23.59
+            5 => 8.81
+            6 => -9.55
+            7 => 14.70
+            8 => 36.78
+            9 => -5.63
+            10 => 49.98
+            11 => 165.83
+            12 => -4.59
+    else if _cycle == 2
+        r := switch _month
+            1 => -11.31
+            2 => -5.81
+            3 => -15.03
+            4 => 4.94
+            5 => 1.75
+            6 => -16.65
+            7 => 9.59
+            8 => -13.65
+            9 => -9.14
+            10 => -4.05
+            11 => -13.89
+            12 => -8.45
+    else
+        r := switch _month
+            1 => -0.04
+            2 => 9.11
+            3 => 9.15
+            4 => 9.42
+            5 => 17.37
+            6 => 17.51
+            7 => -0.68
+            8 => -11.83
+            9 => -2.30
+            10 => 23.41
+            11 => 4.14
+            12 => 7.07
+    r
+
+f_cycle(_year) => _year % 4
+
+// Current month lookup (for visualization/current state).
+cycleNow = f_cycle(year)
+avgNow = f_avg_return(cycleNow, month)
+bullNow = avgNow > 0
+
+// Because the lookup table is fixed in advance, the upcoming month's state is
+// already known on the final bar of the current month. Submit the order there;
+// TradingView's default strategy execution fills it at the next bar's open,
+// i.e. the first daily bar of the new month.
+nextDay = time + 24 * 60 * 60 * 1000
+isLastCalendarDay = month(nextDay) != month
+nextMonth = month(nextDay)
+nextYear = year(nextDay)
+nextCycle = f_cycle(nextYear)
+nextAvg = f_avg_return(nextCycle, nextMonth)
+nextBull = nextAvg > 0
+
+inWindow = time >= startTime and time <= endTime
+
+if isLastCalendarDay and inWindow
+    if nextBull and strategy.position_size <= 0
+        strategy.entry("Long", strategy.long)
+    else if not nextBull and strategy.position_size > 0
+        strategy.close("Long")
+
+// Handle a test that begins inside a bullish month.
+firstEligible = inWindow and (na(time[1]) or time[1] < startTime)
+if firstEligible and bullNow and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long)
+
+// Close after test window.
+if time > endTime and strategy.position_size > 0
+    strategy.close("Long")
+
+plot(showSeasonality ? avgNow : na,
+     title="Cycle-month average return (%)",
+     color=avgNow > 0 ? color.lime : color.red,
+     linewidth=2,
+     style=plot.style_stepline)
+
+bgcolor(showSeasonality ? (bullNow ? color.new(color.green, 92) : color.new(color.red, 94)) : na)
