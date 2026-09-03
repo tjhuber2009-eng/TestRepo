@@ -1,0 +1,23 @@
+{
+  "candidates": [
+    "jonathandm25",
+    "bgsully111",
+    "WilEscobar",
+    "Luisitoalana"
+  ],
+  "census_url": "https://raw.githubusercontent.com/weirdapps/etoro_census/master/public/data/latest-census.json",
+  "benchmarks": {
+    "SPY": "spy.us",
+    "QQQ": "qqq.us"
+  },
+  "thresholds": {
+    "daily_loss_pct": -5.0,
+    "forward_drawdown_pct": -10.0,
+    "risk_score_high": 7,
+    "risk_score_jump": 2,
+    "top1_concentration_pct": 50.0,
+    "top2_concentration_pct": 75.0,
+    "concentration_jump_pct_points": 20.0,
+    "copier_drop_pct": -50.0
+  }
+}
