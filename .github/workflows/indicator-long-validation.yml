@@ -24,6 +24,8 @@ jobs:
         run: python indicator_validation/run_boto_long.py
       - name: Run simple source-informed survivors
         run: python indicator_validation/run_simple_survivors.py
+      - name: Run frozen Sentinel cross-asset robustness
+        run: python indicator_validation/run_sentinel_crossasset.py
       - name: Export validated OHLC CSV
         run: |
           python - <<'PY'
@@ -46,7 +48,7 @@ jobs:
           PY
       - name: Hash outputs
         run: |
-          sha256sum indicator_validation/run_boto_long.py indicator_validation/run_simple_survivors.py indicator_validation/output/* indicator_validation/output_survivors/* indicator_validation/btcusdt_30m_20200101_20260902_ohlc.csv.gz > indicator_validation/SHA256SUMS_ALL.txt
+          sha256sum indicator_validation/run_boto_long.py indicator_validation/run_simple_survivors.py indicator_validation/run_sentinel_crossasset.py indicator_validation/output/* indicator_validation/output_survivors/* indicator_validation/output_sentinel/* indicator_validation/btcusdt_30m_20200101_20260902_ohlc.csv.gz > indicator_validation/SHA256SUMS_ALL.txt
       - name: Upload audit artifact
         uses: actions/upload-artifact@v4
         with:
@@ -54,6 +56,7 @@ jobs:
           path: |
             indicator_validation/output/
             indicator_validation/output_survivors/
+            indicator_validation/output_sentinel/
             indicator_validation/btcusdt_30m_20200101_20260902_ohlc.csv.gz
             indicator_validation/SHA256SUMS_ALL.txt
           if-no-files-found: error
