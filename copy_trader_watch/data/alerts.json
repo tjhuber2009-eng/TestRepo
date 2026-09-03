@@ -1,0 +1,23 @@
+{
+  "alerts": [
+    {
+      "candidate": "jonathandm25",
+      "key": "jonathandm25::missing",
+      "message": "Candidate disappeared from the current census; copy eligibility/status may have changed.",
+      "type": "missing"
+    },
+    {
+      "candidate": "bgsully111",
+      "key": "bgsully111::missing",
+      "message": "Candidate disappeared from the current census; copy eligibility/status may have changed.",
+      "type": "missing"
+    },
+    {
+      "candidate": "WilEscobar",
+      "key": "wilescobar::missing",
+      "message": "Candidate disappeared from the current census; copy eligibility/status may have changed.",
+      "type": "missing"
+    }
+  ],
+  "date": "2026-09-03"
+}

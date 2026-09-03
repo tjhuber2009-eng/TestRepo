@@ -1,0 +1,39 @@
+[
+  {
+    "benchmarks": {
+      "QQQ": null,
+      "SPY": null
+    },
+    "candidates": {
+      "Luisitoalana": {
+        "copiers": 23,
+        "country": null,
+        "daily_gain_pct": -2.45,
+        "gain_ytd_pct": 4.84,
+        "name": null,
+        "portfolio_pnl_pct": 135.24437919578565,
+        "portfolio_value_pct": 99.99921200000001,
+        "positions_count": 205,
+        "present": true,
+        "risk_score": 5,
+        "top1_concentration_pct": 13.0794,
+        "top2_concentration_pct": 23.4961,
+        "trades": 237,
+        "unique_instruments": 20,
+        "username": "Luisitoalana",
+        "win_ratio_pct": 71.73
+      },
+      "WilEscobar": {
+        "present": false
+      },
+      "bgsully111": {
+        "present": false
+      },
+      "jonathandm25": {
+        "present": false
+      }
+    },
+    "date": "2026-09-03",
+    "source_collected_at": "2026-09-03T03:34:59.774Z"
+  }
+]
