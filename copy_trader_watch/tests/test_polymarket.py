@@ -8,7 +8,6 @@ def test_position_stats_cost_roi_and_pf():
         {"realizedPnl": 20, "totalBought": 200, "avgPrice": 0.5, "timestamp": 1_700_172_800},
     ]
     stats = pm.position_stats(rows)
-    # Cost = 50 + 50 + 100 = 200; realized pnl = 60 => 30% cost ROI.
     assert round(stats["cost_roi_pct"], 8) == 30.0
     assert round(stats["profit_factor"], 8) == 7.0
     assert round(stats["win_rate_pct"], 8) == round(2 / 3 * 100, 8)
@@ -32,10 +31,14 @@ def test_open_concentration():
     assert top2 == 90.0
 
 
-def test_copyability_rewards_persistence_and_penalizes_concentration():
-    stats = {"closed_positions": 200, "closed_positions_per_day": 1, "profit_concentration_pct": 10}
-    persistent = pm.copyability_score(stats, 20, True)
-    transient = pm.copyability_score(stats, 20, False)
-    concentrated = pm.copyability_score(stats, 80, True)
-    assert persistent > transient
-    assert concentrated < persistent
+def test_copyability_ignores_sample_size_and_persistence():
+    small = {"closed_positions": 2, "closed_positions_per_day": 1, "profit_concentration_pct": 10}
+    large = {"closed_positions": 200, "closed_positions_per_day": 1, "profit_concentration_pct": 10}
+    assert pm.copyability_score(small, 20, False) == pm.copyability_score(large, 20, True)
+
+
+def test_copyability_still_penalizes_execution_concentration():
+    stats = {"closed_positions": 2, "closed_positions_per_day": 1, "profit_concentration_pct": 10}
+    normal = pm.copyability_score(stats, 20, False)
+    concentrated = pm.copyability_score(stats, 80, False)
+    assert concentrated < normal
