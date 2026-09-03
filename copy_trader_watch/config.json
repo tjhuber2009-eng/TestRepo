@@ -5,7 +5,7 @@
     "WilEscobar",
     "Luisitoalana"
   ],
-  "census_url": "https://raw.githubusercontent.com/weirdapps/etoro_census/master/public/data/latest-census.json",
+  "census_url": "https://raw.githubusercontent.com/weirdapps/etoro_census/master/public/data/census-data-latest.json",
   "benchmarks": {
     "SPY": "spy.us",
     "QQQ": "qqq.us"
