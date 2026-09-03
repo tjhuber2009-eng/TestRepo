@@ -1,0 +1,41 @@
+name: MomentumMagic Independent Audit
+
+on:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - momentummagic_audit.py
+      - .github/workflows/momentummagic-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pandas numpy requests
+      - run: python momentummagic_audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: momentummagic-audit-results
+          path: audit_output_momentummagic/
+      - name: Publish compact results to audit branch
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_momentummagic_repro
+          cp audit_output_momentummagic/summary.json audit_results_momentummagic_repro/
+          cp audit_output_momentummagic/slow_diagnostic.csv audit_results_momentummagic_repro/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_momentummagic_repro
+          git diff --cached --quiet || git commit -m 'Publish MomentumMagic reproduction results'
+          git push origin HEAD:dual-signal-audit-2026-09
