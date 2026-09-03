@@ -104,3 +104,19 @@ if len(train_ok):
     print("\nTRAIN-SELECTED FIXED ALLOCATION")
     print({"chosen_allocation_pct":chosen,"train":train_ok.iloc[0].to_dict(),"test_2023_2026":testm})
     pd.DataFrame([{"chosen_allocation_pct":chosen,**{f"train_{k}":v for k,v in train_ok.iloc[0].to_dict().items()},**{f"test_{k}":v for k,v in testm.items()}}]).to_csv(OUT/"walkforward_fixed.csv",index=False)
+
+
+# Walk-forward for predeclared volatility-target family.
+train_vol=vol_grid(train)
+train_vol_ok=train_vol[train_vol.maxdd_pct>=-3.0].sort_values(["cagr_pct","maxdd_pct"],ascending=[False,False])
+if len(train_vol_ok):
+    row=train_vol_ok.iloc[0]
+    targ=float(row.target_ann_vol_pct)/100.0
+    cap=float(row.cap_pct)/100.0
+    rr=np.log(test.close/test.close.shift(1))
+    annvol=rr.rolling(30).std(ddof=0)*np.sqrt(365)
+    alloc=(targ/annvol).clip(lower=0,upper=cap).fillna(0)
+    testm=run(test,alloc)
+    print("\nTRAIN-SELECTED VOL TARGET")
+    print({"target_ann_vol_pct":float(row.target_ann_vol_pct),"cap_pct":float(row.cap_pct),"train":row.to_dict(),"test_2023_2026":testm})
+    pd.DataFrame([{"target_ann_vol_pct":float(row.target_ann_vol_pct),"cap_pct":float(row.cap_pct),**{f"train_{k}":v for k,v in row.to_dict().items()},**{f"test_{k}":v for k,v in testm.items()}}]).to_csv(OUT/"walkforward_vol.csv",index=False)
