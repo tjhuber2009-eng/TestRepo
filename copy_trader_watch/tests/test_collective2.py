@@ -64,8 +64,8 @@ def test_paid_strategy_is_not_actionable():
     assert "75" in snap.actionable_reason
 
 
-def test_high_suggested_capital_reduces_copyability():
-    rows = c2.parse_page(HTML, "https://collective2.com/lb/320")
-    usa = next(r for r in rows if r["name"] == "USA STOCKS")
-    paid = next(r for r in rows if r["name"] == "Paid Alpha")
-    assert c2._copyability(usa) < c2._copyability(paid)
+def test_high_suggested_capital_reduces_copyability_all_else_equal():
+    row = next(r for r in c2.parse_page(HTML, "https://collective2.com/lb/320") if r["name"] == "USA STOCKS")
+    lower_capital = dict(row)
+    lower_capital["suggested_capital"] = 50_000
+    assert c2._copyability(row) < c2._copyability(lower_capital)
