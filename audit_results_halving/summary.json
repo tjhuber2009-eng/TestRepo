@@ -1,0 +1,156 @@
+{
+  "target": {
+    "return_pct": 126946455.02,
+    "final_from_10000": 12694655502.0,
+    "trades": 4,
+    "win_pct": 100.0,
+    "max_dd_pct": -21.49
+  },
+  "key_next_open_zero": {
+    "public_500_500": {
+      "return_pct": 7424809.371354389,
+      "cagr_pct": 116.53626067894137,
+      "trades": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -85.40696763906092,
+      "claim_ratio": 0.05848846682121165
+    },
+    "pantera_like_400_480": {
+      "return_pct": 23833641.92594271,
+      "cagr_pct": 134.65095103637356,
+      "trades": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -71.03056768558952,
+      "claim_ratio": 0.1877462678856294
+    },
+    "round_600_525": {
+      "return_pct": 151638088.74270082,
+      "cagr_pct": 166.55178073539764,
+      "trades": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -93.07432432432432,
+      "claim_ratio": 1.1945041653065003
+    },
+    "approx_2y_18m": {
+      "return_pct": 137394783.27560413,
+      "cagr_pct": 164.7467123141373,
+      "trades": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -93.07432432432432,
+      "claim_ratio": 1.082304937333337
+    }
+  },
+  "best_offset_grid_match": {
+    "mode": "same_open",
+    "pre_days": 680,
+    "post_days": 520,
+    "final": 12697492580.633186,
+    "return_pct": 126974825.80633187,
+    "trades": 4,
+    "wins": 4,
+    "win_pct": 100.0,
+    "profit_factor": Infinity,
+    "log_final_error": 0.00022346109795508913,
+    "claim_ratio": 1.000223486067246,
+    "cagr_pct": 163.31220743742045,
+    "max_dd_close_pct": -93.07432432432432,
+    "start": "2010-07-27",
+    "end": "2025-01-31"
+  },
+  "best_730_548_snapshot_match": {
+    "mode": "same_close",
+    "end": "2025-01-18",
+    "final": 12690056034.690876,
+    "return_pct": 126900460.34690875,
+    "trades": 4,
+    "wins": 4,
+    "win_pct": 100.0,
+    "profit_factor": Infinity,
+    "claim_ratio": 0.9996376847478532,
+    "abs_pct_gap": 0.03623152521468054,
+    "cagr_pct": 163.92887879560686,
+    "max_dd_close_pct": -93.07432432432432,
+    "start": "2010-07-27"
+  },
+  "timing_sensitivity_730_548_neighborhood": {
+    "min_return_pct": 2282979.589877937,
+    "median_return_pct": 76205221.70492128,
+    "max_return_pct": 518146106.65420544
+  },
+  "buy_hold_730_548_start_to_2025_01_31_pct": 44546224.488908224,
+  "current_next_open_zero": [
+    {
+      "label": "public_500_500",
+      "pre_days": 500,
+      "post_days": 500,
+      "mode": "next_open",
+      "final": 792102950.2082996,
+      "return_pct": 7920929.502082996,
+      "cagr_pct": 101.48435434624469,
+      "trades": 4,
+      "wins": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -85.40696763906092,
+      "start": "2010-07-27",
+      "end": "2026-09-02"
+    },
+    {
+      "label": "pantera_like_400_480",
+      "pre_days": 400,
+      "post_days": 480,
+      "mode": "next_open",
+      "final": 2795319146.145722,
+      "return_pct": 27953091.46145722,
+      "cagr_pct": 117.89807610577677,
+      "trades": 4,
+      "wins": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -71.03056768558952,
+      "start": "2010-07-27",
+      "end": "2026-09-02"
+    },
+    {
+      "label": "round_600_525",
+      "pre_days": 600,
+      "post_days": 525,
+      "mode": "next_open",
+      "final": 16242041436.493599,
+      "return_pct": 162420314.364936,
+      "cagr_pct": 143.06084210226416,
+      "trades": 4,
+      "wins": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -93.07432432432432,
+      "start": "2010-07-27",
+      "end": "2026-09-02"
+    },
+    {
+      "label": "approx_2y_18m",
+      "pre_days": 730,
+      "post_days": 548,
+      "mode": "next_open",
+      "final": 14580799221.812366,
+      "return_pct": 145807892.21812364,
+      "cagr_pct": 141.43752946793455,
+      "trades": 4,
+      "wins": 4,
+      "win_pct": 100.0,
+      "profit_factor": Infinity,
+      "max_dd_close_pct": -93.07432432432432,
+      "start": "2010-07-27",
+      "end": "2026-09-02"
+    }
+  ],
+  "notes": [
+    "Offset-grid matches are reverse-engineering diagnostics, not evidence of validity.",
+    "Daily-close mark-to-market drawdown is used; intraday drawdown would be equal or worse.",
+    "The 2024 trade is force-closed at the requested historical snapshot when its scheduled post-halving exit lies later."
+  ]
+}
