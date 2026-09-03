@@ -27,9 +27,18 @@
       "candidate_limit": 12,
       "max_closed_positions": 200
     },
+    "collective2": {
+      "enabled": true,
+      "urls": [
+        "https://collective2.com/lb/320",
+        "https://collective2.com/selector/old_timers",
+        "https://collective2.com/selector/"
+      ],
+      "keep_top": 30,
+      "free_only_actionable": true
+    },
     "zulutrade": {"enabled": false, "status": "adapter planned"},
-    "collective2": {"enabled": false, "status": "adapter planned"},
     "binance_bybit_okx": {"enabled": false, "status": "research adapters planned"}
   },
-  "report": {"top_n": 25}
+  "report": {"top_n": 30}
 }
