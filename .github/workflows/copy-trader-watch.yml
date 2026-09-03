@@ -12,7 +12,6 @@ on:
       - ".github/workflows/copy-trader-watch.yml"
   workflow_dispatch:
   schedule:
-    # Fixed 7:30 PM Pacific year-round; GitHub Actions applies DST from the IANA timezone.
     - cron: "30 19 * * *"
       timezone: "America/Los_Angeles"
 
@@ -31,26 +30,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: copy_trader_watch/requirements.txt
-
       - name: Install dependencies
         run: python -m pip install -r copy_trader_watch/requirements.txt
-
       - name: Unit tests
         run: python -m pytest -q copy_trader_watch/tests
-
-      - name: Run public-data watcher
+      - name: Run eToro V2 watcher
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python copy_trader_watch/run.py
-
+      - name: Run cross-platform V3 watcher
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: python copy_trader_watch/run_v3.py
       - name: Commit daily snapshot and report
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: |
