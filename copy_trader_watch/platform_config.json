@@ -20,10 +20,16 @@
       "keep_top": 30,
       "actionable_free_only": true
     },
+    "polymarket": {
+      "enabled": true,
+      "research_only": true,
+      "leaderboard_limit": 50,
+      "candidate_limit": 12,
+      "max_closed_positions": 200
+    },
     "zulutrade": {"enabled": false, "status": "adapter planned"},
     "collective2": {"enabled": false, "status": "adapter planned"},
-    "polymarket": {"enabled": false, "status": "adapter planned"},
     "binance_bybit_okx": {"enabled": false, "status": "research adapters planned"}
   },
-  "report": {"top_n": 20}
+  "report": {"top_n": 25}
 }
