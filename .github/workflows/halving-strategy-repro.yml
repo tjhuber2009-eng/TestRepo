@@ -1,0 +1,49 @@
+name: Bitcoin Halving Strategy Reproduction
+
+on:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - halving_strategy_repro.py
+      - .github/workflows/halving-strategy-repro.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pandas numpy requests
+      - run: python halving_strategy_repro.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: halving-strategy-repro-results
+          path: audit_output_halving/
+          if-no-files-found: warn
+      - name: Publish compact audit outputs to audit branch
+        if: success()
+        run: |
+          rm -rf audit_results_halving
+          mkdir audit_results_halving
+          cp audit_output_halving/summary.json audit_results_halving/
+          cp audit_output_halving/candidate_results.csv audit_results_halving/
+          cp audit_output_halving/offset_grid_top100.csv audit_results_halving/
+          cp audit_output_halving/snapshot_search_top100.csv audit_results_halving/
+          cp audit_output_halving/timing_sensitivity.csv audit_results_halving/
+          cp audit_output_halving/current_results.csv audit_results_halving/
+          cp audit_output_halving/two_year_18m_trades.csv audit_results_halving/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_halving
+          git diff --cached --quiet || git commit -m 'Publish Bitcoin Halving audit results'
+          git push origin HEAD:dual-signal-audit-2026-09
