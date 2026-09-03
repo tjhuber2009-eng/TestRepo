@@ -45,7 +45,7 @@ def test_parse_collective2_free_strategy():
     assert usa["suggested_capital"] == 300000
 
 
-def test_free_mature_strategy_can_pass_actionable_screen():
+def test_free_strategy_can_pass_actionable_screen_without_age_gate():
     row = next(r for r in c2.parse_page(HTML, "https://collective2.com/lb/320") if r["name"] == "USA STOCKS")
     snap = c2.normalize(row, "2026-09-03T00:00:00Z")
     assert snap.free is True
@@ -54,6 +54,15 @@ def test_free_mature_strategy_can_pass_actionable_screen():
     assert snap.max_drawdown_pct == -18.1
     assert snap.metadata["suggested_capital"] == 300000
     assert "broker-sponsored" in snap.actionable_reason
+
+
+def test_young_free_strategy_is_not_rejected_for_sample_size():
+    row = next(r for r in c2.parse_page(HTML, "https://collective2.com/lb/320") if r["name"] == "USA STOCKS")
+    row = dict(row)
+    row["age_days"] = 3
+    snap = c2.normalize(row, "2026-09-03T00:00:00Z")
+    assert snap.actionable is True
+    assert snap.forward_test_eligible is True
 
 
 def test_paid_strategy_is_not_actionable():
