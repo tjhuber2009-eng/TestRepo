@@ -20,14 +20,20 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas pyarrow requests
-      - name: Run frozen BoTo validation
+      - name: Run frozen BoTo validation and acquire dataset
         run: python indicator_validation/run_boto_long.py
+      - name: Run simple source-informed survivors
+        run: python indicator_validation/run_simple_survivors.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_boto_long.py indicator_validation/output/* > indicator_validation/output/SHA256SUMS.txt
+        run: |
+          sha256sum indicator_validation/run_boto_long.py indicator_validation/run_simple_survivors.py indicator_validation/output/* indicator_validation/output_survivors/* > indicator_validation/SHA256SUMS_ALL.txt
       - name: Upload audit artifact
         uses: actions/upload-artifact@v4
         with:
-          name: boto-long-validation
-          path: indicator_validation/output/
+          name: indicator-long-validation
+          path: |
+            indicator_validation/output/
+            indicator_validation/output_survivors/
+            indicator_validation/SHA256SUMS_ALL.txt
           if-no-files-found: error
           retention-days: 7
