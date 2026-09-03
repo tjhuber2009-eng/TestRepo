@@ -1,4 +1,4 @@
-name: Indicator Sentinel Risk Validation
+name: Indicator Sentinel DD3 Validation
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run frozen Sentinel63 fractional-risk test
-        run: python indicator_validation/run_sentinel_risk.py
+      - name: Run Sentinel63 DD3 frontier
+        run: python indicator_validation/run_sentinel_dd3.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_sentinel_risk.py indicator_validation/output_sentinel_risk/* > indicator_validation/SHA256SUMS_RISK.txt
-      - name: Upload risk artifact
+        run: sha256sum indicator_validation/run_sentinel_dd3.py indicator_validation/output_sentinel_dd3/* > indicator_validation/SHA256SUMS_DD3.txt
+      - name: Upload DD3 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-sentinel-risk-validation
+          name: indicator-sentinel-dd3-validation
           path: |
-            indicator_validation/output_sentinel_risk/
-            indicator_validation/SHA256SUMS_RISK.txt
+            indicator_validation/output_sentinel_dd3/
+            indicator_validation/SHA256SUMS_DD3.txt
           if-no-files-found: error
           retention-days: 7
