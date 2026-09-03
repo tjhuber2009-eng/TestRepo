@@ -1,0 +1,77 @@
+{
+  "upstream_commit": "dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1",
+  "claim": {
+    "sol_cagr_pct": 129.9,
+    "sol_sharpe": 0.75,
+    "sol_max_dd_pct": 19.1,
+    "sol_trades": 26,
+    "cpcv_p5_sharpe": -1.05
+  },
+  "config": {
+    "primary_symbol": "SOL/USDT:USDT",
+    "hedge_symbol": "PAXG/USDT",
+    "momentum_lookback_bars": 4,
+    "drawdown_hedge_threshold": 0.2,
+    "long_size_usd_pct": 3.0,
+    "vol_target_pct": 0.015,
+    "vol_lookback_bars": 12,
+    "vol_size_max_mult": 1.67
+  },
+  "frictions": {
+    "taker_fee_bps": 4.0,
+    "slippage_bps": 5.0,
+    "funding_rate_per_day": 0.0001
+  },
+  "data": {
+    "train_bars": 248,
+    "full_bars": 296,
+    "sol_range": [
+      1606694400000,
+      1788134400000
+    ],
+    "paxg_range": [
+      1606694400000,
+      1788134400000
+    ]
+  },
+  "train_reproduction": {
+    "start_ms": 1609718400000,
+    "end_ms": 1759104000000,
+    "points": 249,
+    "total_return_pct": 5285.744058716614,
+    "cagr_pct": 132.12231600161388,
+    "max_dd_pct": 19.093135264084783,
+    "sharpe": 0.7478253778701552,
+    "trades": 26,
+    "final_equity": 107714.88117433227
+  },
+  "full_through_2026_08": {
+    "start_ms": 1609718400000,
+    "end_ms": 1788134400000,
+    "points": 297,
+    "total_return_pct": 5301.147241458132,
+    "cagr_pct": 102.50222234196849,
+    "max_dd_pct": 19.093135264084783,
+    "sharpe": 0.6841206073030014,
+    "trades": 29,
+    "final_equity": 108022.94482916265
+  },
+  "preserve_state_2024_onward": {
+    "start_ms": 1704067200000,
+    "end_ms": 1788134400000,
+    "points": 140,
+    "total_return_pct": 53.59966109885548,
+    "cagr_pct": 17.480759560847336,
+    "max_dd_pct": 19.093135264084797,
+    "sharpe": 0.5274522760189789
+  },
+  "preserve_state_holdout_2025_10_onward": {
+    "start_ms": 1759708800000,
+    "end_ms": 1788134400000,
+    "points": 48,
+    "total_return_pct": 5.666561318305541,
+    "cagr_pct": 6.310100212094905,
+    "max_dd_pct": 3.4663486495902562,
+    "sharpe": 0.5849971766541092
+  }
+}
