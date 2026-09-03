@@ -1,0 +1,298 @@
+{
+  "upstream_commit": "ec68b9581a32c51dce9fb5b65adc97b22861255f",
+  "advertised": {
+    "cagr_pct": 717.0,
+    "max_dd_pct": -13.0,
+    "trades": 550,
+    "win_rate_pct": 69.6,
+    "median_trade_pct": 30.3
+  },
+  "independent_base": {
+    "final": 35691660.2707324,
+    "total_return_pct": 3965640.0300813783,
+    "cagr_pct": 717.1401301029429,
+    "max_dd_pct": -12.955427157458244,
+    "days": 285,
+    "trades": 550
+  },
+  "ledger_checks": {
+    "rows": 550,
+    "ret_formula_max_abs_error_pct": 0.011108613278167923,
+    "ret_formula_median_abs_error_pct": 0.0002001362182093569,
+    "exact_duplicate_signals": 0,
+    "repeat_same_symbol_same_day": 193,
+    "min_entry": 1.0045,
+    "median_entry": 14.73885,
+    "max_entry": 271829184.0,
+    "entry_gt_1000": 38,
+    "entry_gt_100000": 12
+  },
+  "trade_distribution": {
+    "win_rate_pct": 70.0,
+    "median_ret_pct": 30.3432,
+    "mean_ret_pct": 80.63564854545454,
+    "min_ret_pct": -94.7461,
+    "max_ret_pct": 2606.4168,
+    "p95_ret_pct": 329.55693999999994,
+    "p99_ret_pct": 1142.4049359999983
+  },
+  "trade_stats_by_year": {
+    "2021": {
+      "trades": 41,
+      "median_ret_pct": 13.6866,
+      "mean_ret_pct": 28.94834390243902,
+      "win_rate": 0.6341463414634146
+    },
+    "2022": {
+      "trades": 62,
+      "median_ret_pct": 34.8697,
+      "mean_ret_pct": 67.33238387096775,
+      "win_rate": 0.7096774193548387
+    },
+    "2023": {
+      "trades": 115,
+      "median_ret_pct": 39.4202,
+      "mean_ret_pct": 79.85088,
+      "win_rate": 0.8
+    },
+    "2024": {
+      "trades": 93,
+      "median_ret_pct": 33.1248,
+      "mean_ret_pct": 69.86205268817203,
+      "win_rate": 0.6774193548387096
+    },
+    "2025": {
+      "trades": 187,
+      "median_ret_pct": 25.1251,
+      "mean_ret_pct": 80.86915721925136,
+      "win_rate": 0.6524064171122995
+    },
+    "2026": {
+      "trades": 52,
+      "median_ret_pct": 52.9546,
+      "mean_ret_pct": 157.41465961538464,
+      "win_rate": 0.7307692307692307
+    }
+  },
+  "portfolio_year_returns": {
+    "2021": {
+      "start_equity": 900.0,
+      "end_equity": 2495.808399851374,
+      "return_pct": 177.31204442793046
+    },
+    "2022": {
+      "start_equity": 2495.808399851374,
+      "end_equity": 40814.168522876906,
+      "return_pct": 1535.3085647643227
+    },
+    "2023": {
+      "start_equity": 40814.168522876906,
+      "end_equity": 5946687.417214879,
+      "return_pct": 14470.154513577014
+    },
+    "2024": {
+      "start_equity": 5946687.417214879,
+      "end_equity": 12430644.433731608,
+      "return_pct": 109.0347711525332
+    },
+    "2025": {
+      "start_equity": 12430644.433731608,
+      "end_equity": 27517096.443457413,
+      "return_pct": 121.36500315934899
+    },
+    "2026": {
+      "start_equity": 27517096.443457413,
+      "end_equity": 35691660.2707324,
+      "return_pct": 29.707217998353208
+    }
+  },
+  "rolling_12m": {
+    "n": 252,
+    "median_12m_pct": 217.51033304730527,
+    "min_12m_pct": 33.66463642781747,
+    "max_12m_pct": 37078.14158443362
+  },
+  "scenarios": {
+    "extra_0in_0out": {
+      "final": 35691660.2707324,
+      "total_return_pct": 3965640.0300813783,
+      "cagr_pct": 717.1401301029429,
+      "max_dd_pct": -12.955427157458244,
+      "days": 285,
+      "trades": 550
+    },
+    "extra_50in_25out": {
+      "final": 34983654.370841414,
+      "total_return_pct": 3886972.7078712685,
+      "cagr_pct": 713.898348706266,
+      "max_dd_pct": -13.009351502556864,
+      "days": 285,
+      "trades": 550
+    },
+    "extra_100in_50out": {
+      "final": 34275241.15182253,
+      "total_return_pct": 3808260.127980281,
+      "cagr_pct": 710.6016307669602,
+      "max_dd_pct": -13.062848101054204,
+      "days": 285,
+      "trades": 550
+    },
+    "extra_200in_100out": {
+      "final": 32831791.544058744,
+      "total_return_pct": 3647876.838228749,
+      "cagr_pct": 703.7115837904713,
+      "max_dd_pct": -13.168615028459952,
+      "days": 285,
+      "trades": 550
+    },
+    "extra_500in_250out": {
+      "final": 27963878.57227233,
+      "total_return_pct": 3106997.61914137,
+      "cagr_pct": 678.5248419829687,
+      "max_dd_pct": -17.515716956273607,
+      "days": 285,
+      "trades": 550
+    },
+    "extra_1000in_500out": {
+      "final": 21382009.22423487,
+      "total_return_pct": 2375678.8026927635,
+      "cagr_pct": 638.1582072126871,
+      "max_dd_pct": -28.484340804976604,
+      "days": 285,
+      "trades": 550
+    },
+    "extra_2000in_1000out": {
+      "final": 3569737.5368565423,
+      "total_return_pct": 396537.5040951714,
+      "cagr_pct": 417.50282521571637,
+      "max_dd_pct": -69.39299271848706,
+      "days": 285,
+      "trades": 549
+    },
+    "extra_5000in_2500out": {
+      "final": 0.6085345150962667,
+      "total_return_pct": -99.93238505387819,
+      "cagr_pct": -76.49890764767771,
+      "max_dd_pct": -99.92811353802885,
+      "days": 285,
+      "trades": 78
+    },
+    "win_cap_200pct": {
+      "final": 19054589.620946508,
+      "total_return_pct": 2117076.624549612,
+      "cagr_pct": 621.4726431690317,
+      "max_dd_pct": -12.960037263560753,
+      "days": 285,
+      "trades": 550
+    },
+    "win_cap_100pct": {
+      "final": 10231520.323548393,
+      "total_return_pct": 1136735.591505377,
+      "cagr_pct": 537.7356908879792,
+      "max_dd_pct": -17.325437823426004,
+      "days": 285,
+      "trades": 550
+    },
+    "win_cap_50pct": {
+      "final": 2136418.1149498792,
+      "total_return_pct": 237279.7905499866,
+      "cagr_pct": 367.39059718403075,
+      "max_dd_pct": -50.67778411358725,
+      "days": 285,
+      "trades": 549
+    },
+    "win_cap_25pct": {
+      "final": 8009.384251286477,
+      "total_return_pct": 789.9315834762751,
+      "cagr_pct": 54.29437175450074,
+      "max_dd_pct": -68.0280702212786,
+      "days": 285,
+      "trades": 546
+    },
+    "first_halt_per_symbol_day": {
+      "final": 11391548.455052096,
+      "total_return_pct": 1265627.6061168995,
+      "cagr_pct": 551.4701201223307,
+      "max_dd_pct": -19.60280603448451,
+      "days": 285,
+      "trades": 357
+    },
+    "start_900": {
+      "final": 35691660.2707324,
+      "total_return_pct": 3965640.0300813783,
+      "cagr_pct": 717.1401301029429,
+      "max_dd_pct": -12.955427157458244,
+      "days": 285,
+      "trades": 550
+    },
+    "start_10000": {
+      "final": 39058424.40082313,
+      "total_return_pct": 390484.2440082313,
+      "cagr_pct": 415.9262395218189,
+      "max_dd_pct": -12.941721429567188,
+      "days": 285,
+      "trades": 550
+    },
+    "start_100000": {
+      "final": 42590253.73261796,
+      "total_return_pct": 42490.25373261796,
+      "cagr_pct": 232.3907007250297,
+      "max_dd_pct": -7.1413625775029965,
+      "days": 285,
+      "trades": 550
+    },
+    "start_1000000": {
+      "final": 45264042.47247705,
+      "total_return_pct": 4426.404247247705,
+      "cagr_pct": 113.05783270741179,
+      "max_dd_pct": -4.327532468747397,
+      "days": 285,
+      "trades": 550
+    },
+    "cap_10000": {
+      "final": 3881904.7083568694,
+      "total_return_pct": 431222.74537298543,
+      "cagr_pct": 426.1821379215502,
+      "max_dd_pct": -12.955427157458244,
+      "days": 285,
+      "trades": 550
+    },
+    "cap_25000": {
+      "final": 9340497.494744431,
+      "total_return_pct": 1037733.0549716034,
+      "cagr_pct": 526.3110834339602,
+      "max_dd_pct": -12.955427157458244,
+      "days": 285,
+      "trades": 550
+    },
+    "cap_50000": {
+      "final": 18222814.460695714,
+      "total_return_pct": 2024657.1622995238,
+      "cagr_pct": 615.1120559775123,
+      "max_dd_pct": -12.955427157458244,
+      "days": 285,
+      "trades": 550
+    },
+    "cap_100000": {
+      "final": 35691660.2707324,
+      "total_return_pct": 3965640.0300813783,
+      "cagr_pct": 717.1401301029429,
+      "max_dd_pct": -12.955427157458244,
+      "days": 285,
+      "trades": 550
+    },
+    "commission_1pct_each_side": {
+      "final": 34781029.00641948,
+      "total_return_pct": 3864458.7784910533,
+      "cagr_pct": 712.9609037598286,
+      "max_dd_pct": -13.340474919124933,
+      "days": 285,
+      "trades": 550
+    }
+  },
+  "limitations": [
+    "raw ~5GB minute bars absent from repo; ledger audit cannot independently verify source bar extraction",
+    "entry/exit prices are split-adjusted; per-share commission economics may differ from historical raw shares",
+    "no post-publication forward sample in committed trade ledger"
+  ]
+}
