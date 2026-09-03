@@ -60,10 +60,22 @@ def main():
             mm,_,_=bt(df,LOOKBACK,THRESH,bps/10000); coststress.append({'symbol':sym,'oneway_bps':bps,**mm})
     r=pd.DataFrame(rows); s=pd.DataFrame(surface); c=pd.DataFrame(coststress)
     r.to_csv(OUT/'sentinel_current63.csv',index=False); s.to_csv(OUT/'sentinel_current63_surface.csv',index=False); c.to_csv(OUT/'sentinel_current63_coststress.csv',index=False)
+
+    # Direct replication of the author's advertised 2014-2026 BTC history.
+    fullbtc=fetch('BTC-USD','2014-09-17')
+    full=[]
+    if len(fullbtc)>=200:
+      for n in [63,65]:
+        for bps in [0,7,25,50,100]:
+          mm,tr,e=bt(fullbtc,n,THRESH,bps/10000); full.append({'lookback':n,'threshold':THRESH,'oneway_bps':bps,**mm})
+    f=pd.DataFrame(full); f.to_csv(OUT/'btc_2014_2026_direct_replication.csv',index=False)
+
     print('CURRENT 63')
     print(r.to_string(index=False))
     print('\nSURFACE')
     print(s.groupby(['domain','symbol']).agg(cells=('net_pct','size'),positive_cells=('net_pct',lambda x:int((x>0).sum())),median_cagr=('cagr_pct','median'),worst_cagr=('cagr_pct','min'),median_pf=('pf','median'),worst_dd=('maxdd_pct','min')).to_string())
     print('\nCRYPTO COST STRESS')
     print(c.pivot(index='symbol',columns='oneway_bps',values='cagr_pct').to_string())
+    print('\nBTC 2014-2026 DIRECT REPLICATION')
+    print(f[['lookback','oneway_bps','net_pct','cagr_pct','pf','trades','maxdd_pct','exposure_pct','bnh_pct','bnh_cagr_pct','bnh_maxdd_pct']].to_string(index=False))
 if __name__=='__main__': main()
