@@ -13,6 +13,11 @@ from models import AdapterResult, TraderSnapshot, score_snapshot
 
 DEFAULT_URL = "https://www.mql5.com/en/signals/mt5/list"
 USER_AGENT = "Mozilla/5.0 (compatible; CopyTraderWatch/3.0; +https://github.com/)"
+GRID_COLUMNS = [
+    "rank", "signal", "price", "growth", "subscribers", "funds", "balance",
+    "weeks", "expert_advisors", "trades", "win", "activity", "pf",
+    "expected_payoff", "drawdown", "leverage",
+]
 
 
 def _text(node) -> str:
@@ -63,12 +68,47 @@ def _leverage(text: str) -> float | None:
 
 def _header_name(text: str) -> str:
     t = re.sub(r"\s+", " ", text.strip().casefold())
-    aliases = {"#": "rank", "signal": "signal", "signals": "signal", "price": "price", "growth": "growth", "subscribers": "subscribers", "funds": "funds", "balance": "balance", "weeks": "weeks", "expert advisors": "expert_advisors", "trades": "trades", "win %": "win", "activity": "activity", "pf": "pf", "expected payoff": "expected_payoff", "drawdown": "drawdown", "leverage": "leverage"}
+    aliases = {
+        "#": "rank", "signal": "signal", "signals": "signal", "price": "price",
+        "growth": "growth", "subscribers": "subscribers", "funds": "funds",
+        "balance": "balance", "weeks": "weeks", "expert advisors": "expert_advisors",
+        "trades": "trades", "win %": "win", "activity": "activity", "pf": "pf",
+        "expected payoff": "expected_payoff", "drawdown": "drawdown", "leverage": "leverage",
+    }
     return aliases.get(t, t)
 
 
-def parse_table(html: str, base_url: str = DEFAULT_URL) -> list[dict[str, Any]]:
-    soup = BeautifulSoup(html, "html.parser")
+def _record_from_mapping(mapping: dict[str, str], link, base_url: str) -> dict[str, Any] | None:
+    if link is None or not link.get("href"):
+        return None
+    href = str(link["href"])
+    match = re.search(r"/(?:[a-z]{2}/)?signals/(\d+)", href, re.I)
+    if not match:
+        return None
+    signal_id = match.group(1)
+    name = _text(link) or mapping.get("signal") or f"MQL5 {signal_id}"
+    is_free, monthly_fee = _fee(mapping.get("price", ""))
+    return {
+        "signal_id": signal_id,
+        "name": name,
+        "url": urljoin(base_url, href),
+        "price_text": mapping.get("price"),
+        "free": is_free,
+        "monthly_fee_usd": monthly_fee,
+        "growth_pct": _num(mapping.get("growth")),
+        "subscribers": _int(mapping.get("subscribers")),
+        "weeks": _num(mapping.get("weeks")),
+        "expert_advisor_pct": _num(mapping.get("expert_advisors")),
+        "trades": _int(mapping.get("trades")),
+        "win_rate_pct": _num(mapping.get("win")),
+        "activity_pct": _num(mapping.get("activity")),
+        "profit_factor": _num(mapping.get("pf")),
+        "drawdown_pct": _num(mapping.get("drawdown")),
+        "leverage": _leverage(mapping.get("leverage", "")),
+    }
+
+
+def _parse_html_table(soup: BeautifulSoup, base_url: str) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for table in soup.find_all("table"):
         headers = [_header_name(_text(th)) for th in table.find_all("th")]
@@ -80,19 +120,93 @@ def parse_table(html: str, base_url: str = DEFAULT_URL) -> list[dict[str, Any]]:
                 continue
             values = [_text(cell) for cell in cells]
             mapping = {headers[i]: values[i] for i in range(min(len(headers), len(values)))}
-            signal_cell = cells[headers.index("signal")] if "signal" in headers and headers.index("signal") < len(cells) else cells[0]
-            link = signal_cell.find("a", href=True)
-            if not link:
-                continue
-            href = str(link["href"])
-            match = re.search(r"/signals/(\d+)", href)
-            if not match:
-                continue
-            signal_id = match.group(1)
-            name = _text(link) or mapping.get("signal") or f"MQL5 {signal_id}"
-            is_free, monthly_fee = _fee(mapping.get("price", ""))
-            records.append({"signal_id": signal_id, "name": name, "url": urljoin(base_url, href), "price_text": mapping.get("price"), "free": is_free, "monthly_fee_usd": monthly_fee, "growth_pct": _num(mapping.get("growth")), "subscribers": _int(mapping.get("subscribers")), "weeks": _num(mapping.get("weeks")), "expert_advisor_pct": _num(mapping.get("expert_advisors")), "trades": _int(mapping.get("trades")), "win_rate_pct": _num(mapping.get("win")), "activity_pct": _num(mapping.get("activity")), "profit_factor": _num(mapping.get("pf")), "drawdown_pct": _num(mapping.get("drawdown")), "leverage": _leverage(mapping.get("leverage", ""))})
+            signal_index = headers.index("signal") if "signal" in headers else 0
+            signal_cell = cells[signal_index] if signal_index < len(cells) else tr
+            record = _record_from_mapping(mapping, signal_cell.find("a", href=True), base_url)
+            if record:
+                records.append(record)
     return records
+
+
+def _direct_grid_cells(row) -> list[Any]:
+    """Return MQL5's visual cells without including nested text twice."""
+    cells = [child for child in row.find_all(recursive=False) if getattr(child, "name", None)]
+    # Some MQL5 variants wrap all cells in one row-content div.
+    if len(cells) == 1:
+        nested = [child for child in cells[0].find_all(recursive=False) if getattr(child, "name", None)]
+        if len(nested) >= 8:
+            cells = nested
+    return cells
+
+
+def _parse_div_grid(soup: BeautifulSoup, base_url: str) -> list[dict[str, Any]]:
+    """Parse the current MQL5 `signals-table` / `row signal` div-grid layout."""
+    records: list[dict[str, Any]] = []
+    containers = []
+    by_id = soup.find(id="signals-table")
+    if by_id is not None:
+        containers.append(by_id)
+    containers.extend(soup.select(".signals-table"))
+    seen_containers: set[int] = set()
+    for container in containers:
+        if id(container) in seen_containers:
+            continue
+        seen_containers.add(id(container))
+        for row in container.select(".row.signal"):
+            link = row.find("a", href=re.compile(r"/(?:[a-z]{2}/)?signals/\d+", re.I))
+            if link is None:
+                continue
+            cells = _direct_grid_cells(row)
+            values = [_text(cell) for cell in cells]
+            mapping: dict[str, str] = {}
+
+            # Prefer semantic class names when MQL5 exposes them.
+            semantic = {
+                "price": ("price",), "growth": ("growth",), "subscribers": ("subscriber",),
+                "funds": ("fund",), "balance": ("balance",), "weeks": ("week",),
+                "expert_advisors": ("expert", "advisor"), "trades": ("trade",),
+                "win": ("win",), "activity": ("activity",), "pf": ("profit-factor", "pf"),
+                "expected_payoff": ("payoff",), "drawdown": ("drawdown",), "leverage": ("leverage",),
+            }
+            for cell in cells:
+                class_text = " ".join(cell.get("class", [])).casefold()
+                for key, tokens in semantic.items():
+                    if key in mapping:
+                        continue
+                    if all(token in class_text for token in tokens):
+                        mapping[key] = _text(cell)
+
+            # The public grid has a stable 16-column visual order. Use that only for
+            # metrics not recovered from semantic classes.
+            if len(values) >= len(GRID_COLUMNS):
+                ordered = {GRID_COLUMNS[i]: values[i] for i in range(len(GRID_COLUMNS))}
+                for key, value in ordered.items():
+                    mapping.setdefault(key, value)
+            else:
+                # If cosmetic/hidden columns disappeared, anchor the signal cell and
+                # consume the remaining direct cells in their documented order.
+                signal_pos = next((i for i, cell in enumerate(cells) if cell.find("a", href=re.compile(r"/(?:[a-z]{2}/)?signals/\d+", re.I))), None)
+                if signal_pos is not None:
+                    tail_keys = GRID_COLUMNS[2:]
+                    tail_values = values[signal_pos + 1:]
+                    for key, value in zip(tail_keys, tail_values):
+                        mapping.setdefault(key, value)
+            mapping["signal"] = _text(link)
+            record = _record_from_mapping(mapping, link, base_url)
+            if record:
+                records.append(record)
+    return records
+
+
+def parse_table(html: str, base_url: str = DEFAULT_URL) -> list[dict[str, Any]]:
+    """Parse both historical HTML tables and the current MQL5 div-grid."""
+    soup = BeautifulSoup(html, "html.parser")
+    records = _parse_div_grid(soup, base_url)
+    records.extend(_parse_html_table(soup, base_url))
+    unique: dict[str, dict[str, Any]] = {}
+    for record in records:
+        unique.setdefault(str(record["signal_id"]), record)
+    return list(unique.values())
 
 
 def _fetch_page(url: str) -> str:
@@ -136,7 +250,7 @@ def _normalize(record: dict[str, Any], observed: str) -> TraderSnapshot:
         reason = "Free signal discovered, but real-vs-demo and broker compatibility require verification before actionability."
     else:
         reason = f"Not free: listed subscription fee is {fee:g} USD/month." if isinstance(fee, (int, float)) else "Subscription fee is not verified as free."
-    snap = TraderSnapshot(platform="mql5", trader_id=str(record["signal_id"]), name=str(record["name"]), observed_at=observed, source="mql5-public-signals-table", source_url=record.get("url"), source_quality=80.0, free=free, us_access="conditional", live_evidence="unknown", return_pct=record.get("growth_pct"), return_window="since-inception", max_drawdown_pct=dd, profit_factor=record.get("profit_factor"), trades=trades, win_rate_pct=record.get("win_rate_pct"), age_days=age_days, leverage=record.get("leverage"), activity_per_day=activity_per_day, profit_concentration_pct=None, copyability_score=_copyability(record), actionable=False, actionable_reason=reason, metadata={"monthly_fee_usd": fee, "price_text": record.get("price_text"), "subscribers": record.get("subscribers"), "activity_pct": record.get("activity_pct"), "expert_advisor_pct": record.get("expert_advisor_pct")})
+    snap = TraderSnapshot(platform="mql5", trader_id=str(record["signal_id"]), name=str(record["name"]), observed_at=observed, source="mql5-public-signals-list", source_url=record.get("url"), source_quality=80.0, free=free, us_access="conditional", live_evidence="unknown", return_pct=record.get("growth_pct"), return_window="since-inception", max_drawdown_pct=dd, profit_factor=record.get("profit_factor"), trades=trades, win_rate_pct=record.get("win_rate_pct"), age_days=age_days, leverage=record.get("leverage"), activity_per_day=activity_per_day, profit_concentration_pct=None, copyability_score=_copyability(record), actionable=False, actionable_reason=reason, metadata={"monthly_fee_usd": fee, "price_text": record.get("price_text"), "subscribers": record.get("subscribers"), "activity_pct": record.get("activity_pct"), "expert_advisor_pct": record.get("expert_advisor_pct")})
     snap.research_score = score_snapshot(snap)
     return snap
 
@@ -165,6 +279,9 @@ def collect(config: dict[str, Any]) -> AdapterResult:
     selected = selected[:keep_top]
     if not parsed and errors:
         status = "unavailable"
+    elif not parsed:
+        status = "degraded"
+        errors.append("pages fetched but no signal rows parsed")
     elif errors:
         status = "degraded"
     else:
