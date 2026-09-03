@@ -20,14 +20,14 @@ Forward-test window: **2026-09-03 → 2026-09-03** (1 observations)
 
 ## Active alerts
 
-- **bgsully111 — missing:** Candidate disappeared from the current census; copy eligibility/status may have changed.
-- **WilEscobar — missing:** Candidate disappeared from the current census; copy eligibility/status may have changed.
+- **bgsully111 — missing:** Candidate could not be resolved by the configured public data sources; this does not by itself prove the eToro account is unavailable to copy.
+- **WilEscobar — missing:** Candidate could not be resolved by the configured public data sources; this does not by itself prove the eToro account is unavailable to copy.
 
 ## Method notes
 
-- eToro investor data comes from the public `weirdapps/etoro_census` daily snapshot.
+- Production candidate data uses the public `weirdapps/etoro_census` per-user endpoint first and its top-1,500 census as a fallback.
 - Forward return is derived from the change in same-year YTD return from the first observation; the monitor resets naturally if you start a new history file in a new calendar year.
-- Forward max drawdown is calculated from the daily stored return path, not from eToro's full historical equity curve.
-- Portfolio concentration aggregates multiple lots in the same eToro instrument.
-- SPY/QQQ quotes use Stooq's free CSV endpoint.
+- Forward max drawdown is calculated from the stored daily path, not from eToro's full historical equity curve.
+- Portfolio concentration aggregates multiple lots when full census data is used; the per-user endpoint supplies already aggregated top positions.
+- SPY/QQQ quotes use Yahoo Finance's public chart data first and Stooq as a fallback.
 - Missing or stale upstream data is surfaced rather than filled with guesses.
