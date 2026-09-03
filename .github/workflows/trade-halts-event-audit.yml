@@ -1,0 +1,130 @@
+name: Trade Halts Event Funnel Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - .github/workflows/trade-halts-event-audit.yml
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Clone frozen upstream
+        run: |
+          git clone https://github.com/gilbertknight-star/Trade-Halts.git /tmp/halts
+          cd /tmp/halts
+          git checkout ec68b9581a32c51dce9fb5b65adc97b22861255f
+      - name: Install deps
+        run: python -m pip install pandas pyarrow numpy
+      - name: Inspect raw event funnel and match trade ledger
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          import numpy as np
+          import pandas as pd
+
+          root=Path('/tmp/halts/research/data')
+          ev=pd.read_parquet(root/'halt_events.parquet')
+          tr=pd.read_csv(root/'halt_trades_rvol.csv',parse_dates=['entry_ts','exit_ts'])
+          out={'event_columns':list(ev.columns),'event_rows':int(len(ev)),'trade_rows':int(len(tr))}
+
+          # Normalize likely timestamp/date columns without assuming schema beyond names.
+          for c in ['anchor_ts_utc','event_date']:
+              if c in ev:
+                  ev[c]=pd.to_datetime(ev[c],errors='coerce',utc=(c=='anchor_ts_utc'))
+          tr['entry_ts']=pd.to_datetime(tr.entry_ts,errors='coerce',utc=True)
+          tr['date']=pd.to_datetime(tr.date,errors='coerce').dt.date
+
+          if 'event_date' in ev:
+              out['event_date_min']=str(ev.event_date.min())
+              out['event_date_max']=str(ev.event_date.max())
+              out['events_by_year']={str(k):int(v) for k,v in ev.groupby(ev.event_date.dt.year).size().items()}
+          if 'bar_status' in ev:
+              out['bar_status_counts']={str(k):int(v) for k,v in ev.bar_status.fillna('<NA>').value_counts(dropna=False).items()}
+              ok=ev[ev.bar_status.astype(str).str.lower()=='ok'].copy()
+          else:
+              ok=ev.copy()
+          out['bar_ok_rows']=int(len(ok))
+          out['bar_ok_fraction']=float(len(ok)/len(ev)) if len(ev) else None
+
+          for c in ['halt_code','exchange','symbol_resolved','symbol','bars_file']:
+              if c in ev:
+                  s=ev[c]
+                  out[f'{c}_nulls']=int(s.isna().sum())
+                  out[f'{c}_unique']=int(s.nunique(dropna=True))
+                  if c in ['halt_code','exchange']:
+                      out[f'{c}_counts']={str(k):int(v) for k,v in s.fillna('<NA>').value_counts().head(30).items()}
+
+          # Match trade rows back to events using symbol + nearest anchor timestamp within 90 sec.
+          symcol='symbol_resolved' if 'symbol_resolved' in ev else ('symbol' if 'symbol' in ev else None)
+          matches=[]
+          unmatched=[]
+          if symcol and 'anchor_ts_utc' in ev:
+              ev2=ev.dropna(subset=[symcol,'anchor_ts_utc']).copy()
+              groups={str(s):g.sort_values('anchor_ts_utc') for s,g in ev2.groupby(ev2[symcol].astype(str))}
+              for i,t in tr.iterrows():
+                  g=groups.get(str(t.symbol))
+                  if g is None or g.empty or pd.isna(t.entry_ts):
+                      unmatched.append(int(i)); continue
+                  delta=(g.anchor_ts_utc-t.entry_ts).abs()
+                  j=delta.idxmin(); ds=float(delta.loc[j].total_seconds())
+                  if ds<=90:
+                      row=g.loc[j]
+                      matches.append({'trade_idx':int(i),'event_idx':int(j),'delta_sec':ds,'bar_status':str(row.get('bar_status','')),'halt_code':str(row.get('halt_code',''))})
+                  else:
+                      unmatched.append(int(i))
+          out['trade_event_matches_within_90s']=int(len(matches))
+          out['trade_event_unmatched']=int(len(unmatched))
+          if matches:
+              m=pd.DataFrame(matches)
+              out['matched_delta_median_sec']=float(m.delta_sec.median())
+              out['matched_delta_max_sec']=float(m.delta_sec.max())
+              out['matched_bar_status_counts']={str(k):int(v) for k,v in m.bar_status.value_counts().items()}
+              out['matched_halt_code_counts']={str(k):int(v) for k,v in m.halt_code.value_counts().items()}
+
+          # Time dependence of missing/non-ok bars.
+          if 'event_date' in ev and 'bar_status' in ev:
+              tmp=ev.assign(year=ev.event_date.dt.year,ok=ev.bar_status.astype(str).str.lower().eq('ok'))
+              by={}
+              for y,g in tmp.groupby('year'):
+                  by[str(int(y))]={'events':int(len(g)),'ok':int(g.ok.sum()),'ok_fraction':float(g.ok.mean())}
+              out['bar_status_by_year']=by
+
+          # What fraction of OK events become trades, by year. This is not a causal-filter audit,
+          # but identifies funnel instability that could indicate coverage bias.
+          if 'event_date' in ok and len(ok):
+              oky=ok.groupby(ok.event_date.dt.year).size()
+              try_=tr.groupby(tr.entry_ts.dt.year).size()
+              out['ok_to_trade_by_year']={str(int(y)):{'ok_events':int(oky.get(y,0)),'trades':int(try_.get(y,0)),'trade_fraction_of_ok':float(try_.get(y,0)/oky.get(y,1))} for y in sorted(set(oky.index)|set(try_.index))}
+
+          os.makedirs('/tmp/event-audit',exist_ok=True)
+          Path('/tmp/event-audit/event_funnel.json').write_text(json.dumps(out,indent=2,default=str))
+          print(json.dumps(out,indent=2,default=str))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trade-halts-event-audit
+          path: /tmp/event-audit/event_funnel.json
+      - name: Publish result
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_trade_halts
+          cp /tmp/event-audit/event_funnel.json audit_results_trade_halts/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_trade_halts/event_funnel.json
+          git diff --cached --quiet || git commit -m 'Publish Trade-Halts event funnel audit'
+          git push origin HEAD:dual-signal-audit-2026-09
