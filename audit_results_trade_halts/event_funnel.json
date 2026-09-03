@@ -1,0 +1,138 @@
+{
+  "event_columns": [
+    "event_id",
+    "event_dt_utc",
+    "event_date",
+    "symbol_raw",
+    "symbol_resolved",
+    "resolve_status",
+    "resolve_message",
+    "exchange",
+    "halt_type",
+    "halts_symbol_day_total",
+    "halts_symbol_day_seq",
+    "bar_status",
+    "bar_rows_day",
+    "anchor_ts_utc",
+    "ret_1m",
+    "ret_2m",
+    "ret_5m",
+    "ret_10m",
+    "ret_15m",
+    "ret_30m",
+    "ret_60m",
+    "max_up_30m",
+    "max_down_30m",
+    "bars_file",
+    "share_class_shares_outstanding",
+    "weighted_shares_outstanding",
+    "market_cap",
+    "shares_ref_status",
+    "shares_ref_asof_date"
+  ],
+  "event_rows": 9952,
+  "trade_rows": 550,
+  "event_date_min": "2021-04-21 00:00:00",
+  "event_date_max": "2026-05-08 00:00:00",
+  "events_by_year": {
+    "2021": 875,
+    "2022": 1783,
+    "2023": 1985,
+    "2024": 1672,
+    "2025": 2887,
+    "2026": 750
+  },
+  "bar_status_counts": {
+    "ok": 9851,
+    "cached": 101
+  },
+  "bar_ok_rows": 9851,
+  "bar_ok_fraction": 0.9898512861736335,
+  "exchange_nulls": 0,
+  "exchange_unique": 5,
+  "exchange_counts": {
+    "Nasdaq": 8046,
+    "NYSE": 695,
+    "NYSE American": 598,
+    "NYSE Arca": 490,
+    "Cboe BZX": 123
+  },
+  "symbol_resolved_nulls": 0,
+  "symbol_resolved_unique": 3151,
+  "bars_file_nulls": 0,
+  "bars_file_unique": 7562,
+  "trade_event_matches_within_90s": 550,
+  "trade_event_unmatched": 0,
+  "matched_delta_median_sec": 0.0,
+  "matched_delta_max_sec": 0.0,
+  "matched_bar_status_counts": {
+    "ok": 550
+  },
+  "matched_halt_code_counts": {
+    "": 550
+  },
+  "bar_status_by_year": {
+    "2021": {
+      "events": 875,
+      "ok": 875,
+      "ok_fraction": 1.0
+    },
+    "2022": {
+      "events": 1783,
+      "ok": 1783,
+      "ok_fraction": 1.0
+    },
+    "2023": {
+      "events": 1985,
+      "ok": 1976,
+      "ok_fraction": 0.9954659949622167
+    },
+    "2024": {
+      "events": 1672,
+      "ok": 1580,
+      "ok_fraction": 0.9449760765550239
+    },
+    "2025": {
+      "events": 2887,
+      "ok": 2887,
+      "ok_fraction": 1.0
+    },
+    "2026": {
+      "events": 750,
+      "ok": 750,
+      "ok_fraction": 1.0
+    }
+  },
+  "ok_to_trade_by_year": {
+    "2021": {
+      "ok_events": 875,
+      "trades": 41,
+      "trade_fraction_of_ok": 0.046857142857142854
+    },
+    "2022": {
+      "ok_events": 1783,
+      "trades": 62,
+      "trade_fraction_of_ok": 0.034772854739203586
+    },
+    "2023": {
+      "ok_events": 1976,
+      "trades": 115,
+      "trade_fraction_of_ok": 0.05819838056680162
+    },
+    "2024": {
+      "ok_events": 1580,
+      "trades": 93,
+      "trade_fraction_of_ok": 0.05886075949367089
+    },
+    "2025": {
+      "ok_events": 2887,
+      "trades": 187,
+      "trade_fraction_of_ok": 0.06477312088673363
+    },
+    "2026": {
+      "ok_events": 750,
+      "trades": 52,
+      "trade_fraction_of_ok": 0.06933333333333333
+    }
+  }
+}
