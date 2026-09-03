@@ -1,0 +1,27 @@
+name: Monthly Seasonality Reproduction
+
+on:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - monthly_seasonality_repro.py
+      - .github/workflows/monthly-seasonality-repro.yml
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pandas numpy requests
+      - run: python monthly_seasonality_repro.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: monthly-seasonality-repro-results
+          path: audit_output_monthly_seasonality/
+          if-no-files-found: warn
