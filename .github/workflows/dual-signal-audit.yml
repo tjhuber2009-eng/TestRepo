@@ -1,0 +1,30 @@
+name: Dual Signal Audit
+
+on:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - dual_signal_audit.py
+      - .github/workflows/dual-signal-audit.yml
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pandas numpy requests yfinance
+      - name: Run causal audit
+        run: python dual_signal_audit.py
+      - name: Upload audit outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dual-signal-audit-results
+          path: audit_output/
+          if-no-files-found: warn
