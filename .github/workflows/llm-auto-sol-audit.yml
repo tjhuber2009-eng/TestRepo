@@ -31,7 +31,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e /tmp/llm
-      - name: Load immutable Binance archive data into upstream cache
+      - name: Build Monday weekly bars from immutable Binance daily archives
         run: |
           cd /tmp/llm
           python - <<'PY'
@@ -44,44 +44,59 @@ jobs:
           def months(a,b):
               p=pd.Period(a,freq='M'); q=pd.Period(b,freq='M')
               while p<=q:
-                  yield p.year,p.month
+                  yield p
                   p+=1
 
-          def ingest(symbol, archive_symbol, market_path, start='2020-12', end='2026-08'):
-              total=0; missing=[]
-              for y,m in months(start,end):
-                  ym=f'{y:04d}-{m:02d}'
-                  url=f'https://data.binance.vision/data/{market_path}/monthly/klines/{archive_symbol}/1w/{archive_symbol}-1w-{ym}.zip'
-                  r=s.get(url,timeout=45)
-                  if r.status_code==404:
-                      missing.append(ym); continue
-                  r.raise_for_status()
-                  with zipfile.ZipFile(io.BytesIO(r.content)) as z:
-                      raw=z.read(z.namelist()[0])
-                  d=pd.read_csv(io.BytesIO(raw),header=None)
-                  # Some recent Binance archives may include a text header; coerce removes it.
-                  d=d.iloc[:,:6]
-                  d.columns=['ts','open','high','low','close','volume']
-                  d['ts']=pd.to_numeric(d.ts,errors='coerce')
-                  for c in ['open','high','low','close','volume']:
-                      d[c]=pd.to_numeric(d[c],errors='coerce')
-                  d=d.dropna()
-                  bars=[]
-                  for row in d.itertuples(index=False):
-                      ts=int(row.ts)
-                      if ts>10**14: ts//=1000  # microseconds -> milliseconds
-                      bars.append(OHLCVBar(ts,float(row.open),float(row.high),float(row.low),float(row.close),float(row.volume)))
-                  cache.store(symbol,'1w',bars); total+=len(bars)
-              print(symbol,'stored',total,'range',cache.range(symbol,'1w'),'missing_months',missing)
+          def parse_zip(content):
+              with zipfile.ZipFile(io.BytesIO(content)) as z:
+                  raw=z.read(z.namelist()[0])
+              d=pd.read_csv(io.BytesIO(raw),header=None).iloc[:,:6]
+              d.columns=['ts','open','high','low','close','volume']
+              for c in d.columns:
+                  d[c]=pd.to_numeric(d[c],errors='coerce')
+              d=d.dropna()
+              ts=d.ts.astype('int64')
+              # Binance began migrating archive timestamps from ms to us in 2025.
+              ts=ts.where(ts<10**14,ts//1000)
+              d['Date']=pd.to_datetime(ts,unit='ms',utc=True).dt.tz_localize(None)
+              return d[['Date','open','high','low','close','volume']]
 
-          ingest('SOL/USDT:USDT','SOLUSDT','futures/um')
-          ingest('PAXG/USDT','PAXGUSDT','spot')
+          def get(url):
+              r=s.get(url,timeout=45)
+              if r.status_code==404: return None
+              r.raise_for_status(); return r.content
+
+          def ingest_daily_then_weekly(symbol, archive_symbol, market_path, start='2020-12', end='2026-08'):
+              frames=[]; missing=[]
+              for p in months(start,end):
+                  ym=str(p)
+                  monthly=f'https://data.binance.vision/data/{market_path}/monthly/klines/{archive_symbol}/1d/{archive_symbol}-1d-{ym}.zip'
+                  c=get(monthly)
+                  if c is not None:
+                      frames.append(parse_zip(c)); continue
+                  found=0
+                  for day in pd.date_range(p.start_time,p.end_time,freq='D'):
+                      ds=day.strftime('%Y-%m-%d')
+                      daily=f'https://data.binance.vision/data/{market_path}/daily/klines/{archive_symbol}/1d/{archive_symbol}-1d-{ds}.zip'
+                      dc=get(daily)
+                      if dc is not None:
+                          frames.append(parse_zip(dc)); found+=1
+                  if found==0: missing.append(ym)
+              if not frames: raise RuntimeError(f'No data for {symbol}')
+              d=(pd.concat(frames,ignore_index=True).drop_duplicates('Date').sort_values('Date').set_index('Date'))
+              # Binance/CCXT 1w candles start Monday 00:00 UTC. Aggregate [Mon, next Mon).
+              w=d.resample('W-MON',label='left',closed='left').agg({'open':'first','high':'max','low':'min','close':'last','volume':'sum'}).dropna()
+              bars=[]
+              for dt,row in w.iterrows():
+                  ts=int(pd.Timestamp(dt,tz='UTC').timestamp()*1000)
+                  bars.append(OHLCVBar(ts,float(row.open),float(row.high),float(row.low),float(row.close),float(row.volume)))
+              cache.store(symbol,'1w',bars)
+              print(symbol,'DAILY_ROWS',len(d),'WEEKLY_ROWS',len(w),'RANGE',cache.range(symbol,'1w'),'MISSING_MONTHS',missing)
+
+          ingest_daily_then_weekly('SOL/USDT:USDT','SOLUSDT','futures/um')
+          ingest_daily_then_weekly('PAXG/USDT','PAXGUSDT','spot')
           PY
-      - name: Reproduce upstream symbol sweep result
-        run: |
-          cd /tmp/llm
-          python scripts/sweep_symbols.py --cache-db /tmp/ohlcv.db --initial-equity 2000 --out-dir /tmp/symbol-sweep
-      - name: Frozen SOL subperiod and forward audit
+      - name: Reproduce frozen H4 SOL training result and preserve-state extensions
         run: |
           cd /tmp/llm
           python - <<'PY'
@@ -95,26 +110,45 @@ jobs:
           from src.analysis.backtest_stats import max_drawdown, sharpe_annualized
           from scripts.sweep_robust import _champion_kwargs
 
+          INITIAL=2000.0
           def ms(s): return int(datetime.strptime(s,'%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()*1000)
-          def metrics(cache,start,end):
-              p=cache.load_range('SOL/USDT:USDT','1w',ms(start),ms(end))
-              h=cache.load_range('PAXG/USDT','1w',ms(start),ms(end))
-              cfg=BaselineConfig(**{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'})
-              fill=FillConfig(taker_fee_bps=4.0,slippage_bps=5.0,funding_rate_per_day=0.00010)
-              r=run_baseline_fast(primary_bars=p,hedge_bars=h if not h.empty else None,config=cfg,fill_config=fill,initial_equity=2000.0)
-              eq=np.array([x[1] for x in r.equity_curve],float)
-              lr=np.diff(np.log(np.maximum(eq,1e-12)))
-              years=max(len(eq)/52.0,1e-9)
-              cagr=(eq[-1]/2000.0)**(1/years)-1 if len(eq) and eq[-1]>0 else float('nan')
-              dd=max_drawdown(eq)[0] if len(eq) else float('nan')
-              sh=sharpe_annualized(lr,periods_per_year=52) if len(lr) else float('nan')
-              return {'start':start,'end':end,'bars':len(p),'equity_points':len(eq),'final':float(eq[-1]),'return_pct':float((eq[-1]/2000-1)*100),'cagr_pct':float(cagr*100),'max_dd_pct':float(dd*100),'sharpe':float(sh),'trades':len(r.trades)}
           c=OHLCVCache('/tmp/ohlcv.db')
-          out={'upstream_commit':'dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1','config':{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'},'frictions':{'taker_fee_bps':4.0,'slippage_bps':5.0,'funding_rate_per_day':0.00010},'windows':[
-              metrics(c,'2021-01-04','2025-09-29'),
-              metrics(c,'2021-01-04','2026-08-31'),
-              metrics(c,'2024-01-01','2025-09-29'),
-              metrics(c,'2025-10-06','2026-08-31')]}
+          cfg=BaselineConfig(**{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'})
+          fill=FillConfig(taker_fee_bps=4.0,slippage_bps=5.0,funding_rate_per_day=0.00010)
+
+          def run(end):
+              p=c.load_range('SOL/USDT:USDT','1w',ms('2021-01-04'),ms(end))
+              h=c.load_range('PAXG/USDT','1w',ms('2021-01-04'),ms(end))
+              return p, run_baseline_fast(primary_bars=p,hedge_bars=h if not h.empty else None,config=cfg,fill_config=fill,initial_equity=INITIAL)
+
+          def stats_from_curve(curve,start=None):
+              rows=[(int(t),float(e)) for t,e in curve]
+              if start is not None:
+                  s=ms(start)
+                  rows=[x for x in rows if x[0]>=s]
+              if len(rows)<2: return {'insufficient':True,'points':len(rows)}
+              eq=np.array([x[1] for x in rows],float)
+              eq=eq/eq[0]
+              lr=np.diff(np.log(np.maximum(eq,1e-12)))
+              years=(rows[-1][0]-rows[0][0])/(1000*86400*365.2425)
+              cagr=eq[-1]**(1/max(years,1e-9))-1
+              dd=max_drawdown(eq)[0]
+              sh=sharpe_annualized(lr,periods_per_year=52) if len(lr)>1 else float('nan')
+              return {'start_ms':rows[0][0],'end_ms':rows[-1][0],'points':len(rows),'total_return_pct':float((eq[-1]-1)*100),'cagr_pct':float(cagr*100),'max_dd_pct':float(dd*100),'sharpe':float(sh)}
+
+          p_train,r_train=run('2025-09-29')
+          p_full,r_full=run('2026-08-31')
+          out={
+            'upstream_commit':'dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1',
+            'claim':{'sol_cagr_pct':129.9,'sol_sharpe':0.75,'sol_max_dd_pct':19.1,'sol_trades':26,'cpcv_p5_sharpe':-1.05},
+            'config':{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'},
+            'frictions':{'taker_fee_bps':4.0,'slippage_bps':5.0,'funding_rate_per_day':0.00010},
+            'data':{'train_bars':len(p_train),'full_bars':len(p_full),'sol_range':c.range('SOL/USDT:USDT','1w'),'paxg_range':c.range('PAXG/USDT','1w')},
+            'train_reproduction':{**stats_from_curve(r_train.equity_curve),'trades':len(r_train.trades),'final_equity':float(r_train.equity_curve[-1][1])},
+            'full_through_2026_08':{**stats_from_curve(r_full.equity_curve),'trades':len(r_full.trades),'final_equity':float(r_full.equity_curve[-1][1])},
+            'preserve_state_2024_onward':stats_from_curve(r_full.equity_curve,'2024-01-01'),
+            'preserve_state_holdout_2025_10_onward':stats_from_curve(r_full.equity_curve,'2025-10-06'),
+          }
           os.makedirs('/tmp/sol-audit',exist_ok=True)
           open('/tmp/sol-audit/summary.json','w').write(json.dumps(out,indent=2))
           print(json.dumps(out,indent=2))
@@ -122,17 +156,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: llm-auto-sol-audit
-          path: |
-            /tmp/sol-audit/summary.json
-            /tmp/symbol-sweep/
+          path: /tmp/sol-audit/summary.json
       - name: Publish compact result
         run: |
           git pull --rebase origin dual-signal-audit-2026-09 || true
           mkdir -p audit_results_llm_auto_sol
           cp /tmp/sol-audit/summary.json audit_results_llm_auto_sol/
-          cp /tmp/symbol-sweep/per_symbol.csv audit_results_llm_auto_sol/ 2>/dev/null || true
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add audit_results_llm_auto_sol
+          git add audit_results_llm_auto_sol/summary.json
           git diff --cached --quiet || git commit -m 'Publish SOL H4 independent reproduction'
           git push origin HEAD:dual-signal-audit-2026-09
