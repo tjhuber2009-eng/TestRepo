@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check pandas pyarrow requests
+        run: python -m pip install --disable-pip-version-check pandas pyarrow requests yfinance
       - name: Run frozen BoTo validation and acquire dataset
         run: python indicator_validation/run_boto_long.py
       - name: Run simple source-informed survivors
