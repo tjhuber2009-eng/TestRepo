@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Free, read-only forward monitor for selected eToro Popular Investors.
+"""Free, read-only forward monitor for selected eToro investors.
 
-Data sources:
-- weirdapps/etoro_census public daily eToro API snapshot
-- Stooq's free CSV quote endpoint for SPY / QQQ benchmarks
+The source-agnostic core consumes an investor snapshot, stores a daily history,
+computes forward metrics, and produces alerts/reports. Production data-source
+selection lives in run.py.
 
 The program never logs in to a broker and never places trades.
 """
@@ -95,8 +95,8 @@ def _pct(v: Any) -> float | None:
 def concentration(investor: dict[str, Any]) -> tuple[float | None, float | None, int]:
     """Aggregate many eToro lots into instrument-level weights.
 
-    investmentPct values in the census are percentages of account value. A trader can
-    hold many lots in one instrument, so summing by instrument avoids understating
+    investmentPct values are percentages of account value. A trader can hold
+    many lots in one instrument, so summing by instrument avoids understating
     concentration.
     """
     positions = investor.get("portfolio", {}).get("positions", []) or []
@@ -239,7 +239,11 @@ def make_alerts(
     for user in candidates:
         current = current_row.get("candidates", {}).get(user, {"present": False})
         if not current.get("present"):
-            add(user, "missing", "Candidate disappeared from the current census; copy eligibility/status may have changed.")
+            add(
+                user,
+                "missing",
+                "Candidate could not be resolved by the configured public data sources; this does not by itself prove the eToro account is unavailable to copy.",
+            )
             continue
 
         daily = _pct(current.get("daily_gain_pct"))
@@ -388,11 +392,11 @@ def build_report(
         "",
         "## Method notes",
         "",
-        "- eToro investor data comes from the public `weirdapps/etoro_census` daily snapshot.",
+        "- Production candidate data uses the public `weirdapps/etoro_census` per-user endpoint first and its top-1,500 census as a fallback.",
         "- Forward return is derived from the change in same-year YTD return from the first observation; the monitor resets naturally if you start a new history file in a new calendar year.",
-        "- Forward max drawdown is calculated from the daily stored return path, not from eToro's full historical equity curve.",
-        "- Portfolio concentration aggregates multiple lots in the same eToro instrument.",
-        "- SPY/QQQ quotes use Stooq's free CSV endpoint.",
+        "- Forward max drawdown is calculated from the stored daily path, not from eToro's full historical equity curve.",
+        "- Portfolio concentration aggregates multiple lots when full census data is used; the per-user endpoint supplies already aggregated top positions.",
+        "- SPY/QQQ quotes use Yahoo Finance's public chart data first and Stooq as a fallback.",
         "- Missing or stale upstream data is surfaced rather than filled with guesses.",
         "",
     ])
@@ -445,7 +449,7 @@ def main() -> int:
         },
     }
 
-    # Idempotent daily reruns replace the same census date instead of duplicating it.
+    # Idempotent daily reruns replace the same source date instead of duplicating it.
     history = [existing for existing in history if existing.get("date") != date]
     history.append(row)
     history.sort(key=lambda x: x.get("date", ""))
