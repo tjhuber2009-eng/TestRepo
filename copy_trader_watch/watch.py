@@ -41,6 +41,8 @@ class Thresholds:
     top2_concentration_pct: float = 75.0
     concentration_jump_pct_points: float = 20.0
     copier_drop_pct: float = -50.0
+    missing_consecutive_runs: int = 2
+    candidate_source_max_age_hours: float = 36.0
 
 
 def load_json(path: Path, default: Any) -> Any:
@@ -58,7 +60,7 @@ def save_json(path: Path, value: Any) -> None:
 
 
 def fetch_json(url: str) -> dict[str, Any]:
-    response = requests.get(url, timeout=45, headers={"User-Agent": "copy-trader-watch/1.0"})
+    response = requests.get(url, timeout=45, headers={"User-Agent": "copy-trader-watch/2.0"})
     response.raise_for_status()
     payload = response.json()
     if not isinstance(payload, dict):
@@ -66,13 +68,39 @@ def fetch_json(url: str) -> dict[str, Any]:
     return payload
 
 
+def parse_iso_datetime(value: Any) -> datetime | None:
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def source_age_hours(source_timestamp: Any, observed_timestamp: Any) -> float | None:
+    source = parse_iso_datetime(source_timestamp)
+    observed = parse_iso_datetime(observed_timestamp)
+    if source is None or observed is None:
+        return None
+    return max(0.0, (observed - source).total_seconds() / 3600.0)
+
+
 def collected_date(census: dict[str, Any]) -> str:
-    raw = census.get("metadata", {}).get("collectedAt")
-    if raw:
+    metadata = census.get("metadata", {}) or {}
+    explicit = metadata.get("observationDate")
+    if explicit:
         try:
-            return datetime.fromisoformat(raw.replace("Z", "+00:00")).date().isoformat()
+            return datetime.fromisoformat(str(explicit)).date().isoformat()
         except ValueError:
             pass
+    raw = metadata.get("collectedAt")
+    if raw:
+        parsed = parse_iso_datetime(raw)
+        if parsed is not None:
+            return parsed.date().isoformat()
     return datetime.now(timezone.utc).date().isoformat()
 
 
@@ -93,12 +121,7 @@ def _pct(v: Any) -> float | None:
 
 
 def concentration(investor: dict[str, Any]) -> tuple[float | None, float | None, int]:
-    """Aggregate many eToro lots into instrument-level weights.
-
-    investmentPct values are percentages of account value. A trader can hold
-    many lots in one instrument, so summing by instrument avoids understating
-    concentration.
-    """
+    """Aggregate many eToro lots into instrument-level weights."""
     positions = investor.get("portfolio", {}).get("positions", []) or []
     by_instrument: dict[str, float] = {}
     for pos in positions:
@@ -110,9 +133,7 @@ def concentration(investor: dict[str, Any]) -> tuple[float | None, float | None,
     weights = sorted(by_instrument.values(), reverse=True)
     if not weights:
         return None, None, 0
-    top1 = weights[0]
-    top2 = sum(weights[:2])
-    return round(top1, 4), round(top2, 4), len(weights)
+    return round(weights[0], 4), round(sum(weights[:2]), 4), len(weights)
 
 
 def snapshot_investor(investor: dict[str, Any] | None) -> dict[str, Any]:
@@ -137,21 +158,35 @@ def snapshot_investor(investor: dict[str, Any] | None) -> dict[str, Any]:
         "unique_instruments": instruments,
         "top1_concentration_pct": top1,
         "top2_concentration_pct": top2,
+        "source": investor.get("source"),
+        "source_timestamp": investor.get("sourceTimestamp"),
     }
 
 
-def fetch_stooq_close(symbol: str) -> float | None:
+def fetch_stooq_quote(symbol: str) -> dict[str, Any]:
     url = f"https://stooq.com/q/l/?s={symbol}&f=sd2t2ohlcv&h&e=csv"
     try:
-        response = requests.get(url, timeout=20, headers={"User-Agent": "copy-trader-watch/1.0"})
+        response = requests.get(url, timeout=20, headers={"User-Agent": "copy-trader-watch/2.0"})
         response.raise_for_status()
         rows = list(csv.DictReader(io.StringIO(response.text)))
         if not rows:
-            return None
-        close = rows[0].get("Close")
-        return _pct(close)
+            return {"close": None, "as_of": None, "source": "stooq"}
+        row = rows[0]
+        return {
+            "close": _pct(row.get("Close")),
+            "as_of": row.get("Date") or None,
+            "source": "stooq",
+        }
     except (requests.RequestException, ValueError):
-        return None
+        return {"close": None, "as_of": None, "source": "stooq"}
+
+
+def fetch_stooq_close(symbol: str) -> float | None:
+    return _pct(fetch_stooq_quote(symbol).get("close"))
+
+
+def fetch_benchmark_quote(symbol: str) -> dict[str, Any]:
+    return fetch_stooq_quote(symbol)
 
 
 def forward_return_from_ytd(baseline_ytd: float | None, current_ytd: float | None) -> float | None:
@@ -171,26 +206,62 @@ def pct_change(base: float | None, current: float | None) -> float | None:
     return (current / base - 1.0) * 100.0
 
 
-def candidate_series(history: list[dict[str, Any]], username: str) -> list[float]:
-    values: list[float] = []
-    baseline_ytd: float | None = None
+def _candidate_rows(history: list[dict[str, Any]], username: str) -> list[tuple[str, dict[str, Any]]]:
     target = username.casefold()
+    found: list[tuple[str, dict[str, Any]]] = []
     for row in history:
         data = next(
             (v for k, v in row.get("candidates", {}).items() if k.casefold() == target),
             None,
         )
-        if not data or not data.get("present"):
+        if data and data.get("present") and _pct(data.get("gain_ytd_pct")) is not None:
+            found.append((str(row.get("date", "")), data))
+    return found
+
+
+def candidate_observation_count(history: list[dict[str, Any]], username: str) -> int:
+    return len(_candidate_rows(history, username))
+
+
+def candidate_series(history: list[dict[str, Any]], username: str) -> list[float]:
+    """Build a cumulative forward-return curve, including calendar-year rollovers.
+
+    Within a calendar year, successive YTD values are converted to period returns.
+    At a year boundary, the first new-year YTD value is treated as the return since
+    the prior year-end. With daily observations this makes the curve continuous
+    without comparing a reset YTD value directly with the prior year's YTD.
+    """
+    observations = _candidate_rows(history, username)
+    if not observations:
+        return []
+
+    equity = 1.0
+    curve = [0.0]
+    prev_date, prev = observations[0]
+    prev_ytd = _pct(prev.get("gain_ytd_pct"))
+
+    for current_date, current in observations[1:]:
+        current_ytd = _pct(current.get("gain_ytd_pct"))
+        if current_ytd is None or prev_ytd is None:
+            prev_date, prev_ytd = current_date, current_ytd
             continue
-        ytd = _pct(data.get("gain_ytd_pct"))
-        if ytd is None:
-            continue
-        if baseline_ytd is None:
-            baseline_ytd = ytd
-        fwd = forward_return_from_ytd(baseline_ytd, ytd)
-        if fwd is not None:
-            values.append(fwd)
-    return values
+
+        try:
+            same_year = datetime.fromisoformat(prev_date).year == datetime.fromisoformat(current_date).year
+        except ValueError:
+            same_year = True
+
+        step_return = (
+            forward_return_from_ytd(prev_ytd, current_ytd)
+            if same_year
+            else current_ytd
+        )
+        if step_return is not None:
+            equity *= 1.0 + step_return / 100.0
+            curve.append((equity - 1.0) * 100.0)
+        prev_date, prev_ytd = current_date, current_ytd
+
+    return curve
 
 
 def max_drawdown_from_returns(returns_pct: Iterable[float]) -> float | None:
@@ -225,6 +296,20 @@ def first_candidate(history: list[dict[str, Any]], username: str) -> dict[str, A
     return None
 
 
+def consecutive_missing_count(history: list[dict[str, Any]], username: str) -> int:
+    target = username.casefold()
+    count = 0
+    for row in reversed(history):
+        data = next(
+            (v for k, v in row.get("candidates", {}).items() if k.casefold() == target),
+            None,
+        )
+        if data and data.get("present"):
+            break
+        count += 1
+    return count
+
+
 def make_alerts(
     history: list[dict[str, Any]], candidates: list[str], thresholds: Thresholds
 ) -> list[dict[str, str]]:
@@ -239,16 +324,32 @@ def make_alerts(
     for user in candidates:
         current = current_row.get("candidates", {}).get(user, {"present": False})
         if not current.get("present"):
+            missing_runs = consecutive_missing_count(history, user)
+            if missing_runs >= max(1, thresholds.missing_consecutive_runs):
+                detail = current.get("lookup_error")
+                message = (
+                    f"Candidate could not be resolved for {missing_runs} consecutive observations by the configured public data sources."
+                )
+                if detail:
+                    message += f" Latest lookup: {detail}."
+                message += " This does not by itself prove the eToro account is unavailable to copy."
+                add(user, "missing", message)
+            continue
+
+        age = source_age_hours(
+            current.get("source_timestamp"),
+            current_row.get("source_collected_at"),
+        )
+        if age is not None and age > thresholds.candidate_source_max_age_hours:
             add(
                 user,
-                "missing",
-                "Candidate could not be resolved by the configured public data sources; this does not by itself prove the eToro account is unavailable to copy.",
+                "stale_source",
+                f"Candidate source data is {age:.1f} hours old (threshold {thresholds.candidate_source_max_age_hours:.1f}h).",
             )
-            continue
 
         daily = _pct(current.get("daily_gain_pct"))
         if daily is not None and daily <= thresholds.daily_loss_pct:
-            add(user, "daily_loss", f"Daily return is {daily:.2f}% (threshold {thresholds.daily_loss_pct:.2f}%).")
+            add(user, "daily_loss", f"Observation return is {daily:.2f}% (threshold {thresholds.daily_loss_pct:.2f}%).")
 
         risk = current.get("risk_score")
         if isinstance(risk, (int, float)) and risk >= thresholds.risk_score_high:
@@ -285,29 +386,42 @@ def make_alerts(
     return alerts
 
 
-def current_metrics(history: list[dict[str, Any]], candidates: list[str]) -> list[dict[str, Any]]:
+def current_metrics(
+    history: list[dict[str, Any]],
+    candidates: list[str],
+    min_score_observations: int = 5,
+) -> list[dict[str, Any]]:
     if not history:
         return []
     row = history[-1]
     metrics: list[dict[str, Any]] = []
-    for user in candidates:
+    for order, user in enumerate(candidates):
         current = row.get("candidates", {}).get(user, {"present": False})
-        first = first_candidate(history, user)
-        if not current.get("present") or not first:
-            metrics.append({"username": user, "present": False})
+        observations = candidate_observation_count(history, user)
+        if not current.get("present") or observations == 0:
+            metrics.append({
+                "username": user,
+                "present": False,
+                "observation_count": observations,
+                "lookup_error": current.get("lookup_error"),
+                "_order": order,
+            })
             continue
-        forward_return = forward_return_from_ytd(
-            _pct(first.get("gain_ytd_pct")), _pct(current.get("gain_ytd_pct"))
-        )
-        dd = max_drawdown_from_returns(candidate_series(history, user))
+
+        curve = candidate_series(history, user)
+        forward_return = curve[-1] if curve else None
+        dd = max_drawdown_from_returns(curve)
         risk = current.get("risk_score")
         top1 = _pct(current.get("top1_concentration_pct"))
-        # A deliberately simple, transparent research score; it does not predict future returns.
         denom = max(abs(dd or 0.0), 5.0)
         return_dd = (forward_return or 0.0) / denom
         risk_penalty = max(0.0, float(risk or 0) - 4.0) * 0.35
         concentration_penalty = max(0.0, (top1 or 0.0) - 35.0) / 25.0
-        score = return_dd - risk_penalty - concentration_penalty
+        score = (
+            return_dd - risk_penalty - concentration_penalty
+            if observations >= max(1, min_score_observations)
+            else None
+        )
         metrics.append({
             "username": user,
             "present": True,
@@ -320,16 +434,56 @@ def current_metrics(history: list[dict[str, Any]], candidates: list[str]) -> lis
             "copiers": current.get("copiers"),
             "win_ratio_pct": _pct(current.get("win_ratio_pct")),
             "research_score": score,
+            "observation_count": observations,
+            "source": current.get("source"),
+            "source_timestamp": current.get("source_timestamp"),
+            "source_age_hours": source_age_hours(
+                current.get("source_timestamp"),
+                row.get("source_collected_at"),
+            ),
+            "_order": order,
         })
-    return sorted(metrics, key=lambda x: x.get("research_score", -999), reverse=True)
+
+    def sort_key(item: dict[str, Any]) -> tuple[int, float, int]:
+        if not item.get("present"):
+            return (0, -999.0, -item["_order"])
+        score = item.get("research_score")
+        if score is None:
+            return (1, 0.0, -item["_order"])
+        return (2, float(score), -item["_order"])
+
+    ranked = sorted(metrics, key=sort_key, reverse=True)
+    for item in ranked:
+        item.pop("_order", None)
+    return ranked
 
 
-def benchmark_metrics(history: list[dict[str, Any]]) -> dict[str, float | None]:
+def _normalize_quote(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return {
+            "close": _pct(value.get("close")),
+            "as_of": value.get("as_of"),
+            "source": value.get("source"),
+        }
+    return {"close": _pct(value), "as_of": None, "source": "legacy"}
+
+
+def benchmark_metrics(history: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     if not history:
         return {}
     first = history[0].get("benchmarks", {})
     current = history[-1].get("benchmarks", {})
-    return {symbol: pct_change(_pct(first.get(symbol)), _pct(current.get(symbol))) for symbol in current}
+    result: dict[str, dict[str, Any]] = {}
+    for symbol, current_value in current.items():
+        first_quote = _normalize_quote(first.get(symbol))
+        current_quote = _normalize_quote(current_value)
+        result[symbol] = {
+            "forward_return_pct": pct_change(first_quote["close"], current_quote["close"]),
+            "close": current_quote["close"],
+            "as_of": current_quote["as_of"],
+            "source": current_quote["source"],
+        }
+    return result
 
 
 def fmt(value: Any, suffix: str = "", digits: int = 2) -> str:
@@ -341,12 +495,16 @@ def fmt(value: Any, suffix: str = "", digits: int = 2) -> str:
 
 
 def build_report(
-    history: list[dict[str, Any]], candidates: list[str], alerts: list[dict[str, str]]
+    history: list[dict[str, Any]],
+    candidates: list[str],
+    alerts: list[dict[str, str]],
+    min_score_observations: int = 5,
 ) -> str:
-    metrics = current_metrics(history, candidates)
+    metrics = current_metrics(history, candidates, min_score_observations)
     bench = benchmark_metrics(history)
     start = history[0]["date"] if history else "n/a"
     end = history[-1]["date"] if history else "n/a"
+    current_row = history[-1] if history else {}
     lines = [
         "# Copy Trader Watch — Latest Report",
         "",
@@ -356,30 +514,62 @@ def build_report(
         "",
         "## Candidate ranking",
         "",
-        "| Rank | Candidate | Forward return | Max DD | Return/DD | Risk | Top-1 concentration | Copiers | Research score |",
+        "| Rank | Candidate | Obs | Forward return | Max DD | Return/DD | Risk | Top-1 concentration | Research score |",
         "|---:|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for idx, item in enumerate(metrics, 1):
         if not item.get("present"):
-            lines.append(f"| {idx} | {item['username']} | missing | n/a | n/a | n/a | n/a | n/a | n/a |")
+            lines.append(
+                f"| {idx} | {item['username']} | {item.get('observation_count', 0)} | unresolved | n/a | n/a | n/a | n/a | n/a |"
+            )
             continue
+        score = (
+            fmt(item.get("research_score"), "", 3)
+            if item.get("research_score") is not None
+            else f"warming up {item['observation_count']}/{min_score_observations}"
+        )
         lines.append(
-            "| {rank} | {user} | {ret} | {dd} | {rdd} | {risk} | {top1} | {copiers} | {score} |".format(
+            "| {rank} | {user} | {obs} | {ret} | {dd} | {rdd} | {risk} | {top1} | {score} |".format(
                 rank=idx,
                 user=item["username"],
+                obs=item["observation_count"],
                 ret=fmt(item.get("forward_return_pct"), "%"),
                 dd=fmt(item.get("forward_max_drawdown_pct"), "%"),
                 rdd=fmt(item.get("return_to_drawdown"), "", 3),
                 risk=item.get("risk_score", "n/a"),
                 top1=fmt(item.get("top1_concentration_pct"), "%"),
-                copiers=item.get("copiers", "n/a"),
-                score=fmt(item.get("research_score"), "", 3),
+                score=score,
             )
         )
 
     lines.extend(["", "## Benchmarks", ""])
-    for symbol, value in bench.items():
-        lines.append(f"- **{symbol}:** {fmt(value, '%')} since the same baseline")
+    for symbol, item in bench.items():
+        detail = []
+        if item.get("as_of"):
+            detail.append(f"as of {item['as_of']}")
+        if item.get("source"):
+            detail.append(str(item["source"]))
+        suffix = f" ({', '.join(detail)})" if detail else ""
+        lines.append(
+            f"- **{symbol}:** {fmt(item.get('forward_return_pct'), '%')} since baseline; "
+            f"close {fmt(item.get('close'))}{suffix}"
+        )
+
+    lines.extend(["", "## Data quality", ""])
+    lines.append("| Candidate | Status | Source | Source timestamp | Source age | Missing streak |")
+    lines.append("|---|---|---|---|---:|---:|")
+    for user in candidates:
+        current = current_row.get("candidates", {}).get(user, {"present": False})
+        if current.get("present"):
+            age = source_age_hours(current.get("source_timestamp"), current_row.get("source_collected_at"))
+            lines.append(
+                f"| {user} | resolved | {current.get('source') or 'unknown'} | "
+                f"{current.get('source_timestamp') or 'n/a'} | {fmt(age, 'h', 1)} | 0 |"
+            )
+        else:
+            streak = consecutive_missing_count(history, user)
+            error = current.get("lookup_error") or "public lookup unresolved"
+            lines.append(f"| {user} | {error} | n/a | n/a | n/a | {streak} |")
 
     lines.extend(["", "## Active alerts", ""])
     if alerts:
@@ -392,11 +582,12 @@ def build_report(
         "",
         "## Method notes",
         "",
-        "- Production candidate data uses the public `weirdapps/etoro_census` per-user endpoint first and its top-1,500 census as a fallback.",
-        "- Forward return is derived from the change in same-year YTD return from the first observation; the monitor resets naturally if you start a new history file in a new calendar year.",
-        "- Forward max drawdown is calculated from the stored daily path, not from eToro's full historical equity curve.",
-        "- Portfolio concentration aggregates multiple lots when full census data is used; the per-user endpoint supplies already aggregated top positions.",
-        "- SPY/QQQ quotes use Yahoo Finance's public chart data first and Stooq as a fallback.",
+        "- Production candidate data uses the public `weirdapps/etoro_census` per-user endpoint first and its top-1,500 census as a throttled fallback.",
+        "- Forward returns are chained from successive YTD observations so a January YTD reset no longer corrupts a multi-year forward test.",
+        f"- Research scores remain disabled until a candidate has at least {min_score_observations} resolved observations.",
+        "- A missing-data alert requires consecutive unresolved observations, reducing false alarms from one transient API failure.",
+        "- Forward max drawdown is calculated from the stored forward path, not from eToro's full historical equity curve.",
+        "- SPY/QQQ quotes use Yahoo Finance public chart data first and Stooq as a fallback; the report records the quote session date.",
         "- Missing or stale upstream data is surfaced rather than filled with guesses.",
         "",
     ])
@@ -419,7 +610,7 @@ def notify_new_alerts(new_alerts: list[dict[str, str]], report_date: str) -> Non
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "copy-trader-watch/1.0",
+            "User-Agent": "copy-trader-watch/2.0",
         },
         json={"title": f"Copy Trader Watch alert — {report_date}", "body": "\n".join(body)},
     )
@@ -430,6 +621,7 @@ def main() -> int:
     config = load_json(CONFIG_PATH, {})
     candidates: list[str] = config.get("candidates", [])
     thresholds = Thresholds(**config.get("thresholds", {}))
+    min_score_observations = int(config.get("scoring", {}).get("min_observations", 5))
     if not candidates:
         raise SystemExit("No candidates configured")
 
@@ -437,19 +629,25 @@ def main() -> int:
     date = collected_date(census)
     history: list[dict[str, Any]] = load_json(HISTORY_PATH, [])
 
+    unresolved = (census.get("metadata", {}) or {}).get("unresolved", {}) or {}
+    candidate_snapshots: dict[str, dict[str, Any]] = {}
+    for user in candidates:
+        snapshot = snapshot_investor(find_investor(census, user))
+        if not snapshot.get("present") and user in unresolved:
+            snapshot["lookup_error"] = unresolved[user]
+        candidate_snapshots[user] = snapshot
+
     row = {
         "date": date,
         "source_collected_at": census.get("metadata", {}).get("collectedAt"),
-        "candidates": {
-            user: snapshot_investor(find_investor(census, user)) for user in candidates
-        },
+        "candidates": candidate_snapshots,
         "benchmarks": {
-            name: fetch_stooq_close(stooq_symbol)
+            name: fetch_benchmark_quote(stooq_symbol)
             for name, stooq_symbol in config.get("benchmarks", {}).items()
         },
     }
 
-    # Idempotent daily reruns replace the same source date instead of duplicating it.
+    # Idempotent reruns replace the same Pacific observation date.
     history = [existing for existing in history if existing.get("date") != date]
     history.append(row)
     history.sort(key=lambda x: x.get("date", ""))
@@ -462,15 +660,18 @@ def main() -> int:
     previous_keys = set(state.get("active_alert_keys", []))
     current_keys = {a["key"] for a in alerts}
     new_alerts = [a for a in alerts if a["key"] not in previous_keys]
-    state = {
+    state.update({
         "last_run_date": date,
         "active_alert_keys": sorted(current_keys),
         "new_alert_count": len(new_alerts),
-    }
+    })
     save_json(STATE_PATH, state)
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text(build_report(history, candidates, alerts), encoding="utf-8")
+    REPORT_PATH.write_text(
+        build_report(history, candidates, alerts, min_score_observations),
+        encoding="utf-8",
+    )
 
     try:
         notify_new_alerts(new_alerts, date)
@@ -478,15 +679,19 @@ def main() -> int:
         print(f"WARNING: GitHub alert issue could not be created: {exc}")
 
     print(f"Recorded {date}; {len(alerts)} active alert(s), {len(new_alerts)} new.")
-    for item in current_metrics(history, candidates):
+    for item in current_metrics(history, candidates, min_score_observations):
         if item.get("present"):
+            score = (
+                fmt(item.get("research_score"), "", 3)
+                if item.get("research_score") is not None
+                else f"warming-up-{item['observation_count']}/{min_score_observations}"
+            )
             print(
                 f"{item['username']}: return={fmt(item.get('forward_return_pct'), '%')} "
-                f"dd={fmt(item.get('forward_max_drawdown_pct'), '%')} "
-                f"score={fmt(item.get('research_score'), '', 3)}"
+                f"dd={fmt(item.get('forward_max_drawdown_pct'), '%')} score={score}"
             )
         else:
-            print(f"{item['username']}: missing")
+            print(f"{item['username']}: unresolved")
     return 0
 
 

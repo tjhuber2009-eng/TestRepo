@@ -12,9 +12,9 @@ on:
       - ".github/workflows/copy-trader-watch.yml"
   workflow_dispatch:
   schedule:
-    # 02:30 UTC = 7:30 PM Pacific during daylight time. This is after
-    # the US cash session and after etoro_census's midnight-UTC snapshot.
-    - cron: "30 2 * * *"
+    # Fixed 7:30 PM Pacific year-round; GitHub Actions applies DST from the IANA timezone.
+    - cron: "30 19 * * *"
+      timezone: "America/Los_Angeles"
 
 permissions:
   contents: write
