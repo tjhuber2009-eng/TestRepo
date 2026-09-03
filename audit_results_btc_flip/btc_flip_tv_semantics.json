@@ -25,10 +25,6 @@
       "text": "tooltip=\"Tested at 2\u00d7. Higher leverage amplifies both returns AND drawdowns. Fees scale with leverage \u2014 at 5\u00d7+ fees may exceed profit margins.\")"
     },
     {
-      "line": 28,
-      "text": "// A runtime warning (bottom of chart) fires if the current TF is not 1H."
-    },
-    {
       "line": 29,
       "text": "strategy(\"BTC Flip Bot V3 \u2014 MTF + SL-Flip + Pyramid + Tuned\", overlay=true, initial_capital=5000,"
     },
@@ -93,10 +89,6 @@
       "text": "partialTpFrac  = input.float(15.0,  \"TP close (%)\", minval=5, maxval=90, step=5, group=grpTP,"
     },
     {
-      "line": 60,
-      "text": "tooltip=\"Percentage of position to close at TP trigger. 15% lets 85% run to catch fat-tail winners. Sweep peak vs old 30% default: +11pp CAGR.\")"
-    },
-    {
       "line": 61,
       "text": "partialBeBufPct = input.float(0.1,  \"Move SL to BE+buf (%) after partial TP\", minval=0.0, maxval=2, step=0.05, group=grpTP,"
     },
@@ -159,10 +151,6 @@
     {
       "line": 83,
       "text": "genCdHours     = input.int(2,       \"Generic exit cooldown (hours)\", minval=0, maxval=24, group=grpCD,"
-    },
-    {
-      "line": 84,
-      "text": "tooltip=\"After any exit, block all entries for this many hours.\")"
     },
     {
       "line": 88,
@@ -265,6 +253,22 @@
       "text": "rsi4h      = request.security(syminfo.tickerid, \"240\", ta.rsi(close, 14)[1], lookahead=barmerge.lookahead_off)"
     },
     {
+      "line": 121,
+      "text": "dailyBull  = dailyClose > dailyEma50"
+    },
+    {
+      "line": 122,
+      "text": "dailyBear  = dailyClose < dailyEma50"
+    },
+    {
+      "line": 123,
+      "text": "h4ConfBull = rsi4h > 50"
+    },
+    {
+      "line": 124,
+      "text": "h4ConfBear = rsi4h < 50"
+    },
+    {
       "line": 127,
       "text": "rsi1h = ta.rsi(close, 21)"
     },
@@ -279,6 +283,10 @@
     {
       "line": 130,
       "text": "atrMa  = ta.sma(atr20, atrMaLength)"
+    },
+    {
+      "line": 131,
+      "text": "highVol = atr20 > atrMa"
     },
     {
       "line": 132,
@@ -315,6 +323,14 @@
     {
       "line": 145,
       "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+    },
+    {
+      "line": 151,
+      "text": "var int haltUntilBar   = na"
+    },
+    {
+      "line": 152,
+      "text": "var float peakEquity   = strategy.initial_capital"
     },
     {
       "line": 153,
@@ -361,14 +377,6 @@
       "text": "var float initSlDist    = na      // SL distance at entry (for R-calc)"
     },
     {
-      "line": 166,
-      "text": "// \u2500\u2500\u2500 Timeframe advisory \u2014 strategy's backtest was run on 1H \u2500\u2500\u2500"
-    },
-    {
-      "line": 172,
-      "text": "wrongTf = timeframe.period != \"60\""
-    },
-    {
       "line": 174,
       "text": "// \u2500\u2500\u2500 Cooldown checks \u2500\u2500\u2500"
     },
@@ -397,6 +405,22 @@
       "text": "canGoShort = shortSignal and not shortCdBlocked and not exitCdBlocked and not isHalted"
     },
     {
+      "line": 186,
+      "text": "stopLong        = math.max(patternLowLong, cappedLowLong)"
+    },
+    {
+      "line": 190,
+      "text": "stopShort        = math.min(patternHighShort, cappedHighShort)"
+    },
+    {
+      "line": 193,
+      "text": "currentEquity = strategy.equity"
+    },
+    {
+      "line": 194,
+      "text": "peakEquity   := math.max(peakEquity, currentEquity)"
+    },
+    {
       "line": 195,
       "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
     },
@@ -407,6 +431,10 @@
     {
       "line": 198,
       "text": "haltUntilBar := bar_index + ddHaltHours"
+    },
+    {
+      "line": 199,
+      "text": "peakEquity   := currentEquity"
     },
     {
       "line": 201,
@@ -657,8 +685,16 @@
       "text": "if strategy.position_size > 0 and strategy.position_size[1] == 0"
     },
     {
+      "line": 273,
+      "text": "storedSL := stopLong"
+    },
+    {
       "line": 274,
       "text": "if strategy.position_size < 0 and strategy.position_size[1] == 0"
+    },
+    {
+      "line": 275,
+      "text": "storedSL := stopShort"
     },
     {
       "line": 277,
@@ -667,6 +703,10 @@
     {
       "line": 278,
       "text": "if usePyramid and strategy.position_size != 0 and not pyramided and not isFlipPos and not na(initSlDist) and initSlDist > 0"
+    },
+    {
+      "line": 279,
+      "text": "entryPx = strategy.position_avg_price"
     },
     {
       "line": 280,
@@ -769,10 +809,6 @@
       "text": "if strategy.position_size > 0 and not partialTaken and not na(storedSL)"
     },
     {
-      "line": 309,
-      "text": "entryPrice = strategy.position_avg_price"
-    },
-    {
       "line": 310,
       "text": "slDistance  = entryPrice - storedSL"
     },
@@ -815,10 +851,6 @@
     {
       "line": 324,
       "text": "if strategy.position_size < 0 and not partialTaken and not na(storedSL)"
-    },
-    {
-      "line": 325,
-      "text": "entryPrice = strategy.position_avg_price"
     },
     {
       "line": 326,
@@ -961,14 +993,6 @@
       "text": "pyramidEntry := na"
     },
     {
-      "line": 371,
-      "text": "// \u2500\u2500\u2500 Wrong-timeframe warning (always visible, overrides clean view) \u2500\u2500\u2500"
-    },
-    {
-      "line": 375,
-      "text": "\"\u26a0 Chart TF is \" + timeframe.period + \" \u2014 Backtest was run on 1H. Results won't match Python numbers unless chart = 1H.\","
-    },
-    {
       "line": 383,
       "text": "bgcolor(longCdColor, title=\"Long Cooldown\")"
     },
@@ -993,6 +1017,18 @@
       "text": "table.cell(dash, 1, 0, str.tostring(leverageInput, \"#.#\") + \"\u00d7 LEV\", bgcolor=color.teal, text_color=color.white)"
     },
     {
+      "line": 400,
+      "text": "biasTxt = dailyBull ? \"BULL \u2713\" : dailyBear ? \"BEAR \u2713\" : \"FLAT\""
+    },
+    {
+      "line": 401,
+      "text": "biasClr = dailyBull ? color.green : color.red"
+    },
+    {
+      "line": 406,
+      "text": "rsi4hTxt = h4ConfBull ? rsi4hStr + \" \u2713\" : h4ConfBear ? rsi4hStr + \" \u2713\" : rsi4hStr"
+    },
+    {
       "line": 417,
       "text": "table.cell(dash, 0, 5, \"Engulfing\")"
     },
@@ -1001,8 +1037,3136 @@
       "text": "engTxt = bullEngulfing ? \"BULL \u2713\" : bearEngulfing ? \"BEAR \u2713\" : \"\u2014\""
     },
     {
+      "line": 423,
+      "text": "atrTxt := highVol ? atrTxt + \" \u2713\" : atrTxt"
+    },
+    {
       "line": 427,
       "text": "volTxt = str.tostring(volume / volSma, \"#.##\") + \"x\""
     }
-  ]
+  ],
+  "contexts": {
+    "dailyBull": [
+      {
+        "line": 121,
+        "context": [
+          {
+            "line": 119,
+            "text": "rsi4h      = request.security(syminfo.tickerid, \"240\", ta.rsi(close, 14)[1], lookahead=barmerge.lookahead_off)"
+          },
+          {
+            "line": 120,
+            "text": ""
+          },
+          {
+            "line": 121,
+            "text": "dailyBull  = dailyClose > dailyEma50"
+          },
+          {
+            "line": 122,
+            "text": "dailyBear  = dailyClose < dailyEma50"
+          },
+          {
+            "line": 123,
+            "text": "h4ConfBull = rsi4h > 50"
+          }
+        ]
+      },
+      {
+        "line": 144,
+        "context": [
+          {
+            "line": 142,
+            "text": "longStack  = rsi1h > rsiLongMin and macdLine > macdSignal and bullEngulfing and highVol and volOk"
+          },
+          {
+            "line": 143,
+            "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+          },
+          {
+            "line": 144,
+            "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+          },
+          {
+            "line": 145,
+            "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+          },
+          {
+            "line": 146,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 400,
+        "context": [
+          {
+            "line": 398,
+            "text": ""
+          },
+          {
+            "line": 399,
+            "text": "table.cell(dash, 0, 1, \"Daily EMA50\")"
+          },
+          {
+            "line": 400,
+            "text": "biasTxt = dailyBull ? \"BULL \u2713\" : dailyBear ? \"BEAR \u2713\" : \"FLAT\""
+          },
+          {
+            "line": 401,
+            "text": "biasClr = dailyBull ? color.green : color.red"
+          },
+          {
+            "line": 402,
+            "text": "table.cell(dash, 1, 1, biasTxt, text_color=biasClr)"
+          }
+        ]
+      },
+      {
+        "line": 401,
+        "context": [
+          {
+            "line": 399,
+            "text": "table.cell(dash, 0, 1, \"Daily EMA50\")"
+          },
+          {
+            "line": 400,
+            "text": "biasTxt = dailyBull ? \"BULL \u2713\" : dailyBear ? \"BEAR \u2713\" : \"FLAT\""
+          },
+          {
+            "line": 401,
+            "text": "biasClr = dailyBull ? color.green : color.red"
+          },
+          {
+            "line": 402,
+            "text": "table.cell(dash, 1, 1, biasTxt, text_color=biasClr)"
+          },
+          {
+            "line": 403,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "dailyBear": [
+      {
+        "line": 122,
+        "context": [
+          {
+            "line": 120,
+            "text": ""
+          },
+          {
+            "line": 121,
+            "text": "dailyBull  = dailyClose > dailyEma50"
+          },
+          {
+            "line": 122,
+            "text": "dailyBear  = dailyClose < dailyEma50"
+          },
+          {
+            "line": 123,
+            "text": "h4ConfBull = rsi4h > 50"
+          },
+          {
+            "line": 124,
+            "text": "h4ConfBear = rsi4h < 50"
+          }
+        ]
+      },
+      {
+        "line": 145,
+        "context": [
+          {
+            "line": 143,
+            "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+          },
+          {
+            "line": 144,
+            "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+          },
+          {
+            "line": 145,
+            "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+          },
+          {
+            "line": 146,
+            "text": ""
+          },
+          {
+            "line": 147,
+            "text": "// \u2500\u2500\u2500 State variables \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 400,
+        "context": [
+          {
+            "line": 398,
+            "text": ""
+          },
+          {
+            "line": 399,
+            "text": "table.cell(dash, 0, 1, \"Daily EMA50\")"
+          },
+          {
+            "line": 400,
+            "text": "biasTxt = dailyBull ? \"BULL \u2713\" : dailyBear ? \"BEAR \u2713\" : \"FLAT\""
+          },
+          {
+            "line": 401,
+            "text": "biasClr = dailyBull ? color.green : color.red"
+          },
+          {
+            "line": 402,
+            "text": "table.cell(dash, 1, 1, biasTxt, text_color=biasClr)"
+          }
+        ]
+      }
+    ],
+    "h4ConfBull": [
+      {
+        "line": 123,
+        "context": [
+          {
+            "line": 121,
+            "text": "dailyBull  = dailyClose > dailyEma50"
+          },
+          {
+            "line": 122,
+            "text": "dailyBear  = dailyClose < dailyEma50"
+          },
+          {
+            "line": 123,
+            "text": "h4ConfBull = rsi4h > 50"
+          },
+          {
+            "line": 124,
+            "text": "h4ConfBear = rsi4h < 50"
+          },
+          {
+            "line": 125,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 144,
+        "context": [
+          {
+            "line": 142,
+            "text": "longStack  = rsi1h > rsiLongMin and macdLine > macdSignal and bullEngulfing and highVol and volOk"
+          },
+          {
+            "line": 143,
+            "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+          },
+          {
+            "line": 144,
+            "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+          },
+          {
+            "line": 145,
+            "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+          },
+          {
+            "line": 146,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 406,
+        "context": [
+          {
+            "line": 404,
+            "text": "table.cell(dash, 0, 2, \"4H RSI\")"
+          },
+          {
+            "line": 405,
+            "text": "rsi4hStr = str.tostring(rsi4h, \"#.#\")"
+          },
+          {
+            "line": 406,
+            "text": "rsi4hTxt = h4ConfBull ? rsi4hStr + \" \u2713\" : h4ConfBear ? rsi4hStr + \" \u2713\" : rsi4hStr"
+          },
+          {
+            "line": 407,
+            "text": "table.cell(dash, 1, 2, rsi4hTxt)"
+          },
+          {
+            "line": 408,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "h4ConfBear": [
+      {
+        "line": 124,
+        "context": [
+          {
+            "line": 122,
+            "text": "dailyBear  = dailyClose < dailyEma50"
+          },
+          {
+            "line": 123,
+            "text": "h4ConfBull = rsi4h > 50"
+          },
+          {
+            "line": 124,
+            "text": "h4ConfBear = rsi4h < 50"
+          },
+          {
+            "line": 125,
+            "text": ""
+          },
+          {
+            "line": 126,
+            "text": "// \u2500\u2500\u2500 1H indicators (V3: RSI 21, ATR 20 \u2014 slower = fewer false signals) \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 145,
+        "context": [
+          {
+            "line": 143,
+            "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+          },
+          {
+            "line": 144,
+            "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+          },
+          {
+            "line": 145,
+            "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+          },
+          {
+            "line": 146,
+            "text": ""
+          },
+          {
+            "line": 147,
+            "text": "// \u2500\u2500\u2500 State variables \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 406,
+        "context": [
+          {
+            "line": 404,
+            "text": "table.cell(dash, 0, 2, \"4H RSI\")"
+          },
+          {
+            "line": 405,
+            "text": "rsi4hStr = str.tostring(rsi4h, \"#.#\")"
+          },
+          {
+            "line": 406,
+            "text": "rsi4hTxt = h4ConfBull ? rsi4hStr + \" \u2713\" : h4ConfBear ? rsi4hStr + \" \u2713\" : rsi4hStr"
+          },
+          {
+            "line": 407,
+            "text": "table.cell(dash, 1, 2, rsi4hTxt)"
+          },
+          {
+            "line": 408,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "highVol": [
+      {
+        "line": 131,
+        "context": [
+          {
+            "line": 129,
+            "text": "atr20  = ta.atr(20)"
+          },
+          {
+            "line": 130,
+            "text": "atrMa  = ta.sma(atr20, atrMaLength)"
+          },
+          {
+            "line": 131,
+            "text": "highVol = atr20 > atrMa"
+          },
+          {
+            "line": 132,
+            "text": "volSma = ta.sma(volume, volSmaLength)"
+          },
+          {
+            "line": 133,
+            "text": "volOk  = volume > volSpikeRatio * volSma"
+          }
+        ]
+      },
+      {
+        "line": 142,
+        "context": [
+          {
+            "line": 140,
+            "text": ""
+          },
+          {
+            "line": 141,
+            "text": "// \u2500\u2500\u2500 Entry stack \u2500\u2500\u2500"
+          },
+          {
+            "line": 142,
+            "text": "longStack  = rsi1h > rsiLongMin and macdLine > macdSignal and bullEngulfing and highVol and volOk"
+          },
+          {
+            "line": 143,
+            "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+          },
+          {
+            "line": 144,
+            "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+          }
+        ]
+      },
+      {
+        "line": 143,
+        "context": [
+          {
+            "line": 141,
+            "text": "// \u2500\u2500\u2500 Entry stack \u2500\u2500\u2500"
+          },
+          {
+            "line": 142,
+            "text": "longStack  = rsi1h > rsiLongMin and macdLine > macdSignal and bullEngulfing and highVol and volOk"
+          },
+          {
+            "line": 143,
+            "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+          },
+          {
+            "line": 144,
+            "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+          },
+          {
+            "line": 145,
+            "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+          }
+        ]
+      },
+      {
+        "line": 423,
+        "context": [
+          {
+            "line": 421,
+            "text": "table.cell(dash, 0, 6, \"ATR / MA\")"
+          },
+          {
+            "line": 422,
+            "text": "atrTxt = str.tostring(atr20, \"#\") + \" / \" + str.tostring(atrMa, \"#\")"
+          },
+          {
+            "line": 423,
+            "text": "atrTxt := highVol ? atrTxt + \" \u2713\" : atrTxt"
+          },
+          {
+            "line": 424,
+            "text": "table.cell(dash, 1, 6, atrTxt)"
+          },
+          {
+            "line": 425,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "stopLong": [
+      {
+        "line": 186,
+        "context": [
+          {
+            "line": 184,
+            "text": "patternLowLong  = math.min(low, low[1]) * (1 - slBufPct)"
+          },
+          {
+            "line": 185,
+            "text": "cappedLowLong   = close * (1 - slMaxPct)"
+          },
+          {
+            "line": 186,
+            "text": "stopLong        = math.max(patternLowLong, cappedLowLong)"
+          },
+          {
+            "line": 187,
+            "text": ""
+          },
+          {
+            "line": 188,
+            "text": "patternHighShort = math.max(high, high[1]) * (1 + slBufPct)"
+          }
+        ]
+      },
+      {
+        "line": 205,
+        "context": [
+          {
+            "line": 203,
+            "text": "// This matches Python v6 backtest: pnl = price_move% \u00d7 leverage \u00d7 equity"
+          },
+          {
+            "line": 204,
+            "text": "// A 1% price move at 2\u00d7 leverage = 2% equity change."
+          },
+          {
+            "line": 205,
+            "text": "slDistLong  = close - stopLong"
+          },
+          {
+            "line": 206,
+            "text": "slDistShort = stopShort - close"
+          },
+          {
+            "line": 207,
+            "text": "notionalQty = (currentEquity * leverageInput) / close"
+          }
+        ]
+      },
+      {
+        "line": 257,
+        "context": [
+          {
+            "line": 255,
+            "text": "if canGoLong and strategy.position_size == 0 and qtyLong > 0 and not pendingActive"
+          },
+          {
+            "line": 256,
+            "text": "strategy.entry(\"L\", strategy.long, qty=qtyLong)"
+          },
+          {
+            "line": 257,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=stopLong)"
+          },
+          {
+            "line": 258,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 259,
+            "text": "isFlipPos := false"
+          }
+        ]
+      },
+      {
+        "line": 261,
+        "context": [
+          {
+            "line": 259,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 260,
+            "text": "pyramided := false"
+          },
+          {
+            "line": 261,
+            "text": "initSlDist := close - stopLong"
+          },
+          {
+            "line": 262,
+            "text": ""
+          },
+          {
+            "line": 263,
+            "text": "if canGoShort and strategy.position_size == 0 and qtyShort > 0 and not pendingActive"
+          }
+        ]
+      },
+      {
+        "line": 273,
+        "context": [
+          {
+            "line": 271,
+            "text": "// \u2500\u2500\u2500 Store entry SL for partial TP \u2500\u2500\u2500"
+          },
+          {
+            "line": 272,
+            "text": "if strategy.position_size > 0 and strategy.position_size[1] == 0"
+          },
+          {
+            "line": 273,
+            "text": "storedSL := stopLong"
+          },
+          {
+            "line": 274,
+            "text": "if strategy.position_size < 0 and strategy.position_size[1] == 0"
+          },
+          {
+            "line": 275,
+            "text": "storedSL := stopShort"
+          }
+        ]
+      }
+    ],
+    "stopShort": [
+      {
+        "line": 190,
+        "context": [
+          {
+            "line": 188,
+            "text": "patternHighShort = math.max(high, high[1]) * (1 + slBufPct)"
+          },
+          {
+            "line": 189,
+            "text": "cappedHighShort  = close * (1 + slMaxPct)"
+          },
+          {
+            "line": 190,
+            "text": "stopShort        = math.min(patternHighShort, cappedHighShort)"
+          },
+          {
+            "line": 191,
+            "text": ""
+          },
+          {
+            "line": 192,
+            "text": "// \u2500\u2500\u2500 DD circuit breaker \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 206,
+        "context": [
+          {
+            "line": 204,
+            "text": "// A 1% price move at 2\u00d7 leverage = 2% equity change."
+          },
+          {
+            "line": 205,
+            "text": "slDistLong  = close - stopLong"
+          },
+          {
+            "line": 206,
+            "text": "slDistShort = stopShort - close"
+          },
+          {
+            "line": 207,
+            "text": "notionalQty = (currentEquity * leverageInput) / close"
+          },
+          {
+            "line": 208,
+            "text": "qtyLong  = slDistLong > 0 ? notionalQty : 0"
+          }
+        ]
+      },
+      {
+        "line": 265,
+        "context": [
+          {
+            "line": 263,
+            "text": "if canGoShort and strategy.position_size == 0 and qtyShort > 0 and not pendingActive"
+          },
+          {
+            "line": 264,
+            "text": "strategy.entry(\"S\", strategy.short, qty=qtyShort)"
+          },
+          {
+            "line": 265,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=stopShort)"
+          },
+          {
+            "line": 266,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 267,
+            "text": "isFlipPos := false"
+          }
+        ]
+      },
+      {
+        "line": 269,
+        "context": [
+          {
+            "line": 267,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 268,
+            "text": "pyramided := false"
+          },
+          {
+            "line": 269,
+            "text": "initSlDist := stopShort - close"
+          },
+          {
+            "line": 270,
+            "text": ""
+          },
+          {
+            "line": 271,
+            "text": "// \u2500\u2500\u2500 Store entry SL for partial TP \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 275,
+        "context": [
+          {
+            "line": 273,
+            "text": "storedSL := stopLong"
+          },
+          {
+            "line": 274,
+            "text": "if strategy.position_size < 0 and strategy.position_size[1] == 0"
+          },
+          {
+            "line": 275,
+            "text": "storedSL := stopShort"
+          },
+          {
+            "line": 276,
+            "text": ""
+          },
+          {
+            "line": 277,
+            "text": "// \u2500\u2500\u2500 V2 PYRAMIDING \u2014 add to winning position at +3R \u2500\u2500\u2500"
+          }
+        ]
+      }
+    ],
+    "currentEquity": [
+      {
+        "line": 193,
+        "context": [
+          {
+            "line": 191,
+            "text": ""
+          },
+          {
+            "line": 192,
+            "text": "// \u2500\u2500\u2500 DD circuit breaker \u2500\u2500\u2500"
+          },
+          {
+            "line": 193,
+            "text": "currentEquity = strategy.equity"
+          },
+          {
+            "line": 194,
+            "text": "peakEquity   := math.max(peakEquity, currentEquity)"
+          },
+          {
+            "line": 195,
+            "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
+          }
+        ]
+      },
+      {
+        "line": 194,
+        "context": [
+          {
+            "line": 192,
+            "text": "// \u2500\u2500\u2500 DD circuit breaker \u2500\u2500\u2500"
+          },
+          {
+            "line": 193,
+            "text": "currentEquity = strategy.equity"
+          },
+          {
+            "line": 194,
+            "text": "peakEquity   := math.max(peakEquity, currentEquity)"
+          },
+          {
+            "line": 195,
+            "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
+          },
+          {
+            "line": 196,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 195,
+        "context": [
+          {
+            "line": 193,
+            "text": "currentEquity = strategy.equity"
+          },
+          {
+            "line": 194,
+            "text": "peakEquity   := math.max(peakEquity, currentEquity)"
+          },
+          {
+            "line": 195,
+            "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
+          },
+          {
+            "line": 196,
+            "text": ""
+          },
+          {
+            "line": 197,
+            "text": "if drawdownPct <= -ddHaltPct and strategy.position_size == 0"
+          }
+        ]
+      },
+      {
+        "line": 199,
+        "context": [
+          {
+            "line": 197,
+            "text": "if drawdownPct <= -ddHaltPct and strategy.position_size == 0"
+          },
+          {
+            "line": 198,
+            "text": "haltUntilBar := bar_index + ddHaltHours"
+          },
+          {
+            "line": 199,
+            "text": "peakEquity   := currentEquity"
+          },
+          {
+            "line": 200,
+            "text": ""
+          },
+          {
+            "line": 201,
+            "text": "// \u2500\u2500\u2500 Position sizing (notional = equity \u00d7 leverage) \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 207,
+        "context": [
+          {
+            "line": 205,
+            "text": "slDistLong  = close - stopLong"
+          },
+          {
+            "line": 206,
+            "text": "slDistShort = stopShort - close"
+          },
+          {
+            "line": 207,
+            "text": "notionalQty = (currentEquity * leverageInput) / close"
+          },
+          {
+            "line": 208,
+            "text": "qtyLong  = slDistLong > 0 ? notionalQty : 0"
+          },
+          {
+            "line": 209,
+            "text": "qtyShort = slDistShort > 0 ? notionalQty : 0"
+          }
+        ]
+      },
+      {
+        "line": 222,
+        "context": [
+          {
+            "line": 220,
+            "text": "flipSL    = math.min(swingSl, capSl)"
+          },
+          {
+            "line": 221,
+            "text": "flipDist  = flipSL - close"
+          },
+          {
+            "line": 222,
+            "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 224,
+            "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+          }
+        ]
+      },
+      {
+        "line": 236,
+        "context": [
+          {
+            "line": 234,
+            "text": "flipSL   = math.max(swingSl, capSl)"
+          },
+          {
+            "line": 235,
+            "text": "flipDist = close - flipSL"
+          },
+          {
+            "line": 236,
+            "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 238,
+            "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+          }
+        ]
+      },
+      {
+        "line": 283,
+        "context": [
+          {
+            "line": 281,
+            "text": "currentR = (close - entryPx) / initSlDist"
+          },
+          {
+            "line": 282,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 283,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 284,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          }
+        ]
+      },
+      {
+        "line": 296,
+        "context": [
+          {
+            "line": 294,
+            "text": "currentR = (entryPx - close) / initSlDist"
+          },
+          {
+            "line": 295,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 296,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          }
+        ]
+      }
+    ],
+    "peakEquity": [
+      {
+        "line": 152,
+        "context": [
+          {
+            "line": 150,
+            "text": "var int lastExitBar    = na"
+          },
+          {
+            "line": 151,
+            "text": "var int haltUntilBar   = na"
+          },
+          {
+            "line": 152,
+            "text": "var float peakEquity   = strategy.initial_capital"
+          },
+          {
+            "line": 153,
+            "text": "var bool partialTaken  = false"
+          },
+          {
+            "line": 154,
+            "text": "var float storedSL     = na"
+          }
+        ]
+      },
+      {
+        "line": 194,
+        "context": [
+          {
+            "line": 192,
+            "text": "// \u2500\u2500\u2500 DD circuit breaker \u2500\u2500\u2500"
+          },
+          {
+            "line": 193,
+            "text": "currentEquity = strategy.equity"
+          },
+          {
+            "line": 194,
+            "text": "peakEquity   := math.max(peakEquity, currentEquity)"
+          },
+          {
+            "line": 195,
+            "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
+          },
+          {
+            "line": 196,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 195,
+        "context": [
+          {
+            "line": 193,
+            "text": "currentEquity = strategy.equity"
+          },
+          {
+            "line": 194,
+            "text": "peakEquity   := math.max(peakEquity, currentEquity)"
+          },
+          {
+            "line": 195,
+            "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
+          },
+          {
+            "line": 196,
+            "text": ""
+          },
+          {
+            "line": 197,
+            "text": "if drawdownPct <= -ddHaltPct and strategy.position_size == 0"
+          }
+        ]
+      },
+      {
+        "line": 199,
+        "context": [
+          {
+            "line": 197,
+            "text": "if drawdownPct <= -ddHaltPct and strategy.position_size == 0"
+          },
+          {
+            "line": 198,
+            "text": "haltUntilBar := bar_index + ddHaltHours"
+          },
+          {
+            "line": 199,
+            "text": "peakEquity   := currentEquity"
+          },
+          {
+            "line": 200,
+            "text": ""
+          },
+          {
+            "line": 201,
+            "text": "// \u2500\u2500\u2500 Position sizing (notional = equity \u00d7 leverage) \u2500\u2500\u2500"
+          }
+        ]
+      }
+    ],
+    "haltUntil": [
+      {
+        "line": 151,
+        "context": [
+          {
+            "line": 149,
+            "text": "var int lastShortSlBar = na"
+          },
+          {
+            "line": 150,
+            "text": "var int lastExitBar    = na"
+          },
+          {
+            "line": 151,
+            "text": "var int haltUntilBar   = na"
+          },
+          {
+            "line": 152,
+            "text": "var float peakEquity   = strategy.initial_capital"
+          },
+          {
+            "line": 153,
+            "text": "var bool partialTaken  = false"
+          }
+        ]
+      },
+      {
+        "line": 178,
+        "context": [
+          {
+            "line": 176,
+            "text": "shortCdBlocked = not na(lastShortSlBar) and (bar_index - lastShortSlBar) < sameDirCdHours"
+          },
+          {
+            "line": 177,
+            "text": "exitCdBlocked  = not na(lastExitBar) and (bar_index - lastExitBar) < genCdHours"
+          },
+          {
+            "line": 178,
+            "text": "isHalted       = not na(haltUntilBar) and bar_index < haltUntilBar"
+          },
+          {
+            "line": 179,
+            "text": ""
+          },
+          {
+            "line": 180,
+            "text": "canGoLong  = longSignal and not longCdBlocked and not exitCdBlocked and not isHalted"
+          }
+        ]
+      },
+      {
+        "line": 198,
+        "context": [
+          {
+            "line": 196,
+            "text": ""
+          },
+          {
+            "line": 197,
+            "text": "if drawdownPct <= -ddHaltPct and strategy.position_size == 0"
+          },
+          {
+            "line": 198,
+            "text": "haltUntilBar := bar_index + ddHaltHours"
+          },
+          {
+            "line": 199,
+            "text": "peakEquity   := currentEquity"
+          },
+          {
+            "line": 200,
+            "text": ""
+          }
+        ]
+      }
+    ],
+    "canGoLong": [
+      {
+        "line": 180,
+        "context": [
+          {
+            "line": 178,
+            "text": "isHalted       = not na(haltUntilBar) and bar_index < haltUntilBar"
+          },
+          {
+            "line": 179,
+            "text": ""
+          },
+          {
+            "line": 180,
+            "text": "canGoLong  = longSignal and not longCdBlocked and not exitCdBlocked and not isHalted"
+          },
+          {
+            "line": 181,
+            "text": "canGoShort = shortSignal and not shortCdBlocked and not exitCdBlocked and not isHalted"
+          },
+          {
+            "line": 182,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 255,
+        "context": [
+          {
+            "line": 253,
+            "text": ""
+          },
+          {
+            "line": 254,
+            "text": "// \u2500\u2500\u2500 Normal entry orders \u2500\u2500\u2500"
+          },
+          {
+            "line": 255,
+            "text": "if canGoLong and strategy.position_size == 0 and qtyLong > 0 and not pendingActive"
+          },
+          {
+            "line": 256,
+            "text": "strategy.entry(\"L\", strategy.long, qty=qtyLong)"
+          },
+          {
+            "line": 257,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=stopLong)"
+          }
+        ]
+      }
+    ],
+    "canGoShort": [
+      {
+        "line": 181,
+        "context": [
+          {
+            "line": 179,
+            "text": ""
+          },
+          {
+            "line": 180,
+            "text": "canGoLong  = longSignal and not longCdBlocked and not exitCdBlocked and not isHalted"
+          },
+          {
+            "line": 181,
+            "text": "canGoShort = shortSignal and not shortCdBlocked and not exitCdBlocked and not isHalted"
+          },
+          {
+            "line": 182,
+            "text": ""
+          },
+          {
+            "line": 183,
+            "text": "// \u2500\u2500\u2500 Pattern-based SL (capped at slMaxPct) \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 263,
+        "context": [
+          {
+            "line": 261,
+            "text": "initSlDist := close - stopLong"
+          },
+          {
+            "line": 262,
+            "text": ""
+          },
+          {
+            "line": 263,
+            "text": "if canGoShort and strategy.position_size == 0 and qtyShort > 0 and not pendingActive"
+          },
+          {
+            "line": 264,
+            "text": "strategy.entry(\"S\", strategy.short, qty=qtyShort)"
+          },
+          {
+            "line": 265,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=stopShort)"
+          }
+        ]
+      }
+    ],
+    "pendingFlipSide": [
+      {
+        "line": 157,
+        "context": [
+          {
+            "line": 155,
+            "text": "// V6 SL-Flip state"
+          },
+          {
+            "line": 156,
+            "text": "var bool isFlipPos      = false   // current position is a flip"
+          },
+          {
+            "line": 157,
+            "text": "var int pendingFlipSide = 0       // 0=none, 1=pending LONG, -1=pending SHORT"
+          },
+          {
+            "line": 158,
+            "text": "var int pendingFlipBar  = na"
+          },
+          {
+            "line": 159,
+            "text": "var float pendingFlipRef = na     // reference price (the SL that broke)"
+          }
+        ]
+      },
+      {
+        "line": 212,
+        "context": [
+          {
+            "line": 210,
+            "text": ""
+          },
+          {
+            "line": 211,
+            "text": "// \u2500\u2500\u2500 V6 SL-FLIP: execute pending flip if wait elapsed (respects DD halt + generic cooldown) \u2500\u2500\u2500"
+          },
+          {
+            "line": 212,
+            "text": "flipReady = useSlFlip and pendingFlipSide != 0 and strategy.position_size == 0 and not na(pendingFlipBar) and (bar_index - pendingFlipBar) >= flipWaitHours and not isHalted and not exitCdBlocked"
+          },
+          {
+            "line": 213,
+            "text": ""
+          },
+          {
+            "line": 214,
+            "text": "if flipReady"
+          }
+        ]
+      },
+      {
+        "line": 216,
+        "context": [
+          {
+            "line": 214,
+            "text": "if flipReady"
+          },
+          {
+            "line": 215,
+            "text": "lbStart = math.max(0, bar_index - flipSrLookback)"
+          },
+          {
+            "line": 216,
+            "text": "if pendingFlipSide == -1"
+          },
+          {
+            "line": 217,
+            "text": "swingHigh = ta.highest(high, flipSrLookback)"
+          },
+          {
+            "line": 218,
+            "text": "swingSl   = swingHigh * (1 + slBufPct)"
+          }
+        ]
+      },
+      {
+        "line": 230,
+        "context": [
+          {
+            "line": 228,
+            "text": "storedSL    := flipSL"
+          },
+          {
+            "line": 229,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 230,
+            "text": "else if pendingFlipSide == 1"
+          },
+          {
+            "line": 231,
+            "text": "swingLow = ta.lowest(low, flipSrLookback)"
+          },
+          {
+            "line": 232,
+            "text": "swingSl  = swingLow * (1 - slBufPct)"
+          }
+        ]
+      },
+      {
+        "line": 244,
+        "context": [
+          {
+            "line": 242,
+            "text": "storedSL    := flipSL"
+          },
+          {
+            "line": 243,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 244,
+            "text": "pendingFlipSide := 0"
+          },
+          {
+            "line": 245,
+            "text": ""
+          },
+          {
+            "line": 246,
+            "text": "// Time-stop for flip positions"
+          }
+        ]
+      },
+      {
+        "line": 252,
+        "context": [
+          {
+            "line": 250,
+            "text": ""
+          },
+          {
+            "line": 251,
+            "text": "// Block normal entries while a flip is pending"
+          },
+          {
+            "line": 252,
+            "text": "pendingActive = pendingFlipSide != 0"
+          },
+          {
+            "line": 253,
+            "text": ""
+          },
+          {
+            "line": 254,
+            "text": "// \u2500\u2500\u2500 Normal entry orders \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 355,
+        "context": [
+          {
+            "line": 353,
+            "text": "// Queue SHORT flip ONLY if this wasn't already a flip (prevents flip-on-flip)"
+          },
+          {
+            "line": 354,
+            "text": "if useSlFlip and not wasFlip"
+          },
+          {
+            "line": 355,
+            "text": "pendingFlipSide := -1"
+          },
+          {
+            "line": 356,
+            "text": "pendingFlipBar  := bar_index"
+          },
+          {
+            "line": 357,
+            "text": "pendingFlipRef  := storedSL"
+          }
+        ]
+      },
+      {
+        "line": 361,
+        "context": [
+          {
+            "line": 359,
+            "text": "lastShortSlBar := bar_index"
+          },
+          {
+            "line": 360,
+            "text": "if useSlFlip and not wasFlip"
+          },
+          {
+            "line": 361,
+            "text": "pendingFlipSide := 1"
+          },
+          {
+            "line": 362,
+            "text": "pendingFlipBar  := bar_index"
+          },
+          {
+            "line": 363,
+            "text": "pendingFlipRef  := storedSL"
+          }
+        ]
+      }
+    ],
+    "pendingFlipTime": [],
+    "flipSL": [
+      {
+        "line": 100,
+        "context": [
+          {
+            "line": 98,
+            "text": "flipWaitHours  = input.int(1,       \"Flip wait (hours)\", minval=0, maxval=24, group=grpFlip,"
+          },
+          {
+            "line": 99,
+            "text": "tooltip=\"Wait N hours after SL before flipping. 1h is optimal \u2014 avoids whipsaw, lets move settle.\")"
+          },
+          {
+            "line": 100,
+            "text": "flipSlCapPct   = input.float(1.5,   \"Flip SL cap (%)\", minval=0.5, maxval=5, step=0.1, group=grpFlip,"
+          },
+          {
+            "line": 101,
+            "text": "tooltip=\"Tighter SL for flip trades (1.5% vs main 2.5%). Pattern-based from swing high/low.\") / 100"
+          },
+          {
+            "line": 102,
+            "text": "flipSrLookback = input.int(10,      \"Swing lookback (bars)\", minval=3, maxval=50, group=grpFlip,"
+          }
+        ]
+      },
+      {
+        "line": 219,
+        "context": [
+          {
+            "line": 217,
+            "text": "swingHigh = ta.highest(high, flipSrLookback)"
+          },
+          {
+            "line": 218,
+            "text": "swingSl   = swingHigh * (1 + slBufPct)"
+          },
+          {
+            "line": 219,
+            "text": "capSl     = pendingFlipRef * (1 + flipSlCapPct)"
+          },
+          {
+            "line": 220,
+            "text": "flipSL    = math.min(swingSl, capSl)"
+          },
+          {
+            "line": 221,
+            "text": "flipDist  = flipSL - close"
+          }
+        ]
+      },
+      {
+        "line": 220,
+        "context": [
+          {
+            "line": 218,
+            "text": "swingSl   = swingHigh * (1 + slBufPct)"
+          },
+          {
+            "line": 219,
+            "text": "capSl     = pendingFlipRef * (1 + flipSlCapPct)"
+          },
+          {
+            "line": 220,
+            "text": "flipSL    = math.min(swingSl, capSl)"
+          },
+          {
+            "line": 221,
+            "text": "flipDist  = flipSL - close"
+          },
+          {
+            "line": 222,
+            "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          }
+        ]
+      },
+      {
+        "line": 221,
+        "context": [
+          {
+            "line": 219,
+            "text": "capSl     = pendingFlipRef * (1 + flipSlCapPct)"
+          },
+          {
+            "line": 220,
+            "text": "flipSL    = math.min(swingSl, capSl)"
+          },
+          {
+            "line": 221,
+            "text": "flipDist  = flipSL - close"
+          },
+          {
+            "line": 222,
+            "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          }
+        ]
+      },
+      {
+        "line": 225,
+        "context": [
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 224,
+            "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+          },
+          {
+            "line": 225,
+            "text": "strategy.exit(\"x\", from_entry=\"fS\", stop=flipSL)"
+          },
+          {
+            "line": 226,
+            "text": "isFlipPos   := true"
+          },
+          {
+            "line": 227,
+            "text": "flipEntryBar := bar_index"
+          }
+        ]
+      },
+      {
+        "line": 228,
+        "context": [
+          {
+            "line": 226,
+            "text": "isFlipPos   := true"
+          },
+          {
+            "line": 227,
+            "text": "flipEntryBar := bar_index"
+          },
+          {
+            "line": 228,
+            "text": "storedSL    := flipSL"
+          },
+          {
+            "line": 229,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 230,
+            "text": "else if pendingFlipSide == 1"
+          }
+        ]
+      },
+      {
+        "line": 233,
+        "context": [
+          {
+            "line": 231,
+            "text": "swingLow = ta.lowest(low, flipSrLookback)"
+          },
+          {
+            "line": 232,
+            "text": "swingSl  = swingLow * (1 - slBufPct)"
+          },
+          {
+            "line": 233,
+            "text": "capSl    = pendingFlipRef * (1 - flipSlCapPct)"
+          },
+          {
+            "line": 234,
+            "text": "flipSL   = math.max(swingSl, capSl)"
+          },
+          {
+            "line": 235,
+            "text": "flipDist = close - flipSL"
+          }
+        ]
+      },
+      {
+        "line": 234,
+        "context": [
+          {
+            "line": 232,
+            "text": "swingSl  = swingLow * (1 - slBufPct)"
+          },
+          {
+            "line": 233,
+            "text": "capSl    = pendingFlipRef * (1 - flipSlCapPct)"
+          },
+          {
+            "line": 234,
+            "text": "flipSL   = math.max(swingSl, capSl)"
+          },
+          {
+            "line": 235,
+            "text": "flipDist = close - flipSL"
+          },
+          {
+            "line": 236,
+            "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          }
+        ]
+      },
+      {
+        "line": 235,
+        "context": [
+          {
+            "line": 233,
+            "text": "capSl    = pendingFlipRef * (1 - flipSlCapPct)"
+          },
+          {
+            "line": 234,
+            "text": "flipSL   = math.max(swingSl, capSl)"
+          },
+          {
+            "line": 235,
+            "text": "flipDist = close - flipSL"
+          },
+          {
+            "line": 236,
+            "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          }
+        ]
+      },
+      {
+        "line": 239,
+        "context": [
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 238,
+            "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+          },
+          {
+            "line": 239,
+            "text": "strategy.exit(\"x\", from_entry=\"fL\", stop=flipSL)"
+          },
+          {
+            "line": 240,
+            "text": "isFlipPos   := true"
+          },
+          {
+            "line": 241,
+            "text": "flipEntryBar := bar_index"
+          }
+        ]
+      },
+      {
+        "line": 242,
+        "context": [
+          {
+            "line": 240,
+            "text": "isFlipPos   := true"
+          },
+          {
+            "line": 241,
+            "text": "flipEntryBar := bar_index"
+          },
+          {
+            "line": 242,
+            "text": "storedSL    := flipSL"
+          },
+          {
+            "line": 243,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 244,
+            "text": "pendingFlipSide := 0"
+          }
+        ]
+      }
+    ],
+    "flipQty": [
+      {
+        "line": 222,
+        "context": [
+          {
+            "line": 220,
+            "text": "flipSL    = math.min(swingSl, capSl)"
+          },
+          {
+            "line": 221,
+            "text": "flipDist  = flipSL - close"
+          },
+          {
+            "line": 222,
+            "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 224,
+            "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+          }
+        ]
+      },
+      {
+        "line": 223,
+        "context": [
+          {
+            "line": 221,
+            "text": "flipDist  = flipSL - close"
+          },
+          {
+            "line": 222,
+            "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 224,
+            "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+          },
+          {
+            "line": 225,
+            "text": "strategy.exit(\"x\", from_entry=\"fS\", stop=flipSL)"
+          }
+        ]
+      },
+      {
+        "line": 224,
+        "context": [
+          {
+            "line": 222,
+            "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 224,
+            "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+          },
+          {
+            "line": 225,
+            "text": "strategy.exit(\"x\", from_entry=\"fS\", stop=flipSL)"
+          },
+          {
+            "line": 226,
+            "text": "isFlipPos   := true"
+          }
+        ]
+      },
+      {
+        "line": 236,
+        "context": [
+          {
+            "line": 234,
+            "text": "flipSL   = math.max(swingSl, capSl)"
+          },
+          {
+            "line": 235,
+            "text": "flipDist = close - flipSL"
+          },
+          {
+            "line": 236,
+            "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 238,
+            "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+          }
+        ]
+      },
+      {
+        "line": 237,
+        "context": [
+          {
+            "line": 235,
+            "text": "flipDist = close - flipSL"
+          },
+          {
+            "line": 236,
+            "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 238,
+            "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+          },
+          {
+            "line": 239,
+            "text": "strategy.exit(\"x\", from_entry=\"fL\", stop=flipSL)"
+          }
+        ]
+      },
+      {
+        "line": 238,
+        "context": [
+          {
+            "line": 236,
+            "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+          },
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 238,
+            "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+          },
+          {
+            "line": 239,
+            "text": "strategy.exit(\"x\", from_entry=\"fL\", stop=flipSL)"
+          },
+          {
+            "line": 240,
+            "text": "isFlipPos   := true"
+          }
+        ]
+      }
+    ],
+    "entryPx": [
+      {
+        "line": 279,
+        "context": [
+          {
+            "line": 277,
+            "text": "// \u2500\u2500\u2500 V2 PYRAMIDING \u2014 add to winning position at +3R \u2500\u2500\u2500"
+          },
+          {
+            "line": 278,
+            "text": "if usePyramid and strategy.position_size != 0 and not pyramided and not isFlipPos and not na(initSlDist) and initSlDist > 0"
+          },
+          {
+            "line": 279,
+            "text": "entryPx = strategy.position_avg_price"
+          },
+          {
+            "line": 280,
+            "text": "if strategy.position_size > 0"
+          },
+          {
+            "line": 281,
+            "text": "currentR = (close - entryPx) / initSlDist"
+          }
+        ]
+      },
+      {
+        "line": 281,
+        "context": [
+          {
+            "line": 279,
+            "text": "entryPx = strategy.position_avg_price"
+          },
+          {
+            "line": 280,
+            "text": "if strategy.position_size > 0"
+          },
+          {
+            "line": 281,
+            "text": "currentR = (close - entryPx) / initSlDist"
+          },
+          {
+            "line": 282,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 283,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          }
+        ]
+      },
+      {
+        "line": 287,
+        "context": [
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          },
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          },
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          }
+        ]
+      },
+      {
+        "line": 294,
+        "context": [
+          {
+            "line": 292,
+            "text": "pyramidEntry := close"
+          },
+          {
+            "line": 293,
+            "text": "else if strategy.position_size < 0"
+          },
+          {
+            "line": 294,
+            "text": "currentR = (entryPx - close) / initSlDist"
+          },
+          {
+            "line": 295,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 296,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          }
+        ]
+      },
+      {
+        "line": 299,
+        "context": [
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          }
+        ]
+      }
+    ],
+    "initSlDist": [
+      {
+        "line": 164,
+        "context": [
+          {
+            "line": 162,
+            "text": "var bool pyramided      = false"
+          },
+          {
+            "line": 163,
+            "text": "var float pyramidEntry  = na"
+          },
+          {
+            "line": 164,
+            "text": "var float initSlDist    = na      // SL distance at entry (for R-calc)"
+          },
+          {
+            "line": 165,
+            "text": ""
+          },
+          {
+            "line": 166,
+            "text": "// \u2500\u2500\u2500 Timeframe advisory \u2014 strategy's backtest was run on 1H \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 261,
+        "context": [
+          {
+            "line": 259,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 260,
+            "text": "pyramided := false"
+          },
+          {
+            "line": 261,
+            "text": "initSlDist := close - stopLong"
+          },
+          {
+            "line": 262,
+            "text": ""
+          },
+          {
+            "line": 263,
+            "text": "if canGoShort and strategy.position_size == 0 and qtyShort > 0 and not pendingActive"
+          }
+        ]
+      },
+      {
+        "line": 269,
+        "context": [
+          {
+            "line": 267,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 268,
+            "text": "pyramided := false"
+          },
+          {
+            "line": 269,
+            "text": "initSlDist := stopShort - close"
+          },
+          {
+            "line": 270,
+            "text": ""
+          },
+          {
+            "line": 271,
+            "text": "// \u2500\u2500\u2500 Store entry SL for partial TP \u2500\u2500\u2500"
+          }
+        ]
+      },
+      {
+        "line": 278,
+        "context": [
+          {
+            "line": 276,
+            "text": ""
+          },
+          {
+            "line": 277,
+            "text": "// \u2500\u2500\u2500 V2 PYRAMIDING \u2014 add to winning position at +3R \u2500\u2500\u2500"
+          },
+          {
+            "line": 278,
+            "text": "if usePyramid and strategy.position_size != 0 and not pyramided and not isFlipPos and not na(initSlDist) and initSlDist > 0"
+          },
+          {
+            "line": 279,
+            "text": "entryPx = strategy.position_avg_price"
+          },
+          {
+            "line": 280,
+            "text": "if strategy.position_size > 0"
+          }
+        ]
+      },
+      {
+        "line": 281,
+        "context": [
+          {
+            "line": 279,
+            "text": "entryPx = strategy.position_avg_price"
+          },
+          {
+            "line": 280,
+            "text": "if strategy.position_size > 0"
+          },
+          {
+            "line": 281,
+            "text": "currentR = (close - entryPx) / initSlDist"
+          },
+          {
+            "line": 282,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 283,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          }
+        ]
+      },
+      {
+        "line": 287,
+        "context": [
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          },
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          },
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          }
+        ]
+      },
+      {
+        "line": 294,
+        "context": [
+          {
+            "line": 292,
+            "text": "pyramidEntry := close"
+          },
+          {
+            "line": 293,
+            "text": "else if strategy.position_size < 0"
+          },
+          {
+            "line": 294,
+            "text": "currentR = (entryPx - close) / initSlDist"
+          },
+          {
+            "line": 295,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 296,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          }
+        ]
+      },
+      {
+        "line": 299,
+        "context": [
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          }
+        ]
+      }
+    ],
+    "partialTaken": [
+      {
+        "line": 153,
+        "context": [
+          {
+            "line": 151,
+            "text": "var int haltUntilBar   = na"
+          },
+          {
+            "line": 152,
+            "text": "var float peakEquity   = strategy.initial_capital"
+          },
+          {
+            "line": 153,
+            "text": "var bool partialTaken  = false"
+          },
+          {
+            "line": 154,
+            "text": "var float storedSL     = na"
+          },
+          {
+            "line": 155,
+            "text": "// V6 SL-Flip state"
+          }
+        ]
+      },
+      {
+        "line": 229,
+        "context": [
+          {
+            "line": 227,
+            "text": "flipEntryBar := bar_index"
+          },
+          {
+            "line": 228,
+            "text": "storedSL    := flipSL"
+          },
+          {
+            "line": 229,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 230,
+            "text": "else if pendingFlipSide == 1"
+          },
+          {
+            "line": 231,
+            "text": "swingLow = ta.lowest(low, flipSrLookback)"
+          }
+        ]
+      },
+      {
+        "line": 243,
+        "context": [
+          {
+            "line": 241,
+            "text": "flipEntryBar := bar_index"
+          },
+          {
+            "line": 242,
+            "text": "storedSL    := flipSL"
+          },
+          {
+            "line": 243,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 244,
+            "text": "pendingFlipSide := 0"
+          },
+          {
+            "line": 245,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 258,
+        "context": [
+          {
+            "line": 256,
+            "text": "strategy.entry(\"L\", strategy.long, qty=qtyLong)"
+          },
+          {
+            "line": 257,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=stopLong)"
+          },
+          {
+            "line": 258,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 259,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 260,
+            "text": "pyramided := false"
+          }
+        ]
+      },
+      {
+        "line": 266,
+        "context": [
+          {
+            "line": 264,
+            "text": "strategy.entry(\"S\", strategy.short, qty=qtyShort)"
+          },
+          {
+            "line": 265,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=stopShort)"
+          },
+          {
+            "line": 266,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 267,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 268,
+            "text": "pyramided := false"
+          }
+        ]
+      },
+      {
+        "line": 308,
+        "context": [
+          {
+            "line": 306,
+            "text": "// \u2500\u2500\u2500 Partial TP (+ move SL to BE after firing) \u2500\u2500\u2500"
+          },
+          {
+            "line": 307,
+            "text": "// Use the correct entry ID based on whether position is a flip or main entry"
+          },
+          {
+            "line": 308,
+            "text": "if strategy.position_size > 0 and not partialTaken and not na(storedSL)"
+          },
+          {
+            "line": 309,
+            "text": "entryPrice = strategy.position_avg_price"
+          },
+          {
+            "line": 310,
+            "text": "slDistance  = entryPrice - storedSL"
+          }
+        ]
+      },
+      {
+        "line": 316,
+        "context": [
+          {
+            "line": 314,
+            "text": "tpId = isFlipPos ? \"fL\" : \"L\""
+          },
+          {
+            "line": 315,
+            "text": "strategy.close(tpId, qty_percent=partialTpFrac)"
+          },
+          {
+            "line": 316,
+            "text": "partialTaken := true"
+          },
+          {
+            "line": 317,
+            "text": "// Move SL to BE+buffer \u2014 but NEVER move SL backwards"
+          },
+          {
+            "line": 318,
+            "text": "if partialBeBufPct > 0"
+          }
+        ]
+      },
+      {
+        "line": 324,
+        "context": [
+          {
+            "line": 322,
+            "text": "storedSL := newSL"
+          },
+          {
+            "line": 323,
+            "text": ""
+          },
+          {
+            "line": 324,
+            "text": "if strategy.position_size < 0 and not partialTaken and not na(storedSL)"
+          },
+          {
+            "line": 325,
+            "text": "entryPrice = strategy.position_avg_price"
+          },
+          {
+            "line": 326,
+            "text": "slDistance  = storedSL - entryPrice"
+          }
+        ]
+      },
+      {
+        "line": 332,
+        "context": [
+          {
+            "line": 330,
+            "text": "tpId = isFlipPos ? \"fS\" : \"S\""
+          },
+          {
+            "line": 331,
+            "text": "strategy.close(tpId, qty_percent=partialTpFrac)"
+          },
+          {
+            "line": 332,
+            "text": "partialTaken := true"
+          },
+          {
+            "line": 333,
+            "text": "if partialBeBufPct > 0"
+          },
+          {
+            "line": 334,
+            "text": "beSL = entryPrice * (1 - partialBeBufPct)"
+          }
+        ]
+      }
+    ],
+    "partialTrigger": [],
+    "pyramidTrigger": [],
+    "pyramidQty": [
+      {
+        "line": 283,
+        "context": [
+          {
+            "line": 281,
+            "text": "currentR = (close - entryPx) / initSlDist"
+          },
+          {
+            "line": 282,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 283,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 284,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          }
+        ]
+      },
+      {
+        "line": 284,
+        "context": [
+          {
+            "line": 282,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 283,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 284,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          },
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          }
+        ]
+      },
+      {
+        "line": 285,
+        "context": [
+          {
+            "line": 283,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 284,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          },
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          },
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          }
+        ]
+      },
+      {
+        "line": 296,
+        "context": [
+          {
+            "line": 294,
+            "text": "currentR = (entryPx - close) / initSlDist"
+          },
+          {
+            "line": 295,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 296,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          }
+        ]
+      },
+      {
+        "line": 297,
+        "context": [
+          {
+            "line": 295,
+            "text": "if currentR >= pyramidR"
+          },
+          {
+            "line": 296,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          }
+        ]
+      },
+      {
+        "line": 298,
+        "context": [
+          {
+            "line": 296,
+            "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+          },
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          }
+        ]
+      }
+    ],
+    "pyrSL": [
+      {
+        "line": 287,
+        "context": [
+          {
+            "line": 285,
+            "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+          },
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          },
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          }
+        ]
+      },
+      {
+        "line": 288,
+        "context": [
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          },
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          },
+          {
+            "line": 290,
+            "text": "storedSL := pyrSL"
+          }
+        ]
+      },
+      {
+        "line": 289,
+        "context": [
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          },
+          {
+            "line": 290,
+            "text": "storedSL := pyrSL"
+          },
+          {
+            "line": 291,
+            "text": "pyramided := true"
+          }
+        ]
+      },
+      {
+        "line": 290,
+        "context": [
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          },
+          {
+            "line": 290,
+            "text": "storedSL := pyrSL"
+          },
+          {
+            "line": 291,
+            "text": "pyramided := true"
+          },
+          {
+            "line": 292,
+            "text": "pyramidEntry := close"
+          }
+        ]
+      },
+      {
+        "line": 299,
+        "context": [
+          {
+            "line": 297,
+            "text": "if pyramidQty > 0"
+          },
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          }
+        ]
+      },
+      {
+        "line": 300,
+        "context": [
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          },
+          {
+            "line": 302,
+            "text": "storedSL := pyrSL"
+          }
+        ]
+      },
+      {
+        "line": 301,
+        "context": [
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          },
+          {
+            "line": 302,
+            "text": "storedSL := pyrSL"
+          },
+          {
+            "line": 303,
+            "text": "pyramided := true"
+          }
+        ]
+      },
+      {
+        "line": 302,
+        "context": [
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          },
+          {
+            "line": 302,
+            "text": "storedSL := pyrSL"
+          },
+          {
+            "line": 303,
+            "text": "pyramided := true"
+          },
+          {
+            "line": 304,
+            "text": "pyramidEntry := close"
+          }
+        ]
+      }
+    ],
+    "strategy.close": [
+      {
+        "line": 248,
+        "context": [
+          {
+            "line": 246,
+            "text": "// Time-stop for flip positions"
+          },
+          {
+            "line": 247,
+            "text": "if isFlipPos and strategy.position_size != 0 and not na(flipEntryBar) and (bar_index - flipEntryBar) >= flipTimeStopH"
+          },
+          {
+            "line": 248,
+            "text": "strategy.close_all()"
+          },
+          {
+            "line": 249,
+            "text": "isFlipPos := false"
+          },
+          {
+            "line": 250,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 315,
+        "context": [
+          {
+            "line": 313,
+            "text": "if currentR >= partialTpR"
+          },
+          {
+            "line": 314,
+            "text": "tpId = isFlipPos ? \"fL\" : \"L\""
+          },
+          {
+            "line": 315,
+            "text": "strategy.close(tpId, qty_percent=partialTpFrac)"
+          },
+          {
+            "line": 316,
+            "text": "partialTaken := true"
+          },
+          {
+            "line": 317,
+            "text": "// Move SL to BE+buffer \u2014 but NEVER move SL backwards"
+          }
+        ]
+      },
+      {
+        "line": 331,
+        "context": [
+          {
+            "line": 329,
+            "text": "if currentR >= partialTpR"
+          },
+          {
+            "line": 330,
+            "text": "tpId = isFlipPos ? \"fS\" : \"S\""
+          },
+          {
+            "line": 331,
+            "text": "strategy.close(tpId, qty_percent=partialTpFrac)"
+          },
+          {
+            "line": 332,
+            "text": "partialTaken := true"
+          },
+          {
+            "line": 333,
+            "text": "if partialBeBufPct > 0"
+          }
+        ]
+      },
+      {
+        "line": 341,
+        "context": [
+          {
+            "line": 339,
+            "text": "// \u2500\u2500\u2500 Opposite signal exit (no flip-open) \u2014 use close_all since full close anyway \u2500\u2500\u2500"
+          },
+          {
+            "line": 340,
+            "text": "if strategy.position_size > 0 and shortSignal"
+          },
+          {
+            "line": 341,
+            "text": "strategy.close_all()"
+          },
+          {
+            "line": 342,
+            "text": "if strategy.position_size < 0 and longSignal"
+          },
+          {
+            "line": 343,
+            "text": "strategy.close_all()"
+          }
+        ]
+      },
+      {
+        "line": 343,
+        "context": [
+          {
+            "line": 341,
+            "text": "strategy.close_all()"
+          },
+          {
+            "line": 342,
+            "text": "if strategy.position_size < 0 and longSignal"
+          },
+          {
+            "line": 343,
+            "text": "strategy.close_all()"
+          },
+          {
+            "line": 344,
+            "text": ""
+          },
+          {
+            "line": 345,
+            "text": "// \u2500\u2500\u2500 Track exits for cooldown + queue flip on SL \u2500\u2500\u2500"
+          }
+        ]
+      }
+    ],
+    "strategy.exit": [
+      {
+        "line": 225,
+        "context": [
+          {
+            "line": 223,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 224,
+            "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+          },
+          {
+            "line": 225,
+            "text": "strategy.exit(\"x\", from_entry=\"fS\", stop=flipSL)"
+          },
+          {
+            "line": 226,
+            "text": "isFlipPos   := true"
+          },
+          {
+            "line": 227,
+            "text": "flipEntryBar := bar_index"
+          }
+        ]
+      },
+      {
+        "line": 239,
+        "context": [
+          {
+            "line": 237,
+            "text": "if flipQty > 0"
+          },
+          {
+            "line": 238,
+            "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+          },
+          {
+            "line": 239,
+            "text": "strategy.exit(\"x\", from_entry=\"fL\", stop=flipSL)"
+          },
+          {
+            "line": 240,
+            "text": "isFlipPos   := true"
+          },
+          {
+            "line": 241,
+            "text": "flipEntryBar := bar_index"
+          }
+        ]
+      },
+      {
+        "line": 257,
+        "context": [
+          {
+            "line": 255,
+            "text": "if canGoLong and strategy.position_size == 0 and qtyLong > 0 and not pendingActive"
+          },
+          {
+            "line": 256,
+            "text": "strategy.entry(\"L\", strategy.long, qty=qtyLong)"
+          },
+          {
+            "line": 257,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=stopLong)"
+          },
+          {
+            "line": 258,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 259,
+            "text": "isFlipPos := false"
+          }
+        ]
+      },
+      {
+        "line": 265,
+        "context": [
+          {
+            "line": 263,
+            "text": "if canGoShort and strategy.position_size == 0 and qtyShort > 0 and not pendingActive"
+          },
+          {
+            "line": 264,
+            "text": "strategy.entry(\"S\", strategy.short, qty=qtyShort)"
+          },
+          {
+            "line": 265,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=stopShort)"
+          },
+          {
+            "line": 266,
+            "text": "partialTaken := false"
+          },
+          {
+            "line": 267,
+            "text": "isFlipPos := false"
+          }
+        ]
+      },
+      {
+        "line": 288,
+        "context": [
+          {
+            "line": 286,
+            "text": "// Move SL to entry + 0.5R (lock small profit)"
+          },
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          },
+          {
+            "line": 290,
+            "text": "storedSL := pyrSL"
+          }
+        ]
+      },
+      {
+        "line": 289,
+        "context": [
+          {
+            "line": 287,
+            "text": "pyrSL = entryPx + 0.5 * initSlDist"
+          },
+          {
+            "line": 288,
+            "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+          },
+          {
+            "line": 289,
+            "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+          },
+          {
+            "line": 290,
+            "text": "storedSL := pyrSL"
+          },
+          {
+            "line": 291,
+            "text": "pyramided := true"
+          }
+        ]
+      },
+      {
+        "line": 300,
+        "context": [
+          {
+            "line": 298,
+            "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+          },
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          },
+          {
+            "line": 302,
+            "text": "storedSL := pyrSL"
+          }
+        ]
+      },
+      {
+        "line": 301,
+        "context": [
+          {
+            "line": 299,
+            "text": "pyrSL = entryPx - 0.5 * initSlDist"
+          },
+          {
+            "line": 300,
+            "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+          },
+          {
+            "line": 301,
+            "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+          },
+          {
+            "line": 302,
+            "text": "storedSL := pyrSL"
+          },
+          {
+            "line": 303,
+            "text": "pyramided := true"
+          }
+        ]
+      },
+      {
+        "line": 321,
+        "context": [
+          {
+            "line": 319,
+            "text": "beSL = entryPrice * (1 + partialBeBufPct)"
+          },
+          {
+            "line": 320,
+            "text": "newSL = math.max(storedSL, beSL)"
+          },
+          {
+            "line": 321,
+            "text": "strategy.exit(\"x\", from_entry=tpId, stop=newSL)"
+          },
+          {
+            "line": 322,
+            "text": "storedSL := newSL"
+          },
+          {
+            "line": 323,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "line": 336,
+        "context": [
+          {
+            "line": 334,
+            "text": "beSL = entryPrice * (1 - partialBeBufPct)"
+          },
+          {
+            "line": 335,
+            "text": "newSL = math.min(storedSL, beSL)"
+          },
+          {
+            "line": 336,
+            "text": "strategy.exit(\"x\", from_entry=tpId, stop=newSL)"
+          },
+          {
+            "line": 337,
+            "text": "storedSL := newSL"
+          },
+          {
+            "line": 338,
+            "text": ""
+          }
+        ]
+      }
+    ]
+  }
 }
