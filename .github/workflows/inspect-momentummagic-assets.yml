@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install requests
+      - run: python -m pip install requests pillow
       - name: Ensure English screenshot text extractor
         run: |
           if ! command -v tesseract >/dev/null 2>&1; then
@@ -32,6 +32,7 @@ jobs:
       - run: python inspect_momentummagic_assets.py
       - name: Publish inspection result to audit branch
         run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
           mkdir -p audit_results_momentummagic
           cp momentummagic_public_inspection.json audit_results_momentummagic/
           git config user.name github-actions[bot]
