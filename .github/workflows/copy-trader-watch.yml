@@ -1,0 +1,65 @@
+name: Copy Trader Watch
+
+on:
+  pull_request:
+    paths:
+      - "copy_trader_watch/**"
+      - ".github/workflows/copy-trader-watch.yml"
+  push:
+    branches: [main]
+    paths:
+      - "copy_trader_watch/**"
+      - ".github/workflows/copy-trader-watch.yml"
+  workflow_dispatch:
+  schedule:
+    # 02:30 UTC = 7:30 PM Pacific during daylight time. This is after
+    # the US cash session and after etoro_census's midnight-UTC snapshot.
+    - cron: "30 2 * * *"
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: copy-trader-watch
+  cancel-in-progress: false
+
+jobs:
+  test-and-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: copy_trader_watch/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r copy_trader_watch/requirements.txt
+
+      - name: Unit tests
+        run: python -m pytest -q copy_trader_watch/tests
+
+      - name: Run public-data watcher
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python copy_trader_watch/watch.py
+
+      - name: Commit daily snapshot and report
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add copy_trader_watch/data copy_trader_watch/reports
+          if git diff --cached --quiet; then
+            echo "No snapshot changes to commit."
+          else
+            git commit -m "Update copy trader watch snapshot"
+            git push
+          fi
