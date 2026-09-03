@@ -1,5 +1,4 @@
 import json, math, os, time
-from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 import requests
@@ -26,10 +25,9 @@ def phase(y):
 def fetch_bitstamp(start, end):
     """Fetch daily BTCUSD OHLC directly from Bitstamp in bounded chunks."""
     s = requests.Session()
-    s.headers.update({'User-Agent':'monthly-seasonality-independent-repro/1.0'})
+    s.headers.update({'User-Agent':'monthly-seasonality-independent-repro/1.1'})
     rows=[]
     cur=start
-    # Bitstamp max 1000 points; use <=900 days/chunk.
     while cur <= end:
         chunk_end=min(cur + pd.Timedelta(days=899), end)
         params={
@@ -64,10 +62,17 @@ def fetch_bitstamp(start, end):
 
 
 def monthly_table(df):
-    x=df.loc[TABLE_START:TABLE_END].copy()
+    """Reconstruct the author's table using month-end close-to-close returns.
+
+    This convention is independently pinned by the public lesson transcript:
+    post-halving February averages about 41.32% and March about 68.67%.
+    Those figures match Bitstamp month-end close-to-close returns, not
+    first-open-to-last-close returns.
+    """
+    x=df.loc[:TABLE_END].copy()
     m=x.resample('MS').agg(Open=('Open','first'), Close=('Close','last'))
-    m=m.dropna()
-    m['ret_pct']=(m['Close']/m['Open']-1)*100
+    m['ret_pct']=m['Close'].pct_change()*100
+    m=m.loc[TABLE_START:TABLE_END].dropna(subset=['ret_pct'])
     m['phase']=[phase(i.year) for i in m.index]
     m['month']=m.index.month
     t=m.groupby(['phase','month'])['ret_pct'].mean().unstack()
@@ -111,7 +116,6 @@ def bt(df, sig, fill_mode='next_open', end=None, fee_side=0.0, force_exit=True):
             elif pending=='sell' and inpos: sell(float(row.Open),dt)
             pending=None
         elif fill_mode=='month_open':
-            # Ex-post table is known before the month begins; emulate exact first-bar-open rebalance.
             if cur != prev:
                 if cur and not inpos: buy(float(row.Open),dt)
                 elif (not cur) and inpos: sell(float(row.Open),dt)
@@ -144,14 +148,12 @@ def bt(df, sig, fill_mode='next_open', end=None, fee_side=0.0, force_exit=True):
 
 
 def expanding_causal_table(monthly, asof_month):
-    # Only observations whose month ended before current month may contribute.
     hist=monthly[monthly.index < asof_month]
     t=hist.groupby(['phase','month'])['ret_pct'].mean().unstack()
     return t
 
 
 def causal_bt(df, monthly, start='2012-02-01', end='2025-01-31'):
-    # Recompute month classification using only prior completed observations.
     d=df.loc[start:end].copy()
     signals=[]
     last=False
@@ -172,14 +174,14 @@ def main():
     os.makedirs('audit_output_monthly_seasonality',exist_ok=True)
     df=fetch_bitstamp(START,FORWARD_END)
     print('BITSTAMP_RANGE',df.index.min(),df.index.max(),'ROWS',len(df))
-    print('EARLIEST_ROWS')
-    print(df.head(10).to_string())
     monthly,table=monthly_table(df)
-    print('\nMONTHLY_PHASE_TABLE_PCT')
+    print('\nMONTHLY_PHASE_TABLE_CLOSE_TO_CLOSE_PCT')
     print(table.round(2).to_string())
-    print('\nCHECK_VALUES post Jan/Feb/Mar, consolidation Oct, bear Dec:',
-          table.loc['post_halving',1],table.loc['post_halving',2],table.loc['post_halving',3],
-          table.loc['consolidation',10],table.loc['bear',12])
+    print('\nPUBLIC_TRANSCRIPT_CHECKS')
+    print('post_halving Feb',table.loc['post_halving',2],'target about 41.32')
+    print('post_halving Mar',table.loc['post_halving',3],'target about 68.67')
+    print('bear Dec',table.loc['bear',12],'target about -8.53')
+    print('consolidation Oct',table.loc['consolidation',10],'target about 23.37')
     sig=signal_series(df,table)
 
     rows=[]
@@ -194,7 +196,7 @@ def main():
             rows.append({'mode':mode,'end':end,**m,'score':score,'target_final':TARGET_FINAL,'final_ratio_to_claim':m['final']/TARGET_FINAL})
     matches=pd.DataFrame(rows).sort_values('score')
     print('\nTOP_CLAIM_MATCHES')
-    print(matches.head(20).to_string(index=False))
+    print(matches.head(30).to_string(index=False))
     matches.to_csv('audit_output_monthly_seasonality/claim_matches.csv',index=False)
     monthly.to_csv('audit_output_monthly_seasonality/monthly_returns_2012_2024.csv')
     table.to_csv('audit_output_monthly_seasonality/phase_month_average_table.csv')
@@ -204,7 +206,7 @@ def main():
     btr.to_csv('audit_output_monthly_seasonality/best_match_trades.csv',index=False)
     beq.rename('equity').to_csv('audit_output_monthly_seasonality/best_match_equity.csv')
 
-    # Frozen-table forward checks. Publication/course data table ends 2024; test 2025 and 2026 separately.
+    forward_rows=[]
     for s,e,name in [
         ('2025-01-01','2025-12-31','2025'),
         ('2026-01-01','2026-09-02','2026_ytd'),
@@ -212,10 +214,11 @@ def main():
         sub=df.loc[s:e]
         ss=signal_series(sub,table)
         mm,tt,ee=bt(sub,ss,'month_open',force_exit=True)
+        forward_rows.append({'period':name,**mm})
         print('FORWARD',name,mm)
         tt.to_csv(f'audit_output_monthly_seasonality/{name}_trades.csv',index=False)
+    pd.DataFrame(forward_rows).to_csv('audit_output_monthly_seasonality/forward_results.csv',index=False)
 
-    # Strict expanding/causal version: no future monthly outcomes used to classify prior months.
     cm,ctr,ceq=causal_bt(df,monthly,start='2012-02-01',end='2025-01-31')
     print('\nCAUSAL_EXPANDING',cm)
     ctr.to_csv('audit_output_monthly_seasonality/causal_expanding_trades.csv',index=False)
@@ -225,6 +228,7 @@ def main():
         'target':{'return_pct':TARGET_RETURN_PCT,'final_from_10000':TARGET_FINAL,'trades':27,'win_pct':85.19,'profit_factor':7.68},
         'best_match':{k:(str(v) if isinstance(v,pd.Timestamp) else float(v) if isinstance(v,(np.floating,float)) else int(v) if isinstance(v,(np.integer,int)) else v) for k,v in best.to_dict().items()},
         'causal_expanding':cm,
+        'forward':forward_rows,
         'table':{p:{str(m):float(table.loc[p,m]) for m in table.columns} for p in table.index},
     }
     with open('audit_output_monthly_seasonality/summary.json','w') as f: json.dump(summary,f,indent=2,default=str)
