@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Production entrypoint for Copy Trader Watch.
 
-Primary source: the public per-user endpoint exposed by weirdapps/etoro_census.
-That route can analyze an eToro username even when the investor is not in the
-census top-1,500 list. If a per-user lookup fails, this runner falls back to the
-large public census configured in config.json and lets watch.py surface a real
-missing-data alert if neither source can resolve the candidate.
+Primary candidate source: the public per-user endpoint exposed by
+weirdapps/etoro_census. That route can analyze an eToro username even when the
+investor is not in the census top-1,500 list. If a per-user lookup fails, this
+runner lazily falls back to the large public census configured in config.json.
+
+Primary benchmark source: Yahoo Finance's public chart endpoint, with the Stooq
+reader in watch.py retained as a fallback.
 """
 from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
@@ -20,12 +21,16 @@ import requests
 import watch
 
 PUBLIC_USER_ENDPOINT = "https://etoro-census.vercel.app/api/public/{username}"
-USER_AGENT = "copy-trader-watch/1.0"
+YAHOO_CHART_ENDPOINT = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+USER_AGENT = "Mozilla/5.0 (compatible; copy-trader-watch/1.0; +https://github.com/)"
 
 
 def _number(value: Any) -> float | None:
     try:
-        return float(value) if value is not None else None
+        number = float(value) if value is not None else None
+        if number is None or number != number:  # NaN guard
+            return None
+        return number
     except (TypeError, ValueError):
         return None
 
@@ -45,15 +50,19 @@ def previous_ytd(username: str, run_date: str) -> float | None:
 def build_investor_record(username: str, payload: dict[str, Any], run_date: str) -> dict[str, Any]:
     if not payload.get("success"):
         raise ValueError(payload.get("error") or f"Public lookup failed for {username}")
+
     portfolio = payload.get("data", {}).get("portfolio") or {}
     ytd = _number(portfolio.get("ytdReturn"))
+    if ytd is None:
+        raise ValueError(f"Public lookup returned no YTD return for {username}")
+
     prev = previous_ytd(username, run_date)
     derived_daily = watch.forward_return_from_ytd(prev, ytd) if prev is not None else None
 
     positions = []
     for position in portfolio.get("topPositions") or []:
         market_value = _number(position.get("marketValue"))
-        if market_value is None:
+        if market_value is None or market_value < 0:
             continue
         positions.append(
             {
@@ -95,6 +104,43 @@ def fetch_public_user(username: str, run_date: str) -> dict[str, Any]:
     return build_investor_record(username, response.json(), run_date)
 
 
+def last_yahoo_close(payload: dict[str, Any]) -> float | None:
+    """Return the most recent non-null chart close from a Yahoo response."""
+    chart = payload.get("chart") or {}
+    results = chart.get("result") or []
+    if not results:
+        return None
+    quotes = results[0].get("indicators", {}).get("quote") or []
+    if not quotes:
+        return None
+    closes = quotes[0].get("close") or []
+    for value in reversed(closes):
+        close = _number(value)
+        if close is not None and close > 0:
+            return close
+    return None
+
+
+def fetch_benchmark_close(symbol: str, stooq_fallback) -> float | None:
+    """Fetch an ETF close from Yahoo; fall back to the original Stooq reader."""
+    yahoo_symbol = symbol.split(".", 1)[0].upper()
+    try:
+        response = requests.get(
+            YAHOO_CHART_ENDPOINT.format(symbol=quote(yahoo_symbol, safe="")),
+            params={"range": "5d", "interval": "1d", "includePrePost": "false"},
+            timeout=20,
+            headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+        )
+        response.raise_for_status()
+        close = last_yahoo_close(response.json())
+        if close is not None:
+            return close
+    except (requests.RequestException, ValueError, json.JSONDecodeError) as exc:
+        print(f"WARNING: Yahoo benchmark lookup failed for {yahoo_symbol}: {exc}")
+
+    return stooq_fallback(symbol)
+
+
 def build_runtime_census(candidates: list[str], census_fallback_url: str) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     run_date = now.date().isoformat()
@@ -123,9 +169,7 @@ def build_runtime_census(candidates: list[str], census_fallback_url: str) -> dic
                 candidate["source"] = "etoro-census-top1500-fallback"
                 investors.append(candidate)
             else:
-                # Preserve an explicit placeholder so watch.py can produce a
-                # genuine missing-data alert rather than silently dropping it.
-                investors.append({"userName": username, "_lookup_failed": True})
+                print(f"WARNING: no public-data source resolved {username}")
 
     return {
         "metadata": {
@@ -147,15 +191,21 @@ def main() -> int:
 
     runtime_census = build_runtime_census(candidates, config["census_url"])
     original_fetch_json = watch.fetch_json
+    original_stooq = watch.fetch_stooq_close
 
     def runtime_fetch(_url: str) -> dict[str, Any]:
         return runtime_census
 
+    def runtime_benchmark(symbol: str) -> float | None:
+        return fetch_benchmark_close(symbol, original_stooq)
+
     watch.fetch_json = runtime_fetch
+    watch.fetch_stooq_close = runtime_benchmark
     try:
         return watch.main()
     finally:
         watch.fetch_json = original_fetch_json
+        watch.fetch_stooq_close = original_stooq
 
 
 if __name__ == "__main__":
