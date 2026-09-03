@@ -3,12 +3,12 @@
     "benchmarks": {
       "QQQ": {
         "as_of": "2026-09-03",
-        "close": 718.5900268554688,
+        "close": 718.5399780273438,
         "source": "yahoo"
       },
       "SPY": {
         "as_of": "2026-09-03",
-        "close": 773.719970703125,
+        "close": 773.60498046875,
         "source": "yahoo"
       }
     },
@@ -17,7 +17,7 @@
         "copiers": null,
         "country": 219,
         "daily_gain_pct": null,
-        "gain_ytd_pct": 4.84,
+        "gain_ytd_pct": 3.66,
         "name": "Luisitoalana",
         "portfolio_pnl_pct": null,
         "portfolio_value_pct": 100.0,
@@ -25,7 +25,7 @@
         "present": true,
         "risk_score": 5,
         "source": "etoro-census-public-user-api",
-        "source_timestamp": "2026-09-03T18:48:07.133Z",
+        "source_timestamp": "2026-09-03T18:51:58.005Z",
         "top1_concentration_pct": 13.0794,
         "top2_concentration_pct": 23.4961,
         "trades": 238,
@@ -45,7 +45,7 @@
         "copiers": null,
         "country": 219,
         "daily_gain_pct": null,
-        "gain_ytd_pct": 17.44,
+        "gain_ytd_pct": 18.4,
         "name": "Jonathan Dom\u00ednguez Serrata",
         "portfolio_pnl_pct": null,
         "portfolio_value_pct": 100.0,
@@ -53,7 +53,7 @@
         "present": true,
         "risk_score": 4,
         "source": "etoro-census-public-user-api",
-        "source_timestamp": "2026-09-03T18:48:03.520Z",
+        "source_timestamp": "2026-09-03T18:51:55.037Z",
         "top1_concentration_pct": 8.0934,
         "top2_concentration_pct": 15.924,
         "trades": 135,
@@ -63,6 +63,6 @@
       }
     },
     "date": "2026-09-03",
-    "source_collected_at": "2026-09-03T18:48:02.229727Z"
+    "source_collected_at": "2026-09-03T18:51:44.728565Z"
   }
 ]

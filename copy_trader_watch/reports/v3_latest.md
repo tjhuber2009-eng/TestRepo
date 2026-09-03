@@ -4,26 +4,27 @@
 
 ## Source health
 
-| Platform | Status | Records | Message |
-|---|---|---:|---|
-| etoro | ok | 2 |  |
-| hyperliquid | ok | 5 |  |
-| mql5 | ok | 30 |  |
+| Platform | Status | Records | Details | Message |
+|---|---|---:|---|---|
+| etoro | ok | 2 | resolved=2 |  |
+| hyperliquid | ok | 5 | resolved=5/5 |  |
+| mql5 | ok | 30 | parsed=192; free=0 |  |
+| polymarket | ok | 12 | resolved=12/12; persistent=3 |  |
 
 ## Free U.S.-actionable candidates
 
 | Rank | Platform | Trader | Return | Window | DD | PF | Trades | Win | Copyability | Score |
 |---:|---|---|---:|---|---:|---:|---:|---:|---:|---:|
-| 1 | etoro | Jonathan Domínguez Serrata (`jonathandm25`) | 17.44% | ytd | n/a | n/a | 135 | 77.78% | 85.00 | 7.62 |
-| 2 | etoro | Luisitoalana (`luisitoalana`) | 4.84% | ytd | n/a | n/a | 238 | 71.85% | 75.00 | 7.31 |
+| 1 | etoro | Jonathan Domínguez Serrata (`jonathandm25`) | 18.40% | ytd | n/a | n/a | 135 | 77.78% | 85.00 | 7.62 |
+| 2 | etoro | Luisitoalana (`luisitoalana`) | 3.66% | ytd | n/a | n/a | 238 | 71.85% | 75.00 | 7.31 |
 
 ## Cross-platform research leaderboard
 
-| Rank | Platform | Trader | Free | U.S. access | Evidence | Return | Window | DD | PF | Trades | Leverage | Copyability | Score |
+| Rank | Platform | Trader | Free | U.S. access | Evidence | Performance | Window / metric | DD | PF | Trades | Leverage | Copyability | Score |
 |---:|---|---|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|
 | 1 | mql5 | BAS 2 11 (`2325779`) | no | conditional | unknown | 870.00% | since-inception | -21.00% | 1.17 | 18706 | 1.00x | 60.00 | 94.43 |
-| 2 | hyperliquid | HL-28839 (`0x28839a…5ca5`) | yes | no | onchain | 139.42% | month | -8.04% | 3.69 | 2000 | 3.00x | 60.00 | 90.03 |
-| 3 | hyperliquid | HL-dc528 (`0xdc5289…19f5`) | yes | no | onchain | 183.74% | month | -9.35% | 6.69 | 2000 | 10.02x | 45.00 | 88.07 |
+| 2 | hyperliquid | HL-28839 (`0x28839a…5ca5`) | yes | no | onchain | 140.19% | month | -8.04% | 3.69 | 2000 | 2.99x | 60.00 | 90.32 |
+| 3 | hyperliquid | HL-dc528 (`0xdc5289…19f5`) | yes | no | onchain | 184.13% | month | -9.35% | 6.69 | 2000 | 9.95x | 55.00 | 89.01 |
 | 4 | mql5 | NoPain MT5 (`2262642`) | no | conditional | unknown | 2108.00% | since-inception | -21.00% | 1.69 | 5864 | 100.00x | 80.00 | 78.79 |
 | 5 | mql5 | RAZOR EA (`2300694`) | no | conditional | unknown | 2100.00% | since-inception | -22.00% | 1.96 | 1854 | 500.00x | 60.00 | 77.54 |
 | 6 | mql5 | Deux ex machina (`2271402`) | no | conditional | unknown | 6305.00% | since-inception | -26.00% | 1.87 | 1856 | 500.00x | 60.00 | 77.09 |
@@ -35,12 +36,17 @@
 | 12 | mql5 | VFCaput Vitual (`2377661`) | no | conditional | unknown | 155.00% | since-inception | -6.00% | 2.58 | 2219 | 500.00x | 50.00 | 73.72 |
 | 13 | mql5 | PsiqueTrader (`2384259`) | no | conditional | unknown | 150.00% | since-inception | -9.00% | 1.80 | 362 | 1.00x | 80.00 | 73.64 |
 | 14 | mql5 | Williams trader3 (`2383810`) | no | conditional | unknown | 500.00% | since-inception | -21.00% | 1.93 | 949 | 30.00x | 80.00 | 73.54 |
-| 15 | hyperliquid | HL-838d (`0x838d8e…520c`) | yes | no | onchain | 102.74% | month | -6.17% | 2.42 | 2000 | 9.83x | 40.00 | 73.34 |
-| 16 | hyperliquid | HL-80fb (`0x80fb58…faea`) | yes | no | onchain | 52.68% | month | -5.08% | 8.16 | 2000 | 2.41x | 90.00 | 73.23 |
+| 15 | hyperliquid | HL-838d (`0x838d8e…520c`) | yes | no | onchain | 102.85% | month | -6.17% | 2.42 | 2000 | 9.76x | 40.00 | 73.40 |
+| 16 | hyperliquid | HL-80fb (`0x80fb58…faea`) | yes | no | onchain | 52.96% | month | -5.08% | 8.16 | 2000 | 2.41x | 90.00 | 73.39 |
 | 17 | mql5 | Goldtrade Pro ICM (`2084890`) | no | conditional | unknown | 649.00% | since-inception | -32.00% | 1.59 | 729 | 500.00x | 60.00 | 72.85 |
 | 18 | mql5 | Relax EA (`884935`) | no | conditional | unknown | 766.00% | since-inception | -33.00% | 1.46 | 2013 | 500.00x | 60.00 | 72.71 |
 | 19 | mql5 | CCC (`2378209`) | no | conditional | unknown | 297.00% | since-inception | -11.00% | 3.79 | 263 | 500.00x | 60.00 | 72.46 |
 | 20 | mql5 | GoldWave signal (`2339082`) | no | conditional | unknown | 724.00% | since-inception | -18.00% | 4.41 | 281 | 500.00x | 60.00 | 72.43 |
+| 21 | mql5 | Gold Reaper Goldtrade Pro Daytrade Pro (`2204998`) | no | conditional | unknown | 951.00% | since-inception | -33.00% | 1.18 | 7926 | 500.00x | 50.00 | 71.70 |
+| 22 | mql5 | Harmonizer Extreme (`2360068`) | no | conditional | unknown | 2221.00% | since-inception | -22.00% | 1.93 | 1192 | 500.00x | 50.00 | 71.56 |
+| 23 | mql5 | Xauusd H1 (`2376983`) | no | conditional | unknown | 395.00% | since-inception | -16.00% | 2.17 | 969 | 500.00x | 60.00 | 71.37 |
+| 24 | mql5 | FXtrading (`2356441`) | no | conditional | unknown | 1299.00% | since-inception | -14.00% | 2.70 | 329 | 500.00x | 50.00 | 70.45 |
+| 25 | mql5 | KiraCat (`2342895`) | no | conditional | unknown | 417.00% | since-inception | -21.00% | 4.10 | 566 | 500.00x | 60.00 | 70.40 |
 
 ## Non-actionable reasons
 
@@ -64,11 +70,17 @@
 - **mql5 / Relax EA:** Not free: listed subscription fee is 40 USD/month.
 - **mql5 / CCC:** Not free: listed subscription fee is 39 USD/month.
 - **mql5 / GoldWave signal:** Not free: listed subscription fee is 49 USD/month.
+- **mql5 / Gold Reaper Goldtrade Pro Daytrade Pro:** Not free: listed subscription fee is 75 USD/month.
+- **mql5 / Harmonizer Extreme:** Not free: listed subscription fee is 999 USD/month.
+- **mql5 / Xauusd H1:** Not free: listed subscription fee is 30 USD/month.
+- **mql5 / FXtrading:** Not free: listed subscription fee is 30 USD/month.
+- **mql5 / KiraCat:** Not free: listed subscription fee is 49 USD/month.
 
 ## Method
 
 - eToro uses the existing V2 U.S. candidate monitor and keeps its public-source limitations.
 - Hyperliquid uses the official public `info` API. Its return path uses PnL change on the period's initial account-value base to reduce deposit/withdrawal distortion; it is research-only in this U.S. workflow.
-- MQL5 scans the public MT5 Signals table. Paid signals may appear in the research leaderboard, but only explicitly free signals can pass the free-cost gate; real-vs-demo status must be verified before actionability.
-- The cross-platform score rewards return/drawdown, age, trade sample, PF, source quality, and copyability, while penalizing unknown drawdown, leverage, concentration, high drawdown, and demo-only evidence.
+- MQL5 scans the public MT5 Signals list. Paid signals can appear in research; only explicitly free signals can pass the cost gate, and real-vs-demo/broker compatibility still require verification.
+- Polymarket uses the official Data API leaderboard plus closed/current-position endpoints. Its displayed percentage is closed-position realized P&L divided by estimated purchase cost in the sampled closed positions; it is a capital-efficiency proxy, **not account equity return**, and max drawdown is unknown.
+- The cross-platform score rewards performance/drawdown, age, trade sample, PF, source quality, and copyability, while penalizing unknown drawdown, leverage, concentration, high drawdown, and demo-only evidence.
 - Missing data is penalized rather than silently imputed.
