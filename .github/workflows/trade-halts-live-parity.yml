@@ -1,0 +1,112 @@
+name: Trade Halts Live Parity Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - .github/workflows/trade-halts-live-parity.yml
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Clone frozen upstream
+        run: |
+          git clone https://github.com/gilbertknight-star/Trade-Halts.git /tmp/halts
+          cd /tmp/halts
+          git checkout ec68b9581a32c51dce9fb5b65adc97b22861255f
+      - name: Install deps
+        run: python -m pip install pandas pyarrow numpy
+      - name: Recompute only events live bot can actually observe
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          import numpy as np, pandas as pd
+
+          root=Path('/tmp/halts/research/data')
+          ev=pd.read_parquet(root/'halt_events.parquet')
+          tr=pd.read_csv(root/'halt_trades_rvol.csv',parse_dates=['entry_ts','exit_ts'])
+          ev['anchor_ts_utc']=pd.to_datetime(ev.anchor_ts_utc,utc=True)
+          tr['entry_ts']=pd.to_datetime(tr.entry_ts,utc=True)
+          tr['date']=pd.to_datetime(tr.date).dt.date
+
+          # Exact join: prior audit established all 550 match exact symbol+timestamp.
+          symcol='symbol_resolved'
+          meta=ev[[symcol,'anchor_ts_utc','exchange','halt_type','resolve_status']].copy()
+          meta=meta.rename(columns={symcol:'symbol','anchor_ts_utc':'entry_ts'})
+          x=tr.merge(meta,on=['symbol','entry_ts'],how='left',validate='many_to_one')
+
+          def comm(shares,price):
+              return max(1.0,min(shares*.005,shares*price*.01))
+          def simulate(mask):
+              d=x.loc[mask].sort_values(['date','entry_ts']).copy()
+              eq=900.; daily=[]; n=0; rets=[]
+              for date,g in d.groupby('date',sort=True):
+                  bod=eq; avail=bod; pnl=0.
+                  for _,t in g.iterrows():
+                      pos=min(bod*.10,100000.,avail)
+                      if pos<5: continue
+                      shares=pos/float(t.entry_px)
+                      net=pos*(float(t.exit_px)/float(t.entry_px)-1)-comm(shares,float(t.entry_px))-comm(shares,float(t.exit_px))
+                      pnl+=net; avail-=pos; n+=1; rets.append(float(t.ret_pct))
+                  eq+=pnl; daily.append(eq)
+              a=np.array(daily,float); rm=np.maximum.accumulate(a); dd=float((a/rm-1).min()) if len(a) else float('nan')
+              if len(d):
+                  dates=sorted(d.date.unique()); years=(pd.Timestamp(dates[-1])-pd.Timestamp(dates[0])).days/365.25
+                  cagr=(eq/900.)**(1/max(years,1e-9))-1
+              else: cagr=float('nan')
+              return {'trades':n,'final':eq,'total_return_pct':(eq/900-1)*100,'cagr_pct':cagr*100,'max_dd_pct':dd*100,'win_rate_pct':float((np.array(rets)>0).mean()*100) if rets else None,'median_trade_pct':float(np.median(rets)) if rets else None}
+
+          luld=x.halt_type.astype(str).str.contains('LULD',case=False,na=False)
+          nasdaq=x.exchange.astype(str).str.casefold().eq('nasdaq')
+          subsets={
+            'all_550_readme':simulate(pd.Series(True,index=x.index)),
+            'luld_only_all_exchanges':simulate(luld),
+            'nasdaq_only_any_halt_type':simulate(nasdaq),
+            'nasdaq_luld_only_closest_live_LUDP':simulate(luld & nasdaq),
+            'non_luld':simulate(~luld),
+            'non_nasdaq':simulate(~nasdaq),
+          }
+          out={
+            'rows':len(x),
+            'unmatched_metadata':int(x.exchange.isna().sum()),
+            'trade_exchange_counts':{str(k):int(v) for k,v in x.exchange.fillna('<NA>').value_counts().items()},
+            'trade_halt_type_counts':{str(k):int(v) for k,v in x.halt_type.fillna('<NA>').value_counts().items()},
+            'cross_counts':x.groupby(['exchange','halt_type']).size().sort_values(ascending=False).head(40).rename('n').reset_index().to_dict('records'),
+            'subsets':subsets,
+            'source_logic':{
+              'backtest_rvol_event_filter':'bar_status == ok only; no halt_type or exchange restriction',
+              'live_bot_halt_codes':['LUDP'],
+              'live_parity_proxy':'Nasdaq + halt_type containing LULD'
+            }
+          }
+          os.makedirs('/tmp/live-parity',exist_ok=True)
+          Path('/tmp/live-parity/live_parity.json').write_text(json.dumps(out,indent=2,default=str))
+          print(json.dumps(out,indent=2,default=str))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trade-halts-live-parity
+          path: /tmp/live-parity/live_parity.json
+      - name: Publish result
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_trade_halts
+          cp /tmp/live-parity/live_parity.json audit_results_trade_halts/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_trade_halts/live_parity.json
+          git diff --cached --quiet || git commit -m 'Publish Trade-Halts live parity audit'
+          git push origin HEAD:dual-signal-audit-2026-09
