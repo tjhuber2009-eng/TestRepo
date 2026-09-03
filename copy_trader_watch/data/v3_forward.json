@@ -1,0 +1,521 @@
+{
+  "current_candidates": 19,
+  "tracked_candidates": 19,
+  "tracks": {
+    "etoro:jonathandm25": {
+      "evidence_score": 46.1195,
+      "first_seen": "2026-09-03",
+      "last_current_name": "Jonathan Dom\u00ednguez Serrata",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "Jonathan Dom\u00ednguez Serrata",
+      "observations": [
+        {
+          "base": null,
+          "date": "2026-09-03",
+          "kind": "cumulative_pct",
+          "observed_at": "2026-09-03T19:24:03.316Z",
+          "period": "2026",
+          "value": 18.4
+        }
+      ],
+      "platform": "etoro",
+      "research_score": 3.36,
+      "trader_id": "jonathandm25"
+    },
+    "etoro:luisitoalana": {
+      "evidence_score": 47.7744,
+      "first_seen": "2026-09-03",
+      "last_current_name": "Luisitoalana",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "Luisitoalana",
+      "observations": [
+        {
+          "base": null,
+          "date": "2026-09-03",
+          "kind": "cumulative_pct",
+          "observed_at": "2026-09-03T19:24:05.618Z",
+          "period": "2026",
+          "value": 3.66
+        }
+      ],
+      "platform": "etoro",
+      "research_score": 2.56,
+      "trader_id": "luisitoalana"
+    },
+    "hyperliquid:0x28839a9fc4a6465000c5c5775983742545ce5ca5": {
+      "evidence_score": 94.7647,
+      "first_seen": "2026-09-03",
+      "last_current_name": "HL-28839",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "HL-28839",
+      "observations": [
+        {
+          "base": 8829.841453,
+          "date": "2026-09-03",
+          "kind": "pnl_index",
+          "observed_at": "2026-09-03T19:24:09.333913Z",
+          "period": "all",
+          "value": 321676.855188
+        }
+      ],
+      "platform": "hyperliquid",
+      "research_score": 72.6973,
+      "trader_id": "0x28839a9fc4a6465000c5c5775983742545ce5ca5"
+    },
+    "hyperliquid:0x80fb5880f38185661962e475ac1557817dc9faea": {
+      "evidence_score": 95.2442,
+      "first_seen": "2026-09-03",
+      "last_current_name": "HL-80fb",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "HL-80fb",
+      "observations": [
+        {
+          "base": 32938.061925,
+          "date": "2026-09-03",
+          "kind": "pnl_index",
+          "observed_at": "2026-09-03T19:24:08.456826Z",
+          "period": "all",
+          "value": 6381501.439958
+        }
+      ],
+      "platform": "hyperliquid",
+      "research_score": 53.3953,
+      "trader_id": "0x80fb5880f38185661962e475ac1557817dc9faea"
+    },
+    "hyperliquid:0x838d8e13ec1010e7851b3dc333699db885f2520c": {
+      "evidence_score": 88.2589,
+      "first_seen": "2026-09-03",
+      "last_current_name": "HL-838d",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "HL-838d",
+      "observations": [
+        {
+          "base": 72266.95119,
+          "date": "2026-09-03",
+          "kind": "pnl_index",
+          "observed_at": "2026-09-03T19:24:06.019695Z",
+          "period": "all",
+          "value": 680372.177738
+        }
+      ],
+      "platform": "hyperliquid",
+      "research_score": 65.3176,
+      "trader_id": "0x838d8e13ec1010e7851b3dc333699db885f2520c"
+    },
+    "hyperliquid:0xdc5289909be4f3ce2604806bdd1448fd307f19f5": {
+      "evidence_score": 91.1291,
+      "first_seen": "2026-09-03",
+      "last_current_name": "HL-dc528",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "HL-dc528",
+      "observations": [
+        {
+          "base": 28947.4269,
+          "date": "2026-09-03",
+          "kind": "pnl_index",
+          "observed_at": "2026-09-03T19:24:07.246682Z",
+          "period": "all",
+          "value": 249351.518579
+        }
+      ],
+      "platform": "hyperliquid",
+      "research_score": 78.9867,
+      "trader_id": "0xdc5289909be4f3ce2604806bdd1448fd307f19f5"
+    },
+    "hyperliquid:0xf517639a8872e756ac98d3c65507d2ebc25cc032": {
+      "evidence_score": 95.2192,
+      "first_seen": "2026-09-03",
+      "last_current_name": "HL-NMTD",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "HL-NMTD",
+      "observations": [
+        {
+          "base": 6717660.813598,
+          "date": "2026-09-03",
+          "kind": "pnl_index",
+          "observed_at": "2026-09-03T19:24:10.237938Z",
+          "period": "all",
+          "value": 30070086.19996
+        }
+      ],
+      "platform": "hyperliquid",
+      "research_score": 46.5575,
+      "trader_id": "0xf517639a8872e756ac98d3c65507d2ebc25cc032"
+    },
+    "polymarket:0x29b52d98ac9ef9414b04164246c95bc63d74cc6c": {
+      "evidence_score": 63.984,
+      "first_seen": "2026-09-03",
+      "last_current_name": "0x29b52d98ac9ef9414b04164246c95BC63d7",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "0x29b52d98ac9ef9414b04164246c95BC63d7",
+      "observations": [
+        {
+          "base": 46153.1254,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:21.878034Z",
+          "period": "2026-09",
+          "value": 197141.74306378898
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": 0.4935,
+      "trader_id": "0x29b52d98ac9ef9414b04164246c95bc63d74cc6c"
+    },
+    "polymarket:0x397062018dfb77e855608fe23223592bc82c44ce": {
+      "evidence_score": 61.8124,
+      "first_seen": "2026-09-03",
+      "last_current_name": "11vsldfdsgfkjgos",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 0,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "11vsldfdsgfkjgos",
+      "observations": [],
+      "platform": "polymarket",
+      "research_score": 10.2464,
+      "trader_id": "0x397062018dfb77e855608fe23223592bc82c44ce"
+    },
+    "polymarket:0x4bff30af91642dc7d2b19a8664378fe55c45fc26": {
+      "evidence_score": 70.6016,
+      "first_seen": "2026-09-03",
+      "last_current_name": "Sassy-Bucket",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "Sassy-Bucket",
+      "observations": [
+        {
+          "base": 521506.3017,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:19.677821Z",
+          "period": "2026-09",
+          "value": 477493.9024894398
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": 2.0672,
+      "trader_id": "0x4bff30af91642dc7d2b19a8664378fe55c45fc26"
+    },
+    "polymarket:0x5a218c7ad04135830a45c41aaed7294df7809318": {
+      "evidence_score": 59.4333,
+      "first_seen": "2026-09-03",
+      "last_current_name": "balthazar",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "balthazar",
+      "observations": [
+        {
+          "base": 297002.0066,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:20.479575Z",
+          "period": "2026-09",
+          "value": 250985.1055049084
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": -2.3888,
+      "trader_id": "0x5a218c7ad04135830a45c41aaed7294df7809318"
+    },
+    "polymarket:0x5e9458202b5817a72cf81105ec8a30e6f3705ba1": {
+      "evidence_score": 70.6034,
+      "first_seen": "2026-09-03",
+      "last_current_name": "pleaseplease123",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "pleaseplease123",
+      "observations": [
+        {
+          "base": 168038.4162,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:17.162960Z",
+          "period": "2026-09",
+          "value": 890893.6501026403
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": -0.3661,
+      "trader_id": "0x5e9458202b5817a72cf81105ec8a30e6f3705ba1"
+    },
+    "polymarket:0x821dab0565ebf5b327f51db06223fdcfe01acf16": {
+      "evidence_score": 59.9814,
+      "first_seen": "2026-09-03",
+      "last_current_name": "Flaznorp",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "Flaznorp",
+      "observations": [
+        {
+          "base": 325637.8541,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:23.719664Z",
+          "period": "2026-09",
+          "value": 133711.6890276872
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": -3.2421,
+      "trader_id": "0x821dab0565ebf5b327f51db06223fdcfe01acf16"
+    },
+    "polymarket:0x8a8685a792c184e5c2ee8c7d4d4baba7c2c94998": {
+      "evidence_score": 72.4121,
+      "first_seen": "2026-09-03",
+      "last_current_name": "BrotherObama",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "BrotherObama",
+      "observations": [
+        {
+          "base": 45292.7819,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:22.786969Z",
+          "period": "2026-09",
+          "value": 157720.31565199682
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": 10.6,
+      "trader_id": "0x8a8685a792c184e5c2ee8c7d4d4baba7c2c94998"
+    },
+    "polymarket:0xa71093cafc0c099b4ccab24c3cb8018d817923c4": {
+      "evidence_score": 71.3198,
+      "first_seen": "2026-09-03",
+      "last_current_name": "Talvez10",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "Talvez10",
+      "observations": [
+        {
+          "base": 12441.2165,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:22.362197Z",
+          "period": "2026-09",
+          "value": 193339.09731606906
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": -0.0538,
+      "trader_id": "0xa71093cafc0c099b4ccab24c3cb8018d817923c4"
+    },
+    "polymarket:0xd3a0b4e941b557d33a8efd5a51c581e7c79cf136": {
+      "evidence_score": 54.3393,
+      "first_seen": "2026-09-03",
+      "last_current_name": "0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 0,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116",
+      "observations": [],
+      "platform": "polymarket",
+      "research_score": 3.5299,
+      "trader_id": "0xd3a0b4e941b557d33a8efd5a51c581e7c79cf136"
+    },
+    "polymarket:0xd570e634aeb745d6501566dba5f81a555cc7e4f8": {
+      "evidence_score": 59.3998,
+      "first_seen": "2026-09-03",
+      "last_current_name": "0xd9670ea74384c1e1b9dc1e4267ffadaf4cdd140",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "0xd9670ea74384c1e1b9dc1e4267ffadaf4cdd140",
+      "observations": [
+        {
+          "base": 100210.9941,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:20.076953Z",
+          "period": "2026-09",
+          "value": 466167.6824657598
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": 7.8,
+      "trader_id": "0xd570e634aeb745d6501566dba5f81a555cc7e4f8"
+    },
+    "polymarket:0xdb859a551fcf56e49416160911476bea7307152f": {
+      "evidence_score": 70.7156,
+      "first_seen": "2026-09-03",
+      "last_current_name": "AV23IUa",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "AV23IUa",
+      "observations": [
+        {
+          "base": 241104.9331,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:17.543301Z",
+          "period": "2026-09",
+          "value": 558862.9681671248
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": 9.8,
+      "trader_id": "0xdb859a551fcf56e49416160911476bea7307152f"
+    },
+    "polymarket:0xfe787d2da716d60e8acff57fb87eb13cd4d10319": {
+      "evidence_score": 60.486,
+      "first_seen": "2026-09-03",
+      "last_current_name": "ferrariChampions2026",
+      "last_seen": "2026-09-03",
+      "latest_metrics": {
+        "forward_max_drawdown_pct": null,
+        "forward_observations": 1,
+        "forward_profit_factor": null,
+        "forward_return_pct": null,
+        "forward_score": null,
+        "forward_win_rate_pct": null
+      },
+      "name": "ferrariChampions2026",
+      "observations": [
+        {
+          "base": 277759.7153,
+          "date": "2026-09-03",
+          "kind": "periodic_pnl_index",
+          "observed_at": "2026-09-03T19:24:18.231361Z",
+          "period": "2026-09",
+          "value": 510918.49310799316
+        }
+      ],
+      "platform": "polymarket",
+      "research_score": 6.1965,
+      "trader_id": "0xfe787d2da716d60e8acff57fb87eb13cd4d10319"
+    }
+  },
+  "updated_date": "2026-09-03"
+}

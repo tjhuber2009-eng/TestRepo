@@ -15,17 +15,17 @@ Forward-test window: **2026-09-03 → 2026-09-03** (1 observations)
 
 ## Benchmarks
 
-- **SPY:** 0.00% since baseline; close 773.41 (as of 2026-09-03, yahoo)
-- **QQQ:** 0.00% since baseline; close 717.83 (as of 2026-09-03, yahoo)
+- **SPY:** 0.00% since baseline; close 773.31 (as of 2026-09-03, yahoo)
+- **QQQ:** 0.00% since baseline; close 717.74 (as of 2026-09-03, yahoo)
 
 ## Data quality
 
 | Candidate | Status | Source | Source timestamp | Source age | Missing streak |
 |---|---|---|---|---:|---:|
-| jonathandm25 | resolved | etoro-census-public-user-api | 2026-09-03T19:14:08.651Z | 0.0h | 0 |
+| jonathandm25 | resolved | etoro-census-public-user-api | 2026-09-03T19:24:03.316Z | 0.0h | 0 |
 | bgsully111 | per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days | n/a | n/a | n/a | 1 |
 | WilEscobar | per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days | n/a | n/a | n/a | 1 |
-| Luisitoalana | resolved | etoro-census-public-user-api | 2026-09-03T19:14:12.239Z | 0.0h | 0 |
+| Luisitoalana | resolved | etoro-census-public-user-api | 2026-09-03T19:24:05.618Z | 0.0h | 0 |
 
 ## Active alerts
 

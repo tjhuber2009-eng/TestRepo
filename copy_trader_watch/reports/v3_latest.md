@@ -1,6 +1,8 @@
-# Copy Trader Watch V3 — Cross-Platform Report
+# Copy Trader Watch V3 — Forward-First Cross-Platform Report
 
-> Read-only research. No broker login or trade execution. `actionable` means the public-data rules passed, not that profitability is expected.
+> Observation date: **2026-09-03 America/Los_Angeles**. Read-only research; no broker login or trade execution.
+
+> **Small samples are never an exclusion rule.** Age/trade count affect only Evidence Confidence. Once a candidate has two usable public observations, its Forward Score—not sample size—controls ranking.
 
 ## Source health
 
@@ -8,111 +10,111 @@
 |---|---|---:|---|---|
 | etoro | ok | 2 | resolved=2 |  |
 | hyperliquid | ok | 5 | resolved=5/5 |  |
-| mql5 | ok | 50 | parsed=960; free=0 |  |
-| polymarket | ok | 12 | resolved=12/12; persistent=3 |  |
+| mql5 | ok | 0 | parsed=960; free=0 |  |
+| polymarket | ok | 12 | resolved=12/12; persistent=0 |  |
 | collective2 | unavailable | 0 | parsed=0; free=0; screen=0 | https://collective2.com/lb/320: 403 Client Error: Forbidden for url: https://collective2.com/lb/320; https://collective2.com/selector/old_timers: 403 Client Error: Forbidden for url: https://collective2.com/selector/old_timers; https://collective2.com/selector/: 403 Client Error: Forbidden for url: https://collective2.com/selector/ |
 
-## Free U.S.-actionable candidates
+## Forward-test leaderboard
 
-| Rank | Platform | Trader | Return | Window | DD | PF | Trades | Win | Copyability | Score | Conditions |
-|---:|---|---|---:|---|---:|---:|---:|---:|---:|---:|---|
-| 1 | etoro | Jonathan Domínguez Serrata (`jonathandm25`) | 18.40% | ytd | n/a | n/a | 135 | 77.78% | 85.00 | 7.62 | eToro Copy must be available |
-| 2 | etoro | Luisitoalana (`luisitoalana`) | 3.66% | ytd | n/a | n/a | 238 | 71.85% | 75.00 | 7.31 | eToro Copy must be available |
+| Rank | Platform | Trader | Obs | Forward return | Forward DD | Forward PF | Forward win | Forward score | Evidence | Seed |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| — | — | Forward test warming up; a second usable observation is required to calculate a return | — | — | — | — | — | — | — | — |
 
-## Cross-platform research leaderboard
+## Free forward-test universe
 
-| Rank | Platform | Trader | Free | U.S. access | Evidence | Performance | Window / metric | DD | PF | Trades | Leverage | Copyability | Score |
-|---:|---|---|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|
-| 1 | mql5 | BAS 2 11 (`2325779`) | no | conditional | unknown | 870.00% | since-inception | -21.00% | 1.17 | 18706 | 1.00x | 60.00 | 94.43 |
-| 2 | hyperliquid | HL-28839 (`0x28839a…5ca5`) | yes | no | onchain | 140.18% | month | -8.04% | 3.69 | 2000 | 3.00x | 60.00 | 90.32 |
-| 3 | hyperliquid | HL-dc528 (`0xdc5289…19f5`) | yes | no | onchain | 184.11% | month | -9.35% | 6.69 | 2000 | 10.04x | 45.00 | 88.17 |
-| 4 | mql5 | NoPain MT5 (`2262642`) | no | conditional | unknown | 2108.00% | since-inception | -21.00% | 1.69 | 5864 | 100.00x | 80.00 | 78.79 |
-| 5 | mql5 | GoQuant (`2341150`) | no | conditional | unknown | 427.00% | since-inception | -14.00% | 5.67 | 797 | 500.00x | 60.00 | 78.22 |
-| 6 | mql5 | RAZOR EA (`2300694`) | no | conditional | unknown | 2100.00% | since-inception | -22.00% | 1.96 | 1854 | 500.00x | 60.00 | 77.54 |
-| 7 | mql5 | Deux ex machina (`2271402`) | no | conditional | unknown | 6305.00% | since-inception | -26.00% | 1.87 | 1856 | 500.00x | 60.00 | 77.09 |
-| 8 | mql5 | Quantum Queen (`2234595`) | no | conditional | unknown | 4963.00% | since-inception | -31.00% | 2.63 | 1510 | 500.00x | 60.00 | 76.70 |
-| 9 | mql5 | MSC Gold Invest Pro (`1988269`) | no | conditional | unknown | 1030.00% | since-inception | -26.00% | 1.78 | 1666 | 500.00x | 60.00 | 76.54 |
-| 10 | mql5 | Forex fibonacci chart 2 (`2386939`) | no | conditional | unknown | 4565.00% | since-inception | -13.00% | 39.31 | 159 | 100.00x | 80.00 | 76.41 |
-| 11 | mql5 | MSC Gold Stable Pro (`2231030`) | no | conditional | unknown | 1418.00% | since-inception | -34.00% | 3.24 | 1095 | 500.00x | 60.00 | 75.97 |
-| 12 | mql5 | Longterm ICM (`1627034`) | no | conditional | unknown | 608.00% | since-inception | -28.00% | 1.24 | 9247 | 500.00x | 60.00 | 75.33 |
-| 13 | mql5 | B3 Portfolio Tendencia e Volatilidade (`810657`) | no | conditional | unknown | 516.00% | since-inception | -35.00% | 1.12 | 49447 | 1.00x | 60.00 | 75.03 |
-| 14 | mql5 | Stacked Algo (`2340187`) | no | conditional | unknown | 562.00% | since-inception | -29.00% | 1.76 | 1921 | 500.00x | 60.00 | 74.70 |
-| 15 | mql5 | Scalp IC Markets MT5 (`1560883`) | no | conditional | unknown | 812.00% | since-inception | -33.00% | 1.70 | 2507 | 500.00x | 60.00 | 74.10 |
-| 16 | mql5 | VFCaput Vitual (`2377661`) | no | conditional | unknown | 155.00% | since-inception | -6.00% | 2.58 | 2219 | 500.00x | 50.00 | 73.72 |
-| 17 | mql5 | PsiqueTrader (`2384259`) | no | conditional | unknown | 150.00% | since-inception | -9.00% | 1.80 | 362 | 1.00x | 80.00 | 73.64 |
-| 18 | mql5 | Williams trader3 (`2383810`) | no | conditional | unknown | 500.00% | since-inception | -21.00% | 1.93 | 949 | 30.00x | 80.00 | 73.54 |
-| 19 | hyperliquid | HL-80fb (`0x80fb58…faea`) | yes | no | onchain | 52.79% | month | -5.08% | 8.16 | 2000 | 2.37x | 90.00 | 73.30 |
-| 20 | mql5 | TharosLongTerm (`2379915`) | no | conditional | unknown | 85.00% | since-inception | -5.00% | 1.93 | 4137 | 30.00x | 80.00 | 72.92 |
-| 21 | mql5 | Goldtrade Pro ICM (`2084890`) | no | conditional | unknown | 649.00% | since-inception | -32.00% | 1.59 | 729 | 500.00x | 60.00 | 72.85 |
-| 22 | mql5 | Relax EA (`884935`) | no | conditional | unknown | 766.00% | since-inception | -33.00% | 1.46 | 2013 | 500.00x | 60.00 | 72.71 |
-| 23 | hyperliquid | HL-838d (`0x838d8e…520c`) | yes | no | onchain | 103.05% | month | -6.17% | 2.42 | 2000 | 10.05x | 30.00 | 72.65 |
-| 24 | mql5 | CCC (`2378209`) | no | conditional | unknown | 297.00% | since-inception | -11.00% | 3.79 | 263 | 500.00x | 60.00 | 72.46 |
-| 25 | mql5 | GoldWave signal (`2339082`) | no | conditional | unknown | 724.00% | since-inception | -18.00% | 4.41 | 281 | 500.00x | 60.00 | 72.43 |
-| 26 | mql5 | Gold Reaper Goldtrade Pro Daytrade Pro (`2204998`) | no | conditional | unknown | 951.00% | since-inception | -33.00% | 1.18 | 7926 | 500.00x | 50.00 | 71.70 |
-| 27 | mql5 | Harmonizer Extreme (`2360068`) | no | conditional | unknown | 2221.00% | since-inception | -22.00% | 1.93 | 1192 | 500.00x | 50.00 | 71.56 |
-| 28 | mql5 | Xauusd H1 (`2376983`) | no | conditional | unknown | 395.00% | since-inception | -16.00% | 2.17 | 969 | 500.00x | 60.00 | 71.37 |
-| 29 | mql5 | NKHC 69 (`2380306`) | no | conditional | unknown | 241.00% | since-inception | -5.00% | 4.73 | 215 | 500.00x | 60.00 | 70.66 |
-| 30 | mql5 | FXtrading (`2356441`) | no | conditional | unknown | 1299.00% | since-inception | -14.00% | 2.70 | 329 | 500.00x | 50.00 | 70.45 |
-| 31 | mql5 | KiraCat (`2342895`) | no | conditional | unknown | 417.00% | since-inception | -21.00% | 4.10 | 566 | 500.00x | 60.00 | 70.40 |
-| 32 | mql5 | Combo Profile 2026 (`2362349`) | no | conditional | unknown | 614.00% | since-inception | -19.00% | 3.58 | 726 | 500.00x | 60.00 | 70.28 |
-| 33 | mql5 | Precise Pair Trading Pro (`2329290`) | no | conditional | unknown | 523.00% | since-inception | -24.00% | 1.46 | 806 | 30.00x | 80.00 | 69.99 |
-| 34 | mql5 | Lazarus (`2323749`) | no | conditional | unknown | 389.00% | since-inception | -31.00% | 6.20 | 433 | 1.00x | 70.00 | 69.68 |
-| 35 | mql5 | Luxor Capital Partner Quantitative PAMM (`2358121`) | no | conditional | unknown | 400.00% | since-inception | -10.00% | 2.12 | 3407 | 200.00x | 60.00 | 69.23 |
-| 36 | mql5 | Meridian Extreme Risk Mode (`2385675`) | no | conditional | unknown | 216.00% | since-inception | -10.00% | 2.96 | 372 | 500.00x | 60.00 | 69.21 |
-| 37 | mql5 | Soma PureGold Indexes and Oil (`2268766`) | no | conditional | unknown | 763.00% | since-inception | -29.00% | 1.30 | 6792 | 500.00x | 50.00 | 68.77 |
-| 38 | mql5 | MOEX Derivatives (`2366339`) | no | conditional | unknown | 111.00% | since-inception | -9.00% | 4.70 | 516 | 1.00x | 80.00 | 68.10 |
-| 39 | mql5 | Mon Scalper MT5 (`2361936`) | no | conditional | unknown | 1160.00% | since-inception | -29.00% | 1.58 | 504 | 500.00x | 60.00 | 67.85 |
-| 40 | mql5 | Algosphere Trading Breakout Strategy (`2353586`) | no | conditional | unknown | 194.00% | since-inception | -9.00% | 2.41 | 900 | 500.00x | 60.00 | 67.80 |
+These candidates are admitted to monitoring regardless of historical sample size. Execution eligibility is a separate question.
 
-## Non-actionable reasons
+| Platform | Trader | Obs | Forward | DD | Historical metric | Trades | Age days | Evidence | Seed | Execution conditions |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| etoro | Jonathan Domínguez Serrata (`jonathandm25`) | 1 | n/a | n/a | 18.40% | 135 | n/a | 46.12 | 3.36 | eToro Copy must be available |
+| etoro | Luisitoalana (`luisitoalana`) | 1 | n/a | n/a | 3.66% | 238 | n/a | 47.77 | 2.56 | eToro Copy must be available |
 
-- **mql5 / BAS 2 11:** Not free: listed subscription fee is 30 USD/month.
-- **hyperliquid / HL-28839:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
+## Awaiting forward result
+
+| Platform | Trader | Historical metric | DD | Trades | Age days | Evidence | Seed | Forward-test status |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| hyperliquid | HL-dc528 (`0xdc5289…19f5`) | 186.96% | -9.35% | 2000 | 316 | 91.13 | 78.99 | Forward test uses changes in the official all-time P&L index divided by prior observed account value; sample size is confidence-only. |
+| hyperliquid | HL-28839 (`0x28839a…5ca5`) | 142.80% | -8.04% | 2000 | 876 | 94.76 | 72.70 | Forward test uses changes in the official all-time P&L index divided by prior observed account value; sample size is confidence-only. |
+| hyperliquid | HL-838d (`0x838d8e…520c`) | 103.74% | -6.17% | 2000 | 141 | 88.26 | 65.32 | Forward test uses changes in the official all-time P&L index divided by prior observed account value; sample size is confidence-only. |
+| hyperliquid | HL-80fb (`0x80fb58…faea`) | 53.51% | -5.08% | 2000 | 1002 | 95.24 | 53.40 | Forward test uses changes in the official all-time P&L index divided by prior observed account value; sample size is confidence-only. |
+| hyperliquid | HL-NMTD (`0xf51763…c032`) | 135.60% | -14.15% | 2000 | 995 | 95.22 | 46.56 | Forward test uses changes in the official all-time P&L index divided by prior observed account value; sample size is confidence-only. |
+| polymarket | BrotherObama (`0x8a8685…4998`) | 116.63% | n/a | 142 | 59 | 72.41 | 10.60 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | 11vsldfdsgfkjgos (`0x397062…44ce`) | 54.82% | n/a | 19 | 14 | 61.81 | 10.25 | Waiting for a usable public P&L/base pair; not rejected for sample size. |
+| polymarket | AV23IUa (`0xdb859a…152f`) | 65.01% | n/a | 200 | 27 | 70.72 | 9.80 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | 0xd9670ea74384c1e1b9dc1e4267ffadaf4cdd140 (`0xd570e6…e4f8`) | 67.20% | n/a | 39 | 3 | 59.40 | 7.80 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | ferrariChampions2026 (`0xfe787d…0319`) | 24.85% | n/a | 200 | 1 | 60.49 | 6.20 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | 0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116 (`0xd3a0b4…f136`) | 116.59% | n/a | 5 | 4 | 54.34 | 3.53 | Waiting for a usable public P&L/base pair; not rejected for sample size. |
+| etoro | Jonathan Domínguez Serrata (`jonathandm25`) | 18.40% | n/a | 135 | n/a | 46.12 | 3.36 | Forward test chains successive public YTD observations; sample size is confidence-only. |
+| etoro | Luisitoalana (`luisitoalana`) | 3.66% | n/a | 238 | n/a | 47.77 | 2.56 | Forward test chains successive public YTD observations; sample size is confidence-only. |
+| polymarket | Sassy-Bucket (`0x4bff30…fc26`) | 25.36% | n/a | 200 | 26 | 70.60 | 2.07 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | 0x29b52d98ac9ef9414b04164246c95BC63d7 (`0x29b52d…cc6c`) | 21.91% | n/a | 200 | 3 | 63.98 | 0.49 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | Talvez10 (`0xa71093…23c4`) | 17.78% | n/a | 200 | 32 | 71.32 | -0.05 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | pleaseplease123 (`0x5e9458…5ba1`) | 5.79% | n/a | 200 | 26 | 70.60 | -0.37 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | balthazar (`0x5a218c…9318`) | -0.43% | n/a | 200 | 0 | 59.43 | -2.39 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+| polymarket | Flaznorp (`0x821dab…cf16`) | -4.83% | n/a | 200 | 0 | 59.98 | -3.24 | Forward test uses changes in official monthly P&L scaled by prior observed portfolio value. |
+
+## Free U.S.-practical candidates
+
+This section applies platform/access requirements but **does not use sample size as a gate**.
+
+| Rank | Platform | Trader | Forward | DD | Historical metric | Copyability | Evidence | Rank score | Conditions |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | etoro | Jonathan Domínguez Serrata (`jonathandm25`) | n/a | n/a | 18.40% | 85.00 | 46.12 | 3.36 | eToro Copy must be available |
+| 2 | etoro | Luisitoalana (`luisitoalana`) | n/a | n/a | 3.66% | 75.00 | 47.77 | 2.56 | eToro Copy must be available |
+
+## Historical discovery leaderboard (seed only)
+
+This ranking is only for new-candidate discovery before enough forward observations exist. Sample size is not part of Seed Score.
+
+| Rank | Platform | Trader | Free | U.S. access | Historical metric | Window | DD | PF | Trades | Evidence | Seed |
+|---:|---|---|---|---|---:|---|---:|---:|---:|---:|---:|
+| 1 | hyperliquid | HL-dc528 (`0xdc5289…19f5`) | yes | no | 186.96% | month | -9.35% | 6.69 | 2000 | 91.13 | 78.99 |
+| 2 | hyperliquid | HL-28839 (`0x28839a…5ca5`) | yes | no | 142.80% | month | -8.04% | 3.69 | 2000 | 94.76 | 72.70 |
+| 3 | hyperliquid | HL-838d (`0x838d8e…520c`) | yes | no | 103.74% | month | -6.17% | 2.42 | 2000 | 88.26 | 65.32 |
+| 4 | hyperliquid | HL-80fb (`0x80fb58…faea`) | yes | no | 53.51% | month | -5.08% | 8.16 | 2000 | 95.24 | 53.40 |
+| 5 | hyperliquid | HL-NMTD (`0xf51763…c032`) | yes | no | 135.60% | month | -14.15% | 999.00 | 2000 | 95.22 | 46.56 |
+| 6 | polymarket | BrotherObama (`0x8a8685…4998`) | yes | no | 116.63% | closed-position cost ROI (142-position sample; not account return) | n/a | 16.17 | 142 | 72.41 | 10.60 |
+| 7 | polymarket | 11vsldfdsgfkjgos (`0x397062…44ce`) | yes | no | 54.82% | closed-position cost ROI (19-position sample; not account return) | n/a | 67.02 | 19 | 61.81 | 10.25 |
+| 8 | polymarket | AV23IUa (`0xdb859a…152f`) | yes | no | 65.01% | closed-position cost ROI (200-position sample; not account return) | n/a | 17.47 | 200 | 70.72 | 9.80 |
+| 9 | polymarket | 0xd9670ea74384c1e1b9dc1e4267ffadaf4cdd140 (`0xd570e6…e4f8`) | yes | no | 67.20% | closed-position cost ROI (39-position sample; not account return) | n/a | 725.19 | 39 | 59.40 | 7.80 |
+| 10 | polymarket | ferrariChampions2026 (`0xfe787d…0319`) | yes | no | 24.85% | closed-position cost ROI (200-position sample; not account return) | n/a | 2.68 | 200 | 60.49 | 6.20 |
+| 11 | polymarket | 0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116 (`0xd3a0b4…f136`) | yes | no | 116.59% | closed-position cost ROI (5-position sample; not account return) | n/a | 50.00 | 5 | 54.34 | 3.53 |
+| 12 | etoro | Jonathan Domínguez Serrata (`jonathandm25`) | yes | yes | 18.40% | ytd | n/a | n/a | 135 | 46.12 | 3.36 |
+| 13 | etoro | Luisitoalana (`luisitoalana`) | yes | yes | 3.66% | ytd | n/a | n/a | 238 | 47.77 | 2.56 |
+| 14 | polymarket | Sassy-Bucket (`0x4bff30…fc26`) | yes | no | 25.36% | closed-position cost ROI (200-position sample; not account return) | n/a | 1.61 | 200 | 70.60 | 2.07 |
+| 15 | polymarket | 0x29b52d98ac9ef9414b04164246c95BC63d7 (`0x29b52d…cc6c`) | yes | no | 21.91% | closed-position cost ROI (200-position sample; not account return) | n/a | 1.70 | 200 | 63.98 | 0.49 |
+| 16 | polymarket | Talvez10 (`0xa71093…23c4`) | yes | no | 17.78% | closed-position cost ROI (200-position sample; not account return) | n/a | 1.43 | 200 | 71.32 | -0.05 |
+| 17 | polymarket | pleaseplease123 (`0x5e9458…5ba1`) | yes | no | 5.79% | closed-position cost ROI (200-position sample; not account return) | n/a | 1.13 | 200 | 70.60 | -0.37 |
+| 18 | polymarket | balthazar (`0x5a218c…9318`) | yes | no | -0.43% | closed-position cost ROI (200-position sample; not account return) | n/a | 0.96 | 200 | 59.43 | -2.39 |
+| 19 | polymarket | Flaznorp (`0x821dab…cf16`) | yes | no | -4.83% | closed-position cost ROI (200-position sample; not account return) | n/a | 0.79 | 200 | 59.98 | -3.24 |
+
+## Non-practical / research-only reasons
+
 - **hyperliquid / HL-dc528:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
-- **mql5 / NoPain MT5:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / GoQuant:** Not free: listed subscription fee is 999 USD/month.
-- **mql5 / RAZOR EA:** Not free: listed subscription fee is 33 USD/month.
-- **mql5 / Deux ex machina:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / Quantum Queen:** Not free: listed subscription fee is 999 USD/month.
-- **mql5 / MSC Gold Invest Pro:** Not free: listed subscription fee is 40 USD/month.
-- **mql5 / Forex fibonacci chart 2:** Not free: listed subscription fee is 50 USD/month.
-- **mql5 / MSC Gold Stable Pro:** Not free: listed subscription fee is 40 USD/month.
-- **mql5 / Longterm ICM:** Not free: listed subscription fee is 999 USD/month.
-- **mql5 / B3 Portfolio Tendencia e Volatilidade:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / Stacked Algo:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / Scalp IC Markets MT5:** Not free: listed subscription fee is 39 USD/month.
-- **mql5 / VFCaput Vitual:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / PsiqueTrader:** Not free: listed subscription fee is 50 USD/month.
-- **mql5 / Williams trader3:** Not free: listed subscription fee is 30 USD/month.
-- **hyperliquid / HL-80fb:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
-- **mql5 / TharosLongTerm:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / Goldtrade Pro ICM:** Not free: listed subscription fee is 39 USD/month.
-- **mql5 / Relax EA:** Not free: listed subscription fee is 40 USD/month.
+- **hyperliquid / HL-28839:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
 - **hyperliquid / HL-838d:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
-- **mql5 / CCC:** Not free: listed subscription fee is 39 USD/month.
-- **mql5 / GoldWave signal:** Not free: listed subscription fee is 49 USD/month.
-- **mql5 / Gold Reaper Goldtrade Pro Daytrade Pro:** Not free: listed subscription fee is 75 USD/month.
-- **mql5 / Harmonizer Extreme:** Not free: listed subscription fee is 999 USD/month.
-- **mql5 / Xauusd H1:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / NKHC 69:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / FXtrading:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / KiraCat:** Not free: listed subscription fee is 49 USD/month.
-- **mql5 / Combo Profile 2026:** Not free: listed subscription fee is 50 USD/month.
-- **mql5 / Precise Pair Trading Pro:** Not free: listed subscription fee is 50 USD/month.
-- **mql5 / Lazarus:** Not free: listed subscription fee is 49 USD/month.
-- **mql5 / Luxor Capital Partner Quantitative PAMM:** Not free: listed subscription fee is 100 USD/month.
-- **mql5 / Meridian Extreme Risk Mode:** Not free: listed subscription fee is 49 USD/month.
-- **mql5 / Soma PureGold Indexes and Oil:** Not free: listed subscription fee is 30 USD/month.
-- **mql5 / MOEX Derivatives:** Not free: listed subscription fee is 60 USD/month.
-- **mql5 / Mon Scalper MT5:** Not free: listed subscription fee is 299 USD/month.
-- **mql5 / Algosphere Trading Breakout Strategy:** Not free: listed subscription fee is 200 USD/month.
+- **hyperliquid / HL-80fb:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
+- **hyperliquid / HL-NMTD:** Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.
+- **polymarket / BrotherObama:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / 11vsldfdsgfkjgos:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / AV23IUa:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / 0xd9670ea74384c1e1b9dc1e4267ffadaf4cdd140:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / ferrariChampions2026:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / 0xd3A0b4E941B557D33A8EFd5a51c581e7c79cF136-1787996319116:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / Sassy-Bucket:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / 0x29b52d98ac9ef9414b04164246c95BC63d7:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / Talvez10:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / pleaseplease123:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / balthazar:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
+- **polymarket / Flaznorp:** Research-only: polymarket.com is not treated as U.S.-actionable in this workflow; Polymarket US is a separate product.
 
 ## Method
 
-- eToro uses the existing V2 U.S. candidate monitor and keeps its public-source limitations.
-- Hyperliquid uses the official public `info` API. Its return path uses PnL change on the period's initial account-value base to reduce deposit/withdrawal distortion; it is research-only in this U.S. workflow.
-- MQL5 scans the public MT5 Signals list. Paid signals can appear in research; only explicitly free signals can pass the cost gate, and real-vs-demo/broker compatibility still require verification.
-- Polymarket uses the official Data API leaderboard plus closed/current-position endpoints. Its displayed percentage is closed-position realized P&L divided by estimated purchase cost in the sampled closed positions; it is a capital-efficiency proxy, **not account equity return**, and max drawdown is unknown.
-- Collective2 parses public strategy lists. Collective2 labels performance results hypothetical, so C2 records are evidence for further testing rather than independently verified brokerage equity curves. A `$0/month` result can depend on a broker-sponsored route and may require substantial suggested capital.
-- The cross-platform score rewards performance/drawdown, age, trade sample, PF, source quality, and copyability, while penalizing unknown drawdown, leverage, concentration, high drawdown, and demo-only evidence.
-- Missing data is penalized rather than silently imputed.
+- **Forward Score is sample-size neutral.** As soon as two usable observations exist, rank is based on observed forward return and forward drawdown. Observation count does not multiply or discount the score.
+- **Evidence Confidence is separate.** Track-record age, trade count, source quality, and metric completeness only tell us how much context exists; they do not eliminate a candidate or lower its Forward Score.
+- eToro chains successive public YTD observations with calendar-year reset handling.
+- MQL5 chains the public cumulative Growth metric. All discovered free signals are intended to be retained for forward monitoring; real/demo and broker compatibility remain execution checks.
+- Polymarket uses changes in official monthly P&L scaled by prior observed portfolio value; this remains research-only and is not presented as an account equity curve.
+- Hyperliquid is kept in historical research until the adapter exposes a non-rolling P&L index; rolling monthly-window changes are deliberately not mislabeled as forward returns.
+- Collective2 remains unavailable from GitHub Actions while its public pages return HTTP 403; the adapter is retained for a future authenticated API route.
+- Persistent tracker currently contains **19** candidates.
