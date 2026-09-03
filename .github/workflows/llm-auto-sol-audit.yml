@@ -31,11 +31,52 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e /tmp/llm
-      - name: Fetch fresh SOL perpetual and PAXG hedge data
+      - name: Load immutable Binance archive data into upstream cache
         run: |
           cd /tmp/llm
-          python scripts/fetch_history.py --exchange binance --market-type swap --symbols 'SOL/USDT:USDT' --timeframe 1w --since 2020-12-01 --until 2026-09-03 --cache-db /tmp/ohlcv.db
-          python scripts/fetch_history.py --exchange binance --market-type spot --symbols 'PAXG/USDT' --timeframe 1w --since 2020-12-01 --until 2026-09-03 --cache-db /tmp/ohlcv.db
+          python - <<'PY'
+          import io, zipfile, requests, pandas as pd
+          from src.backtest.data_cache import OHLCVCache, OHLCVBar
+
+          cache=OHLCVCache('/tmp/ohlcv.db')
+          s=requests.Session(); s.headers.update({'User-Agent':'independent-sol-audit/1.0'})
+
+          def months(a,b):
+              p=pd.Period(a,freq='M'); q=pd.Period(b,freq='M')
+              while p<=q:
+                  yield p.year,p.month
+                  p+=1
+
+          def ingest(symbol, archive_symbol, market_path, start='2020-12', end='2026-08'):
+              total=0; missing=[]
+              for y,m in months(start,end):
+                  ym=f'{y:04d}-{m:02d}'
+                  url=f'https://data.binance.vision/data/{market_path}/monthly/klines/{archive_symbol}/1w/{archive_symbol}-1w-{ym}.zip'
+                  r=s.get(url,timeout=45)
+                  if r.status_code==404:
+                      missing.append(ym); continue
+                  r.raise_for_status()
+                  with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+                      raw=z.read(z.namelist()[0])
+                  d=pd.read_csv(io.BytesIO(raw),header=None)
+                  # Some recent Binance archives may include a text header; coerce removes it.
+                  d=d.iloc[:,:6]
+                  d.columns=['ts','open','high','low','close','volume']
+                  d['ts']=pd.to_numeric(d.ts,errors='coerce')
+                  for c in ['open','high','low','close','volume']:
+                      d[c]=pd.to_numeric(d[c],errors='coerce')
+                  d=d.dropna()
+                  bars=[]
+                  for row in d.itertuples(index=False):
+                      ts=int(row.ts)
+                      if ts>10**14: ts//=1000  # microseconds -> milliseconds
+                      bars.append(OHLCVBar(ts,float(row.open),float(row.high),float(row.low),float(row.close),float(row.volume)))
+                  cache.store(symbol,'1w',bars); total+=len(bars)
+              print(symbol,'stored',total,'range',cache.range(symbol,'1w'),'missing_months',missing)
+
+          ingest('SOL/USDT:USDT','SOLUSDT','futures/um')
+          ingest('PAXG/USDT','PAXGUSDT','spot')
+          PY
       - name: Reproduce upstream symbol sweep result
         run: |
           cd /tmp/llm
@@ -44,7 +85,7 @@ jobs:
         run: |
           cd /tmp/llm
           python - <<'PY'
-          import json, math
+          import json, os
           import numpy as np
           from datetime import datetime, timezone
           from src.backtest.data_cache import OHLCVCache
@@ -54,9 +95,8 @@ jobs:
           from src.analysis.backtest_stats import max_drawdown, sharpe_annualized
           from scripts.sweep_robust import _champion_kwargs
 
-          def ms(s):
-              return int(datetime.strptime(s,'%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()*1000)
-          def metrics(cache, start, end):
+          def ms(s): return int(datetime.strptime(s,'%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()*1000)
+          def metrics(cache,start,end):
               p=cache.load_range('SOL/USDT:USDT','1w',ms(start),ms(end))
               h=cache.load_range('PAXG/USDT','1w',ms(start),ms(end))
               cfg=BaselineConfig(**{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'})
@@ -70,18 +110,11 @@ jobs:
               sh=sharpe_annualized(lr,periods_per_year=52) if len(lr) else float('nan')
               return {'start':start,'end':end,'bars':len(p),'equity_points':len(eq),'final':float(eq[-1]),'return_pct':float((eq[-1]/2000-1)*100),'cagr_pct':float(cagr*100),'max_dd_pct':float(dd*100),'sharpe':float(sh),'trades':len(r.trades)}
           c=OHLCVCache('/tmp/ohlcv.db')
-          out={
-            'upstream_commit':'dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1',
-            'config':{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'},
-            'frictions':{'taker_fee_bps':4.0,'slippage_bps':5.0,'funding_rate_per_day':0.00010},
-            'windows':[
+          out={'upstream_commit':'dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1','config':{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'},'frictions':{'taker_fee_bps':4.0,'slippage_bps':5.0,'funding_rate_per_day':0.00010},'windows':[
               metrics(c,'2021-01-04','2025-09-29'),
-              metrics(c,'2021-01-04','2026-09-03'),
+              metrics(c,'2021-01-04','2026-08-31'),
               metrics(c,'2024-01-01','2025-09-29'),
-              metrics(c,'2025-10-06','2026-09-03'),
-            ]
-          }
-          import os
+              metrics(c,'2025-10-06','2026-08-31')]}
           os.makedirs('/tmp/sol-audit',exist_ok=True)
           open('/tmp/sol-audit/summary.json','w').write(json.dumps(out,indent=2))
           print(json.dumps(out,indent=2))
