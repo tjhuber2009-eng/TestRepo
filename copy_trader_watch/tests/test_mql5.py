@@ -7,6 +7,29 @@ HTML = """
 </tbody></table>
 """
 
+DIV_HTML = """
+<div id="signals-table" class="signals-table">
+  <div class="row signal">
+    <div class="cell rank">1</div>
+    <div class="cell signal-name"><a class="signal-avatar" href="/en/signals/24680">Grid Alpha</a></div>
+    <div class="cell price">Free</div>
+    <div class="cell growth">321.5%</div>
+    <div class="cell subscribers">17</div>
+    <div class="cell funds">4K USD</div>
+    <div class="cell balance">10K USD</div>
+    <div class="cell weeks">104</div>
+    <div class="cell expert-advisors">100%</div>
+    <div class="cell trades">2345</div>
+    <div class="cell win">61.2%</div>
+    <div class="cell activity">24%</div>
+    <div class="cell profit-factor">1.92</div>
+    <div class="cell payoff">3.2 USD</div>
+    <div class="cell drawdown">14.4%</div>
+    <div class="cell leverage">1:100</div>
+  </div>
+</div>
+"""
+
 
 def test_parse_table_extracts_signal_metrics():
     rows = mql5.parse_table(HTML)
@@ -18,6 +41,29 @@ def test_parse_table_extracts_signal_metrics():
     assert a["drawdown_pct"] == 12.0
     assert a["profit_factor"] == 1.8
     assert a["leverage"] == 100.0
+
+
+def test_parse_current_div_grid_extracts_metrics():
+    rows = mql5.parse_table(DIV_HTML)
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["signal_id"] == "24680"
+    assert row["name"] == "Grid Alpha"
+    assert row["free"] is True
+    assert row["growth_pct"] == 321.5
+    assert row["subscribers"] == 17
+    assert row["weeks"] == 104.0
+    assert row["trades"] == 2345
+    assert row["win_rate_pct"] == 61.2
+    assert row["profit_factor"] == 1.92
+    assert row["drawdown_pct"] == 14.4
+    assert row["leverage"] == 100.0
+
+
+def test_div_and_table_duplicates_are_deduplicated():
+    duplicate = DIV_HTML.replace("24680", "12345").replace("Grid Alpha", "Free Alpha")
+    rows = mql5.parse_table(HTML + duplicate)
+    assert len([r for r in rows if r["signal_id"] == "12345"]) == 1
 
 
 def test_paid_signal_not_actionable():
