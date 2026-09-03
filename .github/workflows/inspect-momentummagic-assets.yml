@@ -23,6 +23,12 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install requests
+      - name: Ensure English screenshot text extractor
+        run: |
+          if ! command -v tesseract >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y tesseract-ocr >/dev/null
+          fi
       - run: python inspect_momentummagic_assets.py
       - name: Publish inspection result to audit branch
         run: |
