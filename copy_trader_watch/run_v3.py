@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from models import AdapterResult, TraderSnapshot, score_snapshot
-from adapters import hyperliquid, mql5, polymarket
+from adapters import collective2, hyperliquid, mql5, polymarket
 
 ROOT = Path(__file__).resolve().parent
 PLATFORM_CONFIG_PATH = ROOT / "platform_config.json"
@@ -74,7 +74,12 @@ def collect_all(config: dict[str, Any]) -> list[AdapterResult]:
     results: list[AdapterResult] = []
     if platforms.get("etoro", {}).get("enabled", True):
         results.append(_v2_etoro_records())
-    for name, module in (("hyperliquid", hyperliquid), ("mql5", mql5), ("polymarket", polymarket)):
+    for name, module in (
+        ("hyperliquid", hyperliquid),
+        ("mql5", mql5),
+        ("polymarket", polymarket),
+        ("collective2", collective2),
+    ):
         cfg = platforms.get(name, {})
         if not cfg.get("enabled"):
             continue
@@ -115,8 +120,21 @@ def _source_details(result: AdapterResult) -> str:
         return f"resolved={meta.get('wallets_resolved', 'n/a')}/{meta.get('wallets_requested', 'n/a')}"
     if result.platform == "polymarket":
         return f"resolved={meta.get('candidates_resolved', 'n/a')}/{meta.get('candidates_requested', 'n/a')}; persistent={meta.get('persistent_candidates_in_monthly_top', 'n/a')}"
+    if result.platform == "collective2":
+        return f"parsed={meta.get('rows_parsed', 'n/a')}; free={meta.get('free_strategies_found', 'n/a')}; screen={meta.get('free_screen_passed', 'n/a')}"
     if result.platform == "etoro":
         return f"resolved={meta.get('resolved', len(result.records))}"
+    return ""
+
+
+def _conditions(record: TraderSnapshot) -> str:
+    if record.platform == "collective2":
+        capital = record.metadata.get("suggested_capital")
+        if isinstance(capital, (int, float)):
+            return f"suggested capital ${capital:,.0f}"
+        return "broker route required"
+    if record.platform == "etoro":
+        return "eToro Copy must be available"
     return ""
 
 
@@ -129,12 +147,12 @@ def build_report(results: list[AdapterResult], config: dict[str, Any]) -> str:
     for result in results:
         msg = result.message.replace("|", "/") if result.message else ""
         lines.append(f"| {result.platform} | {result.status} | {len(result.records)} | {_source_details(result)} | {msg} |")
-    lines.extend(["", "## Free U.S.-actionable candidates", "", "| Rank | Platform | Trader | Return | Window | DD | PF | Trades | Win | Copyability | Score |", "|---:|---|---|---:|---|---:|---:|---:|---:|---:|---:|"])
+    lines.extend(["", "## Free U.S.-actionable candidates", "", "| Rank | Platform | Trader | Return | Window | DD | PF | Trades | Win | Copyability | Score | Conditions |", "|---:|---|---|---:|---|---:|---:|---:|---:|---:|---:|---|"])
     if actionable:
         for i, r in enumerate(actionable[:top_n], 1):
-            lines.append(f"| {i} | {r.platform} | {r.name} (`{_short_id(r)}`) | {_fmt(r.return_pct, '%')} | {r.return_window or 'n/a'} | {_fmt(r.max_drawdown_pct, '%')} | {_fmt(r.profit_factor)} | {_fmt(r.trades, '', 0)} | {_fmt(r.win_rate_pct, '%')} | {_fmt(r.copyability_score)} | {_fmt(r.research_score)} |")
+            lines.append(f"| {i} | {r.platform} | {r.name} (`{_short_id(r)}`) | {_fmt(r.return_pct, '%')} | {r.return_window or 'n/a'} | {_fmt(r.max_drawdown_pct, '%')} | {_fmt(r.profit_factor)} | {_fmt(r.trades, '', 0)} | {_fmt(r.win_rate_pct, '%')} | {_fmt(r.copyability_score)} | {_fmt(r.research_score)} | {_conditions(r)} |")
     else:
-        lines.append("| — | — | No candidate currently satisfies free + U.S.-actionable + evidence rules | — | — | — | — | — | — | — | — |")
+        lines.append("| — | — | No candidate currently satisfies free + U.S.-actionable + evidence rules | — | — | — | — | — | — | — | — | — |")
     lines.extend(["", "## Cross-platform research leaderboard", "", "| Rank | Platform | Trader | Free | U.S. access | Evidence | Performance | Window / metric | DD | PF | Trades | Leverage | Copyability | Score |", "|---:|---|---|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|"])
     for i, r in enumerate(records[:top_n], 1):
         lines.append(f"| {i} | {r.platform} | {r.name} (`{_short_id(r)}`) | {_fmt(r.free)} | {r.us_access} | {r.live_evidence} | {_fmt(r.return_pct, '%')} | {r.return_window or 'n/a'} | {_fmt(r.max_drawdown_pct, '%')} | {_fmt(r.profit_factor)} | {_fmt(r.trades, '', 0)} | {_fmt(r.leverage, 'x')} | {_fmt(r.copyability_score)} | {_fmt(r.research_score)} |")
@@ -146,7 +164,7 @@ def build_report(results: list[AdapterResult], config: dict[str, Any]) -> str:
             seen += 1
     if not seen:
         lines.append("No non-actionable records were returned.")
-    lines.extend(["", "## Method", "", "- eToro uses the existing V2 U.S. candidate monitor and keeps its public-source limitations.", "- Hyperliquid uses the official public `info` API. Its return path uses PnL change on the period's initial account-value base to reduce deposit/withdrawal distortion; it is research-only in this U.S. workflow.", "- MQL5 scans the public MT5 Signals list. Paid signals can appear in research; only explicitly free signals can pass the cost gate, and real-vs-demo/broker compatibility still require verification.", "- Polymarket uses the official Data API leaderboard plus closed/current-position endpoints. Its displayed percentage is closed-position realized P&L divided by estimated purchase cost in the sampled closed positions; it is a capital-efficiency proxy, **not account equity return**, and max drawdown is unknown.", "- The cross-platform score rewards performance/drawdown, age, trade sample, PF, source quality, and copyability, while penalizing unknown drawdown, leverage, concentration, high drawdown, and demo-only evidence.", "- Missing data is penalized rather than silently imputed.", ""])
+    lines.extend(["", "## Method", "", "- eToro uses the existing V2 U.S. candidate monitor and keeps its public-source limitations.", "- Hyperliquid uses the official public `info` API. Its return path uses PnL change on the period's initial account-value base to reduce deposit/withdrawal distortion; it is research-only in this U.S. workflow.", "- MQL5 scans the public MT5 Signals list. Paid signals can appear in research; only explicitly free signals can pass the cost gate, and real-vs-demo/broker compatibility still require verification.", "- Polymarket uses the official Data API leaderboard plus closed/current-position endpoints. Its displayed percentage is closed-position realized P&L divided by estimated purchase cost in the sampled closed positions; it is a capital-efficiency proxy, **not account equity return**, and max drawdown is unknown.", "- Collective2 parses public strategy lists. Collective2 labels performance results hypothetical, so C2 records are evidence for further testing rather than independently verified brokerage equity curves. A `$0/month` result can depend on a broker-sponsored route and may require substantial suggested capital.", "- The cross-platform score rewards performance/drawdown, age, trade sample, PF, source quality, and copyability, while penalizing unknown drawdown, leverage, concentration, high drawdown, and demo-only evidence.", "- Missing data is penalized rather than silently imputed.", ""])
     return "\n".join(lines)
 
 
