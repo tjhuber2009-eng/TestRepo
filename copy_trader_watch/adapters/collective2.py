@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 from models import AdapterResult, TraderSnapshot, score_snapshot
 
-USER_AGENT = "Mozilla/5.0 (compatible; CopyTraderWatch/3.2; +https://github.com/)"
+USER_AGENT = "Mozilla/5.0 (compatible; CopyTraderWatch/3.3; +https://github.com/)"
 DEFAULT_URLS = [
     "https://collective2.com/lb/320",
     "https://collective2.com/selector/old_timers",
@@ -98,15 +98,11 @@ def _fetch(url: str) -> str:
 
 
 def _copyability(row: dict[str, Any]) -> float:
+    """Execution/risk copyability only; sample age is intentionally excluded."""
     score = 80.0
-    age = row.get("age_days") or 0.0
     dd = row.get("max_drawdown_pct")
     lev = row.get("average_leverage")
     capital = row.get("suggested_capital")
-    if age < 90:
-        score -= 30
-    elif age < 365:
-        score -= 15
     if isinstance(dd, (int, float)):
         if dd > 40:
             score -= 30
@@ -128,16 +124,18 @@ def normalize(row: dict[str, Any], observed: str) -> TraderSnapshot:
     dd_raw = row.get("max_drawdown_pct")
     dd = -abs(dd_raw) if isinstance(dd_raw, (int, float)) else None
     ret = row.get("return_pct")
-    mature = isinstance(age, (int, float)) and age >= 180
     controlled_dd = isinstance(dd_raw, (int, float)) and dd_raw <= 30
     positive = isinstance(ret, (int, float)) and ret > 0
-    actionable = bool(free and mature and controlled_dd and positive)
+
+    # Historical age/sample size is deliberately NOT an actionability gate.
+    actionable = bool(free and controlled_dd and positive)
     if actionable:
-        reason = "Free broker-sponsored Collective2 route; broker compatibility and suggested-capital fit still require verification."
+        reason = "Free broker-sponsored Collective2 route; broker compatibility and suggested-capital fit still require verification. Historical sample size is not an exclusion rule."
     elif not free:
         reason = f"Not free: listed subscription fee is {row.get('monthly_fee_usd'):g} USD/month."
     else:
-        reason = "Free strategy, but it does not yet pass V3 maturity/positive-return/drawdown screening."
+        reason = "Free strategy remains in forward monitoring, but current return/drawdown or broker-route requirements do not yet support practical execution."
+
     snap = TraderSnapshot(
         platform="collective2",
         trader_id=str(row["strategy_id"]),
@@ -162,6 +160,8 @@ def normalize(row: dict[str, Any], observed: str) -> TraderSnapshot:
         copyability_score=_copyability(row),
         actionable=actionable,
         actionable_reason=reason,
+        forward_test_eligible=True,
+        forward_test_reason="Admitted regardless of track-record age; forward metric is used when a cumulative return field is available.",
         metadata={
             "monthly_fee_usd": row.get("monthly_fee_usd"),
             "sharpe": row.get("sharpe"),
@@ -220,6 +220,6 @@ def collect(config: dict[str, Any]) -> AdapterResult:
             "unique_strategies": len(unique),
             "free_strategies_found": len(free_records),
             "free_screen_passed": len(actionables),
-            "note": "Collective2 publicly states performance results are hypothetical; zero subscription fee can depend on broker-sponsored routing.",
+            "note": "Sample age does not gate admission. Collective2 publicly states performance results are hypothetical; zero subscription fee can depend on broker-sponsored routing.",
         },
     )
