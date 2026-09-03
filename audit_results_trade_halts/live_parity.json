@@ -1,0 +1,98 @@
+{
+  "rows": 550,
+  "unmatched_metadata": 0,
+  "trade_exchange_counts": {
+    "Nasdaq": 468,
+    "NYSE American": 46,
+    "NYSE": 36
+  },
+  "trade_halt_type_counts": {
+    "LULD pause": 537,
+    "LULD Pause": 13
+  },
+  "cross_counts": [
+    {
+      "exchange": "Nasdaq",
+      "halt_type": "LULD pause",
+      "n": 455
+    },
+    {
+      "exchange": "NYSE American",
+      "halt_type": "LULD pause",
+      "n": 46
+    },
+    {
+      "exchange": "NYSE",
+      "halt_type": "LULD pause",
+      "n": 36
+    },
+    {
+      "exchange": "Nasdaq",
+      "halt_type": "LULD Pause",
+      "n": 13
+    }
+  ],
+  "subsets": {
+    "all_550_readme": {
+      "trades": 550,
+      "final": 35691660.2707324,
+      "total_return_pct": 3965640.0300813783,
+      "cagr_pct": 717.1401301029429,
+      "max_dd_pct": -12.955427157458244,
+      "win_rate_pct": 70.0,
+      "median_trade_pct": 30.3432
+    },
+    "luld_only_all_exchanges": {
+      "trades": 550,
+      "final": 35691660.2707324,
+      "total_return_pct": 3965640.0300813783,
+      "cagr_pct": 717.1401301029429,
+      "max_dd_pct": -12.955427157458244,
+      "win_rate_pct": 70.0,
+      "median_trade_pct": 30.3432
+    },
+    "nasdaq_only_any_halt_type": {
+      "trades": 468,
+      "final": 30803159.261456545,
+      "total_return_pct": 3422473.25127295,
+      "cagr_pct": 693.6056459133971,
+      "max_dd_pct": -17.324602880569483,
+      "win_rate_pct": 70.94017094017094,
+      "median_trade_pct": 32.7329
+    },
+    "nasdaq_luld_only_closest_live_LUDP": {
+      "trades": 468,
+      "final": 30803159.261456545,
+      "total_return_pct": 3422473.25127295,
+      "cagr_pct": 693.6056459133971,
+      "max_dd_pct": -17.324602880569483,
+      "win_rate_pct": 70.94017094017094,
+      "median_trade_pct": 32.7329
+    },
+    "non_luld": {
+      "trades": 0,
+      "final": 900.0,
+      "total_return_pct": 0.0,
+      "cagr_pct": NaN,
+      "max_dd_pct": NaN,
+      "win_rate_pct": null,
+      "median_trade_pct": null
+    },
+    "non_nasdaq": {
+      "trades": 82,
+      "final": 21010.916465327045,
+      "total_return_pct": 2234.5462739252275,
+      "cagr_pct": 89.71190230860242,
+      "max_dd_pct": -30.598579687561877,
+      "win_rate_pct": 64.63414634146342,
+      "median_trade_pct": 19.93685
+    }
+  },
+  "source_logic": {
+    "backtest_rvol_event_filter": "bar_status == ok only; no halt_type or exchange restriction",
+    "live_bot_halt_codes": [
+      "LUDP"
+    ],
+    "live_parity_proxy": "Nasdaq + halt_type containing LULD"
+  }
+}
