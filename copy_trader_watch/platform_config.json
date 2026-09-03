@@ -16,8 +16,8 @@
       "enabled": true,
       "list_url": "https://www.mql5.com/en/signals/mt5/list",
       "max_pages": 20,
-      "include_paid_research": true,
-      "keep_top": 50,
+      "include_paid_research": false,
+      "keep_top": 2000,
       "actionable_free_only": true
     },
     "polymarket": {
