@@ -1,0 +1,1008 @@
+{
+  "pub_id": "PUB;1f5ef7239fac4a07bed1092c7e1d33a4",
+  "sha256": "8a133b58766e30cd8bb2aaf10e5d885a0b2ba3cfaf2890fd292a2b9fdca98bce",
+  "source_len": 22447,
+  "lines": 435,
+  "semantic": [
+    {
+      "line": 3,
+      "text": "// BTC Flip Bot V3 \u2014 MTF Engulfing + SL-Flip + Pyramiding + Tuned Indicators (BTCUSDT 1H)"
+    },
+    {
+      "line": 11,
+      "text": "// Tested ONLY on BTCUSDT | 1H | requires 4\u00d7 exchange leverage ceiling."
+    },
+    {
+      "line": 21,
+      "text": "// \u2500\u2500\u2500 Leverage input (must be declared before strategy() for margin calc) \u2500\u2500\u2500"
+    },
+    {
+      "line": 22,
+      "text": "leverageInput = input.float(2.0, \"Leverage\", minval=1, maxval=10, step=0.5,"
+    },
+    {
+      "line": 23,
+      "text": "tooltip=\"Tested at 2\u00d7. Higher leverage amplifies both returns AND drawdowns. Fees scale with leverage \u2014 at 5\u00d7+ fees may exceed profit margins.\")"
+    },
+    {
+      "line": 28,
+      "text": "// A runtime warning (bottom of chart) fires if the current TF is not 1H."
+    },
+    {
+      "line": 29,
+      "text": "strategy(\"BTC Flip Bot V3 \u2014 MTF + SL-Flip + Pyramid + Tuned\", overlay=true, initial_capital=5000,"
+    },
+    {
+      "line": 31,
+      "text": "pyramiding=1, calc_on_order_fills=false, calc_on_every_tick=false,"
+    },
+    {
+      "line": 32,
+      "text": "process_orders_on_close=true, commission_type=strategy.commission.percent,"
+    },
+    {
+      "line": 33,
+      "text": "commission_value=0.04, slippage=3,"
+    },
+    {
+      "line": 39,
+      "text": "// Risk"
+    },
+    {
+      "line": 40,
+      "text": "grpRisk        = \"\u2699\ufe0f Risk Management\""
+    },
+    {
+      "line": 41,
+      "text": "riskPct        = input.float(1.0,   \"Risk per trade (%)\", minval=0.1, maxval=5, step=0.1, group=grpRisk,"
+    },
+    {
+      "line": 42,
+      "text": "tooltip=\"Percentage of equity risked per trade. Sized from SL distance.\") / 100"
+    },
+    {
+      "line": 43,
+      "text": "ddHaltPct      = input.float(25.0,  \"Drawdown halt (%)\", minval=10, maxval=50, group=grpRisk,"
+    },
+    {
+      "line": 45,
+      "text": "ddHaltHours    = input.int(168,     \"Halt duration (hours)\", minval=24, maxval=720, group=grpRisk,"
+    },
+    {
+      "line": 50,
+      "text": "slMaxPct       = input.float(2.5,   \"SL max (%)\", minval=0.5, maxval=10, step=0.1, group=grpSL,"
+    },
+    {
+      "line": 52,
+      "text": "slBufPct       = input.float(0.1,   \"SL buffer (%)\", minval=0.0, maxval=1, step=0.05, group=grpSL,"
+    },
+    {
+      "line": 56,
+      "text": "grpTP          = \"\ud83c\udfaf Partial Take Profit\""
+    },
+    {
+      "line": 57,
+      "text": "partialTpR     = input.float(6.0,   \"TP trigger (R multiple)\", minval=1, maxval=20, step=0.5, group=grpTP,"
+    },
+    {
+      "line": 58,
+      "text": "tooltip=\"Lock in partial profit when price moves this many R in your favor. 6R is the sweep peak \u2014 higher R risks DD halt, lower R gives up edge.\")"
+    },
+    {
+      "line": 59,
+      "text": "partialTpFrac  = input.float(15.0,  \"TP close (%)\", minval=5, maxval=90, step=5, group=grpTP,"
+    },
+    {
+      "line": 60,
+      "text": "tooltip=\"Percentage of position to close at TP trigger. 15% lets 85% run to catch fat-tail winners. Sweep peak vs old 30% default: +11pp CAGR.\")"
+    },
+    {
+      "line": 61,
+      "text": "partialBeBufPct = input.float(0.1,  \"Move SL to BE+buf (%) after partial TP\", minval=0.0, maxval=2, step=0.05, group=grpTP,"
+    },
+    {
+      "line": 62,
+      "text": "tooltip=\"After partial TP fires, move SL to entry \u00b1 this %. Kills giveback on runners (Trade 15 pattern). Backtest: +3pp CAGR, -3.6pp DD. Set 0 to disable.\") / 100"
+    },
+    {
+      "line": 66,
+      "text": "rsiLongMin     = input.int(45,      \"RSI long min\", minval=10, maxval=70, group=grpEntry,"
+    },
+    {
+      "line": 68,
+      "text": "rsiShortMax    = input.int(55,      \"RSI short max\", minval=30, maxval=90, group=grpEntry,"
+    },
+    {
+      "line": 70,
+      "text": "engBodyMult    = input.float(1.0,   \"Engulf body multiplier\", minval=0.5, maxval=3, step=0.1, group=grpEntry,"
+    },
+    {
+      "line": 71,
+      "text": "tooltip=\"Current bar body must be \u2265 this \u00d7 prior bar body to qualify as engulfing.\")"
+    },
+    {
+      "line": 72,
+      "text": "atrMaLength    = input.int(50,      \"ATR MA length\", minval=10, maxval=200, group=grpEntry,"
+    },
+    {
+      "line": 74,
+      "text": "volSmaLength   = input.int(20,      \"Volume SMA length\", minval=5, maxval=100, group=grpEntry,"
+    },
+    {
+      "line": 75,
+      "text": "tooltip=\"Volume compared against N-period SMA.\")"
+    },
+    {
+      "line": 76,
+      "text": "volSpikeRatio  = input.float(1.5,   \"Volume spike ratio\", minval=1.0, maxval=5, step=0.1, group=grpEntry,"
+    },
+    {
+      "line": 77,
+      "text": "tooltip=\"Current volume must be \u2265 this \u00d7 volume SMA to qualify.\")"
+    },
+    {
+      "line": 79,
+      "text": "// Cooldowns"
+    },
+    {
+      "line": 80,
+      "text": "grpCD          = \"\u23f8\ufe0f Cooldowns\""
+    },
+    {
+      "line": 81,
+      "text": "sameDirCdHours = input.int(24,      \"Same-dir SL cooldown (hours)\", minval=0, maxval=168, group=grpCD,"
+    },
+    {
+      "line": 82,
+      "text": "tooltip=\"After SL hit, block same-direction entries for this many hours. 24h is optimal with SL-flip enabled.\")"
+    },
+    {
+      "line": 83,
+      "text": "genCdHours     = input.int(2,       \"Generic exit cooldown (hours)\", minval=0, maxval=24, group=grpCD,"
+    },
+    {
+      "line": 84,
+      "text": "tooltip=\"After any exit, block all entries for this many hours.\")"
+    },
+    {
+      "line": 88,
+      "text": "cleanView      = input.bool(true,   \"Clean view (minimal \u2014 only signal arrows)\", group=grpViz,"
+    },
+    {
+      "line": 89,
+      "text": "tooltip=\"ON = ultra-minimal (just signal arrows). OFF = full dashboard, EMA50 line, cooldown backgrounds.\")"
+    },
+    {
+      "line": 90,
+      "text": "showEma50      = input.bool(false,  \"Show Daily EMA50 line\", group=grpViz,"
+    },
+    {
+      "line": 92,
+      "text": "showSignals    = input.bool(true,   \"Show entry signal arrows\", group=grpViz)"
+    },
+    {
+      "line": 94,
+      "text": "// SL-Flip"
+    },
+    {
+      "line": 95,
+      "text": "grpFlip        = \"\ud83d\udd04 SL-Flip (v6 extension)\""
+    },
+    {
+      "line": 96,
+      "text": "useSlFlip      = input.bool(true,   \"Enable SL-flip\", group=grpFlip,"
+    },
+    {
+      "line": 97,
+      "text": "tooltip=\"On SL hit, flip to opposite direction. Python 5yr backtest: $241K \u2192 $349K with same DD.\")"
+    },
+    {
+      "line": 98,
+      "text": "flipWaitHours  = input.int(1,       \"Flip wait (hours)\", minval=0, maxval=24, group=grpFlip,"
+    },
+    {
+      "line": 99,
+      "text": "tooltip=\"Wait N hours after SL before flipping. 1h is optimal \u2014 avoids whipsaw, lets move settle.\")"
+    },
+    {
+      "line": 100,
+      "text": "flipSlCapPct   = input.float(1.5,   \"Flip SL cap (%)\", minval=0.5, maxval=5, step=0.1, group=grpFlip,"
+    },
+    {
+      "line": 101,
+      "text": "tooltip=\"Tighter SL for flip trades (1.5% vs main 2.5%). Pattern-based from swing high/low.\") / 100"
+    },
+    {
+      "line": 102,
+      "text": "flipSrLookback = input.int(10,      \"Swing lookback (bars)\", minval=3, maxval=50, group=grpFlip,"
+    },
+    {
+      "line": 103,
+      "text": "tooltip=\"Bars to scan for swing high/low when placing flip SL.\")"
+    },
+    {
+      "line": 104,
+      "text": "flipTimeStopH  = input.int(24,      \"Flip time-stop (hours)\", minval=4, maxval=168, group=grpFlip,"
+    },
+    {
+      "line": 105,
+      "text": "tooltip=\"Exit flip position after N hours if still open (blind flips shouldn't hold long).\")"
+    },
+    {
+      "line": 107,
+      "text": "// Pyramiding (V2)"
+    },
+    {
+      "line": 108,
+      "text": "grpPyramid     = \"\ud83d\udcd0 Pyramiding (V2)\""
+    },
+    {
+      "line": 109,
+      "text": "usePyramid     = input.bool(true,   \"Enable pyramiding\", group=grpPyramid,"
+    },
+    {
+      "line": 110,
+      "text": "tooltip=\"Add 50% more position when trade reaches +3R favorable. Amplifies fat-tail winners. Requires 4\u00d7 exchange leverage ceiling.\")"
+    },
+    {
+      "line": 111,
+      "text": "pyramidR       = input.float(3.0,   \"Pyramid trigger (R)\", minval=1, maxval=10, step=0.5, group=grpPyramid,"
+    },
+    {
+      "line": 113,
+      "text": "pyramidFrac    = input.float(50.0,  \"Pyramid size (% of original)\", minval=10, maxval=100, step=10, group=grpPyramid,"
+    },
+    {
+      "line": 117,
+      "text": "dailyClose = request.security(syminfo.tickerid, \"1D\", close[1], lookahead=barmerge.lookahead_off)"
+    },
+    {
+      "line": 118,
+      "text": "dailyEma50 = request.security(syminfo.tickerid, \"1D\", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)"
+    },
+    {
+      "line": 119,
+      "text": "rsi4h      = request.security(syminfo.tickerid, \"240\", ta.rsi(close, 14)[1], lookahead=barmerge.lookahead_off)"
+    },
+    {
+      "line": 127,
+      "text": "rsi1h = ta.rsi(close, 21)"
+    },
+    {
+      "line": 128,
+      "text": "[macdLine, macdSignal, macdHist] = ta.macd(close, 12, 26, 9)"
+    },
+    {
+      "line": 129,
+      "text": "atr20  = ta.atr(20)"
+    },
+    {
+      "line": 130,
+      "text": "atrMa  = ta.sma(atr20, atrMaLength)"
+    },
+    {
+      "line": 132,
+      "text": "volSma = ta.sma(volume, volSmaLength)"
+    },
+    {
+      "line": 133,
+      "text": "volOk  = volume > volSpikeRatio * volSma"
+    },
+    {
+      "line": 135,
+      "text": "// \u2500\u2500\u2500 Engulfing patterns \u2500\u2500\u2500"
+    },
+    {
+      "line": 138,
+      "text": "bullEngulfing = close[1] < open[1] and close > open and close >= open[1] and open <= close[1] and bodySize > prevBody * engBodyMult"
+    },
+    {
+      "line": 139,
+      "text": "bearEngulfing = close[1] > open[1] and close < open and open >= close[1] and close <= open[1] and bodySize > prevBody * engBodyMult"
+    },
+    {
+      "line": 142,
+      "text": "longStack  = rsi1h > rsiLongMin and macdLine > macdSignal and bullEngulfing and highVol and volOk"
+    },
+    {
+      "line": 143,
+      "text": "shortStack = rsi1h < rsiShortMax and macdLine < macdSignal and bearEngulfing and highVol and volOk"
+    },
+    {
+      "line": 144,
+      "text": "longSignal  = longStack and dailyBull and h4ConfBull"
+    },
+    {
+      "line": 145,
+      "text": "shortSignal = shortStack and dailyBear and h4ConfBear"
+    },
+    {
+      "line": 153,
+      "text": "var bool partialTaken  = false"
+    },
+    {
+      "line": 155,
+      "text": "// V6 SL-Flip state"
+    },
+    {
+      "line": 156,
+      "text": "var bool isFlipPos      = false   // current position is a flip"
+    },
+    {
+      "line": 157,
+      "text": "var int pendingFlipSide = 0       // 0=none, 1=pending LONG, -1=pending SHORT"
+    },
+    {
+      "line": 158,
+      "text": "var int pendingFlipBar  = na"
+    },
+    {
+      "line": 159,
+      "text": "var float pendingFlipRef = na     // reference price (the SL that broke)"
+    },
+    {
+      "line": 160,
+      "text": "var int flipEntryBar    = na"
+    },
+    {
+      "line": 161,
+      "text": "// V2 Pyramid state"
+    },
+    {
+      "line": 162,
+      "text": "var bool pyramided      = false"
+    },
+    {
+      "line": 163,
+      "text": "var float pyramidEntry  = na"
+    },
+    {
+      "line": 164,
+      "text": "var float initSlDist    = na      // SL distance at entry (for R-calc)"
+    },
+    {
+      "line": 166,
+      "text": "// \u2500\u2500\u2500 Timeframe advisory \u2014 strategy's backtest was run on 1H \u2500\u2500\u2500"
+    },
+    {
+      "line": 172,
+      "text": "wrongTf = timeframe.period != \"60\""
+    },
+    {
+      "line": 174,
+      "text": "// \u2500\u2500\u2500 Cooldown checks \u2500\u2500\u2500"
+    },
+    {
+      "line": 175,
+      "text": "longCdBlocked  = not na(lastLongSlBar) and (bar_index - lastLongSlBar) < sameDirCdHours"
+    },
+    {
+      "line": 176,
+      "text": "shortCdBlocked = not na(lastShortSlBar) and (bar_index - lastShortSlBar) < sameDirCdHours"
+    },
+    {
+      "line": 177,
+      "text": "exitCdBlocked  = not na(lastExitBar) and (bar_index - lastExitBar) < genCdHours"
+    },
+    {
+      "line": 178,
+      "text": "isHalted       = not na(haltUntilBar) and bar_index < haltUntilBar"
+    },
+    {
+      "line": 180,
+      "text": "canGoLong  = longSignal and not longCdBlocked and not exitCdBlocked and not isHalted"
+    },
+    {
+      "line": 181,
+      "text": "canGoShort = shortSignal and not shortCdBlocked and not exitCdBlocked and not isHalted"
+    },
+    {
+      "line": 195,
+      "text": "drawdownPct   = (currentEquity - peakEquity) / peakEquity"
+    },
+    {
+      "line": 197,
+      "text": "if drawdownPct <= -ddHaltPct and strategy.position_size == 0"
+    },
+    {
+      "line": 198,
+      "text": "haltUntilBar := bar_index + ddHaltHours"
+    },
+    {
+      "line": 201,
+      "text": "// \u2500\u2500\u2500 Position sizing (notional = equity \u00d7 leverage) \u2500\u2500\u2500"
+    },
+    {
+      "line": 202,
+      "text": "// qty = (equity \u00d7 leverage) / price  \u2014 deploys leverage\u00d7 notional of capital"
+    },
+    {
+      "line": 203,
+      "text": "// This matches Python v6 backtest: pnl = price_move% \u00d7 leverage \u00d7 equity"
+    },
+    {
+      "line": 204,
+      "text": "// A 1% price move at 2\u00d7 leverage = 2% equity change."
+    },
+    {
+      "line": 205,
+      "text": "slDistLong  = close - stopLong"
+    },
+    {
+      "line": 206,
+      "text": "slDistShort = stopShort - close"
+    },
+    {
+      "line": 207,
+      "text": "notionalQty = (currentEquity * leverageInput) / close"
+    },
+    {
+      "line": 208,
+      "text": "qtyLong  = slDistLong > 0 ? notionalQty : 0"
+    },
+    {
+      "line": 209,
+      "text": "qtyShort = slDistShort > 0 ? notionalQty : 0"
+    },
+    {
+      "line": 211,
+      "text": "// \u2500\u2500\u2500 V6 SL-FLIP: execute pending flip if wait elapsed (respects DD halt + generic cooldown) \u2500\u2500\u2500"
+    },
+    {
+      "line": 212,
+      "text": "flipReady = useSlFlip and pendingFlipSide != 0 and strategy.position_size == 0 and not na(pendingFlipBar) and (bar_index - pendingFlipBar) >= flipWaitHours and not isHalted and not exitCdBlocked"
+    },
+    {
+      "line": 214,
+      "text": "if flipReady"
+    },
+    {
+      "line": 215,
+      "text": "lbStart = math.max(0, bar_index - flipSrLookback)"
+    },
+    {
+      "line": 216,
+      "text": "if pendingFlipSide == -1"
+    },
+    {
+      "line": 217,
+      "text": "swingHigh = ta.highest(high, flipSrLookback)"
+    },
+    {
+      "line": 219,
+      "text": "capSl     = pendingFlipRef * (1 + flipSlCapPct)"
+    },
+    {
+      "line": 220,
+      "text": "flipSL    = math.min(swingSl, capSl)"
+    },
+    {
+      "line": 221,
+      "text": "flipDist  = flipSL - close"
+    },
+    {
+      "line": 222,
+      "text": "flipQty   = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+    },
+    {
+      "line": 223,
+      "text": "if flipQty > 0"
+    },
+    {
+      "line": 224,
+      "text": "strategy.entry(\"fS\", strategy.short, qty=flipQty)"
+    },
+    {
+      "line": 225,
+      "text": "strategy.exit(\"x\", from_entry=\"fS\", stop=flipSL)"
+    },
+    {
+      "line": 226,
+      "text": "isFlipPos   := true"
+    },
+    {
+      "line": 227,
+      "text": "flipEntryBar := bar_index"
+    },
+    {
+      "line": 228,
+      "text": "storedSL    := flipSL"
+    },
+    {
+      "line": 229,
+      "text": "partialTaken := false"
+    },
+    {
+      "line": 230,
+      "text": "else if pendingFlipSide == 1"
+    },
+    {
+      "line": 231,
+      "text": "swingLow = ta.lowest(low, flipSrLookback)"
+    },
+    {
+      "line": 233,
+      "text": "capSl    = pendingFlipRef * (1 - flipSlCapPct)"
+    },
+    {
+      "line": 234,
+      "text": "flipSL   = math.max(swingSl, capSl)"
+    },
+    {
+      "line": 235,
+      "text": "flipDist = close - flipSL"
+    },
+    {
+      "line": 236,
+      "text": "flipQty  = flipDist > 0 ? (currentEquity * leverageInput) / close : 0"
+    },
+    {
+      "line": 237,
+      "text": "if flipQty > 0"
+    },
+    {
+      "line": 238,
+      "text": "strategy.entry(\"fL\", strategy.long, qty=flipQty)"
+    },
+    {
+      "line": 239,
+      "text": "strategy.exit(\"x\", from_entry=\"fL\", stop=flipSL)"
+    },
+    {
+      "line": 240,
+      "text": "isFlipPos   := true"
+    },
+    {
+      "line": 241,
+      "text": "flipEntryBar := bar_index"
+    },
+    {
+      "line": 242,
+      "text": "storedSL    := flipSL"
+    },
+    {
+      "line": 243,
+      "text": "partialTaken := false"
+    },
+    {
+      "line": 244,
+      "text": "pendingFlipSide := 0"
+    },
+    {
+      "line": 246,
+      "text": "// Time-stop for flip positions"
+    },
+    {
+      "line": 247,
+      "text": "if isFlipPos and strategy.position_size != 0 and not na(flipEntryBar) and (bar_index - flipEntryBar) >= flipTimeStopH"
+    },
+    {
+      "line": 248,
+      "text": "strategy.close_all()"
+    },
+    {
+      "line": 249,
+      "text": "isFlipPos := false"
+    },
+    {
+      "line": 251,
+      "text": "// Block normal entries while a flip is pending"
+    },
+    {
+      "line": 252,
+      "text": "pendingActive = pendingFlipSide != 0"
+    },
+    {
+      "line": 255,
+      "text": "if canGoLong and strategy.position_size == 0 and qtyLong > 0 and not pendingActive"
+    },
+    {
+      "line": 256,
+      "text": "strategy.entry(\"L\", strategy.long, qty=qtyLong)"
+    },
+    {
+      "line": 257,
+      "text": "strategy.exit(\"x\", from_entry=\"L\", stop=stopLong)"
+    },
+    {
+      "line": 258,
+      "text": "partialTaken := false"
+    },
+    {
+      "line": 259,
+      "text": "isFlipPos := false"
+    },
+    {
+      "line": 260,
+      "text": "pyramided := false"
+    },
+    {
+      "line": 261,
+      "text": "initSlDist := close - stopLong"
+    },
+    {
+      "line": 263,
+      "text": "if canGoShort and strategy.position_size == 0 and qtyShort > 0 and not pendingActive"
+    },
+    {
+      "line": 264,
+      "text": "strategy.entry(\"S\", strategy.short, qty=qtyShort)"
+    },
+    {
+      "line": 265,
+      "text": "strategy.exit(\"x\", from_entry=\"S\", stop=stopShort)"
+    },
+    {
+      "line": 266,
+      "text": "partialTaken := false"
+    },
+    {
+      "line": 267,
+      "text": "isFlipPos := false"
+    },
+    {
+      "line": 268,
+      "text": "pyramided := false"
+    },
+    {
+      "line": 269,
+      "text": "initSlDist := stopShort - close"
+    },
+    {
+      "line": 271,
+      "text": "// \u2500\u2500\u2500 Store entry SL for partial TP \u2500\u2500\u2500"
+    },
+    {
+      "line": 272,
+      "text": "if strategy.position_size > 0 and strategy.position_size[1] == 0"
+    },
+    {
+      "line": 274,
+      "text": "if strategy.position_size < 0 and strategy.position_size[1] == 0"
+    },
+    {
+      "line": 277,
+      "text": "// \u2500\u2500\u2500 V2 PYRAMIDING \u2014 add to winning position at +3R \u2500\u2500\u2500"
+    },
+    {
+      "line": 278,
+      "text": "if usePyramid and strategy.position_size != 0 and not pyramided and not isFlipPos and not na(initSlDist) and initSlDist > 0"
+    },
+    {
+      "line": 280,
+      "text": "if strategy.position_size > 0"
+    },
+    {
+      "line": 281,
+      "text": "currentR = (close - entryPx) / initSlDist"
+    },
+    {
+      "line": 282,
+      "text": "if currentR >= pyramidR"
+    },
+    {
+      "line": 283,
+      "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+    },
+    {
+      "line": 284,
+      "text": "if pyramidQty > 0"
+    },
+    {
+      "line": 285,
+      "text": "strategy.entry(\"pL\", strategy.long, qty=pyramidQty)"
+    },
+    {
+      "line": 287,
+      "text": "pyrSL = entryPx + 0.5 * initSlDist"
+    },
+    {
+      "line": 288,
+      "text": "strategy.exit(\"x\", from_entry=\"L\", stop=pyrSL)"
+    },
+    {
+      "line": 289,
+      "text": "strategy.exit(\"px\", from_entry=\"pL\", stop=pyrSL)"
+    },
+    {
+      "line": 291,
+      "text": "pyramided := true"
+    },
+    {
+      "line": 292,
+      "text": "pyramidEntry := close"
+    },
+    {
+      "line": 293,
+      "text": "else if strategy.position_size < 0"
+    },
+    {
+      "line": 294,
+      "text": "currentR = (entryPx - close) / initSlDist"
+    },
+    {
+      "line": 295,
+      "text": "if currentR >= pyramidR"
+    },
+    {
+      "line": 296,
+      "text": "pyramidQty = (currentEquity * leverageInput * pyramidFrac) / close"
+    },
+    {
+      "line": 297,
+      "text": "if pyramidQty > 0"
+    },
+    {
+      "line": 298,
+      "text": "strategy.entry(\"pS\", strategy.short, qty=pyramidQty)"
+    },
+    {
+      "line": 299,
+      "text": "pyrSL = entryPx - 0.5 * initSlDist"
+    },
+    {
+      "line": 300,
+      "text": "strategy.exit(\"x\", from_entry=\"S\", stop=pyrSL)"
+    },
+    {
+      "line": 301,
+      "text": "strategy.exit(\"px\", from_entry=\"pS\", stop=pyrSL)"
+    },
+    {
+      "line": 303,
+      "text": "pyramided := true"
+    },
+    {
+      "line": 304,
+      "text": "pyramidEntry := close"
+    },
+    {
+      "line": 306,
+      "text": "// \u2500\u2500\u2500 Partial TP (+ move SL to BE after firing) \u2500\u2500\u2500"
+    },
+    {
+      "line": 307,
+      "text": "// Use the correct entry ID based on whether position is a flip or main entry"
+    },
+    {
+      "line": 308,
+      "text": "if strategy.position_size > 0 and not partialTaken and not na(storedSL)"
+    },
+    {
+      "line": 309,
+      "text": "entryPrice = strategy.position_avg_price"
+    },
+    {
+      "line": 310,
+      "text": "slDistance  = entryPrice - storedSL"
+    },
+    {
+      "line": 311,
+      "text": "if slDistance > 0"
+    },
+    {
+      "line": 312,
+      "text": "currentR = (close - entryPrice) / slDistance"
+    },
+    {
+      "line": 313,
+      "text": "if currentR >= partialTpR"
+    },
+    {
+      "line": 314,
+      "text": "tpId = isFlipPos ? \"fL\" : \"L\""
+    },
+    {
+      "line": 315,
+      "text": "strategy.close(tpId, qty_percent=partialTpFrac)"
+    },
+    {
+      "line": 316,
+      "text": "partialTaken := true"
+    },
+    {
+      "line": 318,
+      "text": "if partialBeBufPct > 0"
+    },
+    {
+      "line": 319,
+      "text": "beSL = entryPrice * (1 + partialBeBufPct)"
+    },
+    {
+      "line": 321,
+      "text": "strategy.exit(\"x\", from_entry=tpId, stop=newSL)"
+    },
+    {
+      "line": 324,
+      "text": "if strategy.position_size < 0 and not partialTaken and not na(storedSL)"
+    },
+    {
+      "line": 325,
+      "text": "entryPrice = strategy.position_avg_price"
+    },
+    {
+      "line": 326,
+      "text": "slDistance  = storedSL - entryPrice"
+    },
+    {
+      "line": 327,
+      "text": "if slDistance > 0"
+    },
+    {
+      "line": 328,
+      "text": "currentR = (entryPrice - close) / slDistance"
+    },
+    {
+      "line": 329,
+      "text": "if currentR >= partialTpR"
+    },
+    {
+      "line": 330,
+      "text": "tpId = isFlipPos ? \"fS\" : \"S\""
+    },
+    {
+      "line": 331,
+      "text": "strategy.close(tpId, qty_percent=partialTpFrac)"
+    },
+    {
+      "line": 332,
+      "text": "partialTaken := true"
+    },
+    {
+      "line": 333,
+      "text": "if partialBeBufPct > 0"
+    },
+    {
+      "line": 334,
+      "text": "beSL = entryPrice * (1 - partialBeBufPct)"
+    },
+    {
+      "line": 336,
+      "text": "strategy.exit(\"x\", from_entry=tpId, stop=newSL)"
+    },
+    {
+      "line": 339,
+      "text": "// \u2500\u2500\u2500 Opposite signal exit (no flip-open) \u2014 use close_all since full close anyway \u2500\u2500\u2500"
+    },
+    {
+      "line": 340,
+      "text": "if strategy.position_size > 0 and shortSignal"
+    },
+    {
+      "line": 341,
+      "text": "strategy.close_all()"
+    },
+    {
+      "line": 342,
+      "text": "if strategy.position_size < 0 and longSignal"
+    },
+    {
+      "line": 343,
+      "text": "strategy.close_all()"
+    },
+    {
+      "line": 345,
+      "text": "// \u2500\u2500\u2500 Track exits for cooldown + queue flip on SL \u2500\u2500\u2500"
+    },
+    {
+      "line": 346,
+      "text": "if strategy.position_size == 0 and strategy.position_size[1] != 0"
+    },
+    {
+      "line": 347,
+      "text": "lastExitBar := bar_index"
+    },
+    {
+      "line": 348,
+      "text": "wasFlip = isFlipPos"
+    },
+    {
+      "line": 349,
+      "text": "slHitLong  = strategy.position_size[1] > 0 and not na(storedSL) and low <= storedSL"
+    },
+    {
+      "line": 350,
+      "text": "slHitShort = strategy.position_size[1] < 0 and not na(storedSL) and high >= storedSL"
+    },
+    {
+      "line": 352,
+      "text": "lastLongSlBar := bar_index"
+    },
+    {
+      "line": 353,
+      "text": "// Queue SHORT flip ONLY if this wasn't already a flip (prevents flip-on-flip)"
+    },
+    {
+      "line": 354,
+      "text": "if useSlFlip and not wasFlip"
+    },
+    {
+      "line": 355,
+      "text": "pendingFlipSide := -1"
+    },
+    {
+      "line": 356,
+      "text": "pendingFlipBar  := bar_index"
+    },
+    {
+      "line": 357,
+      "text": "pendingFlipRef  := storedSL"
+    },
+    {
+      "line": 359,
+      "text": "lastShortSlBar := bar_index"
+    },
+    {
+      "line": 360,
+      "text": "if useSlFlip and not wasFlip"
+    },
+    {
+      "line": 361,
+      "text": "pendingFlipSide := 1"
+    },
+    {
+      "line": 362,
+      "text": "pendingFlipBar  := bar_index"
+    },
+    {
+      "line": 363,
+      "text": "pendingFlipRef  := storedSL"
+    },
+    {
+      "line": 364,
+      "text": "isFlipPos := false"
+    },
+    {
+      "line": 365,
+      "text": "pyramided := false"
+    },
+    {
+      "line": 366,
+      "text": "pyramidEntry := na"
+    },
+    {
+      "line": 371,
+      "text": "// \u2500\u2500\u2500 Wrong-timeframe warning (always visible, overrides clean view) \u2500\u2500\u2500"
+    },
+    {
+      "line": 375,
+      "text": "\"\u26a0 Chart TF is \" + timeframe.period + \" \u2014 Backtest was run on 1H. Results won't match Python numbers unless chart = 1H.\","
+    },
+    {
+      "line": 383,
+      "text": "bgcolor(longCdColor, title=\"Long Cooldown\")"
+    },
+    {
+      "line": 384,
+      "text": "bgcolor(shortCdColor, title=\"Short Cooldown\")"
+    },
+    {
+      "line": 390,
+      "text": "newLongEntry   = strategy.position_size > 0 and strategy.position_size[1] == 0"
+    },
+    {
+      "line": 391,
+      "text": "newShortEntry  = strategy.position_size < 0 and strategy.position_size[1] == 0"
+    },
+    {
+      "line": 396,
+      "text": "table.cell(dash, 0, 0, \"Flip Bot V3\", bgcolor=color.gray, text_color=color.white)"
+    },
+    {
+      "line": 397,
+      "text": "table.cell(dash, 1, 0, str.tostring(leverageInput, \"#.#\") + \"\u00d7 LEV\", bgcolor=color.teal, text_color=color.white)"
+    },
+    {
+      "line": 417,
+      "text": "table.cell(dash, 0, 5, \"Engulfing\")"
+    },
+    {
+      "line": 418,
+      "text": "engTxt = bullEngulfing ? \"BULL \u2713\" : bearEngulfing ? \"BEAR \u2713\" : \"\u2014\""
+    },
+    {
+      "line": 427,
+      "text": "volTxt = str.tostring(volume / volSma, \"#.##\") + \"x\""
+    }
+  ]
+}
