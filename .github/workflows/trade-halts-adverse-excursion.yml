@@ -1,0 +1,83 @@
+name: Trade Halts Adverse Excursion Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - .github/workflows/trade-halts-adverse-excursion.yml
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Clone frozen upstream
+        run: |
+          git clone https://github.com/gilbertknight-star/Trade-Halts.git /tmp/halts
+          cd /tmp/halts
+          git checkout ec68b9581a32c51dce9fb5b65adc97b22861255f
+      - name: Install deps
+        run: python -m pip install pandas pyarrow numpy
+      - name: Analyze committed event outcome fields as risk proxies
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          import numpy as np, pandas as pd
+          root=Path('/tmp/halts/research/data')
+          ev=pd.read_parquet(root/'halt_events.parquet')
+          tr=pd.read_csv(root/'halt_trades_rvol.csv',parse_dates=['entry_ts'])
+          ev['anchor_ts_utc']=pd.to_datetime(ev.anchor_ts_utc,utc=True)
+          tr['entry_ts']=pd.to_datetime(tr.entry_ts,utc=True)
+          keep=['symbol_resolved','anchor_ts_utc','exchange','ret_1m','ret_2m','ret_5m','ret_10m','ret_15m','ret_30m','ret_60m','max_up_30m','max_down_30m']
+          e=ev[keep].rename(columns={'symbol_resolved':'symbol','anchor_ts_utc':'entry_ts'})
+          x=tr.merge(e,on=['symbol','entry_ts'],how='left',validate='many_to_one')
+          def desc(s):
+              s=pd.to_numeric(s,errors='coerce').dropna().astype(float)
+              if not len(s): return {'n':0}
+              return {'n':int(len(s)),'min':float(s.min()),'p01':float(s.quantile(.01)),'p05':float(s.quantile(.05)),'p25':float(s.quantile(.25)),'median':float(s.median()),'mean':float(s.mean()),'p75':float(s.quantile(.75)),'p95':float(s.quantile(.95)),'p99':float(s.quantile(.99)),'max':float(s.max())}
+          outcome_cols=['ret_1m','ret_2m','ret_5m','ret_10m','ret_15m','ret_30m','ret_60m','max_up_30m','max_down_30m']
+          selected={c:desc(x[c]) for c in outcome_cols}
+          all_events={c:desc(ev[c]) for c in outcome_cols}
+          # Nasdaq subset closest to live code.
+          nas=x[x.exchange.eq('Nasdaq')]
+          nasdaq={c:desc(nas[c]) for c in outcome_cols}
+          # Infer scale only, do not assert semantics: compare ret_30m to trade return magnitudes.
+          scale={'ret_30m_abs_median':float(pd.to_numeric(x.ret_30m,errors='coerce').abs().median()),'trade_ret_pct_abs_median':float(pd.to_numeric(x.ret_pct,errors='coerce').abs().median())}
+          # Position-level capital impact if max_down_30m is a decimal return from resumption.
+          md=pd.to_numeric(x.max_down_30m,errors='coerce')
+          proxy={}
+          if md.notna().any():
+              vals=md.dropna().astype(float)
+              for interpretation,mult in [('raw_as_fraction',10.0),('raw_as_percent',0.1)]:
+                  impacts=vals*mult # 10% position: fraction*10 => account percent; percent*0.1 => account percent
+                  proxy[interpretation]={'worst_single_position_account_pct':float(impacts.min()),'p01_account_pct':float(impacts.quantile(.01)),'median_account_pct':float(impacts.median())}
+          out={'rows_selected':int(len(x)),'matched_outcome_rows':int(x.max_down_30m.notna().sum()),'selected':selected,'nasdaq_selected':nasdaq,'all_events':all_events,'scale_check':scale,'single_position_10pct_equity_proxy':proxy,'limitations':['No pipeline definition for max_down_30m/max_up_30m is committed; statistics are descriptive only.','These fields are future outcomes and were not used by the public backtest code examined, but the strategy was developed on the same historical research set.','This cannot reconstruct simultaneous intraday portfolio mark-to-market drawdown.']}
+          os.makedirs('/tmp/adverse',exist_ok=True)
+          Path('/tmp/adverse/adverse_excursion.json').write_text(json.dumps(out,indent=2,default=str))
+          print(json.dumps(out,indent=2,default=str))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trade-halts-adverse-excursion
+          path: /tmp/adverse/adverse_excursion.json
+      - name: Publish result
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_trade_halts
+          cp /tmp/adverse/adverse_excursion.json audit_results_trade_halts/
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_trade_halts/adverse_excursion.json
+          git diff --cached --quiet || git commit -m 'Publish Trade-Halts adverse excursion audit'
+          git push origin HEAD:dual-signal-audit-2026-09
