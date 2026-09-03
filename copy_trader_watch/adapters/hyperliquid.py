@@ -9,7 +9,7 @@ import requests
 from models import AdapterResult, TraderSnapshot, score_snapshot
 
 INFO_URL = "https://api.hyperliquid.xyz/info"
-USER_AGENT = "copy-trader-watch/3.0 (+https://github.com/)"
+USER_AGENT = "copy-trader-watch/3.3 (+https://github.com/)"
 
 
 def _num(value: Any) -> float | None:
@@ -52,6 +52,11 @@ def _series(raw: Any) -> list[tuple[int, float]]:
             out.append((ts, value))
     out.sort()
     return out
+
+
+def _latest_value(raw: Any) -> float | None:
+    values = _series(raw)
+    return values[-1][1] if values else None
 
 
 def _period_metrics(window: dict[str, Any]) -> tuple[float | None, float | None]:
@@ -107,13 +112,21 @@ def _fill_stats(fills: Any) -> dict[str, float | int | None]:
     return {"trades": len(fills), "win_rate_pct": wr, "profit_factor": pf, "activity_per_day": activity, "profit_concentration_pct": concentration}
 
 
-def _current_leverage(state: Any) -> float | None:
+def _current_account_value(state: Any) -> float | None:
     if not isinstance(state, dict):
         return None
     summary = state.get("marginSummary") or {}
     account = _num(summary.get("accountValue"))
+    return account if account is not None and account > 0 else None
+
+
+def _current_leverage(state: Any) -> float | None:
+    if not isinstance(state, dict):
+        return None
+    summary = state.get("marginSummary") or {}
+    account = _current_account_value(state)
     notional = _num(summary.get("totalNtlPos"))
-    if account is None or notional is None or account <= 0:
+    if account is None or notional is None:
         return None
     return abs(notional) / account
 
@@ -154,8 +167,53 @@ def fetch_wallet(address: str, label: str | None = None) -> TraderSnapshot:
     age = _age_days(all_time)
     stats = _fill_stats(fills)
     leverage = _current_leverage(state)
-    copyability = _copyability(stats["activity_per_day"] if isinstance(stats["activity_per_day"], (int, float)) else None, stats["profit_concentration_pct"] if isinstance(stats["profit_concentration_pct"], (int, float)) else None, leverage)
-    record = TraderSnapshot(platform="hyperliquid", trader_id=address.lower(), name=label or f"{address[:8]}…{address[-4:]}", observed_at=observed, source="official-hyperliquid-info-api", source_url=INFO_URL, source_quality=95.0, free=True, us_access="no", live_evidence="onchain", return_pct=ret, return_window="month", max_drawdown_pct=dd, profit_factor=stats["profit_factor"] if isinstance(stats["profit_factor"], (int, float)) else None, trades=int(stats["trades"] or 0), win_rate_pct=stats["win_rate_pct"] if isinstance(stats["win_rate_pct"], (int, float)) else None, age_days=age, leverage=leverage, activity_per_day=stats["activity_per_day"] if isinstance(stats["activity_per_day"], (int, float)) else None, profit_concentration_pct=stats["profit_concentration_pct"] if isinstance(stats["profit_concentration_pct"], (int, float)) else None, copyability_score=copyability, actionable=False, actionable_reason="Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.", metadata={"month_volume": _num(month.get("vlm")), "all_time_volume": _num(all_time.get("vlm")), "raw_fill_limit_note": "userFills returns at most the most recent 2000 fills", "return_method": "PnL-change on initial period account-value base"})
+    account_value = _current_account_value(state)
+    all_time_pnl_index = _latest_value(all_time.get("pnlHistory"))
+    copyability = _copyability(
+        stats["activity_per_day"] if isinstance(stats["activity_per_day"], (int, float)) else None,
+        stats["profit_concentration_pct"] if isinstance(stats["profit_concentration_pct"], (int, float)) else None,
+        leverage,
+    )
+    record = TraderSnapshot(
+        platform="hyperliquid",
+        trader_id=address.lower(),
+        name=label or f"{address[:8]}…{address[-4:]}",
+        observed_at=observed,
+        source="official-hyperliquid-info-api",
+        source_url=INFO_URL,
+        source_quality=95.0,
+        free=True,
+        us_access="no",
+        live_evidence="onchain",
+        return_pct=ret,
+        return_window="month",
+        max_drawdown_pct=dd,
+        profit_factor=stats["profit_factor"] if isinstance(stats["profit_factor"], (int, float)) else None,
+        trades=int(stats["trades"] or 0),
+        win_rate_pct=stats["win_rate_pct"] if isinstance(stats["win_rate_pct"], (int, float)) else None,
+        age_days=age,
+        leverage=leverage,
+        activity_per_day=stats["activity_per_day"] if isinstance(stats["activity_per_day"], (int, float)) else None,
+        profit_concentration_pct=stats["profit_concentration_pct"] if isinstance(stats["profit_concentration_pct"], (int, float)) else None,
+        copyability_score=copyability,
+        actionable=False,
+        actionable_reason="Research-only for this U.S. workflow; direct Hyperliquid access is not treated as U.S.-actionable.",
+        forward_test_eligible=all_time_pnl_index is not None and account_value is not None,
+        forward_test_reason="Forward test uses changes in the official all-time P&L index divided by prior observed account value; sample size is confidence-only.",
+        metadata={
+            "month_volume": _num(month.get("vlm")),
+            "all_time_volume": _num(all_time.get("vlm")),
+            "current_account_value": account_value,
+            "all_time_pnl_index": all_time_pnl_index,
+            "forward_metric_kind": "pnl_index" if all_time_pnl_index is not None and account_value is not None else None,
+            "forward_metric_value": all_time_pnl_index,
+            "forward_metric_base": account_value,
+            "forward_period_key": "all",
+            "raw_fill_limit_note": "userFills returns at most the most recent 2000 fills",
+            "return_method": "PnL-change on initial period account-value base",
+            "forward_method": "change in all-time PnL index / prior observed account value",
+        },
+    )
     record.research_score = score_snapshot(record)
     return record
 
@@ -176,4 +234,11 @@ def collect(config: dict[str, Any]) -> AdapterResult:
         except (requests.RequestException, ValueError, TypeError) as exc:
             errors.append(f"{address}: {exc}")
     status = "ok" if not errors else ("degraded" if records else "unavailable")
-    return AdapterResult(platform="hyperliquid", observed_at=observed, records=records, status=status, message="; ".join(errors[:5]), metadata={"wallets_requested": len(config.get("wallets", [])), "wallets_resolved": len(records)})
+    return AdapterResult(
+        platform="hyperliquid",
+        observed_at=observed,
+        records=records,
+        status=status,
+        message="; ".join(errors[:5]),
+        metadata={"wallets_requested": len(config.get("wallets", [])), "wallets_resolved": len(records)},
+    )
