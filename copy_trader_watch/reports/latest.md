@@ -8,19 +8,18 @@ Forward-test window: **2026-09-03 → 2026-09-03** (1 observations)
 
 | Rank | Candidate | Forward return | Max DD | Return/DD | Risk | Top-1 concentration | Copiers | Research score |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Luisitoalana | 0.00% | 0.00% | 0.000 | 5 | 13.08% | 23 | -0.350 |
-| 2 | jonathandm25 | missing | n/a | n/a | n/a | n/a | n/a | n/a |
+| 1 | jonathandm25 | 0.00% | 0.00% | 0.000 | 4 | 8.09% | None | 0.000 |
+| 2 | Luisitoalana | 0.00% | 0.00% | 0.000 | 5 | 13.08% | None | -0.350 |
 | 3 | bgsully111 | missing | n/a | n/a | n/a | n/a | n/a | n/a |
 | 4 | WilEscobar | missing | n/a | n/a | n/a | n/a | n/a | n/a |
 
 ## Benchmarks
 
-- **SPY:** n/a since the same baseline
-- **QQQ:** n/a since the same baseline
+- **SPY:** 0.00% since the same baseline
+- **QQQ:** 0.00% since the same baseline
 
 ## Active alerts
 
-- **jonathandm25 — missing:** Candidate disappeared from the current census; copy eligibility/status may have changed.
 - **bgsully111 — missing:** Candidate disappeared from the current census; copy eligibility/status may have changed.
 - **WilEscobar — missing:** Candidate disappeared from the current census; copy eligibility/status may have changed.
 

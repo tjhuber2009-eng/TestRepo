@@ -1,9 +1,8 @@
 {
   "active_alert_keys": [
     "bgsully111::missing",
-    "jonathandm25::missing",
     "wilescobar::missing"
   ],
   "last_run_date": "2026-09-03",
-  "new_alert_count": 3
+  "new_alert_count": 0
 }

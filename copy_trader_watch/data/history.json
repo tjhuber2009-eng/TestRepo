@@ -1,27 +1,27 @@
 [
   {
     "benchmarks": {
-      "QQQ": null,
-      "SPY": null
+      "QQQ": 718.5399780273438,
+      "SPY": 773.719970703125
     },
     "candidates": {
       "Luisitoalana": {
-        "copiers": 23,
-        "country": null,
-        "daily_gain_pct": -2.45,
+        "copiers": null,
+        "country": 219,
+        "daily_gain_pct": null,
         "gain_ytd_pct": 4.84,
-        "name": null,
-        "portfolio_pnl_pct": 135.24437919578565,
-        "portfolio_value_pct": 99.99921200000001,
-        "positions_count": 205,
+        "name": "Luisitoalana",
+        "portfolio_pnl_pct": null,
+        "portfolio_value_pct": 100.0,
+        "positions_count": 20,
         "present": true,
         "risk_score": 5,
         "top1_concentration_pct": 13.0794,
         "top2_concentration_pct": 23.4961,
-        "trades": 237,
-        "unique_instruments": 20,
+        "trades": 238,
+        "unique_instruments": 10,
         "username": "Luisitoalana",
-        "win_ratio_pct": 71.73
+        "win_ratio_pct": 71.85
       },
       "WilEscobar": {
         "present": false
@@ -30,10 +30,25 @@
         "present": false
       },
       "jonathandm25": {
-        "present": false
+        "copiers": null,
+        "country": 219,
+        "daily_gain_pct": null,
+        "gain_ytd_pct": 17.44,
+        "name": "Jonathan Dom\u00ednguez Serrata",
+        "portfolio_pnl_pct": null,
+        "portfolio_value_pct": 100.0,
+        "positions_count": 22,
+        "present": true,
+        "risk_score": 4,
+        "top1_concentration_pct": 8.0934,
+        "top2_concentration_pct": 15.924,
+        "trades": 135,
+        "unique_instruments": 10,
+        "username": "jonathandm25",
+        "win_ratio_pct": 77.78
       }
     },
     "date": "2026-09-03",
-    "source_collected_at": "2026-09-03T03:34:59.774Z"
+    "source_collected_at": "2026-09-03T18:08:07.329212Z"
   }
 ]
