@@ -3,12 +3,12 @@
     "benchmarks": {
       "QQQ": {
         "as_of": "2026-09-03",
-        "close": 718.4000244140625,
+        "close": 718.5900268554688,
         "source": "yahoo"
       },
       "SPY": {
         "as_of": "2026-09-03",
-        "close": 773.5999755859375,
+        "close": 773.719970703125,
         "source": "yahoo"
       }
     },
@@ -25,7 +25,7 @@
         "present": true,
         "risk_score": 5,
         "source": "etoro-census-public-user-api",
-        "source_timestamp": "2026-09-03T18:44:29.631Z",
+        "source_timestamp": "2026-09-03T18:48:07.133Z",
         "top1_concentration_pct": 13.0794,
         "top2_concentration_pct": 23.4961,
         "trades": 238,
@@ -53,7 +53,7 @@
         "present": true,
         "risk_score": 4,
         "source": "etoro-census-public-user-api",
-        "source_timestamp": "2026-09-03T18:44:27.293Z",
+        "source_timestamp": "2026-09-03T18:48:03.520Z",
         "top1_concentration_pct": 8.0934,
         "top2_concentration_pct": 15.924,
         "trades": 135,
@@ -63,6 +63,6 @@
       }
     },
     "date": "2026-09-03",
-    "source_collected_at": "2026-09-03T18:44:16.544198Z"
+    "source_collected_at": "2026-09-03T18:48:02.229727Z"
   }
 ]
