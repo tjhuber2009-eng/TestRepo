@@ -1,0 +1,105 @@
+name: LLM Auto Trader SOL Independent Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dual-signal-audit-2026-09]
+    paths:
+      - .github/workflows/llm-auto-sol-audit.yml
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dual-signal-audit-2026-09
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Clone frozen upstream
+        run: |
+          git clone https://github.com/Erfaniaa/LLM-Auto-Trader.git /tmp/llm
+          cd /tmp/llm
+          git checkout dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1
+          git rev-parse HEAD
+      - name: Install upstream
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e /tmp/llm
+      - name: Fetch fresh SOL perpetual and PAXG hedge data
+        run: |
+          cd /tmp/llm
+          python scripts/fetch_history.py --exchange binance --market-type swap --symbols 'SOL/USDT:USDT' --timeframe 1w --since 2020-12-01 --until 2026-09-03 --cache-db /tmp/ohlcv.db
+          python scripts/fetch_history.py --exchange binance --market-type spot --symbols 'PAXG/USDT' --timeframe 1w --since 2020-12-01 --until 2026-09-03 --cache-db /tmp/ohlcv.db
+      - name: Reproduce upstream symbol sweep result
+        run: |
+          cd /tmp/llm
+          python scripts/sweep_symbols.py --cache-db /tmp/ohlcv.db --initial-equity 2000 --out-dir /tmp/symbol-sweep
+      - name: Frozen SOL subperiod and forward audit
+        run: |
+          cd /tmp/llm
+          python - <<'PY'
+          import json, math
+          import numpy as np
+          from datetime import datetime, timezone
+          from src.backtest.data_cache import OHLCVCache
+          from src.backtest.baseline_strategy import BaselineConfig
+          from src.backtest.fast_baseline import run_baseline_fast
+          from src.backtest.fill_model import FillConfig
+          from src.analysis.backtest_stats import max_drawdown, sharpe_annualized
+          from scripts.sweep_robust import _champion_kwargs
+
+          def ms(s):
+              return int(datetime.strptime(s,'%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()*1000)
+          def metrics(cache, start, end):
+              p=cache.load_range('SOL/USDT:USDT','1w',ms(start),ms(end))
+              h=cache.load_range('PAXG/USDT','1w',ms(start),ms(end))
+              cfg=BaselineConfig(**{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'})
+              fill=FillConfig(taker_fee_bps=4.0,slippage_bps=5.0,funding_rate_per_day=0.00010)
+              r=run_baseline_fast(primary_bars=p,hedge_bars=h if not h.empty else None,config=cfg,fill_config=fill,initial_equity=2000.0)
+              eq=np.array([x[1] for x in r.equity_curve],float)
+              lr=np.diff(np.log(np.maximum(eq,1e-12)))
+              years=max(len(eq)/52.0,1e-9)
+              cagr=(eq[-1]/2000.0)**(1/years)-1 if len(eq) and eq[-1]>0 else float('nan')
+              dd=max_drawdown(eq)[0] if len(eq) else float('nan')
+              sh=sharpe_annualized(lr,periods_per_year=52) if len(lr) else float('nan')
+              return {'start':start,'end':end,'bars':len(p),'equity_points':len(eq),'final':float(eq[-1]),'return_pct':float((eq[-1]/2000-1)*100),'cagr_pct':float(cagr*100),'max_dd_pct':float(dd*100),'sharpe':float(sh),'trades':len(r.trades)}
+          c=OHLCVCache('/tmp/ohlcv.db')
+          out={
+            'upstream_commit':'dfa93ea6db5a2e8c42f57293959aa5843c2ce9d1',
+            'config':{**_champion_kwargs(),'primary_symbol':'SOL/USDT:USDT'},
+            'frictions':{'taker_fee_bps':4.0,'slippage_bps':5.0,'funding_rate_per_day':0.00010},
+            'windows':[
+              metrics(c,'2021-01-04','2025-09-29'),
+              metrics(c,'2021-01-04','2026-09-03'),
+              metrics(c,'2024-01-01','2025-09-29'),
+              metrics(c,'2025-10-06','2026-09-03'),
+            ]
+          }
+          import os
+          os.makedirs('/tmp/sol-audit',exist_ok=True)
+          open('/tmp/sol-audit/summary.json','w').write(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: llm-auto-sol-audit
+          path: |
+            /tmp/sol-audit/summary.json
+            /tmp/symbol-sweep/
+      - name: Publish compact result
+        run: |
+          git pull --rebase origin dual-signal-audit-2026-09 || true
+          mkdir -p audit_results_llm_auto_sol
+          cp /tmp/sol-audit/summary.json audit_results_llm_auto_sol/
+          cp /tmp/symbol-sweep/per_symbol.csv audit_results_llm_auto_sol/ 2>/dev/null || true
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add audit_results_llm_auto_sol
+          git diff --cached --quiet || git commit -m 'Publish SOL H4 independent reproduction'
+          git push origin HEAD:dual-signal-audit-2026-09
