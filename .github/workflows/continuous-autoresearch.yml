@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   issues: write
   pull-requests: write
@@ -172,6 +173,9 @@ jobs:
               )
           with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
               f.write(f"new_completion={'true' if is_new else 'false'}\n")
+              f.write(
+                  f"terminal={'true' if bool(x.get('all_runnable_tracks_terminal')) else 'false'}\n"
+              )
 
       - name: Persist research state branch
         shell: bash
@@ -218,3 +222,11 @@ jobs:
           gh pr comment 13
           --repo tjhuber2009-eng/TestRepo
           --body-file moondev_autoresearch_reconstruction/completion-note.md
+
+      - name: Chain next cycle until exhaustive completion
+        if: success() && steps.completion.outputs.terminal != 'true'
+        shell: bash
+        working-directory: .
+        run: |
+          echo "Dispatching next AUTORESEARCH cycle because runnable universe is not terminal."
+          gh workflow run continuous-autoresearch.yml             --repo tjhuber2009-eng/TestRepo             --ref main
