@@ -40,6 +40,63 @@ def _rolling_std(x, n):
     return pd.Series(x, dtype=float).rolling(n).std(ddof=0).shift(1).to_numpy()
 
 
+def _sma_now(x, n):
+    return pd.Series(x, dtype=float).rolling(n).mean().to_numpy()
+
+
+def _ema_now(x, n):
+    return pd.Series(x, dtype=float).ewm(span=n, adjust=False).mean().to_numpy()
+
+
+def _std_now(x, n):
+    return pd.Series(x, dtype=float).rolling(n).std(ddof=0).to_numpy()
+
+
+def _rolling_min_now(x, n):
+    return pd.Series(x, dtype=float).rolling(n).min().to_numpy()
+
+
+def _rolling_max_now(x, n):
+    return pd.Series(x, dtype=float).rolling(n).max().to_numpy()
+
+
+def _roc_now(x, n):
+    s = pd.Series(x, dtype=float)
+    return (s / s.shift(n) - 1.0).to_numpy()
+
+
+def _range_mean_now(high, low, n):
+    h = pd.Series(high, dtype=float)
+    l = pd.Series(low, dtype=float)
+    return (h - l).rolling(n).mean().to_numpy()
+
+
+def _rsi_now(x, n):
+    s = pd.Series(x, dtype=float)
+    d = s.diff()
+    up = d.clip(lower=0).ewm(alpha=1/n, adjust=False).mean()
+    dn = (-d.clip(upper=0)).ewm(alpha=1/n, adjust=False).mean()
+    rs = up / dn.replace(0, np.nan)
+    return (100 - 100/(1+rs)).to_numpy()
+
+
+def _adx_now(high, low, close, n):
+    h = pd.Series(high, dtype=float)
+    l = pd.Series(low, dtype=float)
+    c = pd.Series(close, dtype=float)
+    up = h.diff()
+    dn = -l.diff()
+    plus_dm = pd.Series(np.where((up > dn) & (up > 0), up, 0.0))
+    minus_dm = pd.Series(np.where((dn > up) & (dn > 0), dn, 0.0))
+    pc = c.shift(1)
+    tr = pd.concat([(h-l).abs(), (h-pc).abs(), (l-pc).abs()], axis=1).max(axis=1)
+    atr = tr.ewm(alpha=1/n, adjust=False).mean()
+    plus = 100 * plus_dm.ewm(alpha=1/n, adjust=False).mean() / atr.replace(0, np.nan)
+    minus = 100 * minus_dm.ewm(alpha=1/n, adjust=False).mean() / atr.replace(0, np.nan)
+    dx = 100 * (plus-minus).abs() / (plus+minus).replace(0, np.nan)
+    return dx.ewm(alpha=1/n, adjust=False).mean().to_numpy()
+
+
 def _roc(x, n):
     s = pd.Series(x, dtype=float)
     return (s / s.shift(n) - 1.0).shift(1).to_numpy()
@@ -108,6 +165,135 @@ __BODY__
 
 
 BODIES = {
+"sentinel63": r'''
+    def init(self):
+        self.ema63 = self.I(_ema_now, self.data.Close, 63)
+        self.sd63 = self.I(_std_now, self.data.Close, 63)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 80:
+            return
+        px=float(self.data.Close[-1]); ema=float(self.ema63[-1]); sd=float(self.sd63[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,ema,sd,rv]).all() or sd <= 0 or rv <= 0:
+            return
+        z=(px-ema)/sd
+        if not self.position and z > 0.5:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and z < -0.5:
+            self.position.close()
+''',
+
+"ibs_deep_pullback": r'''
+    def init(self):
+        self.prior_high10 = self.I(_rolling_high, self.data.High, 10)
+        self.avg_range25 = self.I(_range_mean_now, self.data.High, self.data.Low, 25)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 45:
+            return
+        px=float(self.data.Close[-1]); lo=float(self.data.Low[-1]); hi=float(self.data.High[-1])
+        prior=float(self.prior_high10[-1]); avg=float(self.avg_range25[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,lo,hi,prior,avg,rv]).all() or hi <= lo or rv <= 0:
+            return
+        ibs=(px-lo)/(hi-lo)
+        lower=prior - 2.5*avg
+        if not self.position and px < lower and ibs < 0.30:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and len(self.data.High) >= 2 and px > float(self.data.High[-2]):
+            self.position.close()
+''',
+
+"connors_rsi2": r'''
+    def init(self):
+        self.sma200 = self.I(_sma_now, self.data.Close, 200)
+        self.sma5 = self.I(_sma_now, self.data.Close, 5)
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 220:
+            return
+        px=float(self.data.Close[-1]); s200=float(self.sma200[-1]); s5=float(self.sma5[-1]); r=float(self.rsi2[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,s200,s5,r,rv]).all() or rv <= 0:
+            return
+        if not self.position and px > s200 and r < 5:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and px > s5:
+            self.position.close()
+''',
+
+"connors_double7": r'''
+    def init(self):
+        self.sma200 = self.I(_sma_now, self.data.Close, 200)
+        self.low7 = self.I(_rolling_min_now, self.data.Close, 7)
+        self.high7 = self.I(_rolling_max_now, self.data.Close, 7)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 220:
+            return
+        px=float(self.data.Close[-1]); s200=float(self.sma200[-1]); lo=float(self.low7[-1]); hi=float(self.high7[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,s200,lo,hi,rv]).all() or rv <= 0:
+            return
+        eps=max(1e-12,abs(px)*1e-12)
+        if not self.position and px > s200 and px <= lo + eps:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and px >= hi - eps:
+            self.position.close()
+''',
+
+"btc_rsi_adx": r'''
+    def init(self):
+        self.sma50 = self.I(_sma_now, self.data.Close, 50)
+        self.ema7 = self.I(_ema_now, self.data.Close, 7)
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.adx2 = self.I(_adx_now, self.data.High, self.data.Low, self.data.Close, 2)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 70:
+            return
+        px=float(self.data.Close[-1]); s50=float(self.sma50[-1]); e7=float(self.ema7[-1]); r=float(self.rsi2[-1]); a=float(self.adx2[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,s50,e7,r,a,rv]).all() or rv <= 0:
+            return
+        entry = px > s50 and px > e7 and r > a
+        if not self.position and entry:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and r < a:
+            self.position.close()
+''',
+
+"tsmom_252": r'''
+    def init(self):
+        self.roc252 = self.I(_roc_now, self.data.Close, 252)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 280:
+            return
+        px=float(self.data.Close[-1]); roc=float(self.roc252[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,roc,rv]).all() or rv <= 0:
+            return
+        if not self.position and roc > 0:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and roc <= 0:
+            self.position.close()
+''',
+
 "donchian_20_10": r'''
     entry_lookback = 20
     exit_lookback = 10
