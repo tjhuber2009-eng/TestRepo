@@ -186,6 +186,27 @@ BODIES = {
             self.position.close()
 ''',
 
+"sentinel65": r'''
+    def init(self):
+        self.ema65 = self.I(_ema_now, self.data.Close, 65)
+        self.sd65 = self.I(_std_now, self.data.Close, 65)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 82:
+            return
+        px=float(self.data.Close[-1]); ema=float(self.ema65[-1]); sd=float(self.sd65[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,ema,sd,rv]).all() or sd <= 0 or rv <= 0:
+            return
+        z=(px-ema)/sd
+        if not self.position and z > 0.5:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and z < -0.5:
+            self.position.close()
+''',
+
 "ibs_deep_pullback": r'''
     def init(self):
         self.prior_high10 = self.I(_rolling_high, self.data.High, 10)
