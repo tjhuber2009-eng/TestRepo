@@ -123,6 +123,73 @@ class MoonStrategy:
             loop.risk_control_fingerprint(b),
         )
 
+    def test_localized_method_change_is_allowed(self):
+        base = """
+def helper(x):
+    return x
+
+class MoonStrategy:
+    vol_target = 0.08
+    f_max = 0.5
+    vol_lookback = 30
+    def _units(self, px, rv):
+        return int(px)
+    def init(self):
+        self.x = 1
+    def next(self):
+        if self.x:
+            return
+"""
+        candidate = base.replace(
+            "if self.x:\n            return",
+            "if self.x > 0:\n            return",
+        )
+        ok, detail = loop.local_change_guard(candidate, base)
+        self.assertTrue(ok, detail)
+        self.assertEqual(detail, ["MoonStrategy.next"])
+
+    def test_wholesale_rewrite_is_rejected(self):
+        base = """
+def h1(x): return x
+def h2(x): return x
+
+class MoonStrategy:
+    vol_target = 0.08
+    f_max = 0.5
+    vol_lookback = 30
+    def _units(self, px, rv): return int(px)
+    def init(self): self.x = 1
+    def next(self):
+        if self.x: return
+"""
+        candidate = """
+def h1(x): return x + 1
+def h2(x): return x + 2
+def h3(x): return x + 3
+
+class MoonStrategy:
+    vol_target = 0.08
+    f_max = 0.5
+    vol_lookback = 30
+    def _units(self, px, rv): return int(px)
+    def init(self): self.x = 2
+    def next(self):
+        if self.x > 2: return
+"""
+        ok, _ = loop.local_change_guard(candidate, base)
+        self.assertFalse(ok)
+
+    def test_global_safety_ceiling_is_not_normal_seed_bottleneck(self):
+        source = seed_factory.render_strategy(
+            family="connors_double7",
+            bars_per_year=252,
+            vol_target=0.08,
+            f_max=0.5,
+        )
+        complexity = loop.ast_complexity(source)
+        self.assertLess(complexity["calls"], 360)
+        self.assertLess(complexity["nodes"], 4000)
+
     def test_short_history_falls_back_to_half_year_folds(self):
         env = {
             "AUTORESEARCH_SYMBOL": "SOLUSDT",
