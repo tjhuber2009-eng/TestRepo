@@ -76,6 +76,9 @@ jobs:
             echo "no prior state branch; starting clean"
           fi
 
+      - name: Pre-run OOS contamination guard
+        run: python oos_guard.py
+
       - name: Advance exhaustive nested research
         run: >
           python continuous_runner.py
@@ -88,6 +91,9 @@ jobs:
           --depth-fraction 0.25
           --elite-fraction 0.20
           --model nvidia/nemotron-3-super-120b-a12b
+
+      - name: Post-run OOS contamination guard
+        run: python oos_guard.py
 
       - name: Build cycle report
         shell: python
