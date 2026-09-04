@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+STOP
+baseline.json
+last_run.json
+results.tsv
+proposal.txt
+data/*.csv
+keepers/*.py
+logs/*.txt
+logs/*.json
