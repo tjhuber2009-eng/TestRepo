@@ -7,6 +7,7 @@ proposes one complete replacement for strategy.py at a time.
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import shutil
@@ -30,6 +31,7 @@ PROPOSAL = "proposal.txt"
 STOP = "STOP"
 KEEPERS = "keepers"
 LOGS = "logs"
+SEEN_HASHES = "seen_hashes.json"
 
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
@@ -43,6 +45,30 @@ def now():
 def load_json(path):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+def canonical_ast_hash(source):
+    tree = ast.parse(source, filename=STRATEGY)
+    canonical = ast.dump(tree, annotate_fields=True, include_attributes=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def load_seen_hashes():
+    if not os.path.exists(SEEN_HASHES):
+        return set()
+    try:
+        payload = load_json(SEEN_HASHES)
+        return set(payload.get("hashes", []))
+    except Exception:
+        return set()
+
+
+def save_seen_hashes(values):
+    tmp = SEEN_HASHES + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump({"version": 1, "hashes": sorted(values)}, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, SEEN_HASHES)
 
 
 def ensure_seed():
@@ -68,6 +94,11 @@ def ensure_seed():
                 "ts\titer\tverdict\tscore\tbase_score\tret_pct\tsharpe\t"
                 "ann_vol\ttrades\tmax_dd\tguard\tdesc\n"
             )
+    seen = load_seen_hashes()
+    if os.path.exists(BEST):
+        with open(BEST, encoding="utf-8") as f:
+            seen.add(canonical_ast_hash(f.read()))
+    save_seen_hashes(seen)
 
 
 def results_rows():
@@ -194,7 +225,23 @@ FORBIDDEN_ATTR_CALLS = {
 
 
 def validate_source_safety(tree):
-    for node in ast.walk(tree):
+    nodes = list(ast.walk(tree))
+    if len(nodes) > 1800:
+        raise ValueError(f"strategy AST too large: {len(nodes)} nodes > 1800")
+    if sum(isinstance(x, ast.If) for x in nodes) > 60:
+        raise ValueError("strategy has too many conditional branches")
+    if sum(isinstance(x, ast.Call) for x in nodes) > 140:
+        raise ValueError("strategy has too many function calls")
+    numeric_literals = sum(
+        isinstance(x, ast.Constant)
+        and isinstance(x.value, (int, float))
+        and not isinstance(x.value, bool)
+        for x in nodes
+    )
+    if numeric_literals > 140:
+        raise ValueError("strategy has too many numeric literals / degrees of freedom")
+
+    for node in nodes:
         if isinstance(node, ast.Import):
             names = [alias.name for alias in node.names]
         elif isinstance(node, ast.ImportFrom):
@@ -224,6 +271,8 @@ def validate_payload(proposal, source):
         raise ValueError("missing non-empty proposal")
     if not isinstance(source, str) or not source.strip():
         raise ValueError("missing non-empty strategy source")
+    if len(source) > 30000:
+        raise ValueError("strategy source exceeds 30,000 characters")
     if chr(96) * 3 in source:
         raise ValueError("strategy source contains markdown fences")
     tree = ast.parse(source, filename=STRATEGY)
@@ -416,10 +465,12 @@ def scoreboard():
     kept = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "KEPT")
     rejected = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "REJECTED")
     crashed = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "CRASH")
+    duplicate = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "DUPLICATE")
     base = load_json(BASELINE)
     print(
         f"[4/4] SCOREBOARD tries={len(rows)} kept={kept} "
-        f"rejected={rejected} crash={crashed} current_K={base['score']}"
+        f"rejected={rejected} crash={crashed} duplicate={duplicate} "
+        f"current_K={base['score']}"
     )
 
 
@@ -477,44 +528,56 @@ def main():
             shutil.copy(BEST, STRATEGY)
         else:
             print(f"proposal: {desc}")
-            print("[2/4] BACKTEST")
-            result, err, secs = run_backtest(iteration)
-            if result is None:
-                verdict = "CRASH"
-                reason = err
+            with open(STRATEGY, encoding="utf-8") as f:
+                fingerprint = canonical_ast_hash(f.read())
+            seen = load_seen_hashes()
+            if fingerprint in seen:
+                verdict = "DUPLICATE"
+                reason = "semantic AST duplicate of a previously generated candidate"
                 score = ret = sharpe = vol = dd = "nan"
                 trades = 0
                 shutil.copy(BEST, STRATEGY)
             else:
-                score = result["score"]
-                ret = result["return_pct"]
-                sharpe = result["sharpe"]
-                vol = result["ann_vol_pct"]
-                dd = result["max_dd_pct"]
-                trades = result["trades"]
-                print(
-                    f"K={score} return={ret}% sharpe={sharpe} vol={vol}% "
-                    f"dd={dd}% trades={trades} runtime={secs:.1f}s"
-                )
-                if not result["guard_ok"]:
-                    verdict = "REJECTED"
-                    reason = f"guard: {result['guard_reason']}"
-                elif score > base["score"]:
-                    verdict = "KEPT"
-                    reason = f"K {base['score']} -> {score}"
-                else:
-                    verdict = "REJECTED"
-                    reason = f"K {score} did not beat {base['score']}"
-
-                if verdict == "KEPT":
-                    shutil.copy(STRATEGY, BEST)
-                    shutil.copy(
-                        STRATEGY,
-                        os.path.join(KEEPERS, f"{iteration:03d}_K{score}.py"),
-                    )
-                    shutil.copy(LAST_RUN, BASELINE)
-                else:
+                seen.add(fingerprint)
+                save_seen_hashes(seen)
+                print("[2/4] BACKTEST")
+                result, err, secs = run_backtest(iteration)
+                if result is None:
+                    verdict = "CRASH"
+                    reason = err
+                    score = ret = sharpe = vol = dd = "nan"
+                    trades = 0
                     shutil.copy(BEST, STRATEGY)
+                else:
+                    score = result["score"]
+                    ret = result["return_pct"]
+                    sharpe = result["sharpe"]
+                    vol = result["ann_vol_pct"]
+                    dd = result["max_dd_pct"]
+                    trades = result["trades"]
+                    print(
+                        f"K={score} return={ret}% sharpe={sharpe} vol={vol}% "
+                        f"dd={dd}% trades={trades} runtime={secs:.1f}s"
+                    )
+                    if not result["guard_ok"]:
+                        verdict = "REJECTED"
+                        reason = f"guard: {result['guard_reason']}"
+                    elif score > base["score"]:
+                        verdict = "KEPT"
+                        reason = f"K {base['score']} -> {score}"
+                    else:
+                        verdict = "REJECTED"
+                        reason = f"K {score} did not beat {base['score']}"
+
+                    if verdict == "KEPT":
+                        shutil.copy(STRATEGY, BEST)
+                        shutil.copy(
+                            STRATEGY,
+                            os.path.join(KEEPERS, f"{iteration:03d}_K{score}.py"),
+                        )
+                        shutil.copy(LAST_RUN, BASELINE)
+                    else:
+                        shutil.copy(BEST, STRATEGY)
 
         print(f"[3/4] VERDICT {verdict}: {reason}")
         append_result(
