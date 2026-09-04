@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-04T04:40:00Z",
+  "account_policy": {
+    "demo_only": true,
+    "separate_account_per_candidate": true,
+    "no_manual_trades": true,
+    "no_post_baseline_cashflows": true,
+    "no_parameter_optimization_after_start": true
+  },
+  "launch_order": [
+    {
+      "id": "SAFE_SCALPER_CODEBASE_V120",
+      "status": "READY",
+      "acquisition": "automatic_installer",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "expert": "ASQ_SafeScalping_CodeBase.mq5",
+      "preset": "ASQ_SafeScalping_XAUUSD_M5_v2.set",
+      "reporter_candidate_id": "SAFE_SCALPER_CODEBASE_V120",
+      "notes": [
+        "public CodeBase source",
+        "one trade at a time",
+        "no martingale/grid/hedging per author"
+      ]
+    },
+    {
+      "id": "APEX_USDJPY_V3_TURBO",
+      "status": "READY",
+      "acquisition": "automatic_installer",
+      "cost_usd": 0,
+      "symbol": "USDJPY",
+      "timeframe": "H1",
+      "expert": "ApexBreakout.mq5",
+      "preset": "ApexBreakout_USDJPY_H1_Session_V3_Turbo.set",
+      "reporter_candidate_id": "APEX_USDJPY_V3_TURBO",
+      "notes": [
+        "base EA only",
+        "recovery edition forbidden",
+        "published 2.8y result +212.4% net, PF 1.48, max DD 15.8% at 1% risk"
+      ]
+    },
+    {
+      "id": "APEX_XAUUSD_DONCHIAN",
+      "status": "READY",
+      "acquisition": "automatic_installer",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "H1",
+      "expert": "ApexBreakout.mq5",
+      "preset": "ApexBreakout_XAUUSD_H1_Donchian.set",
+      "reporter_candidate_id": "APEX_XAUUSD_DONCHIAN",
+      "notes": [
+        "base EA only",
+        "published 2.8y result +64.1% net, PF 1.44, max DD 15.7%"
+      ]
+    },
+    {
+      "id": "SAFE_SCALPER_MARKET_V344",
+      "status": "MANUAL_MARKET_INSTALL",
+      "acquisition": "mql5_market_free",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "product_url": "https://www.mql5.com/en/market/product/165581",
+      "frozen_version": "3.44",
+      "reporter_candidate_id": "SAFE_SCALPER_MARKET_V344",
+      "notes": [
+        "do not equate with CodeBase v1.20; newer branch/defaults differ"
+      ]
+    },
+    {
+      "id": "APEX_ORIGIN_V120",
+      "status": "MANUAL_MARKET_INSTALL",
+      "acquisition": "mql5_market_free",
+      "cost_usd": 0,
+      "symbol": "AUDCAD",
+      "timeframe": "H1",
+      "product_url": "https://www.mql5.com/en/market/product/166552",
+      "frozen_version": "1.20",
+      "reporter_candidate_id": "APEX_ORIGIN_V120"
+    },
+    {
+      "id": "AURUM_RA_V510",
+      "status": "MANUAL_MARKET_INSTALL",
+      "acquisition": "mql5_market_free",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "ANY_SELLER_SCHEDULE",
+      "product_url": "https://www.mql5.com/en/market/product/149983",
+      "frozen_version": "5.10",
+      "reporter_candidate_id": "AURUM_RA_V510"
+    },
+    {
+      "id": "IMPOSSIBLE_GOLD_V20",
+      "status": "MANUAL_MARKET_INSTALL",
+      "acquisition": "mql5_market_free",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "product_url": "https://www.mql5.com/en/market/product/169680",
+      "frozen_version": "2.0",
+      "reporter_candidate_id": "IMPOSSIBLE_GOLD_V20"
+    },
+    {
+      "id": "XAUUSD_5_MIN_V73",
+      "status": "MANUAL_MARKET_INSTALL",
+      "acquisition": "mql5_market_free",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "M5",
+      "product_url": "https://www.mql5.com/en/market/product/147332",
+      "frozen_version": "7.3",
+      "reporter_candidate_id": "XAUUSD_5_MIN_V73"
+    },
+    {
+      "id": "EMA_GOLD_TRADER",
+      "status": "QUARANTINED",
+      "acquisition": "none",
+      "cost_usd": 0,
+      "symbol": "XAUUSD",
+      "timeframe": "H1",
+      "reasons": [
+        "source compile plausibility failure",
+        "no declared license",
+        "requires clean independent reimplementation before tournament"
+      ]
+    }
+  ]
+}
