@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "effective_at": "2026-09-04T04:24:00Z",
+  "policy": "FREE_EA_ONLY",
+  "rules": {
+    "maximum_acquisition_cost_usd": 0,
+    "paid_signal_subscriptions_allowed": false,
+    "paid_eas_allowed": false,
+    "free_market_eas_allowed": true,
+    "open_source_eas_allowed": true,
+    "demo_first": true,
+    "real_money_auto_approval": false,
+    "small_sample_exclusion": false
+  },
+  "historical_paid_candidates": ["Definitely No Hype EA MT5","Mon Scalper MT5","Precise Pair Trading Pro"],
+  "historical_paid_candidates_role": "benchmark_only_not_executable"
+}
