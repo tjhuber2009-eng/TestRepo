@@ -57,8 +57,8 @@ class MoonStrategy(Strategy):
 
     # Reconstructed sizing controls suggested by the screenshots.
     vol_lookback = 30
-    vol_target = 0.35
-    f_max = 2.0
+    vol_target = 0.08
+    f_max = 0.50
 
     def init(self):
         self.hh = self.I(
