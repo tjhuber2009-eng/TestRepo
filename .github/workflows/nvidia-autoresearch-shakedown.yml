@@ -55,12 +55,26 @@ jobs:
           echo "NVIDIA_API_KEY is present (value not displayed)."
 
       - name: Smoke test NVIDIA NIM
-        run: python nvidia_smoke.py
+        id: smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python nvidia_smoke.py 2>&1 | tee smoke.log
 
       - name: Prepare ETH 6-hour data
-        run: python prepare_data.py --asset ETH
+        id: prepare
+        if: steps.smoke.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python prepare_data.py --asset ETH 2>&1 | tee prepare.log
 
       - name: Audit prepared data
+        id: audit
+        if: steps.prepare.outcome == 'success'
+        continue-on-error: true
         shell: python
         run: |
           import pandas as pd
@@ -72,19 +86,31 @@ jobs:
           ordered = bool(t.is_monotonic_increasing)
           gaps = t.diff().dropna()
           unexpected = int((gaps != pd.Timedelta(hours=6)).sum())
-          print(f"rows={len(df)}")
-          print(f"first={t.iloc[0]}")
-          print(f"last={t.iloc[-1]}")
-          print(f"duplicates={dup}")
-          print(f"ordered={ordered}")
-          print(f"non_6h_intervals={unexpected}")
+          text = (
+              f"rows={len(df)}\n"
+              f"first={t.iloc[0]}\n"
+              f"last={t.iloc[-1]}\n"
+              f"duplicates={dup}\n"
+              f"ordered={ordered}\n"
+              f"non_6h_intervals={unexpected}\n"
+          )
+          print(text, end="")
+          Path("data_audit.log").write_text(text, encoding="utf-8")
           if dup or not ordered:
               raise SystemExit("data integrity check failed")
 
       - name: Freeze in-sample baseline
-        run: python harness.py --is --set-baseline
+        id: baseline
+        if: steps.audit.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python harness.py --is --set-baseline 2>&1 | tee baseline.log
 
       - name: Preserve seed as current champion
+        id: seed
+        if: steps.baseline.outcome == 'success'
         shell: bash
         run: |
           cp strategy.py strategy_best.py
@@ -93,18 +119,49 @@ jobs:
 
       - name: Run exactly 3 NVIDIA AUTORESEARCH iterations
         id: research
+        if: steps.baseline.outcome == 'success'
         continue-on-error: true
-        run: python loop.py --iters 3 --model "$NVIDIA_MODEL"
+        shell: bash
+        run: |
+          set -o pipefail
+          python loop.py --iters 3 --model "$NVIDIA_MODEL" 2>&1 | tee research.log
 
       - name: Build shakedown report
         if: always()
+        env:
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+          BASELINE_OUTCOME: ${{ steps.baseline.outcome }}
+          RESEARCH_OUTCOME: ${{ steps.research.outcome }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: python
         run: |
           from pathlib import Path
-          import json
           import csv
+          import os
 
-          lines = ["# NVIDIA AUTORESEARCH 3-iteration shakedown", ""]
+          lines = [
+              "# NVIDIA AUTORESEARCH 3-iteration shakedown",
+              "",
+              f"Run: {os.environ.get('RUN_URL', '')}",
+              "",
+              "## Stage outcomes",
+              "",
+              f"- NVIDIA smoke: {os.environ.get('SMOKE_OUTCOME', '')}",
+              f"- data preparation: {os.environ.get('PREPARE_OUTCOME', '')}",
+              f"- data audit: {os.environ.get('AUDIT_OUTCOME', '')}",
+              f"- baseline: {os.environ.get('BASELINE_OUTCOME', '')}",
+              f"- three-iteration research: {os.environ.get('RESEARCH_OUTCOME', '')}",
+              "",
+          ]
+
+          for name in ["smoke.log", "prepare.log", "data_audit.log", "baseline.log", "research.log"]:
+              p = Path(name)
+              if p.exists():
+                  tail = p.read_text(encoding="utf-8", errors="replace").splitlines()[-30:]
+                  lines += [f"## {name} tail", "", "~~~text", *tail, "~~~", ""]
+
           for name in ["baseline.json", "last_run.json"]:
               p = Path(name)
               if p.exists():
@@ -130,8 +187,8 @@ jobs:
           lines += [f"- {p.name}" for p in keepers] or ["- none"]
           lines.append("")
 
-          logs = sorted(Path("logs").glob("*"))
-          lines += ["## Logs", "", f"{len(logs)} log files produced.", ""]
+          logs = sorted(p for p in Path("logs").glob("*") if p.name != ".gitkeep")
+          lines += ["## Loop logs", "", f"{len(logs)} log files produced.", ""]
 
           Path("SHAKEDOWN_REPORT.md").write_text("\n".join(lines), encoding="utf-8")
 
@@ -139,9 +196,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nvidia-autoresearch-shakedown
+          name: nvidia-autoresearch-shakedown-${{ github.run_id }}
           path: |
             moondev_autoresearch_reconstruction/SHAKEDOWN_REPORT.md
+            moondev_autoresearch_reconstruction/*.log
             moondev_autoresearch_reconstruction/baseline.json
             moondev_autoresearch_reconstruction/last_run.json
             moondev_autoresearch_reconstruction/results.tsv
@@ -158,20 +216,17 @@ jobs:
         shell: bash
         run: |
           if [ -f SHAKEDOWN_REPORT.md ]; then
-            {
-              if [ "${{ steps.research.outcome }}" = "success" ]; then
-                echo "NVIDIA AUTORESEARCH shakedown: **COMPLETED**"
-              else
-                echo "NVIDIA AUTORESEARCH shakedown: **FAILED/PARTIAL**"
-              fi
-              echo
-              cat SHAKEDOWN_REPORT.md
-            } > pr-comment.md
+            gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file SHAKEDOWN_REPORT.md
           else
-            echo "NVIDIA AUTORESEARCH shakedown failed before a report could be generated." > pr-comment.md
+            gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body "NVIDIA AUTORESEARCH shakedown failed before a report could be generated. Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
-          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file pr-comment.md
 
-      - name: Fail job if research failed
-        if: steps.research.outcome != 'success'
-        run: exit 1
+      - name: Fail job unless all stages succeeded
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.smoke.outcome }}" = "success"
+          test "${{ steps.prepare.outcome }}" = "success"
+          test "${{ steps.audit.outcome }}" = "success"
+          test "${{ steps.baseline.outcome }}" = "success"
+          test "${{ steps.research.outcome }}" = "success"
