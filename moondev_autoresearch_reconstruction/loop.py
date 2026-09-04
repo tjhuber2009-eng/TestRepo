@@ -19,6 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 PY = sys.executable
 HARNESS = os.environ.get("AUTORESEARCH_HARNESS", "harness.py")
+PROGRAM = os.environ.get("AUTORESEARCH_PROGRAM", "program.md")
 
 STRATEGY = "strategy.py"
 BEST = "strategy_best.py"
@@ -77,7 +78,7 @@ def results_rows():
 
 def build_prompt(iteration, base):
     header, rows = results_rows()
-    with open("program.md", encoding="utf-8") as f:
+    with open(PROGRAM, encoding="utf-8") as f:
         program = f.read()
     with open(STRATEGY, encoding="utf-8") as f:
         strategy = f.read()
@@ -85,6 +86,7 @@ def build_prompt(iteration, base):
         [
             program,
             "",
+            f"## Current strategy family: {os.environ.get('AUTORESEARCH_FAMILY', 'unspecified')}",
             f"## Current market: {os.environ.get('AUTORESEARCH_MARKET', 'crypto')}",
             f"## Current instrument: {os.environ.get('AUTORESEARCH_SYMBOL', 'ETHUSDT')}",
             f"## Current research profile: {os.environ.get('AUTORESEARCH_PROFILE', 'prop')}",
@@ -431,6 +433,8 @@ def main():
     print(f"model={args.model}")
     print(f"endpoint={NVIDIA_BASE_URL}")
     print(f"harness={HARNESS}")
+    print(f"program={PROGRAM}")
+    print(f"family={os.environ.get('AUTORESEARCH_FAMILY', 'unspecified')}")
     print(f"market={os.environ.get('AUTORESEARCH_MARKET', 'crypto')}")
     print(f"instrument={os.environ.get('AUTORESEARCH_SYMBOL', 'ETHUSDT')}")
     print("key=NVIDIA_API_KEY environment variable")
