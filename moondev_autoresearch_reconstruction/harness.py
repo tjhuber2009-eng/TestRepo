@@ -50,6 +50,7 @@ def run(df):
         cash=CASH,
         commission=COMMISSION,
         margin=MARGIN,
+        trade_on_close=False,
     )
     return bt.run()
 
