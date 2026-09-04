@@ -126,6 +126,27 @@ jobs:
           set -o pipefail
           python loop.py --iters 3 --model "$NVIDIA_MODEL" 2>&1 | tee research.log
 
+      - name: Audit three experiment outcomes
+        id: resultaudit
+        if: steps.research.outcome == 'success'
+        continue-on-error: true
+        shell: python
+        run: |
+          import csv
+          from pathlib import Path
+          p = Path("results.tsv")
+          if not p.exists():
+              raise SystemExit("results.tsv missing")
+          rows = list(csv.DictReader(p.open(encoding="utf-8"), delimiter="\t"))
+          print(f"rows={len(rows)}")
+          for row in rows:
+              print(f"iter={row.get('iter')} verdict={row.get('verdict')} score={row.get('score')} desc={row.get('desc')}")
+          if len(rows) != 3:
+              raise SystemExit(f"expected exactly 3 rows, found {len(rows)}")
+          crashes = [r for r in rows if r.get("verdict") == "CRASH"]
+          if crashes:
+              raise SystemExit(f"{len(crashes)} of 3 iterations crashed")
+
       - name: Build shakedown report
         if: always()
         env:
@@ -134,6 +155,7 @@ jobs:
           AUDIT_OUTCOME: ${{ steps.audit.outcome }}
           BASELINE_OUTCOME: ${{ steps.baseline.outcome }}
           RESEARCH_OUTCOME: ${{ steps.research.outcome }}
+          RESULT_AUDIT_OUTCOME: ${{ steps.resultaudit.outcome }}
           RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         shell: python
         run: |
@@ -152,7 +174,8 @@ jobs:
               f"- data preparation: {os.environ.get('PREPARE_OUTCOME', '')}",
               f"- data audit: {os.environ.get('AUDIT_OUTCOME', '')}",
               f"- baseline: {os.environ.get('BASELINE_OUTCOME', '')}",
-              f"- three-iteration research: {os.environ.get('RESEARCH_OUTCOME', '')}",
+              f"- three-iteration research process: {os.environ.get('RESEARCH_OUTCOME', '')}",
+              f"- three valid non-crash outcomes: {os.environ.get('RESULT_AUDIT_OUTCOME', '')}",
               "",
           ]
 
@@ -230,3 +253,4 @@ jobs:
           test "${{ steps.audit.outcome }}" = "success"
           test "${{ steps.baseline.outcome }}" = "success"
           test "${{ steps.research.outcome }}" = "success"
+          test "${{ steps.resultaudit.outcome }}" = "success"
