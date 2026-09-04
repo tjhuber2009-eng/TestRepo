@@ -1,0 +1,361 @@
+{
+  "version": 1,
+  "principles": [
+    "No strategy is promoted from a single aggregate backtest.",
+    "2023+ remains sealed for final one-look OOS.",
+    "Exact published rules are distinguished from research-inspired proxies.",
+    "Blocked families remain in the library until their required data/engine exists; they are never silently approximated as exact."
+  ],
+  "families": [
+    {
+      "id": "donchian_20_10",
+      "status": "runnable",
+      "exactness": "reconstructed",
+      "origin": "Moon Dev reconstruction/current seed",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "donchian_20_10"
+    },
+    {
+      "id": "turtle_55_20",
+      "status": "runnable",
+      "exactness": "canonical_family",
+      "origin": "Turtle/Donchian trend family researched previously",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "turtle_55_20"
+    },
+    {
+      "id": "sma175_regime_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "HR-TQQQ-001: QQQ close>SMA175, TQQQ/cash; single-symbol proxy until multi-asset signal engine",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "factory": "sma175_regime_proxy"
+    },
+    {
+      "id": "sma200_roc126_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "FinLab leveraged ETF rotation regime core: SMA200 + 126d momentum; defensive multi-asset rotation not reproduced here",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "factory": "sma200_roc126_proxy"
+    },
+    {
+      "id": "roc126_regime",
+      "status": "runnable",
+      "exactness": "research_family",
+      "origin": "Rolling-ROC leveraged-equity regime family researched previously",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "factory": "roc126_regime"
+    },
+    {
+      "id": "zanger_volume_breakout_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "Zanger research: breakout + volume contraction/expansion + trend; discretionary chart selection not reproduced",
+      "markets": [
+        "stock",
+        "etf",
+        "crypto"
+      ],
+      "factory": "zanger_volume_breakout_proxy"
+    },
+    {
+      "id": "swing_terminal_breakout_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "Swing Terminal breakout family with regime/liquidity/volume gating",
+      "markets": [
+        "stock",
+        "etf",
+        "crypto",
+        "futures_proxy"
+      ],
+      "factory": "swing_terminal_breakout_proxy"
+    },
+    {
+      "id": "swing_terminal_pullback_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "Swing Terminal pullback family: trend gate, pullback zone, stop/target behavior",
+      "markets": [
+        "stock",
+        "etf",
+        "crypto",
+        "futures_proxy"
+      ],
+      "factory": "swing_terminal_pullback_proxy"
+    },
+    {
+      "id": "zscore_mean_reversion",
+      "status": "runnable",
+      "exactness": "family",
+      "origin": "Mean-reversion/statistical research queue",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "zscore_mean_reversion"
+    },
+    {
+      "id": "bollinger_mean_reversion",
+      "status": "runnable",
+      "exactness": "family",
+      "origin": "TradingView/Bollinger mean-reversion research",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "bollinger_mean_reversion"
+    },
+    {
+      "id": "atr_channel_trend",
+      "status": "runnable",
+      "exactness": "family",
+      "origin": "ATR/channel trend systems researched in TradingView work",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "atr_channel_trend"
+    },
+    {
+      "id": "vol_contraction_breakout",
+      "status": "runnable",
+      "exactness": "family",
+      "origin": "Breakout + volatility contraction research family",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "vol_contraction_breakout"
+    },
+    {
+      "id": "qqe_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "QQE / QQE-mod implementations researched previously; simplified causal proxy",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "qqe_proxy"
+    },
+    {
+      "id": "halftrend_proxy",
+      "status": "runnable",
+      "exactness": "proxy",
+      "origin": "HalfTrend implementations researched previously; simplified causal proxy",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "halftrend_proxy"
+    },
+    {
+      "id": "calendar_monthly",
+      "status": "runnable",
+      "exactness": "family",
+      "origin": "Monthly seasonality/calendar research",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "factory": "calendar_monthly"
+    },
+    {
+      "id": "donchian_sma50",
+      "status": "runnable",
+      "exactness": "family",
+      "origin": "AUTORESEARCH kept/rejected trend-filter family (Donchian + SMA50/60)",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "donchian_sma50"
+    },
+    {
+      "id": "pead",
+      "status": "blocked",
+      "exactness": "documented",
+      "origin": "PEAD academic/mechanical research",
+      "requires": [
+        "point-in-time earnings announcement data",
+        "surprise measure",
+        "event engine"
+      ]
+    },
+    {
+      "id": "zanger_exact",
+      "status": "blocked",
+      "exactness": "unrecovered",
+      "origin": "ZANGER-MECH exact chart-pattern implementation",
+      "requires": [
+        "exact mechanical pattern rules",
+        "curated universe reconstruction"
+      ]
+    },
+    {
+      "id": "nbe_volume_profile",
+      "status": "blocked",
+      "exactness": "provisional",
+      "origin": "NodeBreachEngine POC/POV volume-profile rejection",
+      "requires": [
+        "intraday volume-profile engine",
+        "POC/POV parity"
+      ]
+    },
+    {
+      "id": "orb_twp",
+      "status": "blocked",
+      "exactness": "documented_live_family",
+      "origin": "TWP ORB EA / OE-ORB-FM-001 research",
+      "requires": [
+        "intraday session data",
+        "broker/session execution model"
+      ]
+    },
+    {
+      "id": "opening_reversal_futures",
+      "status": "blocked",
+      "exactness": "research_queue",
+      "origin": "HR-005 futures opening reversal",
+      "requires": [
+        "intraday futures data",
+        "contract calendar"
+      ]
+    },
+    {
+      "id": "overnight_intraday_reversal",
+      "status": "blocked",
+      "exactness": "research_queue",
+      "origin": "HR-001 overnight-to-intraday reversal",
+      "requires": [
+        "overnight/intraday session decomposition"
+      ]
+    },
+    {
+      "id": "intraday_residual_reversal",
+      "status": "blocked",
+      "exactness": "research_queue",
+      "origin": "HR-002 intraday residual reversal",
+      "requires": [
+        "intraday cross-sectional data"
+      ]
+    },
+    {
+      "id": "bounded_vrp",
+      "status": "blocked",
+      "exactness": "research_queue",
+      "origin": "HR-004 bounded volatility risk premium",
+      "requires": [
+        "options/volatility surface data"
+      ]
+    },
+    {
+      "id": "fx_futures_mean_reversion",
+      "status": "blocked",
+      "exactness": "research_queue",
+      "origin": "HR-007 FX-futures mean reversion",
+      "requires": [
+        "clean futures/FX data and contract model"
+      ]
+    },
+    {
+      "id": "liquidation_mean_reversion",
+      "status": "blocked",
+      "exactness": "research_family",
+      "origin": "Crypto liquidation mean-reversion research",
+      "requires": [
+        "historical liquidation feed"
+      ]
+    },
+    {
+      "id": "funding_basis",
+      "status": "blocked",
+      "exactness": "research_family",
+      "origin": "Coinbase/Bitnomial funding-basis research",
+      "requires": [
+        "historical funding",
+        "mark/index/basis data"
+      ]
+    },
+    {
+      "id": "stat_arb_pairs",
+      "status": "blocked",
+      "exactness": "family",
+      "origin": "Cointegration/stat-arb pairs repositories researched previously",
+      "requires": [
+        "multi-asset synchronized engine"
+      ]
+    },
+    {
+      "id": "finlab_rotation_exact",
+      "status": "blocked",
+      "exactness": "documented",
+      "origin": "QQQ SMA200 + 126d momentum; leveraged risk-on and IEF/GLD/SHY defensive rotation",
+      "requires": [
+        "multi-asset portfolio engine"
+      ]
+    },
+    {
+      "id": "hr_dual_alpha",
+      "status": "blocked",
+      "exactness": "partially_documented",
+      "origin": "HR-DUAL-ALPHA-001 research",
+      "requires": [
+        "frozen exact implementation from prior project"
+      ]
+    },
+    {
+      "id": "copy_trader_signal_replication",
+      "status": "blocked",
+      "exactness": "external_signal",
+      "origin": "Copy-trader research project",
+      "requires": [
+        "historical timestamped source signals",
+        "execution mapping"
+      ]
+    }
+  ]
+}
