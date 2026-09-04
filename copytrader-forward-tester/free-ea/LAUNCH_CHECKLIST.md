@@ -1,61 +1,80 @@
-# Free EA Launch Checklist
+# Final Free-EA Launch Checklist
 
-## Automatic installs
+## 1. Automatic source candidates
 
-Run in PowerShell from the repository checkout:
+Run:
 
     powershell -ExecutionPolicy Bypass -File .\copytrader-forward-tester\free-ea\install_free_eas.ps1 -ListTerminals
 
-Then install into the intended MT5 data folder:
+Then:
 
     powershell -ExecutionPolicy Bypass -File .\copytrader-forward-tester\free-ea\install_free_eas.ps1 -Mql5Path "C:\Users\YOU\AppData\Roaming\MetaQuotes\Terminal\<id>\MQL5"
 
-The installer fetches:
-
-- SafeScalper CodeBase v1.20 source + XAUUSD M5 ready preset directly from MQL5 CodeBase.
-- ApexBreakout base EA at exact upstream commit 3dab20e20a846edae9ac6fcf56d6b090dbba9f98.
-- Apex XAUUSD Donchian, USDJPY V3 Turbo, and V2 Guarded presets.
+This installs:
+- ASQ Safe Scalping CodeBase v1.20 + official XAUUSD M5 preset.
+- FvgGold v2.00 at pinned MIT commit.
 - CopyTraderDemoReporter.
 
-It intentionally does **not** install ApexBreakoutRecovery or either recovery preset.
+It no longer installs public GitHub projects with no declared license.
 
-## Manual free Market installs
+## 2. Manual official FREE Market candidates
 
-Inside the same MT5 terminal, use Market search and verify the displayed price is **FREE** before installing:
+Inside MT5 Market, search the exact product name. Install only if the product currently displays **FREE**.
 
-| Candidate | Frozen version | Chart |
-|---|---:|---|
-| SafeScalperPro | 3.44 | XAUUSD M5 |
-| Apex Origin | 1.20 | AUDCAD H1 |
-| Aurum Ra Gold EA | 5.10 | XAUUSD; seller schedule |
-| The Impossible Gold | 2.0 | XAUUSD M5 |
-| XAUUSD 5 minute | 7.3 | XAUUSD M5 |
+First wave:
+- Apex Origin v1.20
+- Daruma001 v1.18
+- Numbit v1.21
 
-If the version or price differs, do not silently substitute it. Record the new version and create a new baseline.
+Second wave:
+- SafeScalperPro Market current free version
+- Nang Kwak Gold Trader v1.0
+- EA34 Tanin Force v1.20
+- Universal Breakout MT5 v2.6
+- Aurum Ra Gold EA
+- Kabut001 v1.23
+- Londoncalling001 v1.20
+- The Impossible Gold v2.0
+- XAUUSD 5 minute
 
-## Separate demo accounts
+If the displayed version differs from this file, do not pretend it is the frozen version. Record the installed version as a new baseline.
 
-Use one demo account per candidate/preset. At minimum start with:
+## 3. Separate demo accounts
 
-1. SAFE_SCALPER_CODEBASE_V120
-2. APEX_USDJPY_V3_TURBO
-3. APEX_XAUUSD_DONCHIAN
+Use one account per candidate. Do not combine EAs.
 
-This gives one transparent MQL5 CodeBase EA plus two independently configured instances of the strongest non-recovery open-source breakout EA.
+Minimum first-wave accounts:
+- FREE-APEX-ORIGIN
+- FREE-DARUMA
+- FREE-SAFE-CODEBASE
+- FREE-FVG-GOLD
+- FREE-NUMBIT
 
-## Baseline procedure
+## 4. Baseline
 
-For each account:
-
-1. Confirm ACCOUNT_TRADE_MODE is Demo.
-2. Confirm there are zero pre-existing positions/orders.
-3. Record balance/equity and server.
-4. Attach the candidate EA to the specified chart.
-5. Load the exact frozen preset when applicable.
-6. Attach CopyTraderDemoReporter to a spare chart and set CandidateId exactly.
+For every account:
+1. Confirm Demo account.
+2. Zero pre-existing positions/orders.
+3. Record balance/equity, broker server, symbol names, leverage and account type.
+4. Attach only the intended EA.
+5. Load exact frozen/default settings.
+6. Attach CopyTraderDemoReporter on a spare chart with the matching candidate ID.
 7. Enable Algo Trading.
-8. Do not manually trade or move money after start.
+8. Never manually trade, deposit or withdraw after baseline.
 
-## EMA Gold Trader
+## 5. Ranking
 
-Do **not** install it from the original repository in this tournament. Its published source currently has compile-plausibility problems and the repository has no declared license. It remains a historical claim to reproduce later through an independently authored implementation, not a launch candidate.
+Use:
+
+    powershell -ExecutionPolicy Bypass -File .\copytrader-forward-tester\free-ea\rank_tournament.ps1 -CommonFiles "C:\Users\YOU\AppData\Roaming\MetaQuotes\Terminal\Common\Files"
+
+Young candidates remain ranked. Trade count and elapsed time alter confidence, not eligibility.
+
+## 6. Do not execute
+
+- Gold Prop Firm Robot / Gold Reaper relabel
+- third-party mirrors of paid EAs
+- ApexBreakout no-license source
+- DonchianTurtle no-license source
+- EMA Gold Trader original malformed/no-license source
+- unavailable products

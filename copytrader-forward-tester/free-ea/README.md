@@ -1,51 +1,56 @@
 # Free-EA Forward Tournament
 
-**Governing policy: every executable candidate costs $0.**
+**Final research state: exhaustive public search complete to diminishing returns (2026-09-04).**
 
-Paid EAs and paid signal subscriptions are excluded. The previous DNH / Mon Scalper / Precise research remains only as a historical benchmark.
+Every executable candidate must cost $0. Paid EAs and paid signal subscriptions are prohibited.
 
-## Ready-to-run launch order
+Read first:
+- `SEARCH_AUDIT_2026-09-04.md` — what was searched and why the search stopped.
+- `PROVENANCE_POLICY.json` — what is legally/operationally allowed into the executable tournament.
+- `candidates.json` — final evidence-ranked universe.
+- `FREE_EA_START_MANIFEST.json` — first and second forward-test waves.
 
-1. **ASQ Safe Scalping CodeBase v1.20** — public MQL5 CodeBase source, XAUUSD M5, ready preset included by the author.
-2. **ApexBreakout USDJPY V3 Turbo** — pinned upstream base EA, USDJPY H1. The separate recovery/martingale EA is forbidden.
-3. **ApexBreakout XAUUSD Donchian** — same pinned base EA, XAUUSD H1.
-4. **SafeScalperPro Market v3.44** — free Market binary, manual MT5 Market install.
-5. **Apex Origin v1.20** — free Market binary, AUDCAD H1.
-6. **Aurum Ra Gold EA v5.10** — free Market binary, XAUUSD.
-7. **The Impossible Gold v2.0** — free Market binary, XAUUSD M5.
-8. **XAUUSD 5 minute v7.3** — free Market binary, XAUUSD M5.
+## First wave
 
-**EMA Gold Trader is quarantined**. Its public repository has no declared license and its published .mq5 currently contains apparent Markdown formatting inside executable code, so it is not a plug-and-play launch candidate.
+1. **Apex Origin v1.20** — official FREE Market EA; strongest exact public live evidence found. Manual Market install only.
+2. **Daruma001 v1.18** — official FREE; strongest large-sample low-DD seller validation package. Manual Market install.
+3. **ASQ Safe Scalping CodeBase v1.20** — official free source + XAUUSD M5 preset; automatic installer.
+4. **FvgGold v2.00** — MIT-licensed GitHub source; automatic installer.
+5. **Numbit v1.21** — official FREE BTCUSD EA; strong seller real-tick metrics but only days old.
 
-## Important SafeScalper distinction
+Small samples stay admitted. They receive lower evidence confidence rather than automatic rejection.
 
-The CodeBase source v1.20 and Market v3.44 are treated as separate candidates. The current Market branch has evolved from the public source branch and uses different current defaults.
+## Important corrections from the exhaustive audit
 
-## Install the automatic candidates
+- **Gold Prop Firm Robot is not a new clean winner**. Its account identity matches Gold Reaper and it is quarantined; independent risk review labels Gold Reaper martingale-confirmed.
+- **ApexBreakout source is public but has no declared license**. It is research-only and is no longer auto-installed.
+- **DonchianTurtle also has no declared license** and is research-only.
+- **EMA Gold Trader remains quarantined** because of source-format/compile plausibility problems plus no declared license.
+- Third-party mirrors of paid/commercial EAs are never executable simply because a download site offers them for $0.
 
-From a Windows checkout of this repository:
+## Automatic installation
+
+From Windows:
 
     powershell -ExecutionPolicy Bypass -File .\copytrader-forward-tester\free-ea\install_free_eas.ps1 -ListTerminals
 
-Then:
+Then choose the correct MT5 data folder:
 
     powershell -ExecutionPolicy Bypass -File .\copytrader-forward-tester\free-ea\install_free_eas.ps1 -Mql5Path "C:\Users\YOU\AppData\Roaming\MetaQuotes\Terminal\<terminal-id>\MQL5"
 
-This fetches source directly from the original upstreams and does not vendor third-party code into this repository.
+The automatic installer now installs only:
+- ASQ Safe Scalping CodeBase v1.20 from official MQL5 CodeBase;
+- FvgGold at pinned MIT commit `a8a521c2c6e619a5f9fc7f80cad63242d1e236b5`;
+- CopyTraderDemoReporter.
 
-See:
+Official Market EAs must be installed manually from MT5 after confirming the product is still displayed as **FREE**. Freeze the exact installed version at baseline.
 
-- `FREE_EA_START_MANIFEST.json` — exact frozen launch configurations.
-- `UPSTREAM_PINS.json` — exact upstream commit/source pins.
-- `LAUNCH_CHECKLIST.md` — full MT5 procedure.
-- `../mt5-demo/CopyTraderDemoReporter.mq5` — demo-only account reporter.
+## Forward-test rules
 
-## Experiment rules
-
-- one isolated MT5 demo account per EA/preset;
+- separate MT5 demo account per EA;
 - no manual trades;
-- no deposits or withdrawals after baseline;
-- no parameter optimization after the forward test starts;
-- no candidate removed solely for a small sample;
-- rank by forward return, PF, return/max equity DD, then evidence strength and reproducibility;
-- no automatic real-money approval.
+- no deposits/withdrawals after baseline;
+- exact version and settings frozen;
+- no optimization after start;
+- rank by forward return, PF, return/max observed equity DD, then evidence strength and reproducibility;
+- no real-money auto-approval.

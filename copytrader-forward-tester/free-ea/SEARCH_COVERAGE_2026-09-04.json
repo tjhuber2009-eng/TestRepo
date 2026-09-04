@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-04T05:10:00Z",
+  "status": "COMPLETE_TO_DIMINISHING_RETURNS",
+  "coverage": {
+    "mql5_market_free_mt5_experts": "all current exposed pagination traversed",
+    "mql5_codebase_mt5_experts": "all 41 current pages traversed",
+    "github": "broad repo/code queries plus detailed finalist source/license audits",
+    "reddit": "generic plus exact-name searches",
+    "other": [
+      "ForexFactory",
+      "EarnForex",
+      "ForexCracked",
+      "Myfxbook",
+      "FXBlue",
+      "MQL5 Signals"
+    ]
+  },
+  "top_findings": {
+    "best_exact_live_official_free": "APEX_ORIGIN_V120",
+    "best_large_sample_seller_validation": "DARUMA001_V118",
+    "best_official_source": "SAFE_SCALPER_CODEBASE_V120",
+    "best_permissive_github_source": "FVG_GOLD_V200",
+    "strongest_identity_falsification": "GOLD_PROP_REAPER_RELABEL"
+  }
+}

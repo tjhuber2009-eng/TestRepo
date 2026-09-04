@@ -5,40 +5,54 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
 class LaunchPackTests(unittest.TestCase):
-    def test_manifest_free_and_demo_only(self):
+    def test_manifest_is_demo_only_and_free(self):
         m=json.loads((ROOT/"FREE_EA_START_MANIFEST.json").read_text())
         self.assertTrue(m["account_policy"]["demo_only"])
-        for c in m["launch_order"]:
-            self.assertEqual(c["cost_usd"],0)
+        for group in ("first_wave","second_wave"):
+            for c in m[group]:
+                self.assertEqual(c["cost_usd"],0)
 
-    def test_recovery_forbidden(self):
-        pins=json.loads((ROOT/"UPSTREAM_PINS.json").read_text())
-        apex=next(x for x in pins["upstreams"] if x["id"]=="APEX_BREAKOUT_UPSTREAM")
-        self.assertTrue(any("Recovery" in x for x in apex["forbidden_files"]))
-        self.assertFalse(any("Recovery" in x for x in apex["allowed_files"]))
-
-    def test_ema_quarantined(self):
-        m=json.loads((ROOT/"FREE_EA_START_MANIFEST.json").read_text())
-        ema=next(x for x in m["launch_order"] if x["id"]=="EMA_GOLD_TRADER")
-        self.assertEqual(ema["status"],"QUARANTINED")
-
-    def test_installer_never_copies_recovery(self):
-        text=(ROOT/"install_free_eas.ps1").read_text(encoding="utf-8")
-        forbidden='Copy-Item (Join-Path $tmp "MQL5\\Experts\\ApexBreakoutRecovery.mq5")'
-        self.assertNotIn(forbidden,text)
-        self.assertIn("ApexBreakoutRecovery.mq5",text)
-
-    def test_registry_has_only_free_candidates(self):
+    def test_auto_ready_sources_have_valid_provenance(self):
         r=json.loads((ROOT/"candidates.json").read_text())
-        self.assertGreaterEqual(len(r["candidates"]),8)
         for c in r["candidates"]:
-            self.assertEqual(c["cost_usd"],0)
+            if c["launch_status"]=="READY":
+                self.assertIn(c["source_type"],{"mql5_codebase_free_source","licensed_public_source"})
 
-    def test_safe_scalper_source_and_market_are_separate(self):
+    def test_no_license_github_is_not_executable(self):
         r=json.loads((ROOT/"candidates.json").read_text())
-        ids={c["id"] for c in r["candidates"]}
-        self.assertIn("SAFE_SCALPER_CODEBASE_V120",ids)
-        self.assertIn("SAFE_SCALPER_MARKET_V344",ids)
+        for c in r["candidates"]:
+            if c["source_type"]=="public_github_no_license":
+                self.assertNotIn(c["launch_status"],{"READY","MANUAL_MARKET_INSTALL"})
+
+    def test_third_party_mirrors_are_not_executable(self):
+        r=json.loads((ROOT/"candidates.json").read_text())
+        for c in r["candidates"]:
+            if "third_party_mirror" in c["source_type"]:
+                self.assertNotIn(c["launch_status"],{"READY","MANUAL_MARKET_INSTALL"})
+
+    def test_fvg_is_mit_pinned_and_ready(self):
+        pins=json.loads((ROOT/"UPSTREAM_PINS.json").read_text())
+        p=next(x for x in pins["upstreams"] if x["id"]=="FVG_GOLD_UPSTREAM")
+        self.assertEqual(p["declared_license"],"MIT")
+        r=json.loads((ROOT/"candidates.json").read_text())
+        c=next(x for x in r["candidates"] if x["id"]=="FVG_GOLD_V200")
+        self.assertEqual(c["launch_status"],"READY")
+
+    def test_apex_no_longer_auto_installed(self):
+        text=(ROOT/"install_free_eas.ps1").read_text(encoding="utf-8")
+        self.assertNotIn("sbrakni/MQL5-trading-bot-claude-experiment.git",text)
+        self.assertNotIn('Copy-Item (Join-Path $tmp "MQL5\\Experts\\ApexBreakout.mq5")',text)
+
+    def test_gold_reaper_relabel_quarantined(self):
+        r=json.loads((ROOT/"candidates.json").read_text())
+        c=next(x for x in r["candidates"] if x["id"]=="GOLD_PROP_REAPER_RELABEL")
+        self.assertEqual(c["launch_status"],"QUARANTINED")
+        self.assertIn("algocheck_martingale_confirmed",c["risk_flags"])
+
+    def test_search_marked_complete_to_diminishing_returns(self):
+        c=json.loads((ROOT/"SEARCH_COVERAGE_2026-09-04.json").read_text())
+        self.assertEqual(c["status"],"COMPLETE_TO_DIMINISHING_RETURNS")
+        self.assertIn("all 41",c["coverage"]["mql5_codebase_mt5_experts"])
 
 if __name__=="__main__":
     unittest.main()

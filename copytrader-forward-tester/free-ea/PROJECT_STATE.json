@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-04T05:18:00Z",
+  "project": "FREE_EA_RESEARCH_AND_FORWARD_TOURNAMENT",
+  "research_status": "COMPLETE_TO_DIMINISHING_RETURNS",
+  "search_complete": true,
+  "executable_policy": "FREE_EA_ONLY",
+  "historical_search_expansion_complete": true,
+  "next_phase": "MT5_DEMO_FORWARD_EXECUTION",
+  "top_evidence_roles": {
+    "exact_live_official_free": "APEX_ORIGIN_V120",
+    "large_sample_seller_validation": "DARUMA001_V118",
+    "official_source": "SAFE_SCALPER_CODEBASE_V120",
+    "permissive_github_source": "FVG_GOLD_V200",
+    "new_low_dd_seller_validation": "NUMBIT_V121"
+  },
+  "first_wave": [
+    "APEX_ORIGIN_V120",
+    "DARUMA001_V118",
+    "SAFE_SCALPER_CODEBASE_V120",
+    "FVG_GOLD_V200",
+    "NUMBIT_V121"
+  ],
+  "hard_exclusions": {
+    "paid_eas": true,
+    "paid_signals": true,
+    "unlicensed_github_auto_install": true,
+    "third_party_commercial_mirrors": true,
+    "known_martingale_relabels": true
+  },
+  "remaining_blocker": "Actual MT5 demo accounts must run the exact free EA builds prospectively; GitHub-hosted Linux Actions cannot execute MetaTrader 5 desktop EAs."
+}
