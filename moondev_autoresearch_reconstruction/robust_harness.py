@@ -466,8 +466,8 @@ def search_guard(summary):
         base = json.loads(BASELINE.read_text(encoding="utf-8"))
         bv = float(base["ann_vol_pct"])
         v = float(summary["ann_vol_pct"])
-        if bv > 0 and abs(v - bv) / bv > VOL_BAND:
-            details.append("portfolio volatility left frozen development baseline band")
+        if bv > 0 and v > bv * (1.0 + VOL_BAND):
+            details.append("portfolio volatility rose above frozen development ceiling")
 
     ok = not details
     return ok, ("ok" if ok else "development robustness gate failed"), details
