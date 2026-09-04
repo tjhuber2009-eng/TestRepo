@@ -1,131 +1,148 @@
 {
-  "schema_version": 1,
-  "frozen_at": "2026-09-04T04:40:00Z",
+  "schema_version": 2,
+  "frozen_at": "2026-09-04T05:15:00Z",
   "account_policy": {
     "demo_only": true,
     "separate_account_per_candidate": true,
     "no_manual_trades": true,
     "no_post_baseline_cashflows": true,
-    "no_parameter_optimization_after_start": true
+    "no_parameter_optimization_after_start": true,
+    "freeze_exact_installed_version": true
   },
-  "launch_order": [
+  "first_wave": [
+    {
+      "id": "APEX_ORIGIN_V120",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "source": "official_mql5_free",
+      "symbol": "MULTI_FX",
+      "timeframe": "H1",
+      "product_url": "https://www.mql5.com/en/market/product/166552",
+      "reporter_candidate_id": "APEX_ORIGIN_V120",
+      "reason": "best exact current live evidence among official-free EAs; risk structure must be observed"
+    },
+    {
+      "id": "DARUMA001_V118",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "source": "official_mql5_free",
+      "symbol": "MULTI_7",
+      "timeframe": "MULTI",
+      "product_url": "https://www.mql5.com/en/market/product/192791",
+      "reporter_candidate_id": "DARUMA001_V118",
+      "reason": "largest clean seller-validation sample with low reported equity DD"
+    },
     {
       "id": "SAFE_SCALPER_CODEBASE_V120",
       "status": "READY",
-      "acquisition": "automatic_installer",
       "cost_usd": 0,
+      "source": "official_mql5_codebase",
       "symbol": "XAUUSD",
       "timeframe": "M5",
       "expert": "ASQ_SafeScalping_CodeBase.mq5",
       "preset": "ASQ_SafeScalping_XAUUSD_M5_v2.set",
       "reporter_candidate_id": "SAFE_SCALPER_CODEBASE_V120",
-      "notes": [
-        "public CodeBase source",
-        "one trade at a time",
-        "no martingale/grid/hedging per author"
-      ]
+      "reason": "transparent official source plus published preset"
     },
     {
-      "id": "APEX_USDJPY_V3_TURBO",
+      "id": "FVG_GOLD_V200",
       "status": "READY",
-      "acquisition": "automatic_installer",
       "cost_usd": 0,
-      "symbol": "USDJPY",
-      "timeframe": "H1",
-      "expert": "ApexBreakout.mq5",
-      "preset": "ApexBreakout_USDJPY_H1_Session_V3_Turbo.set",
-      "reporter_candidate_id": "APEX_USDJPY_V3_TURBO",
-      "notes": [
-        "base EA only",
-        "recovery edition forbidden",
-        "published 2.8y result +212.4% net, PF 1.48, max DD 15.8% at 1% risk"
-      ]
-    },
-    {
-      "id": "APEX_XAUUSD_DONCHIAN",
-      "status": "READY",
-      "acquisition": "automatic_installer",
-      "cost_usd": 0,
+      "source": "MIT_GITHUB",
       "symbol": "XAUUSD",
-      "timeframe": "H1",
-      "expert": "ApexBreakout.mq5",
-      "preset": "ApexBreakout_XAUUSD_H1_Donchian.set",
-      "reporter_candidate_id": "APEX_XAUUSD_DONCHIAN",
-      "notes": [
-        "base EA only",
-        "published 2.8y result +64.1% net, PF 1.44, max DD 15.7%"
-      ]
+      "timeframe": "M15",
+      "expert": "FvgGold.mq5",
+      "reporter_candidate_id": "FVG_GOLD_V200",
+      "reason": "permissively licensed transparent source, fixed risk controls"
     },
     {
-      "id": "SAFE_SCALPER_MARKET_V344",
+      "id": "NUMBIT_V121",
       "status": "MANUAL_MARKET_INSTALL",
-      "acquisition": "mql5_market_free",
       "cost_usd": 0,
-      "symbol": "XAUUSD",
-      "timeframe": "M5",
-      "product_url": "https://www.mql5.com/en/market/product/165581",
-      "frozen_version": "3.44",
-      "reporter_candidate_id": "SAFE_SCALPER_MARKET_V344",
-      "notes": [
-        "do not equate with CodeBase v1.20; newer branch/defaults differ"
-      ]
+      "source": "official_mql5_free",
+      "symbol": "BTCUSD",
+      "timeframe": "seller_default",
+      "product_url": "https://www.mql5.com/en/market/product/193631",
+      "reporter_candidate_id": "NUMBIT_V121",
+      "reason": "strong low-DD seller real-tick package, newly published"
+    }
+  ],
+  "second_wave": [
+    {
+      "id": "SAFE_SCALPER_MARKET_CURRENT",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "product_url": "https://www.mql5.com/en/market/product/165581"
     },
     {
-      "id": "APEX_ORIGIN_V120",
+      "id": "NANG_KWAK_GOLD_V10",
       "status": "MANUAL_MARKET_INSTALL",
-      "acquisition": "mql5_market_free",
       "cost_usd": 0,
-      "symbol": "AUDCAD",
-      "timeframe": "H1",
-      "product_url": "https://www.mql5.com/en/market/product/166552",
-      "frozen_version": "1.20",
-      "reporter_candidate_id": "APEX_ORIGIN_V120"
+      "product_url": "https://www.mql5.com/en/market/product/192232"
+    },
+    {
+      "id": "EA34_TANIN_FORCE_V120",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "product_url": "https://www.mql5.com/en/market/product/176142"
+    },
+    {
+      "id": "UNIVERSAL_BREAKOUT_V26",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "product_url": "https://www.mql5.com/en/market/product/93732"
     },
     {
       "id": "AURUM_RA_V510",
       "status": "MANUAL_MARKET_INSTALL",
-      "acquisition": "mql5_market_free",
       "cost_usd": 0,
-      "symbol": "XAUUSD",
-      "timeframe": "ANY_SELLER_SCHEDULE",
-      "product_url": "https://www.mql5.com/en/market/product/149983",
-      "frozen_version": "5.10",
-      "reporter_candidate_id": "AURUM_RA_V510"
+      "product_url": "https://www.mql5.com/en/market/product/149983"
+    },
+    {
+      "id": "KABUT001_V123",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "product_url": "https://www.mql5.com/en/market/product/193705"
+    },
+    {
+      "id": "LONDONCALLING001_V120",
+      "status": "MANUAL_MARKET_INSTALL",
+      "cost_usd": 0,
+      "product_url": "https://www.mql5.com/en/market/product/193617"
     },
     {
       "id": "IMPOSSIBLE_GOLD_V20",
       "status": "MANUAL_MARKET_INSTALL",
-      "acquisition": "mql5_market_free",
       "cost_usd": 0,
-      "symbol": "XAUUSD",
-      "timeframe": "M5",
-      "product_url": "https://www.mql5.com/en/market/product/169680",
-      "frozen_version": "2.0",
-      "reporter_candidate_id": "IMPOSSIBLE_GOLD_V20"
+      "product_url": "https://www.mql5.com/en/market/product/169680"
     },
     {
       "id": "XAUUSD_5_MIN_V73",
       "status": "MANUAL_MARKET_INSTALL",
-      "acquisition": "mql5_market_free",
       "cost_usd": 0,
-      "symbol": "XAUUSD",
-      "timeframe": "M5",
-      "product_url": "https://www.mql5.com/en/market/product/147332",
-      "frozen_version": "7.3",
-      "reporter_candidate_id": "XAUUSD_5_MIN_V73"
+      "product_url": "https://www.mql5.com/en/market/product/147332"
+    }
+  ],
+  "not_executable": [
+    {
+      "id": "APEX_BREAKOUT_RESEARCH",
+      "status": "RESEARCH_ONLY_LICENSE_UNCLEAR"
+    },
+    {
+      "id": "DONCHIAN_TURTLE_RESEARCH",
+      "status": "RESEARCH_ONLY_LICENSE_UNCLEAR"
     },
     {
       "id": "EMA_GOLD_TRADER",
-      "status": "QUARANTINED",
-      "acquisition": "none",
-      "cost_usd": 0,
-      "symbol": "XAUUSD",
-      "timeframe": "H1",
-      "reasons": [
-        "source compile plausibility failure",
-        "no declared license",
-        "requires clean independent reimplementation before tournament"
-      ]
+      "status": "QUARANTINED"
+    },
+    {
+      "id": "GOLD_PROP_REAPER_RELABEL",
+      "status": "QUARANTINED"
+    },
+    {
+      "id": "THIRD_PARTY_COMMERCIAL_MIRRORS",
+      "status": "RESEARCH_ONLY_PROVENANCE_DENIED"
     }
   ]
 }
