@@ -15,8 +15,13 @@ harness decides whether it lives.
 
 ## Laws (learned the hard way, do not re-learn them)
 
-- The entry gate may only use information known at the close of bar t-1. A gate
-  that reads the entry bar's own price deletes the best breakouts.
+- Execution timing is explicit: Backtesting.py runs with trade_on_close=False.
+  Inside next(), the newest visible completed bar is the signal bar (t-1
+  relative to the next-bar execution). A market order placed from that signal
+  fills on the following bar. Therefore reading self.data.Close[-1], High[-1],
+  Low[-1], or indicators computed only from completed bars is causal. Do NOT
+  shift the signal back an extra bar merely to "fix lookahead"; that introduces
+  an unnecessary one-bar delay and has already tested worse.
 - No trailing exit unless it is armed by a big move first (12% MFE), and even
   then expect it to lose; past tests showed cut winners keep running (+88bps post-drift).
 - Size is not an idea. Raising `f_max`, `vol_target` or the cash fraction is a
