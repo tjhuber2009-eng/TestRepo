@@ -4,12 +4,16 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 * * * *"
+  pull_request:
+    paths:
+      - "copytrader-forward-tester/**"
+      - ".github/workflows/copytrader-forward-test.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: copytrader-forward-test
+  group: copytrader-forward-test-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -49,7 +53,7 @@ jobs:
           retention-days: 90
 
       - name: Persist state and reports
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
