@@ -83,6 +83,38 @@ def structural_similarity(a, b):
     ).ratio()
 
 
+def risk_control_fingerprint(source):
+    tree = ast.parse(source, filename=STRATEGY)
+    cls = next(
+        (x for x in tree.body if isinstance(x, ast.ClassDef) and x.name == "MoonStrategy"),
+        None,
+    )
+    if cls is None:
+        return None
+    frozen_assignments = {}
+    units_dump = None
+    for node in cls.body:
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name) and target.id in {
+                    "vol_target", "f_max", "vol_lookback",
+                }:
+                    value = node.value
+                    frozen_assignments[target.id] = ast.dump(
+                        value, annotate_fields=True, include_attributes=False
+                    )
+        elif isinstance(node, ast.FunctionDef) and node.name == "_units":
+            units_dump = ast.dump(
+                node, annotate_fields=True, include_attributes=False
+            )
+    payload = json.dumps(
+        {"assignments": frozen_assignments, "units": units_dump},
+        sort_keys=True,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
 def load_seen_hashes():
     if not os.path.exists(SEEN_HASHES):
         return set()
@@ -542,12 +574,16 @@ def scoreboard():
         1 for r in rows
         if len(r.split("\t")) > 2 and r.split("\t")[2] == "TOO_BROAD"
     )
+    risk_change = sum(
+        1 for r in rows
+        if len(r.split("\t")) > 2 and r.split("\t")[2] == "RISK_CONTROL_CHANGE"
+    )
     base = load_json(BASELINE)
     print(
         f"[4/4] SCOREBOARD tries={len(rows)} kept={kept} "
         f"rejected={rejected} crash={crashed} duplicate={duplicate} "
         f"parameter_only={parameter_only} too_broad={too_broad} "
-        f"current_K={base['score']}"
+        f"risk_change={risk_change} current_K={base['score']}"
     )
 
 
@@ -625,6 +661,14 @@ def main():
                 reason = "semantic AST duplicate of a previously generated candidate"
                 score = ret = sharpe = vol = dd = "nan"
                 trades = 0
+                shutil.copy(BEST, STRATEGY)
+            elif risk_control_fingerprint(candidate_source) != risk_control_fingerprint(best_source):
+                verdict = "RISK_CONTROL_CHANGE"
+                reason = "host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed"
+                score = ret = sharpe = vol = dd = "nan"
+                trades = 0
+                seen.add(fingerprint)
+                save_seen_hashes(seen)
                 shutil.copy(BEST, STRATEGY)
             elif structural_ast_hash(candidate_source) == structural_ast_hash(best_source):
                 verdict = "PARAMETER_ONLY"
