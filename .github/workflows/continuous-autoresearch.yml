@@ -115,7 +115,7 @@ jobs:
               f"Hidden validation pass/fail: **{progress.get('validation_pass_count',0)}/{progress.get('validation_fail_count',0)}**",
               f"Insufficient-data tracks: **{progress.get('data_insufficient_count',0)}**",
               f"Seed-blocked tracks: **{progress.get('seed_blocked_count',0)}**",
-              f"Model crashes: **{progress.get('total_crashes',0)}**; semantic duplicates: **{progress.get('total_duplicates',0)}**; parameter-only mutations rejected: **{progress.get('total_parameter_only',0)}**",
+              f"Model crashes: **{progress.get('total_crashes',0)}**; semantic duplicates: **{progress.get('total_duplicates',0)}**; parameter-only rejected: **{progress.get('total_parameter_only',0)}**; too-broad rewrites rejected: **{progress.get('total_too_broad',0)}**",
               f"Search budgets: breadth **{progress.get('breadth_target')}**, depth **{progress.get('depth_target')}**, elite **{progress.get('elite_target')}** valid candidates.",
               f"Special-engine families still catalogued as blocked: **{progress.get('blocked_family_count',0)}**",
               "",
