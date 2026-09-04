@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 PY = sys.executable
+HARNESS = os.environ.get("AUTORESEARCH_HARNESS", "harness.py")
 
 STRATEGY = "strategy.py"
 BEST = "strategy_best.py"
@@ -50,7 +51,7 @@ def ensure_seed():
         print("[setup] freezing seed baseline")
         with open(os.path.join(LOGS, "baseline.txt"), "w", encoding="utf-8") as f:
             r = subprocess.run(
-                [PY, "harness.py", "--is", "--set-baseline"],
+                [PY, HARNESS, "--is", "--set-baseline"],
                 stdout=f,
                 stderr=subprocess.STDOUT,
                 text=True,
@@ -83,6 +84,8 @@ def build_prompt(iteration, base):
         [
             program,
             "",
+            f"## Current market: {os.environ.get('AUTORESEARCH_MARKET', 'crypto')}",
+            f"## Current instrument: {os.environ.get('AUTORESEARCH_SYMBOL', 'ETHUSDT')}",
             f"## Current research profile: {os.environ.get('AUTORESEARCH_PROFILE', 'prop')}",
             f"## HARD MAX DRAWDOWN: {os.environ.get('AUTORESEARCH_MAX_DD_PCT', '10.0')}%",
             "Any candidate exceeding that historical max-drawdown limit is invalid,",
@@ -378,7 +381,7 @@ def run_backtest(iteration):
     t0 = time.time()
     with open(path, "w", encoding="utf-8") as f:
         r = subprocess.run(
-            [PY, "harness.py", "--is"],
+            [PY, HARNESS, "--is"],
             stdout=f,
             stderr=subprocess.STDOUT,
             text=True,
@@ -426,6 +429,9 @@ def main():
     print("MOON DEV AUTORESEARCH — NVIDIA NIM")
     print(f"model={args.model}")
     print(f"endpoint={NVIDIA_BASE_URL}")
+    print(f"harness={HARNESS}")
+    print(f"market={os.environ.get('AUTORESEARCH_MARKET', 'crypto')}")
+    print(f"instrument={os.environ.get('AUTORESEARCH_SYMBOL', 'ETHUSDT')}")
     print("key=NVIDIA_API_KEY environment variable")
     print(f"profile={os.environ.get('AUTORESEARCH_PROFILE', 'prop')}")
     print(f"max_dd_limit={os.environ.get('AUTORESEARCH_MAX_DD_PCT', '10.0')}%")
