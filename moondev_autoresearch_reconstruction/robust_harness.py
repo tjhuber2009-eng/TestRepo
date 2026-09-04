@@ -364,6 +364,15 @@ def evaluate_search(df):
     )
     boot = deterministic_bootstrap_p10(base_stats, SEARCH_START, DEV_END)
     score = robust_score(folds, stress, boot)
+    worst_risk_dd = max(
+        abs(float(full["max_dd_pct"])),
+        abs(float(full["intrabar_dd_proxy_pct"])),
+        abs(float(stress["max_dd_pct"])),
+        abs(float(stress["intrabar_dd_proxy_pct"])),
+    )
+    risk_utilization = worst_risk_dd / MAX_DD_PCT if MAX_DD_PCT > 0 else float("inf")
+    dd_headroom_penalty = 0.10 * max(0.0, risk_utilization - 0.70)
+    score -= dd_headroom_penalty
 
     full.update({
         "score": round(score, 6) if np.isfinite(score) else float("-inf"),
@@ -376,6 +385,8 @@ def evaluate_search(df):
         "median_fold_k": round(float(np.median(finite_k)), 6) if finite_k else float("-inf"),
         "fold_score_std": round(float(np.std(finite_k)), 6) if finite_k else float("inf"),
         "bootstrap_sharpe_p10": boot,
+        "risk_cap_utilization": round(risk_utilization, 4),
+        "dd_headroom_penalty": round(dd_headroom_penalty, 6),
         "start": SEARCH_START,
         "end": DEV_END,
     })
