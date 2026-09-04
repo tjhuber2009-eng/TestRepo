@@ -457,6 +457,19 @@ def append_cycle(record):
         f.write(json.dumps(record, sort_keys=True) + "\n")
 
 
+def discard_stale_track_state(track_dir):
+    meta = track_dir / "state_meta.json"
+    if not meta.exists():
+        return
+    try:
+        payload = load_json(meta)
+    except Exception:
+        payload = {}
+    if payload.get("protocol") != PROTOCOL:
+        print(f"[state reset] discarding stale protocol state in {track_dir.name}")
+        shutil.rmtree(track_dir)
+
+
 def process_track(track, iters, model):
     print("\n" + "=" * 88)
     print(
@@ -466,6 +479,7 @@ def process_track(track, iters, model):
     print("=" * 88, flush=True)
 
     track_dir = TRACKS / track["id"]
+    discard_stale_track_state(track_dir)
     clean_runtime()
     prepare_data(track)
     env = target_env(track)
