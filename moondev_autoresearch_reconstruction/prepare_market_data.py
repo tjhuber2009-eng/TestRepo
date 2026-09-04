@@ -138,6 +138,43 @@ def prepare_yahoo(symbol, start, end, out):
     print(f"Yahoo {symbol}: {len(rows)} adjusted daily bars -> {out}")
 
 
+def sha256_path(path):
+    h = hashlib.sha256()
+    with Path(path).open("rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def write_manifest(out, source, symbol, ident, start, end):
+    with out.open(encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    if not rows:
+        raise RuntimeError(f"cannot manifest empty file: {out}")
+    manifest = {
+        "version": 1,
+        "source": source,
+        "symbol": symbol,
+        "id": ident,
+        "requested_start": start.strftime("%Y-%m-%d"),
+        "requested_end": end.strftime("%Y-%m-%d"),
+        "rows": len(rows),
+        "first": rows[0]["Date"],
+        "last": rows[-1]["Date"],
+        "csv_sha256": sha256_path(out),
+        "provider_integrity": (
+            "published monthly archive SHA256 verified"
+            if source == "binance"
+            else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+        ),
+        "oos_included": False,
+    }
+    path = out.with_suffix(".manifest.json")
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"manifest -> {path} sha256={manifest['csv_sha256']}")
+    return manifest
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", choices=["binance","yahoo"], required=True)
@@ -153,6 +190,7 @@ def main():
         prepare_binance(args.symbol, start, end, out)
     else:
         prepare_yahoo(args.symbol, start, end, out)
+    write_manifest(out, args.source, args.symbol, args.id, start, end)
 
 
 if __name__ == "__main__":
