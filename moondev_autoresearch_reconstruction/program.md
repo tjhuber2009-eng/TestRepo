@@ -27,6 +27,9 @@ harness decides whether it lives.
 - Size is not an idea. Raising `f_max`, `vol_target` or the cash fraction is a
   leverage dial; the volatility guard will reject it. Spend the try on entries,
   exits, or gates.
+- Maximum historical drawdown is a hard risk constraint: 10.0% or less.
+  Any candidate with Max. Drawdown below -10.0% is rejected regardless of K.
+  Do not trade away this constraint for return.
 - Fewer, better trades is fine. Fewer than 50 is a reject.
 - Real data only. Never write code that fabricates a bar or fills a gap with a guess.
 
