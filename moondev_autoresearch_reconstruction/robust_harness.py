@@ -153,7 +153,54 @@ def slice_trades(stats, start, end):
     return tr.loc[(exits >= a) & (exits <= b)].copy()
 
 
-def metrics_from_stats(stats, start, end):
+def intrabar_drawdown_proxy(stats, price_df, start, end):
+    """Conservative one-trade-at-a-time adverse-excursion equity proxy.
+
+    Daily close equity can hide an intraday breach. For each realized trade we
+    mark its worst daily low/high while open against pre-entry equity and the
+    prior equity peak. This is still a proxy (especially if a strategy
+    pyramids), so it is reported explicitly rather than called exact.
+    """
+    if price_df is None:
+        return 0.0
+    tr = slice_trades(stats, start, end)
+    if tr.empty:
+        return 0.0
+    eq = stats["_equity_curve"]["Equity"].astype(float).reset_index(drop=True)
+    lows = pd.to_numeric(price_df["Low"], errors="coerce").reset_index(drop=True)
+    highs = pd.to_numeric(price_df["High"], errors="coerce").reset_index(drop=True)
+    worst = 0.0
+    for _, row in tr.iterrows():
+        try:
+            eb = int(row["EntryBar"])
+            xb = int(row["ExitBar"])
+            size = float(row["Size"])
+            entry = float(row["EntryPrice"])
+        except Exception:
+            continue
+        if eb < 0 or eb >= len(eq) or not np.isfinite([size, entry]).all():
+            continue
+        xb = min(max(xb, eb), len(eq) - 1)
+        base_i = max(0, eb - 1)
+        base_equity = float(eq.iloc[base_i])
+        peak_equity = float(eq.iloc[: eb + 1].max())
+        if base_equity <= 0 or peak_equity <= 0:
+            continue
+        if size > 0:
+            adverse_px = float(lows.iloc[eb:xb + 1].min())
+            adverse_pnl = size * (adverse_px - entry)
+        elif size < 0:
+            adverse_px = float(highs.iloc[eb:xb + 1].max())
+            adverse_pnl = abs(size) * (entry - adverse_px)
+        else:
+            continue
+        adverse_equity = base_equity + adverse_pnl
+        dd = 100.0 * (adverse_equity / peak_equity - 1.0)
+        worst = min(worst, dd)
+    return round(float(worst), 3)
+
+
+def metrics_from_stats(stats, start, end, price_df=None):
     eq = slice_equity(stats, start, end)
     if len(eq) < 2:
         return {
@@ -187,7 +234,18 @@ def metrics_from_stats(stats, start, end):
         pf = 0.0
     wins = int((pnl > 0).sum()) if len(pnl) else 0
     win_pct = 100.0 * wins / len(pnl) if len(pnl) else 0.0
+    positive = pnl[pnl > 0].sort_values(ascending=False)
+    gross_profit = float(positive.sum()) if len(positive) else 0.0
+    top1_concentration = (
+        float(positive.iloc[0]) / gross_profit
+        if gross_profit > 0 and len(positive) else 0.0
+    )
+    top3_concentration = (
+        float(positive.iloc[:3].sum()) / gross_profit
+        if gross_profit > 0 and len(positive) else 0.0
+    )
     raw_k = math.log1p(total) * sharpe if total > -1 and np.isfinite(sharpe) else float("-inf")
+    intrabar_proxy = intrabar_drawdown_proxy(stats, price_df, start, end)
 
     return {
         "raw_k": round(float(raw_k), 6) if np.isfinite(raw_k) else float("-inf"),
@@ -195,9 +253,12 @@ def metrics_from_stats(stats, start, end):
         "sharpe": round(sharpe, 4),
         "ann_vol_pct": round(vol * 100.0, 3),
         "max_dd_pct": round(max_dd, 3),
+        "intrabar_dd_proxy_pct": intrabar_proxy,
         "trades": int(len(pnl)),
         "win_pct": round(win_pct, 2),
         "pf": round(float(min(pf, 99.0)), 3),
+        "top1_profit_concentration": round(top1_concentration, 4),
+        "top3_profit_concentration": round(top3_concentration, 4),
         "bars": int(len(eq)),
     }
 
@@ -285,14 +346,14 @@ def evaluate_search(df):
 
     base_stats = run_bt(work, COMMISSION)
     stress_stats = run_bt(work, COMMISSION * COST_STRESS_MULT)
-    full = metrics_from_stats(base_stats, SEARCH_START, DEV_END)
-    stress = metrics_from_stats(stress_stats, SEARCH_START, DEV_END)
+    full = metrics_from_stats(base_stats, SEARCH_START, DEV_END, work)
+    stress = metrics_from_stats(stress_stats, SEARCH_START, DEV_END, work)
 
     eq_idx = pd.to_datetime(base_stats["_equity_curve"].index, utc=True)
     windows = fold_windows(eq_idx, SEARCH_START, DEV_END)
     folds = []
     for name, start, end, n in windows:
-        x = metrics_from_stats(base_stats, start, end)
+        x = metrics_from_stats(base_stats, start, end, work)
         x.update({"name": name, "start": start, "end": end, "bars": n})
         folds.append(x)
 
@@ -330,8 +391,8 @@ def evaluate_validation(df):
 
     base_stats = run_bt(work, COMMISSION)
     stress_stats = run_bt(work, COMMISSION * COST_STRESS_MULT)
-    full = metrics_from_stats(base_stats, VALIDATION_START, VALIDATION_END)
-    stress = metrics_from_stats(stress_stats, VALIDATION_START, VALIDATION_END)
+    full = metrics_from_stats(base_stats, VALIDATION_START, VALIDATION_END, work)
+    stress = metrics_from_stats(stress_stats, VALIDATION_START, VALIDATION_END, work)
     eq_idx = pd.to_datetime(base_stats["_equity_curve"].index, utc=True)
     windows = fold_windows(eq_idx, VALIDATION_START, VALIDATION_END)
     folds = []
@@ -373,8 +434,14 @@ def search_guard(summary):
         details.append("2x-cost stressed development return not positive")
     if summary["max_dd_pct"] < -MAX_DD_PCT:
         details.append("development drawdown limit exceeded")
+    if summary["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
+        details.append("development intrabar adverse-excursion DD proxy exceeded limit")
     if summary["stress"]["max_dd_pct"] < -MAX_DD_PCT:
         details.append("stressed development drawdown limit exceeded")
+    if summary["stress"]["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
+        details.append("stressed intrabar DD proxy exceeded limit")
+    if summary["trades"] >= 10 and summary["top1_profit_concentration"] > 0.70:
+        details.append("single winning trade supplies >70% of gross profit")
     if summary["positive_fold_fraction"] < 0.40:
         details.append("fewer than 40% of development folds are profitable")
     if np.isfinite(float(summary["median_fold_k"])) and summary["median_fold_k"] < -0.10:
@@ -405,8 +472,12 @@ def validation_guard(summary):
         details.append("hidden-validation stressed return not positive")
     if summary["max_dd_pct"] < -MAX_DD_PCT:
         details.append("hidden-validation drawdown limit exceeded")
+    if summary["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
+        details.append("hidden-validation intrabar DD proxy exceeded limit")
     if summary["stress"]["max_dd_pct"] < -MAX_DD_PCT:
         details.append("hidden-validation stressed drawdown limit exceeded")
+    if summary["stress"]["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
+        details.append("hidden-validation stressed intrabar DD proxy exceeded limit")
     if summary["positive_fold_fraction"] < 0.50:
         details.append("less than half of hidden-validation folds are profitable")
     ok = not details
@@ -455,7 +526,12 @@ def main():
     if selected == "check":
         x = df.loc[df.index <= to_utc_timestamp(DEV_END, end=True)].tail(500)
         stats = run_bt(x, COMMISSION)
-        out = metrics_from_stats(stats, x.index[0].strftime("%Y-%m-%d"), x.index[-1].strftime("%Y-%m-%d"))
+        out = metrics_from_stats(
+            stats,
+            x.index[0].strftime("%Y-%m-%d"),
+            x.index[-1].strftime("%Y-%m-%d"),
+            x,
+        )
         print(json.dumps(out, indent=2, sort_keys=True))
         return
 
