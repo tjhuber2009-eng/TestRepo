@@ -8,6 +8,75 @@
   ],
   "families": [
     {
+      "id": "tsmom_252",
+      "status": "runnable",
+      "exactness": "canonical_family",
+      "origin": "AC-003 time-series momentum: 12-month sign with host volatility targeting",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "tsmom_252"
+    },
+    {
+      "id": "btc_rsi_adx",
+      "status": "runnable",
+      "exactness": "substantially_specified",
+      "origin": "RDT-007 BTC RSI/ADX daily momentum rules from prior research dossier",
+      "markets": [
+        "crypto"
+      ],
+      "factory": "btc_rsi_adx"
+    },
+    {
+      "id": "connors_double7",
+      "status": "runnable",
+      "exactness": "frozen_exact",
+      "origin": "RDT-003 Connors Double-7 daily rules, rolling 7-day close window including today",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "factory": "connors_double7"
+    },
+    {
+      "id": "connors_rsi2",
+      "status": "runnable",
+      "exactness": "frozen_exact",
+      "origin": "RDT-002 Connors RSI(2) daily mean-reversion rules from prior research dossier",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "factory": "connors_rsi2"
+    },
+    {
+      "id": "ibs_deep_pullback",
+      "status": "runnable",
+      "exactness": "frozen_exact",
+      "origin": "RDT-001 IBS deep-pullback daily mean-reversion rules from prior research dossier",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "factory": "ibs_deep_pullback"
+    },
+    {
+      "id": "sentinel63",
+      "status": "runnable",
+      "exactness": "frozen_exact",
+      "origin": "Dual Signal Trend Sentinel 63-day VAMS rule independently reconstructed in prior TradingView-indicator research",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "sentinel63"
+    },
+    {
       "id": "donchian_20_10",
       "status": "runnable",
       "exactness": "reconstructed",
