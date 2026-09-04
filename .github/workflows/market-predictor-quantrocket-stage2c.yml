@@ -1,0 +1,155 @@
+name: Market Predictor - QuantRocket Stage 2C
+
+on:
+  push:
+    branches:
+      - market-predictor-stage2c
+    paths:
+      - "market_predictor/**"
+      - ".github/workflows/market-predictor-quantrocket-stage2c.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: market-predictor-stage2c
+  cancel-in-progress: false
+
+jobs:
+  data-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      MP_BUNDLE: usstock-learn-1d
+      QR_LICENSE: ${{ secrets.QUANTROCKET_LICENSE_KEY }}
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Docker preflight
+        run: |
+          docker version
+          docker compose version
+          df -h
+          free -h
+
+      - name: Check QuantRocket license secret
+        id: license
+        shell: bash
+        run: |
+          if [ -z "$QR_LICENSE" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "## QuantRocket Stage 2C"
+              echo
+              echo "Workflow is installed and Docker preflight passed."
+              echo
+              echo "**Blocked only on repository secret:** `QUANTROCKET_LICENSE_KEY`."
+              echo
+              echo "Add the free QuantRocket license under Settings → Secrets and variables → Actions, then re-run this job."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download official QuantRocket Compose file
+        if: steps.license.outputs.present == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/quantrocket"
+          curl --fail --location --silent --show-error             "https://www.quantrocket.com/composefiles/latest/local/docker-compose.yml"             -o "$RUNNER_TEMP/quantrocket/docker-compose.yml"
+
+      - name: Start QuantRocket
+        if: steps.license.outputs.present == 'true'
+        working-directory: ${{ runner.temp }}/quantrocket
+        run: |
+          docker compose -p quantrocket up -d
+          for i in $(seq 1 60); do
+            JID="$(docker compose -p quantrocket ps -q jupyter)"
+            if [ -n "$JID" ] && [ "$(docker inspect -f '{{.State.Running}}' "$JID" 2>/dev/null || true)" = "true" ]; then
+              echo "Jupyter container is running."
+              break
+            fi
+            sleep 5
+          done
+          docker compose -p quantrocket ps
+
+      - name: Activate free QuantRocket license
+        if: steps.license.outputs.present == 'true'
+        working-directory: ${{ runner.temp }}/quantrocket
+        run: |
+          docker compose -p quantrocket exec -T -e QR_LICENSE="$QR_LICENSE" jupyter             bash -lc 'quantrocket license set "$QR_LICENSE" >/tmp/license_set.out && cat /tmp/license_set.out'
+          docker compose -p quantrocket exec -T jupyter quantrocket license get
+
+      - name: Create and ingest free learning bundle
+        if: steps.license.outputs.present == 'true'
+        working-directory: ${{ runner.temp }}/quantrocket
+        run: |
+          docker compose -p quantrocket exec -T jupyter             quantrocket zipline create-usstock-bundle "$MP_BUNDLE" --learn
+          docker compose -p quantrocket exec -T jupyter             quantrocket zipline ingest "$MP_BUNDLE"
+
+          ready=0
+          for i in $(seq 1 90); do
+            count="$(docker compose -p quantrocket exec -T jupyter python - <<'PY' 2>/dev/null || true
+from quantrocket.zipline import list_sids
+try:
+    print(len(list_sids("usstock-learn-1d")))
+except Exception:
+    print(0)
+PY
+)"
+            count="$(echo "$count" | tail -n1 | tr -dc '0-9')"
+            count="${count:-0}"
+            echo "Bundle SID count: $count"
+            if [ "$count" -ge 1000 ]; then
+              ready=1
+              break
+            fi
+            sleep 10
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Learning bundle did not become queryable."
+            docker compose -p quantrocket logs --no-color zipline | tail -n 250
+            exit 1
+          fi
+
+      - name: Run data-only survivorship and adjustment audit
+        if: steps.license.outputs.present == 'true'
+        working-directory: ${{ runner.temp }}/quantrocket
+        run: |
+          JID="$(docker compose -p quantrocket ps -q jupyter)"
+          docker cp "$GITHUB_WORKSPACE/market_predictor/scripts/quantrocket_stage2c_audit.py"             "$JID:/tmp/quantrocket_stage2c_audit.py"
+          docker compose -p quantrocket exec -T -e MP_BUNDLE="$MP_BUNDLE" jupyter             python /tmp/quantrocket_stage2c_audit.py
+          mkdir -p "$GITHUB_WORKSPACE/market_predictor/results"
+          docker cp "$JID:/tmp/stage2c_quantrocket_audit.json"             "$GITHUB_WORKSPACE/market_predictor/results/stage2c_quantrocket_audit.json"
+          docker cp "$JID:/tmp/stage2c_quantrocket_audit.md"             "$GITHUB_WORKSPACE/market_predictor/results/stage2c_quantrocket_audit.md"
+
+      - name: Upload Stage 2C audit
+        if: steps.license.outputs.present == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-predictor-stage2c-audit-${{ github.run_number }}
+          path: |
+            market_predictor/results/stage2c_quantrocket_audit.json
+            market_predictor/results/stage2c_quantrocket_audit.md
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish audit summary
+        if: steps.license.outputs.present == 'true' && always()
+        shell: bash
+        run: |
+          if [ -f market_predictor/results/stage2c_quantrocket_audit.md ]; then
+            cat market_predictor/results/stage2c_quantrocket_audit.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## Stage 2C failed before producing an audit"
+              echo
+              echo "Inspect the workflow logs. No model was run."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Stop QuantRocket stack
+        if: steps.license.outputs.present == 'true' && always()
+        working-directory: ${{ runner.temp }}/quantrocket
+        run: docker compose -p quantrocket down -v --remove-orphans
