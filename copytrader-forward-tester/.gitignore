@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+data/forward.sqlite3-wal
+data/forward.sqlite3-shm
