@@ -43,6 +43,7 @@ RUNTIME_FILES = [
     "STOP",
     "strategy_best.py",
     "seen_hashes.json",
+    "experiments.jsonl",
 ]
 PROTOCOL = "nested_chronological_v2"
 
@@ -295,12 +296,12 @@ def restore_state(track_dir):
         return False
     for name in [
         "baseline.json", "last_run.json", "results.tsv",
-        "strategy_best.py", "seen_hashes.json",
+        "strategy_best.py", "seen_hashes.json", "experiments.jsonl",
     ]:
         src = track_dir / name
         if src.exists():
             shutil.copy2(src, HERE / name)
-        elif name != "seen_hashes.json":
+        elif name not in {"seen_hashes.json", "experiments.jsonl"}:
             return False
     shutil.copy2(track_dir / "strategy_best.py", HERE / "strategy.py")
     src = track_dir / "keepers"
@@ -420,7 +421,7 @@ def save_track_state(track, track_dir, reason=""):
     track_dir.mkdir(parents=True, exist_ok=True)
     for name in [
         "baseline.json", "last_run.json", "results.tsv",
-        "strategy_best.py", "seen_hashes.json",
+        "strategy_best.py", "seen_hashes.json", "experiments.jsonl",
     ]:
         src = HERE / name
         if src.exists():
@@ -430,6 +431,12 @@ def save_track_state(track, track_dir, reason=""):
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(HERE / "keepers", dst)
+
+    data_manifest_src = (
+        HERE / "data" / f"{track['target']['id']}_1d.manifest.json"
+    )
+    if data_manifest_src.exists():
+        shutil.copy2(data_manifest_src, track_dir / "data_manifest.json")
 
     baseline = load_json(HERE / "baseline.json") if (HERE / "baseline.json").exists() else {}
     counts = result_counts_at(HERE / "results.tsv")
@@ -447,6 +454,10 @@ def save_track_state(track, track_dir, reason=""):
         "max_dd_limit_pct": track["profile"]["max_dd_pct"],
         **counts,
         "baseline": baseline,
+        "data_manifest": (
+            load_json(track_dir / "data_manifest.json")
+            if (track_dir / "data_manifest.json").exists() else None
+        ),
         "updated_at": now(),
     }
     save_json(track_dir / "state_meta.json", meta)
