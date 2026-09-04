@@ -180,11 +180,15 @@ class MoonStrategy:
         self.assertFalse(ok)
 
     def test_global_safety_ceiling_is_not_normal_seed_bottleneck(self):
-        source = seed_factory.render_strategy(
-            family="connors_double7",
-            bars_per_year=252,
-            vol_target=0.08,
-            f_max=0.5,
+        source = (
+            seed_factory.COMMON
+            .replace("__BARS_PER_YEAR__", "252")
+            .replace("__VOL_TARGET__", repr(0.08))
+            .replace("__F_MAX__", repr(0.5))
+            .replace(
+                "__BODY__",
+                seed_factory.BODIES["connors_double7"].strip("\n"),
+            )
         )
         complexity = loop.ast_complexity(source)
         self.assertLess(complexity["calls"], 360)
