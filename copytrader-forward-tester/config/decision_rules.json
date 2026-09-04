@@ -1,0 +1,16 @@
+{
+  "schema_version":1,
+  "decision_ready": {
+    "min_maturity": 0.60,
+    "absolute_dd_cap_pct": 30.0,
+    "minimum_dd_allowance_pct": 15.0,
+    "baseline_dd_multiplier": 2.0,
+    "pf_gate_min_trades": 20,
+    "min_pf_after_trade_gate": 1.20
+  },
+  "notes": [
+    "No fixed minimum trade count is used for admission.",
+    "Forward maturity combines elapsed time, new trade count and accepted observations.",
+    "Real-money use is never automatically approved by this program."
+  ]
+}
