@@ -1,0 +1,52 @@
+name: NVIDIA AUTORESEARCH smoke test
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "moondev_autoresearch_reconstruction/**"
+      - ".github/workflows/nvidia-autoresearch-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Compile project
+        run: python -m compileall -q .
+
+      - name: Verify NVIDIA secret is available
+        shell: bash
+        run: |
+          if [ -z "$NVIDIA_API_KEY" ]; then
+            echo "::error::NVIDIA_API_KEY repository secret is not available to this workflow."
+            exit 1
+          fi
+          echo "NVIDIA_API_KEY is present (value not displayed)."
+
+      - name: NVIDIA NIM smoke test
+        run: python nvidia_smoke.py
