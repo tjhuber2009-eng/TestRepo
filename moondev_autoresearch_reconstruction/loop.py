@@ -7,6 +7,7 @@ proposes one complete replacement for strategy.py at a time.
 
 import argparse
 import ast
+import difflib
 import hashlib
 import json
 import os
@@ -61,12 +62,25 @@ class _NumericShape(ast.NodeTransformer):
         return node
 
 
-def structural_ast_hash(source):
+def structural_ast_dump(source):
     tree = ast.parse(source, filename=STRATEGY)
     tree = _NumericShape().visit(tree)
     ast.fix_missing_locations(tree)
-    canonical = ast.dump(tree, annotate_fields=True, include_attributes=False)
+    return ast.dump(tree, annotate_fields=True, include_attributes=False)
+
+
+def structural_ast_hash(source):
+    canonical = structural_ast_dump(source)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def structural_similarity(a, b):
+    return difflib.SequenceMatcher(
+        None,
+        structural_ast_dump(a),
+        structural_ast_dump(b),
+        autojunk=False,
+    ).ratio()
 
 
 def load_seen_hashes():
@@ -524,11 +538,16 @@ def scoreboard():
         1 for r in rows
         if len(r.split("\t")) > 2 and r.split("\t")[2] == "PARAMETER_ONLY"
     )
+    too_broad = sum(
+        1 for r in rows
+        if len(r.split("\t")) > 2 and r.split("\t")[2] == "TOO_BROAD"
+    )
     base = load_json(BASELINE)
     print(
         f"[4/4] SCOREBOARD tries={len(rows)} kept={kept} "
         f"rejected={rejected} crash={crashed} duplicate={duplicate} "
-        f"parameter_only={parameter_only} current_K={base['score']}"
+        f"parameter_only={parameter_only} too_broad={too_broad} "
+        f"current_K={base['score']}"
     )
 
 
@@ -610,6 +629,14 @@ def main():
             elif structural_ast_hash(candidate_source) == structural_ast_hash(best_source):
                 verdict = "PARAMETER_ONLY"
                 reason = "numeric-only parameter mutation rejected by hardened anti-curve-fit policy"
+                score = ret = sharpe = vol = dd = "nan"
+                trades = 0
+                seen.add(fingerprint)
+                save_seen_hashes(seen)
+                shutil.copy(BEST, STRATEGY)
+            elif structural_similarity(candidate_source, best_source) < 0.60:
+                verdict = "TOO_BROAD"
+                reason = "candidate rewrote too much of the family in one experiment"
                 score = ret = sharpe = vol = dd = "nan"
                 trades = 0
                 seen.add(fingerprint)
