@@ -1,0 +1,63 @@
+name: CopyTrader Forward Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: copytrader-forward-test
+  cancel-in-progress: false
+
+jobs:
+  forward-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify frozen baseline
+        run: python copytrader-forward-tester/forward_test.py verify
+
+      - name: Run built-in tests
+        run: python copytrader-forward-tester/forward_test.py self-test
+
+      - name: Poll MQL5 and update forward test
+        run: python copytrader-forward-tester/forward_test.py run
+
+      - name: Verify chained ledger
+        run: python copytrader-forward-tester/forward_test.py verify
+
+      - name: Upload forward-test state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copytrader-forward-state-${{ github.run_number }}
+          path: |
+            copytrader-forward-tester/data/forward.sqlite3
+            copytrader-forward-tester/reports/
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Persist state and reports
+        if: success()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add copytrader-forward-tester/data/forward.sqlite3 copytrader-forward-tester/reports/
+          if git diff --cached --quiet; then
+            echo "No state changes to commit."
+          else
+            git commit -m "forward-test: update prospective observations"
+            git push
+          fi
