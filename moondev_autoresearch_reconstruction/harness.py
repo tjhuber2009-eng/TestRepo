@@ -26,7 +26,8 @@ IS_END = "2022-12-31"
 OOS_START = "2023-01-01"
 MIN_TRADES = 50
 VOL_BAND = 0.10
-MAX_DD_PCT = 10.0
+MAX_DD_PCT = float(os.environ.get("AUTORESEARCH_MAX_DD_PCT", "10.0"))
+PROFILE = os.environ.get("AUTORESEARCH_PROFILE", "prop").strip() or "prop"
 
 
 def signed_sharpe(stats):
@@ -228,6 +229,8 @@ def main():
             "bars": int(len(df)),
             "start": str(df.index[0]),
             "end": str(df.index[-1]),
+            "profile": PROFILE,
+            "max_dd_limit_pct": MAX_DD_PCT,
         }
     )
 
