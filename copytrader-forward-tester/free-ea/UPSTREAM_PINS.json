@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-04T04:40:00Z",
+  "upstreams": [
+    {
+      "id": "APEX_BREAKOUT_UPSTREAM",
+      "repository": "sbrakni/MQL5-trading-bot-claude-experiment",
+      "commit": "3dab20e20a846edae9ac6fcf56d6b090dbba9f98",
+      "declared_license": null,
+      "install_policy": "fetch_directly_from_upstream_do_not_vendor",
+      "allowed_files": [
+        "MQL5/Experts/ApexBreakout.mq5",
+        "MQL5/Presets/ApexBreakout_XAUUSD_H1_Donchian.set",
+        "MQL5/Presets/ApexBreakout_USDJPY_H1_Session_V3_Turbo.set",
+        "MQL5/Presets/ApexBreakout_USDJPY_H1_Session_V2_Guarded.set"
+      ],
+      "forbidden_files": [
+        "MQL5/Experts/ApexBreakoutRecovery.mq5",
+        "MQL5/Presets/ApexRecovery_USDJPY_H1_Steady.set",
+        "MQL5/Presets/ApexRecovery_USDJPY_H1_Aggressive.set"
+      ]
+    },
+    {
+      "id": "EMA_GOLD_UPSTREAM",
+      "repository": "koichi055/ema-gold-trader-ea",
+      "commit": "8c77a0cf00b0f60b365ac60c6421d4253f7c6434",
+      "declared_license": null,
+      "launch_status": "QUARANTINED",
+      "reasons": [
+        "published mq5 contains apparent literal markdown code fences inside functions",
+        "no declared repository license",
+        "claimed backtest not independently reproduced"
+      ],
+      "install_policy": "do_not_install_automatically"
+    },
+    {
+      "id": "SAFE_SCALPER_CODEBASE",
+      "page": "https://www.mql5.com/en/code/71189",
+      "published_version": "1.20",
+      "updated": "2026-04-06",
+      "source_download": "https://www.mql5.com/en/code/download/71189/ASQ_SafeScalping_CodeBase.mq5",
+      "ready_preset_download": "https://www.mql5.com/en/code/download/71189/ASQ_SafeScalping_XAUUSD_M5_v2.set",
+      "install_policy": "download_directly_from_mql5_codebase"
+    }
+  ]
+}

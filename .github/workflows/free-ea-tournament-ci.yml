@@ -22,7 +22,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Enforce free-only candidate registry
         run: python copytrader-forward-tester/free-ea/validate_registry.py
-      - name: Test demo analyzer and safety guard
+
+      - name: Test free-EA launch safeguards
+        run: python -m unittest discover -s copytrader-forward-tester/free-ea/tests -v
+
+      - name: Test demo analyzer and demo-only reporter guard
         run: python -m unittest discover -s copytrader-forward-tester/mt5-demo/tests -v
