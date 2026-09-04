@@ -1,60 +1,39 @@
-# CopyTrader Forward Tester
+# CopyTrader / Free-EA Forward Research
 
-Prospective, fail-closed forward testing for three frozen MQL5 candidates:
+## Current governing policy
 
-- Definitely No Hype EA MT5
-- Mon Scalper MT5
-- Precise Pair Trading Pro
+As of 2026-09-04, executable candidates must be **free EAs**.
 
-## What this does
+- Paid EA acquisition: prohibited for this project.
+- Paid MQL5 signal subscriptions: prohibited.
+- Free MQL5 Market EAs: allowed.
+- Open-source MT5 EAs: preferred.
+- Demo execution first.
+- No real-money auto-approval.
 
-The tester reads only public MQL5 signal aggregates and counts performance only after the frozen baseline trade counts.
+See free-ea/FREE_ONLY_POLICY.json and free-ea/candidates.json.
 
-It tracks genuinely new post-baseline trades, cash-flow-adjusted forward equity return, realized forward P/L, forward gross profit/loss, forward profit factor, forward win rate, observed forward equity drawdown, evidence maturity, and anomalies such as regressed trade counts or cumulative totals.
+## Active experiment
 
-The system deliberately fails closed. A stale or inconsistent page does not become forward performance.
+The active experiment is now the **Free-EA Forward Tournament** under copytrader-forward-tester/free-ea/.
 
-## Frozen baselines
+Actual EA execution must occur in MetaTrader 5. GitHub cannot run MT5 desktop EAs on its Linux hosted runners. The repository therefore handles frozen candidate registry and policy, demo-only account reporting, demo-result analysis, CI validation, and historical benchmark preservation.
 
-The files in config/ are locked by config/BASELINE_LOCK.json.
+The previous DNH / Mon Scalper / Precise public-provider watcher is retained as historical research only. It is no longer the executable candidate set and its scheduled hourly run is disabled.
 
-Baseline trade counts:
+## Demo harness
 
-- Definitely No Hype EA MT5: 264
-- Mon Scalper MT5: 504
-- Precise Pair Trading Pro: 808
+Use copytrader-forward-tester/mt5-demo/CopyTraderDemoReporter.mq5 on a separate demo account for every EA/preset. It refuses non-demo accounts and never sends orders.
 
-Do not edit these after forward testing starts.
+Analyze the resulting Common Files CSVs with:
 
-## GitHub Actions
+    python copytrader-forward-tester/mt5-demo/demo_analyzer.py --common-files "C:\\path\\to\\Terminal\\Common\\Files"
 
-The workflow at .github/workflows/copytrader-forward-test.yml runs approximately once per hour.
+## Historical provider benchmark
 
-Each run verifies the frozen configuration, runs the built-in self-test, fetches each public MQL5 signal, appends the observation to the SHA-256 chained SQLite ledger, rebuilds status.json/status.csv/status.html, uploads the state as a GitHub Actions artifact, and commits changed state/reports back to the repository.
-
-GitHub scheduled jobs can be delayed during periods of high Actions load, so hourly means scheduled hourly rather than guaranteed to execute at an exact minute.
-
-## Manual commands
-
-From the repository root:
+The old provider scraper and frozen baseline files remain present for auditability. Run them manually only:
 
     python copytrader-forward-tester/forward_test.py verify
-    python copytrader-forward-tester/forward_test.py self-test
-    python copytrader-forward-tester/forward_test.py run
     python copytrader-forward-tester/forward_test.py status
 
-Python 3.10+ is sufficient. No third-party Python packages are required.
-
-## Generated files
-
-- data/forward.sqlite3 — append-only chained observation ledger
-- reports/status.json — machine-readable current results
-- reports/status.csv — spreadsheet-friendly results
-- reports/status.html — simple dashboard
-- reports/latest_run.json — classifications from the latest poll
-
-## Important limitation
-
-MQL5 does not expose full realtime trade details publicly. This tester therefore measures prospective provider-account economics from public cumulative aggregates. It does not pretend to reconstruct exact individual fills or copier slippage.
-
-No trades are placed. No broker credentials are used. No candidate is automatically approved for real-money trading.
+They do not authorize spending and are not the active free-EA tournament.
