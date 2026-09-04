@@ -24,6 +24,7 @@ STATE = HERE / "continuous_state"
 TRACKS = STATE / "tracks"
 CURSOR = STATE / "cursor.json"
 LEDGER = STATE / "cycles.jsonl"
+PROGRESS = STATE / "first_pass_progress.json"
 
 RUNTIME_FILES = [
     "baseline.json",
@@ -109,6 +110,134 @@ def write_cursor(index, total):
         "updated_at": now(),
         "protocol": PROTOCOL,
     })
+
+
+def result_counts_at(path):
+    path = Path(path)
+    if not path.exists():
+        return {"attempts": 0, "valid": 0, "kept": 0, "rejected": 0, "crashes": 0}
+    attempts = valid = kept = rejected = crashes = 0
+    with path.open(encoding="utf-8") as f:
+        next(f, None)
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 3:
+                continue
+            attempts += 1
+            verdict = parts[2]
+            if verdict == "KEPT":
+                kept += 1
+                valid += 1
+            elif verdict == "REJECTED":
+                rejected += 1
+                valid += 1
+            elif verdict == "CRASH":
+                crashes += 1
+    return {
+        "attempts": attempts,
+        "valid": valid,
+        "kept": kept,
+        "rejected": rejected,
+        "crashes": crashes,
+    }
+
+
+def track_test_status(track, required_valid_attempts):
+    track_dir = TRACKS / track["id"]
+    meta_path = track_dir / "state_meta.json"
+    if not meta_path.exists():
+        return {"complete": False, "status": "pending", "valid": 0, "attempts": 0}
+    try:
+        meta = load_json(meta_path)
+    except Exception:
+        return {"complete": False, "status": "corrupt_state", "valid": 0, "attempts": 0}
+    if meta.get("protocol") != PROTOCOL:
+        return {"complete": False, "status": "stale_protocol", "valid": 0, "attempts": 0}
+    if meta.get("status") == "seed_blocked":
+        return {
+            "complete": True,
+            "status": "seed_rejected",
+            "valid": 0,
+            "attempts": 0,
+            "reason": meta.get("reason", ""),
+        }
+    counts = result_counts_at(track_dir / "results.tsv")
+    return {
+        "complete": counts["valid"] >= required_valid_attempts,
+        "status": "validated" if counts["valid"] >= required_valid_attempts else "researching",
+        "valid": counts["valid"],
+        "attempts": counts["attempts"],
+        "crashes": counts["crashes"],
+    }
+
+
+def select_incomplete_tracks(tracks, start, batch_size, required_valid_attempts):
+    selected = []
+    n = len(tracks)
+    if not n:
+        return selected
+    for offset in range(n):
+        idx = (start + offset) % n
+        track = tracks[idx]
+        status = track_test_status(track, required_valid_attempts)
+        if status["complete"]:
+            continue
+        selected.append((idx, track, status))
+        if len(selected) >= batch_size:
+            break
+    return selected
+
+
+def write_progress(tracks, required_valid_attempts):
+    registry = load_json(REGISTRY)
+    blocked_families = [
+        {
+            "id": x["id"],
+            "exactness": x.get("exactness"),
+            "origin": x.get("origin"),
+            "requires": x.get("requires", []),
+        }
+        for x in registry["families"]
+        if x.get("status") != "runnable"
+    ]
+    rows = []
+    validated = seed_rejected = pending = crashes = 0
+    for track in tracks:
+        s = track_test_status(track, required_valid_attempts)
+        crashes += int(s.get("crashes", 0) or 0)
+        if s["status"] == "validated":
+            validated += 1
+        elif s["status"] == "seed_rejected":
+            seed_rejected += 1
+        else:
+            pending += 1
+        rows.append({
+            "track_id": track["id"],
+            "family": track["family"]["id"],
+            "target": track["target"]["id"],
+            "profile": track["profile_name"],
+            "status": s["status"],
+            "valid_attempts": s.get("valid", 0),
+            "attempts": s.get("attempts", 0),
+        })
+    complete = validated + seed_rejected
+    payload = {
+        "updated_at": now(),
+        "protocol": PROTOCOL,
+        "required_valid_attempts_per_viable_track": required_valid_attempts,
+        "runnable_track_count": len(tracks),
+        "completed_track_count": complete,
+        "validated_track_count": validated,
+        "seed_rejected_track_count": seed_rejected,
+        "pending_track_count": pending,
+        "total_crashes_recorded": crashes,
+        "runnable_first_pass_complete": pending == 0,
+        "blocked_family_count": len(blocked_families),
+        "blocked_families": blocked_families,
+        "rows": rows,
+    }
+    save_json(PROGRESS, payload)
+    return payload
 
 
 def target_env(track):
@@ -298,11 +427,7 @@ def initialize_track(track, track_dir, env):
 
 
 def result_row_count():
-    p = HERE / "results.tsv"
-    if not p.exists():
-        return 0
-    with p.open(encoding="utf-8") as f:
-        return max(0, sum(1 for _ in f) - 1)
+    return result_counts_at(HERE / "results.tsv")["attempts"]
 
 
 def save_track_state(track, track_dir, status="active", reason=""):
@@ -320,6 +445,7 @@ def save_track_state(track, track_dir, status="active", reason=""):
     baseline = {}
     if (HERE / "baseline.json").exists():
         baseline = load_json(HERE / "baseline.json")
+    counts = result_counts_at(HERE / "results.tsv")
     meta = {
         "status": status,
         "reason": reason,
@@ -332,7 +458,11 @@ def save_track_state(track, track_dir, status="active", reason=""):
         "market": track["target"]["market"],
         "profile": track["profile_name"],
         "max_dd_limit_pct": track["profile"]["max_dd_pct"],
-        "attempts": result_row_count(),
+        "attempts": counts["attempts"],
+        "valid_attempts": counts["valid"],
+        "kept": counts["kept"],
+        "rejected": counts["rejected"],
+        "crashes": counts["crashes"],
         "baseline": baseline,
         "updated_at": now(),
     }
@@ -449,9 +579,13 @@ def process_track(track, iters, model):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch-size", type=int, default=4)
-    ap.add_argument("--iters-per-track", type=int, default=2)
+    ap.add_argument("--iters-per-visit", type=int, default=2)
+    ap.add_argument("--required-valid-attempts", type=int, default=10)
     ap.add_argument("--model", default="nvidia/nemotron-3-super-120b-a12b")
     args = ap.parse_args()
+
+    if args.batch_size < 1 or args.iters_per_visit < 1 or args.required_valid_attempts < 1:
+        raise SystemExit("batch/iteration targets must be positive")
 
     if not os.environ.get("NVIDIA_API_KEY"):
         raise SystemExit("NVIDIA_API_KEY missing")
@@ -462,17 +596,38 @@ def main():
     if not tracks:
         raise SystemExit("no runnable continuous tracks")
 
-    start = read_cursor(len(tracks))
-    selected = [tracks[(start + i) % len(tracks)] for i in range(min(args.batch_size, len(tracks)))]
+    progress = write_progress(tracks, args.required_valid_attempts)
+    if progress["runnable_first_pass_complete"]:
+        print(
+            f"ALL RUNNABLE TRACKS TESTED: {progress['completed_track_count']}/"
+            f"{progress['runnable_track_count']} tracks complete with "
+            f">={args.required_valid_attempts} valid NVIDIA candidates per viable track."
+        )
+        print(
+            f"Blocked special-engine families still catalogued: "
+            f"{progress['blocked_family_count']}"
+        )
+        rebuild_leaderboard()
+        return
 
+    start = read_cursor(len(tracks))
+    selected = select_incomplete_tracks(
+        tracks, start, args.batch_size, args.required_valid_attempts
+    )
     print(
         f"continuous universe tracks={len(tracks)} cursor={start} "
-        f"batch={len(selected)} iters_per_track={args.iters_per_track}"
+        f"pending={progress['pending_track_count']} batch={len(selected)} "
+        f"iters_per_visit={args.iters_per_visit} "
+        f"required_valid={args.required_valid_attempts}"
     )
 
-    for track in selected:
+    last_index = start
+    for idx, track, status_before in selected:
+        last_index = idx
         try:
-            process_track(track, args.iters_per_track, args.model)
+            missing = max(1, args.required_valid_attempts - int(status_before.get("valid", 0)))
+            visit_iters = min(args.iters_per_visit, missing)
+            process_track(track, visit_iters, args.model)
         except Exception as exc:
             append_cycle({
                 "ts": now(),
@@ -482,9 +637,16 @@ def main():
             })
             print(f"[runner error] {track['id']}: {exc}", file=sys.stderr)
 
-    write_cursor(start + len(selected), len(tracks))
+    write_cursor(last_index + 1, len(tracks))
     rebuild_leaderboard()
-    print(f"next_cursor={(start + len(selected)) % len(tracks)}")
+    progress = write_progress(tracks, args.required_valid_attempts)
+    print(
+        f"progress={progress['completed_track_count']}/{progress['runnable_track_count']} "
+        f"pending={progress['pending_track_count']} "
+        f"validated={progress['validated_track_count']} "
+        f"seed_rejected={progress['seed_rejected_track_count']}"
+    )
+    print(f"next_cursor={(last_index + 1) % len(tracks)}")
 
 
 if __name__ == "__main__":
