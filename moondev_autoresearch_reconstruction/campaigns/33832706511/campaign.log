@@ -1,0 +1,402 @@
+MOON DEV AUTORESEARCH — NVIDIA NIM
+model=nvidia/nemotron-3-super-120b-a12b
+endpoint=https://integrate.api.nvidia.com/v1
+key=NVIDIA_API_KEY environment variable
+
+ITERATION 1 baseline K=0.5643
+[1/4] AGENT
+proposal: Add volatility-adjusted entry threshold: require close to exceed recent high by 0.5*ATR
+[2/4] BACKTEST
+K=0.4731 return=58.7% sharpe=1.024 vol=8.75% dd=-5.92% trades=76 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.4731 did not beat 0.5643
+[4/4] SCOREBOARD tries=1 kept=0 rejected=1 crash=0 current_K=0.5643
+
+ITERATION 2 baseline K=0.5643
+[1/4] AGENT
+proposal: Add volatility-adjusted exit threshold: require close to fall below recent low by 0.5*ATR to exit
+[2/4] BACKTEST
+K=0.6143 return=80.62% sharpe=1.039 vol=11.18% dd=-9.63% trades=84 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: ann vol 11.2% outside +-10% of baseline 9.5%
+[4/4] SCOREBOARD tries=2 kept=0 rejected=2 crash=0 current_K=0.5643
+
+ITERATION 3 baseline K=0.5643
+[1/4] AGENT
+proposal: Increase stop loss multiple from 3.0 to 3.5 to allow winners to run
+[2/4] BACKTEST
+K=0.6053 return=71.48% sharpe=1.122 vol=9.4% dd=-8.81% trades=105 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.5643 -> 0.6053
+[4/4] SCOREBOARD tries=3 kept=1 rejected=2 crash=0 current_K=0.6053
+
+ITERATION 4 baseline K=0.6053
+[1/4] AGENT
+proposal: Add 50-period SMA filter to entry: only buy when price exceeds both the 20-bar high and the 50-bar SMA.
+[2/4] BACKTEST
+K=0.592 return=70.34% sharpe=1.111 vol=9.37% dd=-8.09% trades=100 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.592 did not beat 0.6053
+[4/4] SCOREBOARD tries=4 kept=1 rejected=3 crash=0 current_K=0.6053
+
+ITERATION 5 baseline K=0.6053
+[1/4] AGENT
+proposal: Increase exit lookback period from 10 to 20 bars
+[2/4] BACKTEST
+K=0.7926 return=101.97% sharpe=1.128 vol=12.38% dd=-11.41% trades=76 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: max drawdown -11.41% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=5 kept=1 rejected=4 crash=0 current_K=0.6053
+
+ITERATION 6 baseline K=0.6053
+[1/4] AGENT
+proposal: Add bullish candle filter to entry: only buy on breakout when the signal bar closes above its open.
+[2/4] BACKTEST
+K=0.6053 return=71.48% sharpe=1.122 vol=9.4% dd=-8.81% trades=105 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.6053 did not beat 0.6053
+[4/4] SCOREBOARD tries=6 kept=1 rejected=5 crash=0 current_K=0.6053
+
+ITERATION 7 baseline K=0.6053
+[1/4] AGENT
+proposal: Increase entry lookback period from 20 to 25 bars to require stronger breakout signals
+[2/4] BACKTEST
+K=0.5846 return=68.36% sharpe=1.122 vol=9.06% dd=-5.41% trades=94 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.5846 did not beat 0.6053
+[4/4] SCOREBOARD tries=7 kept=1 rejected=6 crash=0 current_K=0.6053
+
+ITERATION 8 baseline K=0.6053
+[1/4] AGENT
+proposal: Decrease exit lookback from 10 to 5 bars to exit earlier on breakdowns
+[2/4] BACKTEST
+K=0.6827 return=71.67% sharpe=1.263 vol=8.37% dd=-8.38% trades=125 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: ann vol 8.4% outside +-10% of baseline 9.4%
+[4/4] SCOREBOARD tries=8 kept=1 rejected=7 crash=0 current_K=0.6053
+
+ITERATION 9 baseline K=0.6053
+[1/4] AGENT
+proposal: Change exit to close below 20-period SMA instead of breaking lowest low
+[2/4] BACKTEST
+K=0.701 return=69.89% sharpe=1.323 vol=7.83% dd=-8.05% trades=128 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: ann vol 7.8% outside +-10% of baseline 9.4%
+[4/4] SCOREBOARD tries=9 kept=1 rejected=8 crash=0 current_K=0.6053
+
+ITERATION 10 baseline K=0.6053
+[1/4] AGENT
+proposal: Adjust exit condition to require close to break below recent low by 0.25*ATR for earlier exit in volatile conditions
+[2/4] BACKTEST
+K=0.6139 return=74.58% sharpe=1.102 vol=9.91% dd=-9.53% trades=96 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.6053 -> 0.6139
+[4/4] SCOREBOARD tries=10 kept=2 rejected=8 crash=0 current_K=0.6139
+
+ITERATION 11 baseline K=0.6139
+[1/4] AGENT
+proposal: Add volume filter to entry: require current volume above its 20-period moving average.
+[2/4] BACKTEST
+K=0.6529 return=77.65% sharpe=1.136 vol=9.92% dd=-9.28% trades=89 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.6139 -> 0.6529
+[4/4] SCOREBOARD tries=11 kept=3 rejected=8 crash=0 current_K=0.6529
+
+ITERATION 12 baseline K=0.6529
+[1/4] AGENT
+proposal: Change exit condition to close below 20-period SMA minus 0.25*ATR instead of breaking lowest low
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_12.txt
+[4/4] SCOREBOARD tries=12 kept=3 rejected=8 crash=1 current_K=0.6529
+
+ITERATION 13 baseline K=0.6529
+[1/4] AGENT
+proposal: Add volume confirmation to exit condition: require current volume above its 20-period moving average when breaking below recent low
+[2/4] BACKTEST
+K=0.7677 return=88.57% sharpe=1.21 vol=10.34% dd=-9.36% trades=87 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.6529 -> 0.7677
+[4/4] SCOREBOARD tries=13 kept=4 rejected=8 crash=1 current_K=0.7677
+
+ITERATION 14 baseline K=0.7677
+[1/4] AGENT
+proposal: Dynamic stop loss: widen stop loss in high volume breakouts using volume ratio to avoid premature exits
+[2/4] BACKTEST
+K=0.6994 return=83.27% sharpe=1.154 vol=10.33% dd=-10.48% trades=87 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.48% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=14 kept=4 rejected=9 crash=1 current_K=0.7677
+
+ITERATION 15 baseline K=0.7677
+[1/4] AGENT
+proposal: Add bearish candle filter to exit: require close < open when price breaks below recent low by 0.25*ATR with volume confirmation
+[2/4] BACKTEST
+K=0.7677 return=88.57% sharpe=1.21 vol=10.34% dd=-9.36% trades=87 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.7677 did not beat 0.7677
+[4/4] SCOREBOARD tries=15 kept=4 rejected=10 crash=1 current_K=0.7677
+
+ITERATION 16 baseline K=0.7677
+[1/4] AGENT
+proposal: Increase exit volume confirmation multiplier to require 1.5x average volume for exit signals
+[2/4] BACKTEST
+K=0.8374 return=96.89% sharpe=1.236 vol=10.86% dd=-7.3% trades=77 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.7677 -> 0.8374
+[4/4] SCOREBOARD tries=16 kept=5 rejected=10 crash=1 current_K=0.8374
+
+ITERATION 17 baseline K=0.8374
+[1/4] AGENT
+proposal: Add volume confirmation multiplier to entry requirement: require current volume to exceed 1.2x its 20-period MA for breakout entries
+[2/4] BACKTEST
+K=0.7417 return=84.95% sharpe=1.206 vol=10.04% dd=-7.32% trades=72 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.7417 did not beat 0.8374
+[4/4] SCOREBOARD tries=17 kept=5 rejected=11 crash=1 current_K=0.8374
+
+ITERATION 18 baseline K=0.8374
+[1/4] AGENT
+proposal: Decrease entry volume threshold to 0.9x of its 20-period MA to allow more entries
+[2/4] BACKTEST
+K=0.8179 return=95.41% sharpe=1.221 vol=10.87% dd=-7.82% trades=80 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.8179 did not beat 0.8374
+[4/4] SCOREBOARD tries=18 kept=5 rejected=12 crash=1 current_K=0.8374
+
+ITERATION 19 baseline K=0.8374
+[1/4] AGENT
+proposal: Change entry breakout condition from highest high to highest close of the last 20 bars
+[2/4] BACKTEST
+K=0.773 return=94.3% sharpe=1.164 vol=11.3% dd=-9.12% trades=89 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.773 did not beat 0.8374
+[4/4] SCOREBOARD tries=19 kept=5 rejected=13 crash=1 current_K=0.8374
+
+ITERATION 20 baseline K=0.8374
+[1/4] AGENT
+proposal: Increase volume moving average lookback period from 20 to 50 for both entry and exit volume filters
+[2/4] BACKTEST
+K=0.8443 return=95.15% sharpe=1.263 vol=10.48% dd=-7.99% trades=71 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.8374 -> 0.8443
+[4/4] SCOREBOARD tries=20 kept=6 rejected=13 crash=1 current_K=0.8443
+
+ITERATION 21 baseline K=0.8443
+[1/4] AGENT
+proposal: Increase exit ATR multiplier from 0.25 to 0.30 to require a stronger breakdown signal for exit
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_21.txt
+[4/4] SCOREBOARD tries=21 kept=6 rejected=13 crash=2 current_K=0.8443
+
+ITERATION 22 baseline K=0.8443
+[1/4] AGENT
+proposal: Add volatility-adjusted entry threshold: require close to exceed recent high by 0.5*ATR
+[2/4] BACKTEST
+K=0.502 return=62.88% sharpe=1.029 vol=9.23% dd=-7.16% trades=56 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: ann vol 9.2% outside +-10% of baseline 10.5%
+[4/4] SCOREBOARD tries=22 kept=6 rejected=14 crash=2 current_K=0.8443
+
+ITERATION 23 baseline K=0.8443
+[1/4] AGENT
+proposal: Change exit condition to use the lowest close of the last 10 bars instead of the lowest low
+[2/4] BACKTEST
+K=0.9612 return=97.72% sharpe=1.41 vol=9.58% dd=-6.35% trades=77 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.8443 -> 0.9612
+[4/4] SCOREBOARD tries=23 kept=7 rejected=14 crash=2 current_K=0.9612
+
+ITERATION 24 baseline K=0.9612
+[1/4] AGENT
+proposal: Change entry breakout condition from highest high to highest close of the last 20 bars
+[2/4] BACKTEST
+K=1.0529 return=105.88% sharpe=1.458 vol=9.86% dd=-6.61% trades=86 runtime=0.9s
+[3/4] VERDICT KEPT: K 0.9612 -> 1.0529
+[4/4] SCOREBOARD tries=24 kept=8 rejected=14 crash=2 current_K=1.0529
+
+ITERATION 25 baseline K=1.0529
+[1/4] AGENT
+proposal: Change exit condition to use the lowest low of the last 10 bars instead of the lowest close
+[2/4] BACKTEST
+K=0.8232 return=94.86% sharpe=1.234 vol=10.7% dd=-8.11% trades=80 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.8232 did not beat 1.0529
+[4/4] SCOREBOARD tries=25 kept=8 rejected=15 crash=2 current_K=1.0529
+
+ITERATION 26 baseline K=1.0529
+[1/4] AGENT
+proposal: Add rising volume condition to entry: require current volume above its moving average and above previous bar's volume
+[2/4] BACKTEST
+K=1.0414 return=104.77% sharpe=1.453 vol=9.81% dd=-6.79% trades=84 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.0414 did not beat 1.0529
+[4/4] SCOREBOARD tries=26 kept=8 rejected=16 crash=2 current_K=1.0529
+
+ITERATION 27 baseline K=1.0529
+[1/4] AGENT
+proposal: Use different volume moving average lookbacks for entry (20) and exit (50) to improve responsiveness.
+[2/4] BACKTEST
+K=0.8567 return=91.81% sharpe=1.315 vol=9.79% dd=-8.01% trades=92 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.8567 did not beat 1.0529
+[4/4] SCOREBOARD tries=27 kept=8 rejected=17 crash=2 current_K=1.0529
+
+ITERATION 28 baseline K=1.0529
+[1/4] AGENT
+proposal: Increase exit lookback period from 10 to 20 bars to use the lowest close of the last 20 bars for exit signals.
+[2/4] BACKTEST
+K=0.7405 return=92.06% sharpe=1.135 vol=11.37% dd=-9.16% trades=73 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: ann vol 11.4% outside +-10% of baseline 9.9%
+[4/4] SCOREBOARD tries=28 kept=8 rejected=18 crash=2 current_K=1.0529
+
+ITERATION 29 baseline K=1.0529
+[1/4] AGENT
+proposal: Remove ATR buffer from exit condition, exiting when price closes below lowest close of lookback period with volume confirmation
+[2/4] BACKTEST
+K=0.913 return=94.49% sharpe=1.373 vol=9.59% dd=-7.14% trades=91 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.913 did not beat 1.0529
+[4/4] SCOREBOARD tries=29 kept=8 rejected=19 crash=2 current_K=1.0529
+
+ITERATION 30 baseline K=1.0529
+[1/4] AGENT
+proposal: Increase entry volume threshold to 1.2 times the 50-period volume moving average for breakout entries.
+[2/4] BACKTEST
+K=1.0782 return=106.01% sharpe=1.492 vol=9.64% dd=-6.95% trades=76 runtime=1.0s
+[3/4] VERDICT KEPT: K 1.0529 -> 1.0782
+[4/4] SCOREBOARD tries=30 kept=9 rejected=19 crash=2 current_K=1.0782
+
+ITERATION 31 baseline K=1.0782
+[1/4] AGENT
+proposal: Change entry breakout condition to use highest high instead of highest close of the last 20 bars
+[2/4] BACKTEST
+K=1.0068 return=98.61% sharpe=1.467 vol=9.28% dd=-5.57% trades=68 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.0068 did not beat 1.0782
+[4/4] SCOREBOARD tries=31 kept=9 rejected=20 crash=2 current_K=1.0782
+
+ITERATION 32 baseline K=1.0782
+[1/4] AGENT
+proposal: Increase exit volume confirmation multiplier from 1.5 to 2.0 to require stronger volume confirmation for exit signals.
+[2/4] BACKTEST
+K=1.0459 return=112.51% sharpe=1.387 vol=10.84% dd=-8.8% trades=63 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: ann vol 10.8% outside +-10% of baseline 9.6%
+[4/4] SCOREBOARD tries=32 kept=9 rejected=21 crash=2 current_K=1.0782
+
+ITERATION 33 baseline K=1.0782
+[1/4] AGENT
+proposal: Increase exit lookback period from 10 to 15 bars to use the lowest close of the last 15 bars for exit signals.
+[2/4] BACKTEST
+K=0.9216 return=98.18% sharpe=1.347 vol=10.07% dd=-8.5% trades=71 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.9216 did not beat 1.0782
+[4/4] SCOREBOARD tries=33 kept=9 rejected=22 crash=2 current_K=1.0782
+
+ITERATION 34 baseline K=1.0782
+[1/4] AGENT
+proposal: Change exit signal to use lowest low of lookback period instead of lowest close
+[2/4] BACKTEST
+K=0.8304 return=91.68% sharpe=1.276 vol=10.08% dd=-8.43% trades=70 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.8304 did not beat 1.0782
+[4/4] SCOREBOARD tries=34 kept=9 rejected=23 crash=2 current_K=1.0782
+
+ITERATION 35 baseline K=1.0782
+[1/4] AGENT
+proposal: Increase volume moving average lookback period from 50 to 100 for both entry and exit volume filters.
+[2/4] BACKTEST
+K=1.1809 return=112.93% sharpe=1.562 vol=9.66% dd=-5.54% trades=75 runtime=0.9s
+[3/4] VERDICT KEPT: K 1.0782 -> 1.1809
+[4/4] SCOREBOARD tries=35 kept=10 rejected=23 crash=2 current_K=1.1809
+
+ITERATION 36 baseline K=1.1809
+[1/4] AGENT
+proposal: Increase exit volume confirmation multiplier from 1.5 to 1.6 to require stronger volume confirmation for exit signals.
+[2/4] BACKTEST
+K=1.2152 return=116.08% sharpe=1.577 vol=9.77% dd=-5.96% trades=70 runtime=0.9s
+[3/4] VERDICT KEPT: K 1.1809 -> 1.2152
+[4/4] SCOREBOARD tries=36 kept=11 rejected=23 crash=2 current_K=1.2152
+
+ITERATION 37 baseline K=1.2152
+[1/4] AGENT
+proposal: Increase entry volume threshold multiplier from 1.2 to 1.3 to require stronger volume confirmation for breakout entries.
+[2/4] BACKTEST
+K=1.1009 return=107.84% sharpe=1.505 vol=9.68% dd=-6.6% trades=69 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.1009 did not beat 1.2152
+[4/4] SCOREBOARD tries=37 kept=11 rejected=24 crash=2 current_K=1.2152
+
+ITERATION 38 baseline K=1.2152
+[1/4] AGENT
+proposal: Reduce exit ATR multiplier from 0.25 to 0.20 to exit earlier on breakdowns
+[2/4] BACKTEST
+K=1.181 return=113.51% sharpe=1.557 vol=9.73% dd=-5.96% trades=71 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.181 did not beat 1.2152
+[4/4] SCOREBOARD tries=38 kept=11 rejected=25 crash=2 current_K=1.2152
+
+ITERATION 39 baseline K=1.2152
+[1/4] AGENT
+proposal: Increase entry lookback period from 20 to 25 bars for the highest close breakout entry.
+[2/4] BACKTEST
+K=1.0379 return=100.58% sharpe=1.491 vol=9.27% dd=-6.82% trades=65 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.0379 did not beat 1.2152
+[4/4] SCOREBOARD tries=39 kept=11 rejected=26 crash=2 current_K=1.2152
+
+ITERATION 40 baseline K=1.2152
+[1/4] AGENT
+proposal: Decrease stop loss ATR multiplier from 3.5 to 3.0 to tighten risk control
+[2/4] BACKTEST
+K=1.254 return=119.56% sharpe=1.594 vol=9.88% dd=-5.4% trades=71 runtime=0.9s
+[3/4] VERDICT KEPT: K 1.2152 -> 1.254
+[4/4] SCOREBOARD tries=40 kept=12 rejected=26 crash=2 current_K=1.254
+
+ITERATION 41 baseline K=1.254
+[1/4] AGENT
+proposal: Change exit volume confirmation to require current volume above its moving average and above previous bar's volume
+[2/4] BACKTEST
+K=1.1757 return=110.47% sharpe=1.58 vol=9.39% dd=-5.55% trades=94 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.1757 did not beat 1.254
+[4/4] SCOREBOARD tries=41 kept=12 rejected=27 crash=2 current_K=1.254
+
+ITERATION 42 baseline K=1.254
+[1/4] AGENT
+proposal: Add bullish candle requirement to entry condition: require close > open for breakout entries
+[2/4] BACKTEST
+K=1.254 return=119.56% sharpe=1.594 vol=9.88% dd=-5.4% trades=71 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.254 did not beat 1.254
+[4/4] SCOREBOARD tries=42 kept=12 rejected=28 crash=2 current_K=1.254
+
+ITERATION 43 baseline K=1.254
+[1/4] AGENT
+proposal: Use different volume moving average lookbacks for entry (50) and exit (100)
+[2/4] BACKTEST
+K=1.0735 return=106.73% sharpe=1.478 vol=9.78% dd=-7.77% trades=73 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.0735 did not beat 1.254
+[4/4] SCOREBOARD tries=43 kept=12 rejected=29 crash=2 current_K=1.254
+
+ITERATION 44 baseline K=1.254
+[1/4] AGENT
+proposal: Decrease entry volume threshold to 1.1 and increase exit volume multiplier to 1.7 to allow more entries and require stronger volume for exits.
+[2/4] BACKTEST
+K=1.1178 return=112.46% sharpe=1.483 vol=10.14% dd=-7.51% trades=77 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.1178 did not beat 1.254
+[4/4] SCOREBOARD tries=44 kept=12 rejected=30 crash=2 current_K=1.254
+
+ITERATION 45 baseline K=1.254
+[1/4] AGENT
+proposal: Decrease entry volume threshold multiplier from 1.2 to 1.1 to allow more breakout entries
+[2/4] BACKTEST
+K=1.0839 return=108.13% sharpe=1.479 vol=9.87% dd=-7.39% trades=79 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.0839 did not beat 1.254
+[4/4] SCOREBOARD tries=45 kept=12 rejected=31 crash=2 current_K=1.254
+
+ITERATION 46 baseline K=1.254
+[1/4] AGENT
+proposal: Decrease ATR lookback period from 20 to 15 for more responsive volatility measurement
+[2/4] BACKTEST
+K=1.0911 return=107.52% sharpe=1.495 vol=9.73% dd=-5.79% trades=76 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.0911 did not beat 1.254
+[4/4] SCOREBOARD tries=46 kept=12 rejected=32 crash=2 current_K=1.254
+
+ITERATION 47 baseline K=1.254
+[1/4] AGENT
+proposal: Decrease exit ATR multiplier from 0.25 to 0.22 to exit earlier on breakdowns
+[2/4] BACKTEST
+K=1.2126 return=116.46% sharpe=1.57 vol=9.83% dd=-5.4% trades=72 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.2126 did not beat 1.254
+[4/4] SCOREBOARD tries=47 kept=12 rejected=33 crash=2 current_K=1.254
+
+ITERATION 48 baseline K=1.254
+[1/4] AGENT
+proposal: Increase volume moving average lookback period from 100 to 200 for both entry and exit volume filters
+[2/4] BACKTEST
+K=1.0173 return=99.1% sharpe=1.477 vol=9.25% dd=-7.25% trades=72 runtime=0.9s
+[3/4] VERDICT REJECTED: K 1.0173 did not beat 1.254
+[4/4] SCOREBOARD tries=48 kept=12 rejected=34 crash=2 current_K=1.254
+
+ITERATION 49 baseline K=1.254
+[1/4] AGENT
+proposal: Increase exit ATR multiplier from 0.25 to 0.30 to require a stronger breakdown signal for exit
+[2/4] BACKTEST
+K=1.2812 return=123.57% sharpe=1.592 vol=10.13% dd=-5.4% trades=70 runtime=0.9s
+[3/4] VERDICT KEPT: K 1.254 -> 1.2812
+[4/4] SCOREBOARD tries=49 kept=13 rejected=34 crash=2 current_K=1.2812
+
+ITERATION 50 baseline K=1.2812
+[1/4] AGENT
+proposal: Decrease ATR lookback period from 20 to 10 for more responsive volatility measurement
+[2/4] BACKTEST
+K=0.9741 return=101.61% sharpe=1.389 vol=10.02% dd=-6.05% trades=78 runtime=0.9s
+[3/4] VERDICT REJECTED: K 0.9741 did not beat 1.2812
+[4/4] SCOREBOARD tries=50 kept=13 rejected=35 crash=2 current_K=1.2812
