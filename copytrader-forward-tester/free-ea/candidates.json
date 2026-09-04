@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "frozen_at": "2026-09-04T04:24:00Z",
+  "objective": "Prospectively rank actually obtainable free EAs by demo return, PF, equity DD, trade count, robustness and reproducibility.",
+  "candidates": [
+    {
+      "id": "EMA_GOLD_TRADER",
+      "name": "EMA Gold Trader EA",
+      "source_type": "open_source_github",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "unspecified_in_registry_source",
+      "source_url": "https://github.com/koichi055/ema-gold-trader-ea",
+      "source_code": true,
+      "claimed_test": {
+        "period": "2025-01 to 2026-03",
+        "return_pct": 110.4,
+        "profit_factor": 1.92,
+        "trades": 650,
+        "win_rate_pct": 72.46,
+        "max_equity_dd_pct": 9.57
+      },
+      "risk_flags": [
+        "published_backtest_not_yet_independently_reproduced"
+      ],
+      "priority": 1
+    },
+    {
+      "id": "MQL5_CLAUDE_MULTI",
+      "name": "MQL5 Trading Bot Claude Experiment",
+      "source_type": "open_source_github",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "MULTI",
+      "timeframe": "H1",
+      "source_url": "https://github.com/sbrakni/MQL5-trading-bot-claude-experiment",
+      "source_code": true,
+      "claimed_test": {
+        "xauusd_donchian_cagr_pct": 23.4,
+        "xauusd_donchian_pf": 1.44,
+        "xauusd_donchian_trades": 253,
+        "xauusd_donchian_max_dd_pct": 15.7,
+        "usdjpy_session_cagr_pct": 19.2,
+        "usdjpy_session_pf": 1.38,
+        "usdjpy_session_trades": 345,
+        "usdjpy_session_max_dd_pct": 9
+      },
+      "risk_flags": [
+        "repository_authored_results_require_independent_demo_forward_test"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "SAFE_SCALPER_PRO",
+      "name": "SafeScalperPro",
+      "source_type": "mql5_market_free_plus_source",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "M5",
+      "source_url": "https://www.mql5.com/en/market/product/165581",
+      "source_code": true,
+      "source_code_url": "https://www.mql5.com/en/code/71189",
+      "risk_flags": [
+        "no_verified_live_provider_record_in_registry"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "APEX_ORIGIN",
+      "name": "Apex Origin",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "AUDCAD",
+      "timeframe": "H1",
+      "source_url": "https://www.mql5.com/en/market/product/166552",
+      "source_code": false,
+      "risk_flags": [
+        "uses_linear_position_scaling_0.01_0.02_0.03",
+        "seller_describes_no_heavy_martingale_not_no_martingale",
+        "historical_oos_claim_not_prospective"
+      ],
+      "priority": 4
+    },
+    {
+      "id": "AURUM_RA_GOLD",
+      "name": "Aurum Ra Gold EA",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "seller_presets",
+      "source_url": "https://www.mql5.com/en/market/product/149983",
+      "source_code": false,
+      "risk_flags": [
+        "seller_claims_no_grid_no_martingale_no_averaging",
+        "community_reported_stop_loss_anomaly",
+        "version_has_changed_materially"
+      ],
+      "priority": 5
+    },
+    {
+      "id": "IMPOSSIBLE_GOLD",
+      "name": "The Impossible Gold",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "M5",
+      "source_url": "https://www.mql5.com/en/market/product/169680",
+      "source_code": false,
+      "risk_flags": [
+        "seller_claims_no_martingale_no_grid_no_averaging",
+        "community_reported_33pct_live_drawdown_despite_same_settings_backtest",
+        "broker_sensitive",
+        "defaults_genetically_optimized"
+      ],
+      "priority": 6
+    },
+    {
+      "id": "XAUUSD_5_MIN",
+      "name": "XAUUSD 5 minute",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "M5",
+      "source_url": "https://www.mql5.com/en/market/product/147332",
+      "source_code": false,
+      "risk_flags": [
+        "community_reported_57pct_default_backtest_drawdown",
+        "mean_reversion_multi_system_logic",
+        "version_updated_2026_09_03"
+      ],
+      "priority": 7
+    }
+  ]
+}

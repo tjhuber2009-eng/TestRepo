@@ -1,0 +1,28 @@
+name: Free EA Tournament CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "copytrader-forward-tester/free-ea/**"
+      - "copytrader-forward-tester/mt5-demo/**"
+      - ".github/workflows/free-ea-tournament-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "copytrader-forward-tester/free-ea/**"
+      - "copytrader-forward-tester/mt5-demo/**"
+      - ".github/workflows/free-ea-tournament-ci.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Enforce free-only candidate registry
+        run: python copytrader-forward-tester/free-ea/validate_registry.py
+      - name: Test demo analyzer and safety guard
+        run: python -m unittest discover -s copytrader-forward-tester/mt5-demo/tests -v

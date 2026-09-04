@@ -1,96 +1,57 @@
-# MT5 Demo Validation Harness
+# MT5 Demo Validation Harness — Free-EA Tournament
 
-This folder is the execution-validation layer for the CopyTrader project.
+This folder measures **your own MT5 demo execution** of free EAs.
 
-## What it can and cannot do
+## Governing rule
 
-The public MQL5 signal pages do not expose enough realtime trade detail to recreate entries. Therefore there are only two legitimate ways to forward-execute the candidate on an MT5 demo account:
+Every executable tournament EA costs $0. Paid EAs and paid signal subscriptions are not used.
 
-1. **Native MQL5 Signal subscription** — MetaTrader copies the provider's trades.
-2. **The actual purchased EA** — the EA generates its own trades directly on your MT5 demo account.
+The active candidate registry is ../free-ea/candidates.json.
 
-MQL5 Market demo EAs cannot run on online charts, even on demo accounts; they work only in Strategy Tester. So this repository does not pretend that a free Market demo can forward trade.
+## Recommended layout
 
-## Current direct-EA routes (checked 2026-09-03)
-
-- Definitely No Hype EA MT5 — XAUUSD H1; MQL5 Market product 189326; current listed price $279.
-- Mon Scalper MT5 — XAUUSD M15; product 128708; current listed price $399.
-- Precise Pair Trading Pro — two-symbol pair-trading EA; product 148319; current listed price $470.
-
-No purchase is required to use this harness. Do not spend anything merely to install the reporter.
-
-## Recommended experiment layout
-
-Use a **separate MT5 demo account for each candidate**. MQL5 allows only one signal provider per trading account, and isolation also prevents one EA from contaminating another's P/L.
+Use a separate MT5 demo account for each EA or preset. This prevents one strategy from contaminating another's P/L.
 
 Suggested labels:
 
-- DNH-DEMO
-- MON-DEMO
-- PRECISE-DEMO
-
-For native MQL5 copy subscriptions, the signal subscription itself may still have a fee. A demo account can be used to evaluate real signals according to MQL5 moderator guidance, but confirm availability and price inside your own terminal before paying.
+- FREE-EMA-GOLD
+- FREE-MULTI-XAU-DONCHIAN
+- FREE-MULTI-USDJPY-SESSION
+- FREE-SAFE-SCALPER
+- FREE-APEX
+- FREE-AURUM
+- FREE-IMPOSSIBLE
+- FREE-XAU5M
 
 ## Install the reporter
 
-1. In MT5, open **File → Open Data Folder**.
+1. In MT5 choose **File → Open Data Folder**.
 2. Open **MQL5 → Experts**.
-3. Copy `CopyTraderDemoReporter.mq5` there.
-4. Open MetaEditor and compile it.
-5. Attach the reporter to a spare chart **different from the chart used by the candidate EA**.
-6. Set `CandidateId` to `DNH`, `MON`, or `PRECISE`.
-7. The reporter refuses to initialize unless the account is DEMO.
+3. Copy CopyTraderDemoReporter.mq5 there and compile it in MetaEditor.
+4. Install/compile the free EA on the same demo account.
+5. Attach the candidate EA to its required chart.
+6. Attach the reporter to a spare chart.
+7. Set CandidateId to the registry ID.
+8. Leave the account untouched after baseline: no manual trades, deposits or withdrawals.
 
-It does not import the trade library and contains no order-sending calls.
+The reporter refuses non-demo accounts and has no order-sending code.
 
-## Data location
+## Outputs
 
-The reporter writes to MT5's **Common Files** folder so another program can read it:
+It writes into MT5 Common Files:
 
-- `COPYTRADER_DEMO_<login>_<candidate>_account.csv`
-- `COPYTRADER_DEMO_<login>_<candidate>_positions.csv`
-- `COPYTRADER_DEMO_<login>_<candidate>_deals.csv`
+- COPYTRADER_DEMO_<login>_<candidate>_account.csv
+- COPYTRADER_DEMO_<login>_<candidate>_positions.csv
+- COPYTRADER_DEMO_<login>_<candidate>_deals.csv
 
-In MT5, the Common Files location is under the terminal-wide common data directory.
+Then run:
 
-## Analyze the demo execution
+    python demo_analyzer.py --common-files "C:\\path\\to\\Terminal\\Common\\Files"
 
-Run:
+The analyzer reports return, PF, wins/losses, max observed equity DD, positions, and cash-flow contamination.
 
-    python demo_analyzer.py --common-files "C:\path\to\Terminal\Common\Files"
+## Important
 
-The analyzer reports:
+A **free MQL5 Market product** can be installed as a $0 product and run normally. This is different from the restricted demo build of a paid Market product.
 
-- demo equity return
-- balance return
-- maximum observed equity drawdown
-- closed positions
-- wins/losses
-- gross profit/loss
-- profit factor
-- whether any deposit/credit/cash-flow event invalidated the clean comparison
-
-## How this connects to GitHub forward testing
-
-The GitHub forward tester measures the **provider account** prospectively.
-
-This harness measures **your demo execution** prospectively.
-
-The decision we ultimately care about is:
-
-    provider forward result
-    vs.
-    your demo result
-    vs.
-    execution gap
-
-A candidate is much more useful if your demo account reproduces the provider after broker/spread/slippage differences.
-
-## Remaining blocker
-
-The reporter is free and ready. Actual forward execution requires either:
-
-- a native MQL5 signal subscription, or
-- ownership of the full EA.
-
-This repository does not purchase either one automatically.
+GitHub itself does not host or execute MT5 desktop terminals. MT5 must remain running on your PC or a VPS for genuine forward testing.
