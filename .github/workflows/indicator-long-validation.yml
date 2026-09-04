@@ -1,4 +1,4 @@
-name: Indicator Global Portfolio DD Frontier
+name: Indicator Global Portfolio DD Frontier V2
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run diversified global DD frontier
-        run: python indicator_validation/run_global_portfolio_frontier.py
+      - name: Run global diversified DD frontier v2
+        run: python indicator_validation/run_global_portfolio_frontier_v2.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_global_portfolio_frontier.py indicator_validation/output_global_portfolio_frontier/* > indicator_validation/SHA256SUMS_GLOBAL_PORTFOLIO.txt
-      - name: Upload global frontier artifact
+        run: sha256sum indicator_validation/run_global_portfolio_frontier_v2.py indicator_validation/output_global_portfolio_frontier_v2/* > indicator_validation/SHA256SUMS_GLOBAL_PORTFOLIO_V2.txt
+      - name: Upload global frontier v2 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-global-portfolio-frontier
+          name: indicator-global-portfolio-frontier-v2
           path: |
-            indicator_validation/output_global_portfolio_frontier/
-            indicator_validation/SHA256SUMS_GLOBAL_PORTFOLIO.txt
+            indicator_validation/output_global_portfolio_frontier_v2/
+            indicator_validation/SHA256SUMS_GLOBAL_PORTFOLIO_V2.txt
           if-no-files-found: error
           retention-days: 7
