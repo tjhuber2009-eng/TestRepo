@@ -93,9 +93,9 @@ jobs:
               raise SystemExit(
                   f"seed annualized volatility is not sane: {x['ann_vol_pct']}%"
               )
-          if x["max_dd_pct"] < -60:
+          if x["max_dd_pct"] < -10.0:
               raise SystemExit(
-                  f"seed drawdown is too extreme for campaign: {x['max_dd_pct']}%"
+                  f"seed drawdown exceeds hard 10% limit: {x['max_dd_pct']}%"
               )
 
       - name: Run 50 NVIDIA research iterations
@@ -197,6 +197,7 @@ jobs:
               "- Research window: 2017-08-17 through 2022-12-31 only",
               "- OOS 2023+ was not downloaded or opened",
               "- Backtest commission: frozen at 0.20% per order",
+              "- Hard maximum drawdown constraint: 10.0%",
               "- Candidate execution: next-bar (trade_on_close=False)",
               "",
               "## Run status",
