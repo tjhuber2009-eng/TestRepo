@@ -1,0 +1,217 @@
+name: Cross-market seed audit
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  audit:
+    if: >
+      github.event.issue.pull_request &&
+      github.event.issue.number == 13 &&
+      github.event.comment.body == '/cross-market-seed-audit' &&
+      github.event.comment.user.login == 'tjhuber2009-eng'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        profile: [prop, private]
+        target:
+          - { id: btc, symbol: BTCUSDT, source: binance, market: crypto, bpy: "365", commission: "0.0010", margin: "0.25" }
+          - { id: eth, symbol: ETHUSDT, source: binance, market: crypto, bpy: "365", commission: "0.0010", margin: "0.25" }
+          - { id: sol, symbol: SOLUSDT, source: binance, market: crypto, bpy: "365", commission: "0.0010", margin: "0.25" }
+          - { id: spy, symbol: SPY, source: yahoo, market: etf, bpy: "252", commission: "0.0002", margin: "0.50" }
+          - { id: qqq, symbol: QQQ, source: yahoo, market: etf, bpy: "252", commission: "0.0002", margin: "0.50" }
+          - { id: tqqq, symbol: TQQQ, source: yahoo, market: etf, bpy: "252", commission: "0.0002", margin: "0.50" }
+          - { id: aapl, symbol: AAPL, source: yahoo, market: stock, bpy: "252", commission: "0.0002", margin: "0.50" }
+          - { id: nvda, symbol: NVDA, source: yahoo, market: stock, bpy: "252", commission: "0.0002", margin: "0.50" }
+          - { id: eurusd, symbol: "EURUSD=X", source: yahoo, market: forex, bpy: "252", commission: "0.0001", margin: "0.05" }
+          - { id: gbpusd, symbol: "GBPUSD=X", source: yahoo, market: forex, bpy: "252", commission: "0.0001", margin: "0.05" }
+          - { id: usdjpy, symbol: "JPY=X", source: yahoo, market: forex, bpy: "252", commission: "0.0001", margin: "0.05" }
+          - { id: es, symbol: "ES=F", source: yahoo, market: futures_proxy, bpy: "252", commission: "0.00015", margin: "0.10" }
+          - { id: nq, symbol: "NQ=F", source: yahoo, market: futures_proxy, bpy: "252", commission: "0.00015", margin: "0.10" }
+          - { id: gold, symbol: "GC=F", source: yahoo, market: futures_proxy, bpy: "252", commission: "0.00015", margin: "0.10" }
+          - { id: oil, symbol: "CL=F", source: yahoo, market: futures_proxy, bpy: "252", commission: "0.00015", margin: "0.10" }
+    env:
+      AUTORESEARCH_HARNESS: market_harness.py
+      AUTORESEARCH_SYMBOL: ${{ matrix.target.symbol }}
+      AUTORESEARCH_MARKET: ${{ matrix.target.market }}
+      AUTORESEARCH_DATA_FILE: data/${{ matrix.target.id }}_1d.csv
+      AUTORESEARCH_COMMISSION: ${{ matrix.target.commission }}
+      AUTORESEARCH_MARGIN: ${{ matrix.target.margin }}
+      AUTORESEARCH_BARS_PER_YEAR: ${{ matrix.target.bpy }}
+      AUTORESEARCH_PROFILE: ${{ matrix.profile }}
+      AUTORESEARCH_MAX_DD_PCT: ${{ matrix.profile == 'prop' && '10.0' || '32.0' }}
+      AUTORESEARCH_MIN_TRADES: "50"
+      AUTORESEARCH_VOL_BAND: "0.10"
+      TARGET_ID: ${{ matrix.target.id }}
+      SOURCE: ${{ matrix.target.source }}
+      SEED_FILE: ${{ matrix.profile == 'prop' && 'strategy_prop_seed.py' || 'strategy_private_seed.py' }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - run: python -m pip install -r requirements.txt
+      - run: python -m compileall -q .
+
+      - name: Prepare sealed daily data
+        run: >
+          python prepare_market_data.py
+          --source "$SOURCE"
+          --symbol "$AUTORESEARCH_SYMBOL"
+          --id "$TARGET_ID"
+          --start 2017-08-17
+          --end 2022-12-31
+
+      - name: Configure profile seed for daily market
+        shell: python
+        run: |
+          import os, re
+          from pathlib import Path
+          src=Path(os.environ["SEED_FILE"]).read_text(encoding="utf-8")
+          src=re.sub(
+              r"BARS_PER_YEAR\s*=\s*4\s*\*\s*365",
+              f"BARS_PER_YEAR = {os.environ['AUTORESEARCH_BARS_PER_YEAR']}",
+              src,
+          )
+          if os.environ["AUTORESEARCH_PROFILE"] == "private":
+              src=src.replace("vol_target = 0.34", "vol_target = 0.30")
+          Path("strategy.py").write_text(src, encoding="utf-8")
+
+      - name: Risk-normalize seed downward if needed
+        shell: python
+        run: |
+          import json, os, re, subprocess, sys
+          from pathlib import Path
+
+          limit=float(os.environ["AUTORESEARCH_MAX_DD_PCT"])
+          for attempt in range(5):
+              subprocess.run(
+                  [sys.executable, "market_harness.py", "--is"],
+                  check=True,
+              )
+              x=json.loads(Path("last_run.json").read_text())
+              print(f"attempt={attempt+1} DD={x['max_dd_pct']} vol={x['ann_vol_pct']} trades={x['trades']}")
+              if x["trades"] < 50:
+                  raise SystemExit("fewer than 50 seed trades")
+              dd=abs(float(x["max_dd_pct"]))
+              if dd <= limit:
+                  break
+              factor=min(0.90 * limit / dd, 0.95)
+              text=Path("strategy.py").read_text()
+              m=re.search(r"vol_target\s*=\s*([0-9.]+)", text)
+              if not m:
+                  raise SystemExit("vol_target not found")
+              old=float(m.group(1))
+              new=max(old*factor, 0.005)
+              text=text[:m.start(1)] + f"{new:.6f}" + text[m.end(1):]
+              Path("strategy.py").write_text(text)
+              print(f"downscaled vol_target {old:.6f} -> {new:.6f}")
+          else:
+              raise SystemExit("could not normalize seed below DD cap")
+
+      - name: Freeze valid baseline
+        run: python market_harness.py --is --set-baseline
+
+      - name: Save audit summary
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          x=json.loads(Path("baseline.json").read_text())
+          out=Path("seed_audit_export")
+          out.mkdir(exist_ok=True)
+          result={
+              "id": os.environ["TARGET_ID"],
+              "symbol": os.environ["AUTORESEARCH_SYMBOL"],
+              "market": os.environ["AUTORESEARCH_MARKET"],
+              "profile": os.environ["AUTORESEARCH_PROFILE"],
+              "max_dd_limit_pct": float(os.environ["AUTORESEARCH_MAX_DD_PCT"]),
+              "commission": float(os.environ["AUTORESEARCH_COMMISSION"]),
+              "margin": float(os.environ["AUTORESEARCH_MARGIN"]),
+              "baseline": x,
+          }
+          (out/f"{os.environ['TARGET_ID']}-{os.environ['AUTORESEARCH_PROFILE']}.json").write_text(
+              json.dumps(result, indent=2, sort_keys=True)+"\n",
+              encoding="utf-8",
+          )
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seed-${{ matrix.target.id }}-${{ matrix.profile }}-${{ github.run_id }}
+          path: moondev_autoresearch_reconstruction/seed_audit_export/*.json
+          retention-days: 14
+
+  aggregate:
+    needs: audit
+    if: always() && github.event.issue.pull_request && github.event.issue.number == 13 && github.event.comment.body == '/cross-market-seed-audit'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: seed-*-${{ github.run_id }}
+          path: seed-results
+          merge-multiple: true
+
+      - name: Build seed tournament table
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          rows=[]
+          for p in sorted(Path("seed-results").glob("*.json")):
+              x=json.loads(p.read_text())
+              b=x["baseline"]
+              rows.append({
+                  "id":x["id"],"market":x["market"],"profile":x["profile"],
+                  "ddcap":x["max_dd_limit_pct"],"k":b["score"],
+                  "ret":b["return_pct"],"dd":b["max_dd_pct"],
+                  "sh":b["sharpe"],"pf":b["pf"],"trades":b["trades"],
+              })
+          lines=[
+              "# Cross-market seed audit",
+              "",
+              "| Asset | Market | Profile | DD cap | K | Return | DD | Sharpe | PF | Trades |",
+              "|---|---|---|---:|---:|---:|---:|---:|---:|---:|",
+          ]
+          for r in sorted(rows, key=lambda x:(x["profile"],-x["k"])):
+              lines.append(
+                  f"| {r['id']} | {r['market']} | {r['profile']} | {r['ddcap']}% | "
+                  f"{r['k']} | {r['ret']}% | {r['dd']}% | {r['sh']} | {r['pf']} | {r['trades']} |"
+              )
+          lines += [
+              "",
+              "All data end at 2022-12-31. 2023+ OOS was not downloaded.",
+              "Futures rows use normalized continuous-futures price proxies for research ranking,",
+              "not contract-exact multiplier/commission simulation.",
+          ]
+          Path("seed-report.md").write_text("\n".join(lines)+"\n")
+          print("\n".join(lines))
+
+      - name: Comment report on PR
+        run: gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file seed-report.md
