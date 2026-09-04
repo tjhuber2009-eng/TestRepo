@@ -105,7 +105,7 @@ def build_tracks():
     targets = [x for x in config["targets"] if x.get("enabled")]
     profiles = config["profiles"]
     tracks = []
-    for family in sorted(families, key=lambda x: x["id"]):
+    for family in sorted(families, key=lambda x: (int(x.get("priority", 50)), x["id"])):
         allowed = set(family.get("markets", []))
         for target in sorted(targets, key=lambda x: x["id"]):
             if allowed and target["market"] not in allowed:
