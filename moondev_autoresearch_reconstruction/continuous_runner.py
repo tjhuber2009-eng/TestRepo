@@ -717,11 +717,23 @@ def write_progress(
     blocked_families = [
         {
             "id": x["id"],
+            "status": x.get("status"),
             "exactness": x.get("exactness"),
             "origin": x.get("origin"),
             "requires": x.get("requires", []),
         }
-        for x in registry["families"] if x.get("status") != "runnable"
+        for x in registry["families"]
+        if x.get("status") == "blocked"
+    ]
+    prior_terminal_families = [
+        {
+            "id": x["id"],
+            "status": x.get("status"),
+            "evidence": x.get("evidence"),
+            "origin": x.get("origin"),
+        }
+        for x in registry["families"]
+        if str(x.get("status", "")).startswith("prior_rejected")
     ]
     rows = []
     counts = {
@@ -798,6 +810,8 @@ def write_progress(
         "all_runnable_tracks_terminal": terminal == len(tracks),
         "blocked_family_count": len(blocked_families),
         "blocked_families": blocked_families,
+        "prior_terminal_family_count": len(prior_terminal_families),
+        "prior_terminal_families": prior_terminal_families,
         "rows": rows,
     }
     save_json(PROGRESS, payload)
