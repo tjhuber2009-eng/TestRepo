@@ -167,13 +167,17 @@ def parse_json_fallback(raw):
     return payload.get("proposal"), payload.get("strategy_py")
 
 
-FORBIDDEN_IMPORT_ROOTS = {
-    "os", "sys", "subprocess", "socket", "urllib", "requests", "http",
-    "pathlib", "shutil", "glob", "tempfile", "importlib", "ftplib",
-    "smtplib", "asyncio",
+ALLOWED_IMPORT_ROOTS = {
+    "numpy", "pandas", "math", "statistics", "backtesting",
 }
 FORBIDDEN_CALL_NAMES = {
     "open", "exec", "eval", "compile", "__import__", "input", "breakpoint",
+}
+FORBIDDEN_ATTR_CALLS = {
+    "read_csv", "read_json", "read_pickle", "read_parquet", "read_excel",
+    "read_html", "read_xml", "read_sql", "to_csv", "to_json", "to_pickle",
+    "to_parquet", "to_excel", "to_sql", "load", "save", "loadtxt",
+    "savetxt", "genfromtxt", "fromfile", "tofile",
 }
 
 
@@ -185,14 +189,22 @@ def validate_source_safety(tree):
             names = [node.module] if node.module else []
         else:
             names = []
+
         for name in names:
             root = name.split(".", 1)[0]
-            if root in FORBIDDEN_IMPORT_ROOTS:
-                raise ValueError(f"forbidden import in strategy.py: {name}")
+            if root not in ALLOWED_IMPORT_ROOTS:
+                raise ValueError(
+                    f"import not allowed in strategy.py: {name}; "
+                    f"allowed roots are {sorted(ALLOWED_IMPORT_ROOTS)}"
+                )
 
         if isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_CALL_NAMES:
                 raise ValueError(f"forbidden call in strategy.py: {node.func.id}")
+            if isinstance(node.func, ast.Attribute) and node.func.attr in FORBIDDEN_ATTR_CALLS:
+                raise ValueError(
+                    f"forbidden I/O-style call in strategy.py: {node.func.attr}"
+                )
 
 
 def validate_payload(proposal, source):
