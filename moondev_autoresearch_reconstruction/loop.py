@@ -55,6 +55,7 @@ def ensure_seed():
                 stdout=f,
                 stderr=subprocess.STDOUT,
                 text=True,
+                env=safe_backtest_env(),
             )
         if r.returncode != 0:
             raise RuntimeError("baseline failed; see logs/baseline.txt")
