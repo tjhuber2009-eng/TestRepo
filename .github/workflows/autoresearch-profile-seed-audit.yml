@@ -1,0 +1,108 @@
+name: AUTORESEARCH profile seed audit
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  audit:
+    if: >
+      github.event.issue.pull_request &&
+      github.event.issue.number == 13 &&
+      github.event.comment.body == '/profile-seed-audit' &&
+      github.event.comment.user.login == 'tjhuber2009-eng'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: prop
+            max_dd: "10.0"
+            seed: strategy_prop_seed.py
+          - profile: private
+            max_dd: "32.0"
+            seed: strategy_private_seed.py
+    env:
+      AUTORESEARCH_PROFILE: ${{ matrix.profile }}
+      AUTORESEARCH_MAX_DD_PCT: ${{ matrix.max_dd }}
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - run: python -m pip install -r requirements.txt
+      - run: python -m compileall -q .
+      - run: python prepare_data.py --asset ETH --end 2022-12-31
+
+      - name: Install profile seed
+        run: cp "${{ matrix.seed }}" strategy.py
+
+      - name: Run profile seed baseline
+        id: baseline
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          rm -f baseline.json last_run.json
+          python harness.py --is --set-baseline 2>&1 | tee profile-baseline.log
+
+      - name: Report profile seed
+        if: always()
+        shell: python
+        env:
+          PROFILE: ${{ matrix.profile }}
+          LIMIT: ${{ matrix.max_dd }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          import json, os
+          from pathlib import Path
+          p = Path("baseline.json")
+          lines = [
+              f"## {os.environ['PROFILE']} seed audit",
+              "",
+              f"Run: {os.environ['RUN_URL']}",
+              f"Hard DD limit: **{os.environ['LIMIT']}%**",
+              "",
+          ]
+          if p.exists():
+              x=json.loads(p.read_text())
+              lines += [
+                  f"- K: **{x['score']}**",
+                  f"- return: **{x['return_pct']}%**",
+                  f"- Sharpe: **{x['sharpe']}**",
+                  f"- annualized vol: **{x['ann_vol_pct']}%**",
+                  f"- max DD: **{x['max_dd_pct']}%**",
+                  f"- trades: **{x['trades']}**",
+                  f"- PF: **{x['pf']}**",
+                  f"- guard: **{x['guard_ok']}** — {x['guard_reason']}",
+              ]
+          else:
+              lines += ["Baseline did not freeze.", "", "Log tail:"]
+              q=Path("profile-baseline.log")
+              if q.exists():
+                  lines += q.read_text(errors="replace").splitlines()[-20:]
+          Path("profile-comment.md").write_text("\n".join(lines), encoding="utf-8")
+
+      - name: Comment result
+        if: always()
+        run: gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file profile-comment.md
+
+      - name: Fail if baseline invalid
+        if: steps.baseline.outcome != 'success'
+        run: exit 1
