@@ -32,6 +32,7 @@ STOP = "STOP"
 KEEPERS = "keepers"
 LOGS = "logs"
 SEEN_HASHES = "seen_hashes.json"
+EXPERIMENTS = "experiments.jsonl"
 
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
@@ -84,6 +85,44 @@ def save_seen_hashes(values):
         json.dump({"version": 1, "hashes": sorted(values)}, f, indent=2)
         f.write("\n")
     os.replace(tmp, SEEN_HASHES)
+
+
+def file_sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def append_experiment_record(
+    ts, iteration, model, verdict, reason, desc, base_score,
+    candidate_score, candidate_ast_sha, candidate_source_sha,
+    best_before_ast_sha,
+):
+    prompt_path = os.path.join(LOGS, f"prompt_{iteration}.txt")
+    record = {
+        "ts": ts,
+        "iteration": iteration,
+        "model": model,
+        "family": os.environ.get("AUTORESEARCH_FAMILY", "unspecified"),
+        "market": os.environ.get("AUTORESEARCH_MARKET", "unspecified"),
+        "symbol": os.environ.get("AUTORESEARCH_SYMBOL", "unspecified"),
+        "profile": os.environ.get("AUTORESEARCH_PROFILE", "unspecified"),
+        "verdict": verdict,
+        "reason": reason,
+        "description": desc,
+        "base_score": str(base_score),
+        "candidate_score": str(candidate_score),
+        "candidate_ast_sha256": candidate_ast_sha,
+        "candidate_source_sha256": candidate_source_sha,
+        "best_before_ast_sha256": best_before_ast_sha,
+        "prompt_sha256": file_sha256(prompt_path) if os.path.exists(prompt_path) else None,
+        "program_sha256": file_sha256(PROGRAM) if os.path.exists(PROGRAM) else None,
+        "harness_sha256": file_sha256(HARNESS) if os.path.exists(HARNESS) else None,
+    }
+    with open(EXPERIMENTS, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, sort_keys=True) + "\n")
 
 
 def ensure_seed():
@@ -529,6 +568,11 @@ def main():
         iteration += 1
         ts = now()
         base = load_json(BASELINE)
+        with open(BEST, encoding="utf-8") as f:
+            best_before_source = f.read()
+        best_before_ast_sha = canonical_ast_hash(best_before_source)
+        candidate_ast_sha = None
+        candidate_source_sha = None
         shutil.copy(BEST, STRATEGY)
         if os.path.exists(PROPOSAL):
             os.remove(PROPOSAL)
@@ -552,6 +596,10 @@ def main():
             with open(BEST, encoding="utf-8") as f:
                 best_source = f.read()
             fingerprint = canonical_ast_hash(candidate_source)
+            candidate_ast_sha = fingerprint
+            candidate_source_sha = hashlib.sha256(
+                candidate_source.encode("utf-8")
+            ).hexdigest()
             seen = load_seen_hashes()
             if fingerprint in seen:
                 verdict = "DUPLICATE"
@@ -625,6 +673,19 @@ def main():
         append_result(
             ts, iteration, verdict, score, base, ret, sharpe, vol,
             trades, dd, reason, desc
+        )
+        append_experiment_record(
+            ts=ts,
+            iteration=iteration,
+            model=args.model,
+            verdict=verdict,
+            reason=reason,
+            desc=desc,
+            base_score=base["score"],
+            candidate_score=score,
+            candidate_ast_sha=candidate_ast_sha,
+            candidate_source_sha=candidate_source_sha,
+            best_before_ast_sha=best_before_ast_sha,
         )
         scoreboard()
 
