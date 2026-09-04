@@ -1,6 +1,7 @@
 name: Market Predictor - QuantRocket Stage 2C
 
 on:
+  workflow_call:
   push:
     branches:
       - market-predictor-stage2c
