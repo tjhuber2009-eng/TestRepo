@@ -83,6 +83,12 @@ def build_prompt(iteration, base):
         [
             program,
             "",
+            f"## Current research profile: {os.environ.get('AUTORESEARCH_PROFILE', 'prop')}",
+            f"## HARD MAX DRAWDOWN: {os.environ.get('AUTORESEARCH_MAX_DD_PCT', '10.0')}%",
+            "Any candidate exceeding that historical max-drawdown limit is invalid,",
+            "regardless of return, Sharpe, or K. Do not propose a sizing increase",
+            "or structural change that violates the profile's drawdown ceiling.",
+            "",
             f"## Current baseline (must beat): score K={base['score']}, "
             f"ann vol {base['ann_vol_pct']}%, trades {base['trades']}",
             "",
@@ -421,6 +427,8 @@ def main():
     print(f"model={args.model}")
     print(f"endpoint={NVIDIA_BASE_URL}")
     print("key=NVIDIA_API_KEY environment variable")
+    print(f"profile={os.environ.get('AUTORESEARCH_PROFILE', 'prop')}")
+    print(f"max_dd_limit={os.environ.get('AUTORESEARCH_MAX_DD_PCT', '10.0')}%")
 
     ensure_seed()
     _, rows = results_rows()
