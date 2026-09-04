@@ -1,0 +1,56 @@
+{
+  "schema_version": "open-trading-bot-audit.final.v1",
+  "date": "2026-09-03",
+  "branch": "dual-signal-audit-2026-09",
+  "project_status": "RESEARCH_COMPLETE_FORWARD_VALIDATION_REQUIRED",
+  "deployable_champion": null,
+  "historical_leader": {
+    "id": "trade_halts",
+    "cagr_pct": 717.1401301029429,
+    "classification": "HISTORICAL_REPRODUCED_FORWARD_REQUIRED",
+    "live_proxy_cagr_pct": 693.6056459133971
+  },
+  "forward_watch": [
+    {
+      "id": "soxl_v7",
+      "classification": "FROZEN_FORWARD_WATCH",
+      "frozen_at": "2026-08-26T00:00:00Z",
+      "first_forward_session": "2026-08-26",
+      "required_sessions": 252
+    },
+    {
+      "id": "trade_halts",
+      "classification": "FORWARD_PAPER_FILL_REQUIRED"
+    },
+    {
+      "id": "nfi_x7",
+      "classification": "FREEZE_AND_FORWARD_ONLY",
+      "note": "latest-code retrospective monthly CI is not eligible as forward CAGR"
+    }
+  ],
+  "rejected_high_claims": [
+    {
+      "id": "twinstar_quantum",
+      "claim_cagr_pct": 628234.9,
+      "reason": "invalid leverage/MDD and overlapping full-equity compounding"
+    },
+    {
+      "id": "systemtrading",
+      "claim_cagr_pct": 2600,
+      "reason": "own walk-forward OOS -25.8% CAGR"
+    },
+    {
+      "id": "monthly_seasonality",
+      "claim_total_return_pct": 326357765.75,
+      "reason": "hindsight phase-month table"
+    },
+    {
+      "id": "seaside420",
+      "reason": "intrabar emulator artifact"
+    }
+  ],
+  "stop_rule": {
+    "met": true,
+    "reason": "Repeated expanded searches yielded no new fully reconstructable multi-period economically coherent candidate above 717% CAGR."
+  }
+}
