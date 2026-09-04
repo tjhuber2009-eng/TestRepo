@@ -53,6 +53,21 @@ def canonical_ast_hash(source):
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+class _NumericShape(ast.NodeTransformer):
+    def visit_Constant(self, node):
+        if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+            return ast.copy_location(ast.Constant(value=0), node)
+        return node
+
+
+def structural_ast_hash(source):
+    tree = ast.parse(source, filename=STRATEGY)
+    tree = _NumericShape().visit(tree)
+    ast.fix_missing_locations(tree)
+    canonical = ast.dump(tree, annotate_fields=True, include_attributes=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def load_seen_hashes():
     if not os.path.exists(SEEN_HASHES):
         return set()
@@ -466,11 +481,15 @@ def scoreboard():
     rejected = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "REJECTED")
     crashed = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "CRASH")
     duplicate = sum(1 for r in rows if len(r.split("\t")) > 2 and r.split("\t")[2] == "DUPLICATE")
+    parameter_only = sum(
+        1 for r in rows
+        if len(r.split("\t")) > 2 and r.split("\t")[2] == "PARAMETER_ONLY"
+    )
     base = load_json(BASELINE)
     print(
         f"[4/4] SCOREBOARD tries={len(rows)} kept={kept} "
         f"rejected={rejected} crash={crashed} duplicate={duplicate} "
-        f"current_K={base['score']}"
+        f"parameter_only={parameter_only} current_K={base['score']}"
     )
 
 
@@ -529,13 +548,24 @@ def main():
         else:
             print(f"proposal: {desc}")
             with open(STRATEGY, encoding="utf-8") as f:
-                fingerprint = canonical_ast_hash(f.read())
+                candidate_source = f.read()
+            with open(BEST, encoding="utf-8") as f:
+                best_source = f.read()
+            fingerprint = canonical_ast_hash(candidate_source)
             seen = load_seen_hashes()
             if fingerprint in seen:
                 verdict = "DUPLICATE"
                 reason = "semantic AST duplicate of a previously generated candidate"
                 score = ret = sharpe = vol = dd = "nan"
                 trades = 0
+                shutil.copy(BEST, STRATEGY)
+            elif structural_ast_hash(candidate_source) == structural_ast_hash(best_source):
+                verdict = "PARAMETER_ONLY"
+                reason = "numeric-only parameter mutation rejected by hardened anti-curve-fit policy"
+                score = ret = sharpe = vol = dd = "nan"
+                trades = 0
+                seen.add(fingerprint)
+                save_seen_hashes(seen)
                 shutil.copy(BEST, STRATEGY)
             else:
                 seen.add(fingerprint)
@@ -562,12 +592,24 @@ def main():
                     if not result["guard_ok"]:
                         verdict = "REJECTED"
                         reason = f"guard: {result['guard_reason']}"
-                    elif score > base["score"]:
-                        verdict = "KEPT"
-                        reason = f"K {base['score']} -> {score}"
                     else:
-                        verdict = "REJECTED"
-                        reason = f"K {score} did not beat {base['score']}"
+                        base_score = float(base["score"])
+                        min_delta = max(
+                            0.005,
+                            min(0.02, 0.01 * max(abs(base_score), 0.10)),
+                        )
+                        if float(score) > base_score + min_delta:
+                            verdict = "KEPT"
+                            reason = (
+                                f"K {base_score} -> {score} "
+                                f"(required delta {min_delta:.4f})"
+                            )
+                        else:
+                            verdict = "REJECTED"
+                            reason = (
+                                f"K {score} did not exceed {base_score} "
+                                f"by required delta {min_delta:.4f}"
+                            )
 
                     if verdict == "KEPT":
                         shutil.copy(STRATEGY, BEST)
