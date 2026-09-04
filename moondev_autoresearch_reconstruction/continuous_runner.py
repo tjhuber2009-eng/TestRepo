@@ -1,19 +1,26 @@
-"""Persistent breadth-first continuous AUTORESEARCH runner.
+"""Persistent exhaustive NVIDIA AUTORESEARCH orchestrator.
 
-Each scheduled invocation advances a deterministic cursor through the Cartesian
-product of researched runnable strategy families, enabled markets, and the two
-risk profiles. Every track keeps its own champion, baseline, result ledger and
-keepers under continuous_state/.
+Protocol:
+1. Breadth: every runnable family/market/profile track receives a fixed number
+   of valid development-only experiments.
+2. Depth: a frozen top fraction inside each market/profile receives more search.
+3. Elite: a frozen top fraction of depth survivors receives the largest budget.
+4. Hidden validation: only after *all* adaptive search is frozen, each champion
+   gets one pre-OOS validation look.
+5. 2023+ is never downloaded or opened.
+
+State persists on a dedicated GitHub branch between scheduled invocations.
 """
 
 import argparse
-import csv
 import json
+import math
 import os
 import re
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,17 +31,20 @@ STATE = HERE / "continuous_state"
 TRACKS = STATE / "tracks"
 CURSOR = STATE / "cursor.json"
 LEDGER = STATE / "cycles.jsonl"
-PROGRESS = STATE / "first_pass_progress.json"
+PROGRESS = STATE / "progress.json"
+SELECTIONS = STATE / "search_selections.json"
 
 RUNTIME_FILES = [
     "baseline.json",
     "last_run.json",
+    "validation_run.json",
     "results.tsv",
     "proposal.txt",
     "STOP",
     "strategy_best.py",
+    "seen_hashes.json",
 ]
-PROTOCOL = "chronological_robust_v1"
+PROTOCOL = "nested_chronological_v2"
 
 
 def now():
@@ -67,8 +77,24 @@ def save_json(path, obj):
 
 
 def slug(*parts):
-    raw = "__".join(parts)
-    return re.sub(r"[^A-Za-z0-9_.-]+", "_", raw)
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", "__".join(parts))
+
+
+def safe_harness_env(env):
+    out = dict(env)
+    for key in list(out):
+        upper = key.upper()
+        if (
+            upper == "NVIDIA_API_KEY"
+            or upper == "GH_TOKEN"
+            or upper == "GITHUB_TOKEN"
+            or upper.endswith("_TOKEN")
+            or upper.endswith("_API_KEY")
+            or upper.endswith("_SECRET")
+        ):
+            out.pop(key, None)
+    out["PYTHONNOUSERSITE"] = "1"
+    return out
 
 
 def build_tracks():
@@ -77,7 +103,6 @@ def build_tracks():
     families = [x for x in registry["families"] if x.get("status") == "runnable"]
     targets = [x for x in config["targets"] if x.get("enabled")]
     profiles = config["profiles"]
-
     tracks = []
     for family in sorted(families, key=lambda x: x["id"]):
         allowed = set(family.get("markets", []))
@@ -85,12 +110,11 @@ def build_tracks():
             if allowed and target["market"] not in allowed:
                 continue
             for profile_name in ["prop", "private"]:
-                p = profiles[profile_name]
                 tracks.append({
                     "family": family,
                     "target": target,
                     "profile_name": profile_name,
-                    "profile": p,
+                    "profile": profiles[profile_name],
                     "id": slug(family["id"], target["id"], profile_name),
                 })
     return tracks
@@ -99,7 +123,12 @@ def build_tracks():
 def read_cursor(total):
     if not CURSOR.exists():
         return 0
-    x = load_json(CURSOR)
+    try:
+        x = load_json(CURSOR)
+    except Exception:
+        return 0
+    if x.get("protocol") != PROTOCOL:
+        return 0
     return int(x.get("next_index", 0)) % max(total, 1)
 
 
@@ -114,135 +143,81 @@ def write_cursor(index, total):
 
 def result_counts_at(path):
     path = Path(path)
+    counts = {
+        "attempts": 0, "valid": 0, "kept": 0, "rejected": 0,
+        "crashes": 0, "duplicates": 0,
+    }
     if not path.exists():
-        return {"attempts": 0, "valid": 0, "kept": 0, "rejected": 0, "crashes": 0}
-    attempts = valid = kept = rejected = crashes = 0
+        return counts
     with path.open(encoding="utf-8") as f:
         next(f, None)
         for line in f:
             parts = line.rstrip("\n").split("\t")
             if len(parts) < 3:
                 continue
-            attempts += 1
+            counts["attempts"] += 1
             verdict = parts[2]
             if verdict == "KEPT":
-                kept += 1
-                valid += 1
+                counts["kept"] += 1
+                counts["valid"] += 1
             elif verdict == "REJECTED":
-                rejected += 1
-                valid += 1
+                counts["rejected"] += 1
+                counts["valid"] += 1
             elif verdict == "CRASH":
-                crashes += 1
-    return {
-        "attempts": attempts,
-        "valid": valid,
-        "kept": kept,
-        "rejected": rejected,
-        "crashes": crashes,
-    }
+                counts["crashes"] += 1
+            elif verdict == "DUPLICATE":
+                counts["duplicates"] += 1
+    return counts
 
 
-def track_test_status(track, required_valid_attempts):
-    track_dir = TRACKS / track["id"]
-    meta_path = track_dir / "state_meta.json"
-    if not meta_path.exists():
-        return {"complete": False, "status": "pending", "valid": 0, "attempts": 0}
+def track_meta(track):
+    p = TRACKS / track["id"] / "state_meta.json"
+    if not p.exists():
+        return None
     try:
-        meta = load_json(meta_path)
+        m = load_json(p)
     except Exception:
-        return {"complete": False, "status": "corrupt_state", "valid": 0, "attempts": 0}
-    if meta.get("protocol") != PROTOCOL:
-        return {"complete": False, "status": "stale_protocol", "valid": 0, "attempts": 0}
-    if meta.get("status") == "seed_blocked":
-        return {
-            "complete": True,
-            "status": "seed_rejected",
-            "valid": 0,
-            "attempts": 0,
-            "reason": meta.get("reason", ""),
-        }
-    counts = result_counts_at(track_dir / "results.tsv")
-    return {
-        "complete": counts["valid"] >= required_valid_attempts,
-        "status": "validated" if counts["valid"] >= required_valid_attempts else "researching",
-        "valid": counts["valid"],
-        "attempts": counts["attempts"],
-        "crashes": counts["crashes"],
-    }
+        return None
+    if m.get("protocol") != PROTOCOL:
+        return None
+    return m
 
 
-def select_incomplete_tracks(tracks, start, batch_size, required_valid_attempts):
-    selected = []
-    n = len(tracks)
-    if not n:
-        return selected
-    for offset in range(n):
-        idx = (start + offset) % n
-        track = tracks[idx]
-        status = track_test_status(track, required_valid_attempts)
-        if status["complete"]:
-            continue
-        selected.append((idx, track, status))
-        if len(selected) >= batch_size:
-            break
-    return selected
+def track_counts(track):
+    return result_counts_at(TRACKS / track["id"] / "results.tsv")
 
 
-def write_progress(tracks, required_valid_attempts):
-    registry = load_json(REGISTRY)
-    blocked_families = [
-        {
-            "id": x["id"],
-            "exactness": x.get("exactness"),
-            "origin": x.get("origin"),
-            "requires": x.get("requires", []),
-        }
-        for x in registry["families"]
-        if x.get("status") != "runnable"
-    ]
-    rows = []
-    validated = seed_rejected = pending = crashes = 0
-    for track in tracks:
-        s = track_test_status(track, required_valid_attempts)
-        crashes += int(s.get("crashes", 0) or 0)
-        if s["status"] == "validated":
-            validated += 1
-        elif s["status"] == "seed_rejected":
-            seed_rejected += 1
-        else:
-            pending += 1
-        rows.append({
-            "track_id": track["id"],
-            "family": track["family"]["id"],
-            "target": track["target"]["id"],
-            "profile": track["profile_name"],
-            "status": s["status"],
-            "valid_attempts": s.get("valid", 0),
-            "attempts": s.get("attempts", 0),
-        })
-    complete = validated + seed_rejected
-    payload = {
-        "updated_at": now(),
-        "protocol": PROTOCOL,
-        "required_valid_attempts_per_viable_track": required_valid_attempts,
-        "runnable_track_count": len(tracks),
-        "completed_track_count": complete,
-        "validated_track_count": validated,
-        "seed_rejected_track_count": seed_rejected,
-        "pending_track_count": pending,
-        "total_crashes_recorded": crashes,
-        "runnable_first_pass_complete": pending == 0,
-        "blocked_family_count": len(blocked_families),
-        "blocked_families": blocked_families,
-        "rows": rows,
-    }
-    save_json(PROGRESS, payload)
-    return payload
+def is_terminal_block(track):
+    m = track_meta(track)
+    return bool(m and m.get("status") in {"seed_blocked", "data_insufficient"})
+
+
+def validation_state(track):
+    p = TRACKS / track["id"] / "validation.json"
+    if not p.exists():
+        return None
+    try:
+        return load_json(p)
+    except Exception:
+        return None
+
+
+def development_score(track):
+    m = track_meta(track)
+    if not m:
+        return float("-inf")
+    b = m.get("baseline") or {}
+    try:
+        score = float(b.get("score", float("-inf")))
+    except Exception:
+        return float("-inf")
+    return score if math.isfinite(score) else float("-inf")
 
 
 def target_env(track):
     t = track["target"]
     p = track["profile"]
+    cfg = load_json(CONFIG)
     env = dict(os.environ)
     env.update({
         "AUTORESEARCH_HARNESS": "robust_harness.py",
@@ -256,13 +231,19 @@ def target_env(track):
         "AUTORESEARCH_BARS_PER_YEAR": str(t["bars_per_year"]),
         "AUTORESEARCH_PROFILE": track["profile_name"],
         "AUTORESEARCH_MAX_DD_PCT": str(p["max_dd_pct"]),
-        "AUTORESEARCH_MIN_TRADES": "20",
-        "AUTORESEARCH_MIN_FOLD_TRADES": "2",
+        "AUTORESEARCH_MIN_TRADES": str(track["family"].get("min_trades", 12)),
+        "AUTORESEARCH_MIN_VALIDATION_TRADES": str(
+            track["family"].get("min_validation_trades", 2)
+        ),
         "AUTORESEARCH_MIN_ACTIVE_FOLDS": "3",
-        "AUTORESEARCH_MIN_FOLD_BARS": "180",
-        "AUTORESEARCH_VOL_BAND": "0.20",
-        "AUTORESEARCH_IS_START": "2017-08-17",
-        "AUTORESEARCH_IS_END": "2022-12-31",
+        "AUTORESEARCH_MIN_FOLD_BARS": "100",
+        "AUTORESEARCH_VOL_BAND": "0.25",
+        "AUTORESEARCH_COST_STRESS_MULT": str(
+            cfg.get("protocol", {}).get("cost_stress_multiplier", 2.0)
+        ),
+        "AUTORESEARCH_IS_START": t.get("start", "2017-08-17"),
+        "AUTORESEARCH_VALIDATION_START": t.get("validation_start", "2021-01-01"),
+        "AUTORESEARCH_VALIDATION_END": t.get("validation_end", "2022-12-31"),
     })
     return env
 
@@ -270,16 +251,24 @@ def target_env(track):
 def prepare_data(track):
     t = track["target"]
     path = HERE / "data" / f"{t['id']}_1d.csv"
-    if path.exists() and path.stat().st_size > 1000:
-        return
+    manifest = HERE / "data" / f"{t['id']}_1d.manifest.json"
+    wanted_start = t.get("start", "2017-08-17")
+    wanted_end = t.get("validation_end", "2022-12-31")
+    if path.exists() and path.stat().st_size > 1000 and manifest.exists():
+        try:
+            m = load_json(manifest)
+            if m.get("requested_start") == wanted_start and m.get("requested_end") == wanted_end:
+                return
+        except Exception:
+            pass
     run([
         sys.executable,
         "prepare_market_data.py",
         "--source", t["source"],
         "--symbol", t["symbol"],
         "--id", t["id"],
-        "--start", "2017-08-17",
-        "--end", "2022-12-31",
+        "--start", wanted_start,
+        "--end", wanted_end,
     ])
 
 
@@ -302,19 +291,19 @@ def restore_state(track_dir):
     meta = load_json(meta_path)
     if meta.get("protocol") != PROTOCOL or meta.get("status") != "active":
         return False
-
-    for name in ["baseline.json", "last_run.json", "results.tsv", "strategy_best.py"]:
+    for name in [
+        "baseline.json", "last_run.json", "results.tsv",
+        "strategy_best.py", "seen_hashes.json",
+    ]:
         src = track_dir / name
-        if not src.exists():
-            return False
-        shutil.copy2(src, HERE / name)
-    shutil.copy2(track_dir / "strategy_best.py", HERE / "strategy.py")
-
-    for d in ["keepers"]:
-        src = track_dir / d
-        dst = HERE / d
         if src.exists():
-            shutil.copytree(src, dst, dirs_exist_ok=True)
+            shutil.copy2(src, HERE / name)
+        elif name != "seen_hashes.json":
+            return False
+    shutil.copy2(track_dir / "strategy_best.py", HERE / "strategy.py")
+    src = track_dir / "keepers"
+    if src.exists():
+        shutil.copytree(src, HERE / "keepers", dirs_exist_ok=True)
     return True
 
 
@@ -343,24 +332,24 @@ def generate_seed(track):
 def initialize_track(track, track_dir, env):
     generate_seed(track)
     limit = float(track["profile"]["max_dd_pct"])
+    henv = safe_harness_env(env)
 
     last = None
-    for attempt in range(7):
+    for _ in range(8):
         for name in ["baseline.json", "last_run.json"]:
             p = HERE / name
             if p.exists():
                 p.unlink()
-        run([sys.executable, "robust_harness.py", "--is"], env=env)
+        run([sys.executable, "robust_harness.py", "--is"], env=henv)
         last = load_json(HERE / "last_run.json")
 
-        structural_failures = [
-            x for x in last.get("audit_guard_details", [])
-            if "drawdown" not in x and "volatility" not in x
-        ]
-        if structural_failures:
-            reason = "; ".join(structural_failures)
+        # Insufficient history is a data qualification result, not evidence that
+        # the strategy itself is bad.
+        details = list(last.get("audit_guard_details", []))
+        if int(last.get("active_folds", 0)) < 3:
+            reason = "insufficient pre-validation history for >=3 development folds"
             save_json(track_dir / "state_meta.json", {
-                "status": "seed_blocked",
+                "status": "data_insufficient",
                 "reason": reason,
                 "protocol": PROTOCOL,
                 "family": track["family"]["id"],
@@ -370,22 +359,13 @@ def initialize_track(track, track_dir, env):
             })
             return False, reason
 
-        dds = [abs(float(last["max_dd_pct"]))]
-        dds += [abs(float(x["max_dd_pct"])) for x in last.get("folds", [])]
-        worst_dd = max(dds) if dds else 0.0
+        dds = [abs(float(last.get("max_dd_pct", 0.0)))]
+        stress = last.get("stress") or {}
+        dds.append(abs(float(stress.get("max_dd_pct", 0.0))))
+        worst_dd = max(dds)
 
-        if worst_dd <= limit and last.get("guard_ok"):
+        if worst_dd <= limit:
             break
-
-        if worst_dd <= 0:
-            reason = "seed failed robustness guard for non-drawdown reason"
-            save_json(track_dir / "state_meta.json", {
-                "status": "seed_blocked",
-                "reason": reason,
-                "protocol": PROTOCOL,
-                "updated_at": now(),
-            })
-            return False, reason
 
         source = (HERE / "strategy.py").read_text(encoding="utf-8")
         m = re.search(r"^\s*vol_target\s*=\s*([0-9.]+)", source, re.M)
@@ -399,8 +379,10 @@ def initialize_track(track, track_dir, env):
             })
             return False, reason
         old = float(m.group(1))
+        if worst_dd <= 0:
+            break
         factor = min(0.88 * limit / worst_dd, 0.93)
-        new = max(0.003, old * factor)
+        new = max(0.002, old * factor)
         (HERE / "strategy.py").write_text(
             replace_numeric_assignment(source, "vol_target", new),
             encoding="utf-8",
@@ -410,7 +392,7 @@ def initialize_track(track, track_dir, env):
             f"vol_target {old:.6f}->{new:.6f}"
         )
     else:
-        reason = "could not normalize seed below chronological DD constraints"
+        reason = "could not normalize seed below development/stress DD cap"
         save_json(track_dir / "state_meta.json", {
             "status": "seed_blocked",
             "reason": reason,
@@ -419,20 +401,25 @@ def initialize_track(track, track_dir, env):
         })
         return False, reason
 
-    # Freeze only after the seed passes every chronological robustness gate.
-    run([sys.executable, "robust_harness.py", "--is", "--set-baseline"], env=env)
+    # Freeze a development baseline even when the original seed is not yet
+    # profitable. The agent is then allowed to rescue a weak researched family;
+    # candidates themselves must pass the full development robustness gate.
+    if not math.isfinite(float(last.get("score", float("-inf")))):
+        last["score"] = -1000000.0
+    save_json(HERE / "baseline.json", last)
     shutil.copy2(HERE / "strategy.py", HERE / "strategy_best.py")
     shutil.copy2(HERE / "strategy.py", HERE / "keepers" / "000_seed.py")
+    save_json(HERE / "seen_hashes.json", {"version": 1, "hashes": []})
+    save_track_state(track, track_dir)
     return True, "ok"
 
 
-def result_row_count():
-    return result_counts_at(HERE / "results.tsv")["attempts"]
-
-
-def save_track_state(track, track_dir, status="active", reason=""):
+def save_track_state(track, track_dir, reason=""):
     track_dir.mkdir(parents=True, exist_ok=True)
-    for name in ["baseline.json", "last_run.json", "results.tsv", "strategy_best.py"]:
+    for name in [
+        "baseline.json", "last_run.json", "results.tsv",
+        "strategy_best.py", "seen_hashes.json",
+    ]:
         src = HERE / name
         if src.exists():
             shutil.copy2(src, track_dir / name)
@@ -442,12 +429,10 @@ def save_track_state(track, track_dir, status="active", reason=""):
             shutil.rmtree(dst)
         shutil.copytree(HERE / "keepers", dst)
 
-    baseline = {}
-    if (HERE / "baseline.json").exists():
-        baseline = load_json(HERE / "baseline.json")
+    baseline = load_json(HERE / "baseline.json") if (HERE / "baseline.json").exists() else {}
     counts = result_counts_at(HERE / "results.tsv")
     meta = {
-        "status": status,
+        "status": "active",
         "reason": reason,
         "protocol": PROTOCOL,
         "family": track["family"]["id"],
@@ -458,11 +443,7 @@ def save_track_state(track, track_dir, status="active", reason=""):
         "market": track["target"]["market"],
         "profile": track["profile_name"],
         "max_dd_limit_pct": track["profile"]["max_dd_pct"],
-        "attempts": counts["attempts"],
-        "valid_attempts": counts["valid"],
-        "kept": counts["kept"],
-        "rejected": counts["rejected"],
-        "crashes": counts["crashes"],
+        **counts,
         "baseline": baseline,
         "updated_at": now(),
     }
@@ -476,41 +457,6 @@ def append_cycle(record):
         f.write(json.dumps(record, sort_keys=True) + "\n")
 
 
-def rebuild_leaderboard():
-    rows = []
-    for meta_path in TRACKS.glob("*/state_meta.json"):
-        try:
-            m = load_json(meta_path)
-        except Exception:
-            continue
-        if m.get("status") != "active" or not m.get("baseline"):
-            continue
-        b = m["baseline"]
-        rows.append({
-            "track_id": meta_path.parent.name,
-            "family": m.get("family"),
-            "exactness": m.get("family_exactness"),
-            "target": m.get("target"),
-            "market": m.get("market"),
-            "profile": m.get("profile"),
-            "attempts": m.get("attempts", 0),
-            "score": b.get("score"),
-            "return_pct": b.get("return_pct"),
-            "sharpe": b.get("sharpe"),
-            "max_dd_pct": b.get("max_dd_pct"),
-            "pf": b.get("pf"),
-            "active_folds": b.get("active_folds"),
-            "worst_fold_k": b.get("worst_fold_k"),
-        })
-    rows.sort(key=lambda x: float(x["score"]) if x["score"] is not None else -1e99, reverse=True)
-    save_json(STATE / "leaderboard_latest.json", {
-        "updated_at": now(),
-        "protocol": PROTOCOL,
-        "count": len(rows),
-        "rows": rows,
-    })
-
-
 def process_track(track, iters, model):
     print("\n" + "=" * 88)
     print(
@@ -520,18 +466,6 @@ def process_track(track, iters, model):
     print("=" * 88, flush=True)
 
     track_dir = TRACKS / track["id"]
-    meta_path = track_dir / "state_meta.json"
-    if meta_path.exists():
-        old_meta = load_json(meta_path)
-        if old_meta.get("status") == "seed_blocked" and old_meta.get("protocol") == PROTOCOL:
-            record = {
-                "ts": now(), "track_id": track["id"], "status": "skipped_seed_blocked",
-                "reason": old_meta.get("reason", ""),
-            }
-            append_cycle(record)
-            print(f"[skip] {old_meta.get('reason')}")
-            return
-
     clean_runtime()
     prepare_data(track)
     env = target_env(track)
@@ -541,23 +475,21 @@ def process_track(track, iters, model):
         ok, reason = initialize_track(track, track_dir, env)
         if not ok:
             append_cycle({
-                "ts": now(), "track_id": track["id"], "status": "seed_blocked",
-                "reason": reason,
+                "ts": now(), "track_id": track["id"],
+                "status": "search_unavailable", "reason": reason,
             })
-            print(f"[seed blocked] {reason}")
+            print(f"[search unavailable] {reason}")
             return
 
-    before = result_row_count()
+    before = result_counts_at(HERE / "results.tsv")
     proc = run(
         [sys.executable, "loop.py", "--iters", str(iters), "--model", model],
         env=env,
         check=False,
     )
-    after = result_row_count()
-    status = "active" if proc.returncode == 0 else "loop_error"
+    after = result_counts_at(HERE / "results.tsv")
     reason = "" if proc.returncode == 0 else f"loop exit {proc.returncode}"
-    meta = save_track_state(track, track_dir, status="active", reason=reason)
-
+    meta = save_track_state(track, track_dir, reason=reason)
     b = meta.get("baseline", {})
     append_cycle({
         "ts": now(),
@@ -565,9 +497,10 @@ def process_track(track, iters, model):
         "family": track["family"]["id"],
         "target": track["target"]["id"],
         "profile": track["profile_name"],
-        "status": status,
-        "iterations_before": before,
-        "iterations_after": after,
+        "status": "active" if proc.returncode == 0 else "loop_error",
+        "valid_before": before["valid"],
+        "valid_after": after["valid"],
+        "attempts_after": after["attempts"],
         "score": b.get("score"),
         "return_pct": b.get("return_pct"),
         "max_dd_pct": b.get("max_dd_pct"),
@@ -576,77 +509,417 @@ def process_track(track, iters, model):
     })
 
 
+def validate_track(track):
+    track_dir = TRACKS / track["id"]
+    if is_terminal_block(track) or validation_state(track):
+        return
+    clean_runtime()
+    prepare_data(track)
+    if not restore_state(track_dir):
+        raise RuntimeError("cannot restore frozen champion for hidden validation")
+    env = safe_harness_env(target_env(track))
+    run([sys.executable, "robust_harness.py", "--validation"], env=env)
+    result = load_json(HERE / "validation_run.json")
+    save_json(track_dir / "validation.json", result)
+
+    meta = load_json(track_dir / "state_meta.json")
+    meta["status"] = "validation_pass" if result.get("guard_ok") else "validation_fail"
+    meta["validation_guard_reason"] = result.get("guard_reason")
+    meta["validation_return_pct"] = result.get("return_pct")
+    meta["validation_sharpe"] = result.get("sharpe")
+    meta["validation_max_dd_pct"] = result.get("max_dd_pct")
+    meta["validation_pf"] = result.get("pf")
+    meta["validated_at"] = now()
+    save_json(track_dir / "state_meta.json", meta)
+    append_cycle({
+        "ts": now(),
+        "track_id": track["id"],
+        "family": track["family"]["id"],
+        "target": track["target"]["id"],
+        "profile": track["profile_name"],
+        "status": meta["status"],
+        "hidden_return_pct": result.get("return_pct"),
+        "hidden_sharpe": result.get("sharpe"),
+        "hidden_max_dd_pct": result.get("max_dd_pct"),
+        "hidden_pf": result.get("pf"),
+    })
+
+
+def all_reached(tracks, ids, target):
+    wanted = set(ids)
+    for track in tracks:
+        if track["id"] not in wanted:
+            continue
+        if is_terminal_block(track):
+            continue
+        if track_counts(track)["valid"] < target:
+            return False
+    return True
+
+
+def breadth_complete(tracks, target):
+    for track in tracks:
+        if is_terminal_block(track):
+            continue
+        if track_counts(track)["valid"] < target:
+            return False
+    return True
+
+
+def ranked_viable(tracks, min_valid):
+    rows = []
+    for track in tracks:
+        if is_terminal_block(track):
+            continue
+        if track_counts(track)["valid"] < min_valid:
+            continue
+        score = development_score(track)
+        if math.isfinite(score):
+            rows.append((score, track))
+    rows.sort(key=lambda x: x[0], reverse=True)
+    return rows
+
+
+def freeze_depth_selection(tracks, breadth_target, depth_fraction):
+    if SELECTIONS.exists():
+        x = load_json(SELECTIONS)
+        if x.get("protocol") == PROTOCOL and x.get("depth_ids"):
+            return x
+
+    grouped = {}
+    for score, track in ranked_viable(tracks, breadth_target):
+        key = (track["target"]["id"], track["profile_name"])
+        grouped.setdefault(key, []).append((score, track))
+
+    depth_ids = []
+    for key, rows in sorted(grouped.items()):
+        n = max(1, math.ceil(len(rows) * depth_fraction))
+        depth_ids.extend(track["id"] for _, track in rows[:n])
+
+    x = {
+        "protocol": PROTOCOL,
+        "created_at": now(),
+        "breadth_target": breadth_target,
+        "depth_fraction": depth_fraction,
+        "depth_ids": sorted(set(depth_ids)),
+        "elite_ids": [],
+    }
+    save_json(SELECTIONS, x)
+    return x
+
+
+def freeze_elite_selection(tracks, depth_target, elite_fraction):
+    x = load_json(SELECTIONS)
+    if x.get("elite_ids"):
+        return x
+    depth_ids = set(x.get("depth_ids", []))
+    rows = [
+        (score, track)
+        for score, track in ranked_viable(tracks, depth_target)
+        if track["id"] in depth_ids
+    ]
+    by_profile = {}
+    for score, track in rows:
+        by_profile.setdefault(track["profile_name"], []).append((score, track))
+
+    elite_ids = []
+    for profile, group in sorted(by_profile.items()):
+        n = max(3, math.ceil(len(group) * elite_fraction))
+        elite_ids.extend(track["id"] for _, track in group[:n])
+    x["elite_fraction"] = elite_fraction
+    x["elite_created_at"] = now()
+    x["elite_ids"] = sorted(set(elite_ids))
+    save_json(SELECTIONS, x)
+    return x
+
+
+def current_search_plan(
+    tracks, breadth_target, depth_target, elite_target,
+    depth_fraction, elite_fraction,
+):
+    if not breadth_complete(tracks, breadth_target):
+        return "breadth", {t["id"]: breadth_target for t in tracks if not is_terminal_block(t)}
+
+    selections = freeze_depth_selection(tracks, breadth_target, depth_fraction)
+    depth_ids = selections.get("depth_ids", [])
+    if not all_reached(tracks, depth_ids, depth_target):
+        return "depth", {x: depth_target for x in depth_ids}
+
+    selections = freeze_elite_selection(tracks, depth_target, elite_fraction)
+    elite_ids = selections.get("elite_ids", [])
+    if not all_reached(tracks, elite_ids, elite_target):
+        return "elite", {x: elite_target for x in elite_ids}
+
+    return "validation", {}
+
+
+def next_search_track(tracks, plan, start):
+    n = len(tracks)
+    for offset in range(n):
+        idx = (start + offset) % n
+        track = tracks[idx]
+        target = plan.get(track["id"])
+        if target is None or is_terminal_block(track):
+            continue
+        if track_counts(track)["valid"] < target:
+            return idx, track, target
+    return None
+
+
+def next_validation_track(tracks, start):
+    n = len(tracks)
+    for offset in range(n):
+        idx = (start + offset) % n
+        track = tracks[idx]
+        if is_terminal_block(track):
+            continue
+        if validation_state(track) is None:
+            return idx, track
+    return None
+
+
+def write_progress(
+    tracks, phase, breadth_target, depth_target, elite_target,
+):
+    registry = load_json(REGISTRY)
+    blocked_families = [
+        {
+            "id": x["id"],
+            "exactness": x.get("exactness"),
+            "origin": x.get("origin"),
+            "requires": x.get("requires", []),
+        }
+        for x in registry["families"] if x.get("status") != "runnable"
+    ]
+    rows = []
+    counts = {
+        "data_insufficient": 0, "seed_blocked": 0,
+        "validation_pass": 0, "validation_fail": 0,
+        "searching": 0,
+    }
+    total_valid = total_attempts = total_crashes = total_duplicates = 0
+
+    selections = load_json(SELECTIONS) if SELECTIONS.exists() else {}
+    depth_ids = set(selections.get("depth_ids", []))
+    elite_ids = set(selections.get("elite_ids", []))
+
+    for track in tracks:
+        m = track_meta(track)
+        rc = track_counts(track)
+        total_valid += rc["valid"]
+        total_attempts += rc["attempts"]
+        total_crashes += rc["crashes"]
+        total_duplicates += rc["duplicates"]
+        val = validation_state(track)
+
+        if m and m.get("status") == "data_insufficient":
+            status = "data_insufficient"
+        elif m and m.get("status") == "seed_blocked":
+            status = "seed_blocked"
+        elif val is not None:
+            status = "validation_pass" if val.get("guard_ok") else "validation_fail"
+        else:
+            status = "searching"
+        counts[status] += 1
+
+        rows.append({
+            "track_id": track["id"],
+            "family": track["family"]["id"],
+            "target": track["target"]["id"],
+            "profile": track["profile_name"],
+            "status": status,
+            "valid_attempts": rc["valid"],
+            "attempts": rc["attempts"],
+            "development_score": development_score(track),
+            "depth_selected": track["id"] in depth_ids,
+            "elite_selected": track["id"] in elite_ids,
+        })
+
+    terminal = (
+        counts["data_insufficient"] + counts["seed_blocked"]
+        + counts["validation_pass"] + counts["validation_fail"]
+    )
+    payload = {
+        "updated_at": now(),
+        "protocol": PROTOCOL,
+        "phase": phase,
+        "breadth_target": breadth_target,
+        "depth_target": depth_target,
+        "elite_target": elite_target,
+        "runnable_track_count": len(tracks),
+        "terminal_track_count": terminal,
+        "validation_pass_count": counts["validation_pass"],
+        "validation_fail_count": counts["validation_fail"],
+        "data_insufficient_count": counts["data_insufficient"],
+        "seed_blocked_count": counts["seed_blocked"],
+        "searching_count": counts["searching"],
+        "total_valid_candidates": total_valid,
+        "total_model_attempt_rows": total_attempts,
+        "total_crashes": total_crashes,
+        "total_duplicates": total_duplicates,
+        "all_runnable_tracks_terminal": terminal == len(tracks),
+        "blocked_family_count": len(blocked_families),
+        "blocked_families": blocked_families,
+        "rows": rows,
+    }
+    save_json(PROGRESS, payload)
+    return payload
+
+
+def rebuild_leaderboard(tracks):
+    rows = []
+    for track in tracks:
+        m = track_meta(track)
+        if not m or not m.get("baseline"):
+            continue
+        b = m["baseline"]
+        val = validation_state(track)
+        rows.append({
+            "track_id": track["id"],
+            "family": m.get("family"),
+            "exactness": m.get("family_exactness"),
+            "target": m.get("target"),
+            "market": m.get("market"),
+            "profile": m.get("profile"),
+            "valid_attempts": m.get("valid", m.get("valid_attempts", 0)),
+            "development_score": b.get("score"),
+            "development_return_pct": b.get("return_pct"),
+            "development_sharpe": b.get("sharpe"),
+            "development_max_dd_pct": b.get("max_dd_pct"),
+            "development_pf": b.get("pf"),
+            "hidden_validation_pass": None if val is None else bool(val.get("guard_ok")),
+            "hidden_return_pct": None if val is None else val.get("return_pct"),
+            "hidden_sharpe": None if val is None else val.get("sharpe"),
+            "hidden_max_dd_pct": None if val is None else val.get("max_dd_pct"),
+            "hidden_pf": None if val is None else val.get("pf"),
+        })
+    rows.sort(
+        key=lambda x: (
+            1 if x["hidden_validation_pass"] is True else 0,
+            float(x["development_score"])
+            if x["development_score"] is not None and math.isfinite(float(x["development_score"]))
+            else -1e99,
+        ),
+        reverse=True,
+    )
+    save_json(STATE / "leaderboard_latest.json", {
+        "updated_at": now(),
+        "protocol": PROTOCOL,
+        "count": len(rows),
+        "rows": rows,
+    })
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--batch-size", type=int, default=4)
     ap.add_argument("--iters-per-visit", type=int, default=2)
-    ap.add_argument("--required-valid-attempts", type=int, default=10)
+    ap.add_argument("--max-visits", type=int, default=12)
+    ap.add_argument("--max-seconds", type=int, default=2400)
+    ap.add_argument("--breadth-target", type=int, default=10)
+    ap.add_argument("--depth-target", type=int, default=30)
+    ap.add_argument("--elite-target", type=int, default=60)
+    ap.add_argument("--depth-fraction", type=float, default=0.25)
+    ap.add_argument("--elite-fraction", type=float, default=0.20)
     ap.add_argument("--model", default="nvidia/nemotron-3-super-120b-a12b")
     args = ap.parse_args()
 
-    if args.batch_size < 1 or args.iters_per_visit < 1 or args.required_valid_attempts < 1:
-        raise SystemExit("batch/iteration targets must be positive")
-
     if not os.environ.get("NVIDIA_API_KEY"):
         raise SystemExit("NVIDIA_API_KEY missing")
+    if not (0 < args.depth_fraction <= 1 and 0 < args.elite_fraction <= 1):
+        raise SystemExit("selection fractions must be in (0,1]")
+    if not (1 <= args.breadth_target <= args.depth_target <= args.elite_target):
+        raise SystemExit("require breadth <= depth <= elite targets")
 
     STATE.mkdir(parents=True, exist_ok=True)
     TRACKS.mkdir(parents=True, exist_ok=True)
     tracks = build_tracks()
     if not tracks:
-        raise SystemExit("no runnable continuous tracks")
+        raise SystemExit("no runnable tracks")
 
-    progress = write_progress(tracks, args.required_valid_attempts)
-    if progress["runnable_first_pass_complete"]:
-        print(
-            f"ALL RUNNABLE TRACKS TESTED: {progress['completed_track_count']}/"
-            f"{progress['runnable_track_count']} tracks complete with "
-            f">={args.required_valid_attempts} valid NVIDIA candidates per viable track."
+    started = time.monotonic()
+    cursor = read_cursor(len(tracks))
+    visits = 0
+
+    while visits < args.max_visits and (time.monotonic() - started) < args.max_seconds:
+        phase, plan = current_search_plan(
+            tracks,
+            args.breadth_target,
+            args.depth_target,
+            args.elite_target,
+            args.depth_fraction,
+            args.elite_fraction,
+        )
+        progress = write_progress(
+            tracks, phase, args.breadth_target, args.depth_target, args.elite_target
         )
         print(
-            f"Blocked special-engine families still catalogued: "
-            f"{progress['blocked_family_count']}"
+            f"phase={phase} tracks={len(tracks)} valid_candidates="
+            f"{progress['total_valid_candidates']} terminal={progress['terminal_track_count']}"
         )
-        rebuild_leaderboard()
-        return
 
-    start = read_cursor(len(tracks))
-    selected = select_incomplete_tracks(
-        tracks, start, args.batch_size, args.required_valid_attempts
-    )
-    print(
-        f"continuous universe tracks={len(tracks)} cursor={start} "
-        f"pending={progress['pending_track_count']} batch={len(selected)} "
-        f"iters_per_visit={args.iters_per_visit} "
-        f"required_valid={args.required_valid_attempts}"
-    )
+        if phase == "validation":
+            nxt = next_validation_track(tracks, cursor)
+            if nxt is None:
+                print("ALL RUNNABLE TRACKS TERMINAL; hidden validation phase complete")
+                break
+            idx, track = nxt
+            try:
+                validate_track(track)
+            except Exception as exc:
+                append_cycle({
+                    "ts": now(), "track_id": track["id"],
+                    "status": "validation_runner_error",
+                    "reason": f"{type(exc).__name__}: {str(exc)[:500]}",
+                })
+                print(f"[validation error] {track['id']}: {exc}", file=sys.stderr)
+            cursor = (idx + 1) % len(tracks)
+            visits += 1
+            continue
 
-    last_index = start
-    for idx, track, status_before in selected:
-        last_index = idx
+        nxt = next_search_track(tracks, plan, cursor)
+        if nxt is None:
+            # Recompute phase on the next loop; this occurs at a phase boundary.
+            continue
+        idx, track, target = nxt
+        current = track_counts(track)["valid"]
+        visit_iters = min(args.iters_per_visit, max(1, target - current))
         try:
-            missing = max(1, args.required_valid_attempts - int(status_before.get("valid", 0)))
-            visit_iters = min(args.iters_per_visit, missing)
             process_track(track, visit_iters, args.model)
         except Exception as exc:
             append_cycle({
-                "ts": now(),
-                "track_id": track["id"],
+                "ts": now(), "track_id": track["id"],
                 "status": "runner_error",
                 "reason": f"{type(exc).__name__}: {str(exc)[:500]}",
             })
             print(f"[runner error] {track['id']}: {exc}", file=sys.stderr)
+        cursor = (idx + 1) % len(tracks)
+        visits += 1
 
-    write_cursor(last_index + 1, len(tracks))
-    rebuild_leaderboard()
-    progress = write_progress(tracks, args.required_valid_attempts)
-    print(
-        f"progress={progress['completed_track_count']}/{progress['runnable_track_count']} "
-        f"pending={progress['pending_track_count']} "
-        f"validated={progress['validated_track_count']} "
-        f"seed_rejected={progress['seed_rejected_track_count']}"
+    write_cursor(cursor, len(tracks))
+    phase, _ = current_search_plan(
+        tracks,
+        args.breadth_target,
+        args.depth_target,
+        args.elite_target,
+        args.depth_fraction,
+        args.elite_fraction,
     )
-    print(f"next_cursor={(last_index + 1) % len(tracks)}")
+    progress = write_progress(
+        tracks, phase, args.breadth_target, args.depth_target, args.elite_target
+    )
+    rebuild_leaderboard(tracks)
+    print(json.dumps({
+        "phase": phase,
+        "visits_this_run": visits,
+        "valid_candidates": progress["total_valid_candidates"],
+        "terminal_tracks": progress["terminal_track_count"],
+        "runnable_tracks": progress["runnable_track_count"],
+        "validation_pass": progress["validation_pass_count"],
+        "validation_fail": progress["validation_fail_count"],
+        "data_insufficient": progress["data_insufficient_count"],
+        "seed_blocked": progress["seed_blocked_count"],
+        "next_cursor": cursor,
+    }, indent=2))
 
 
 if __name__ == "__main__":
