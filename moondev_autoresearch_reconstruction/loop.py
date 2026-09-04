@@ -38,7 +38,7 @@ EXPERIMENTS = "experiments.jsonl"
 
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
-MAX_API_RETRIES = 4
+MAX_API_RETRIES = 6
 
 
 def now():
@@ -519,7 +519,7 @@ def run_agent(iteration, prompt, model):
             last_exc = exc
             log_agent_attempt(iteration, attempt, last_raw, exc)
             if retryable(exc) and attempt < MAX_API_RETRIES:
-                time.sleep(min(2 ** (attempt - 1), 8))
+                time.sleep(min(2 ** (attempt - 1), 20))
                 continue
             break
 
