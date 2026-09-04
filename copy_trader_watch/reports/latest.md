@@ -1,6 +1,6 @@
 # Copy Trader Watch — Latest Report
 
-Forward-test window: **2026-09-03 → 2026-09-03** (1 observations)
+Forward-test window: **2026-09-03 → 2026-09-04** (2 observations)
 
 > Research monitor only. It does not place trades and its score is not an investment recommendation.
 
@@ -8,28 +8,29 @@ Forward-test window: **2026-09-03 → 2026-09-03** (1 observations)
 
 | Rank | Candidate | Obs | Forward return | Max DD | Return/DD | Risk | Top-1 concentration | Research score |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|
-| 1 | jonathandm25 | 1 | 0.00% | 0.00% | 0.000 | 4 | 8.09% | warming up 1/5 |
-| 2 | Luisitoalana | 1 | 0.00% | 0.00% | 0.000 | 5 | 13.08% | warming up 1/5 |
+| 1 | jonathandm25 | 2 | 0.00% | 0.00% | 0.000 | 4 | 8.09% | warming up 2/5 |
+| 2 | Luisitoalana | 2 | 0.00% | 0.00% | 0.000 | 5 | 13.08% | warming up 2/5 |
 | 3 | bgsully111 | 0 | unresolved | n/a | n/a | n/a | n/a | n/a |
 | 4 | WilEscobar | 0 | unresolved | n/a | n/a | n/a | n/a | n/a |
 
 ## Benchmarks
 
-- **SPY:** 0.00% since baseline; close 773.31 (as of 2026-09-03, yahoo)
-- **QQQ:** 0.00% since baseline; close 717.74 (as of 2026-09-03, yahoo)
+- **SPY:** -1.05% since baseline; close 765.16 (as of 2026-09-02, yahoo)
+- **QQQ:** -1.18% since baseline; close 709.24 (as of 2026-09-02, yahoo)
 
 ## Data quality
 
 | Candidate | Status | Source | Source timestamp | Source age | Missing streak |
 |---|---|---|---|---:|---:|
-| jonathandm25 | resolved | etoro-census-public-user-api | 2026-09-03T19:24:03.316Z | 0.0h | 0 |
-| bgsully111 | per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days | n/a | n/a | n/a | 1 |
-| WilEscobar | per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days | n/a | n/a | n/a | 1 |
-| Luisitoalana | resolved | etoro-census-public-user-api | 2026-09-03T19:24:05.618Z | 0.0h | 0 |
+| jonathandm25 | resolved | etoro-census-public-user-api | 2026-09-04T07:22:23.346Z | 0.0h | 0 |
+| bgsully111 | per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days | n/a | n/a | n/a | 2 |
+| WilEscobar | per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days | n/a | n/a | n/a | 2 |
+| Luisitoalana | resolved | etoro-census-public-user-api | 2026-09-04T07:22:25.810Z | 0.0h | 0 |
 
 ## Active alerts
 
-No configured alert conditions are active.
+- **bgsully111 — missing:** Candidate could not be resolved for 2 consecutive observations by the configured public data sources. Latest lookup: per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days. This does not by itself prove the eToro account is unavailable to copy.
+- **WilEscobar — missing:** Candidate could not be resolved for 2 consecutive observations by the configured public data sources. Latest lookup: per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days. This does not by itself prove the eToro account is unavailable to copy.
 
 ## Method notes
 

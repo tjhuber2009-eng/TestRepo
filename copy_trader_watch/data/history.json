@@ -64,5 +64,71 @@
     },
     "date": "2026-09-03",
     "source_collected_at": "2026-09-03T19:23:53.537047Z"
+  },
+  {
+    "benchmarks": {
+      "QQQ": {
+        "as_of": "2026-09-02",
+        "close": 709.239990234375,
+        "source": "yahoo"
+      },
+      "SPY": {
+        "as_of": "2026-09-02",
+        "close": 765.1599731445312,
+        "source": "yahoo"
+      }
+    },
+    "candidates": {
+      "Luisitoalana": {
+        "copiers": null,
+        "country": 219,
+        "daily_gain_pct": 0.0,
+        "gain_ytd_pct": 3.66,
+        "name": "Luisitoalana",
+        "portfolio_pnl_pct": null,
+        "portfolio_value_pct": 100.0,
+        "positions_count": 20,
+        "present": true,
+        "risk_score": 5,
+        "source": "etoro-census-public-user-api",
+        "source_timestamp": "2026-09-04T07:22:25.810Z",
+        "top1_concentration_pct": 13.0794,
+        "top2_concentration_pct": 23.4961,
+        "trades": 238,
+        "unique_instruments": 10,
+        "username": "Luisitoalana",
+        "win_ratio_pct": 71.85
+      },
+      "WilEscobar": {
+        "lookup_error": "per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days",
+        "present": false
+      },
+      "bgsully111": {
+        "lookup_error": "per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days",
+        "present": false
+      },
+      "jonathandm25": {
+        "copiers": null,
+        "country": 219,
+        "daily_gain_pct": 0.0,
+        "gain_ytd_pct": 18.4,
+        "name": "Jonathan Dom\u00ednguez Serrata",
+        "portfolio_pnl_pct": null,
+        "portfolio_value_pct": 100.0,
+        "positions_count": 22,
+        "present": true,
+        "risk_score": 4,
+        "source": "etoro-census-public-user-api",
+        "source_timestamp": "2026-09-04T07:22:23.346Z",
+        "top1_concentration_pct": 8.0934,
+        "top2_concentration_pct": 15.924,
+        "trades": 135,
+        "unique_instruments": 10,
+        "username": "jonathandm25",
+        "win_ratio_pct": 77.78
+      }
+    },
+    "date": "2026-09-04",
+    "source_collected_at": "2026-09-04T07:22:22.024513Z"
   }
 ]
