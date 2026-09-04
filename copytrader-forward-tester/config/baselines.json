@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "frozen_from_project": "COPYTRADER-FORWARD-LAB 3.2-final",
+  "candidates": [
+    {
+      "candidate_id":"2385460","name":"Definitely No Hype EA MT5","observed_at":"2026-09-03T23:48:00Z","currency":"USD",
+      "balance":26441.94,"equity":26441.94,"initial_deposit":4000.0,"deposits":0.0,"withdrawals":0.0,"trades":264,"wins":206,"losses":58,
+      "gross_profit":75509.09,"gross_loss":-53067.15,"baseline_equity_dd_pct":6.09,"source_url":"https://www.mql5.com/en/signals/2385460"
+    },
+    {
+      "candidate_id":"2361936","name":"Mon Scalper MT5","observed_at":"2026-09-03T23:48:00Z","currency":"USD",
+      "balance":1159.40,"equity":1159.40,"initial_deposit":150.0,"deposits":339.54,"withdrawals":539.54,"trades":504,"wins":430,"losses":74,
+      "gross_profit":3259.62,"gross_loss":-2050.22,"baseline_equity_dd_pct":5.12,"source_url":"https://www.mql5.com/en/signals/2361936"
+    },
+    {
+      "candidate_id":"2329290","name":"Precise Pair Trading Pro","observed_at":"2026-09-04T01:56:00Z","currency":"EUR",
+      "balance":1383.20,"equity":1383.20,"initial_deposit":224.79,"deposits":2.42,"withdrawals":0.0,"trades":808,"wins":474,"losses":334,
+      "gross_profit":3715.97,"gross_loss":-2559.98,"baseline_equity_dd_pct":21.22,"source_url":"https://www.mql5.com/en/signals/2329290"
+    }
+  ]
+}
