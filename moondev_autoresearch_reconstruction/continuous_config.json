@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "profiles": {
+    "prop": {
+      "max_dd_pct": 10,
+      "starting_vol_target": 0.08,
+      "f_max": 0.5
+    },
+    "private": {
+      "max_dd_pct": 32,
+      "starting_vol_target": 0.3,
+      "f_max": 2
+    }
+  },
+  "targets": [
+    {
+      "id": "btc",
+      "symbol": "BTCUSDT",
+      "source": "binance",
+      "market": "crypto",
+      "enabled": true,
+      "bars_per_year": 365,
+      "commission": 0.001,
+      "margin": 0.25
+    },
+    {
+      "id": "eth",
+      "symbol": "ETHUSDT",
+      "source": "binance",
+      "market": "crypto",
+      "enabled": true,
+      "bars_per_year": 365,
+      "commission": 0.001,
+      "margin": 0.25
+    },
+    {
+      "id": "sol",
+      "symbol": "SOLUSDT",
+      "source": "binance",
+      "market": "crypto",
+      "enabled": true,
+      "bars_per_year": 365,
+      "commission": 0.001,
+      "margin": 0.25
+    },
+    {
+      "id": "spy",
+      "symbol": "SPY",
+      "source": "yahoo",
+      "market": "etf",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.0002,
+      "margin": 0.5
+    },
+    {
+      "id": "qqq",
+      "symbol": "QQQ",
+      "source": "yahoo",
+      "market": "etf",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.0002,
+      "margin": 0.5
+    },
+    {
+      "id": "tqqq",
+      "symbol": "TQQQ",
+      "source": "yahoo",
+      "market": "etf",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.0002,
+      "margin": 0.5
+    },
+    {
+      "id": "aapl",
+      "symbol": "AAPL",
+      "source": "yahoo",
+      "market": "stock",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.0002,
+      "margin": 0.5
+    },
+    {
+      "id": "nvda",
+      "symbol": "NVDA",
+      "source": "yahoo",
+      "market": "stock",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.0002,
+      "margin": 0.5
+    },
+    {
+      "id": "es",
+      "symbol": "ES=F",
+      "source": "yahoo",
+      "market": "futures_proxy",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.00015,
+      "margin": 0.1
+    },
+    {
+      "id": "nq",
+      "symbol": "NQ=F",
+      "source": "yahoo",
+      "market": "futures_proxy",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.00015,
+      "margin": 0.1
+    },
+    {
+      "id": "gold",
+      "symbol": "GC=F",
+      "source": "yahoo",
+      "market": "futures_proxy",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.00015,
+      "margin": 0.1
+    },
+    {
+      "id": "oil",
+      "symbol": "CL=F",
+      "source": "yahoo",
+      "market": "futures_proxy",
+      "enabled": true,
+      "bars_per_year": 252,
+      "commission": 0.00015,
+      "margin": 0.1
+    },
+    {
+      "id": "eurusd",
+      "symbol": "EURUSD=X",
+      "source": "yahoo",
+      "market": "forex",
+      "enabled": false,
+      "blocked_reason": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
+      "bars_per_year": 252,
+      "commission": 0.0001,
+      "margin": 0.05
+    },
+    {
+      "id": "gbpusd",
+      "symbol": "GBPUSD=X",
+      "source": "yahoo",
+      "market": "forex",
+      "enabled": false,
+      "blocked_reason": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
+      "bars_per_year": 252,
+      "commission": 0.0001,
+      "margin": 0.05
+    },
+    {
+      "id": "usdjpy",
+      "symbol": "JPY=X",
+      "source": "yahoo",
+      "market": "forex",
+      "enabled": false,
+      "blocked_reason": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
+      "bars_per_year": 252,
+      "commission": 0.0001,
+      "margin": 0.05
+    }
+  ]
+}
