@@ -1,0 +1,333 @@
+name: NVIDIA AUTORESEARCH 50-iteration campaign
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  campaign:
+    if: >
+      github.event.issue.pull_request &&
+      github.event.issue.number == 13 &&
+      github.event.comment.body == '/nvidia-campaign-50' &&
+      github.event.comment.user.login == 'tjhuber2009-eng'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b
+      GH_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ github.run_id }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+
+    steps:
+      - name: Check out research branch
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Compile project
+        run: python -m compileall -q .
+
+      - name: Verify NVIDIA secret
+        shell: bash
+        run: |
+          if [ -z "$NVIDIA_API_KEY" ]; then
+            echo "::error::NVIDIA_API_KEY repository secret is not available."
+            exit 1
+          fi
+          echo "NVIDIA_API_KEY present."
+
+      - name: Smoke test NVIDIA
+        run: python nvidia_smoke.py
+
+      - name: Prepare checksum-verified sealed in-sample data
+        run: python prepare_data.py --asset ETH --end 2022-12-31
+
+      - name: Reset runtime state
+        shell: bash
+        run: |
+          rm -f baseline.json last_run.json results.tsv proposal.txt STOP strategy_best.py
+          rm -rf keepers logs
+          mkdir -p keepers logs
+
+      - name: Freeze seed baseline
+        id: baseline
+        shell: bash
+        run: |
+          set -o pipefail
+          python harness.py --is --set-baseline 2>&1 | tee campaign-baseline.log
+          cp strategy.py strategy_best.py
+          cp strategy.py keepers/000_seed.py
+
+      - name: Audit baseline risk
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          x = json.loads(Path("baseline.json").read_text())
+          print(x)
+          if not x["guard_ok"]:
+              raise SystemExit("seed baseline guard failed")
+          if x["trades"] < 50:
+              raise SystemExit("seed baseline has too few trades")
+          if x["ann_vol_pct"] <= 0 or x["ann_vol_pct"] > 100:
+              raise SystemExit(
+                  f"seed annualized volatility is not sane: {x['ann_vol_pct']}%"
+              )
+          if x["max_dd_pct"] < -60:
+              raise SystemExit(
+                  f"seed drawdown is too extreme for campaign: {x['max_dd_pct']}%"
+              )
+
+      - name: Run 50 NVIDIA research iterations
+        id: research
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python loop.py --iters 50 --model "$NVIDIA_MODEL" 2>&1 | tee campaign.log
+
+      - name: Audit campaign
+        id: audit
+        if: always()
+        continue-on-error: true
+        shell: python
+        run: |
+          import csv
+          import json
+          from pathlib import Path
+
+          p = Path("results.tsv")
+          if not p.exists():
+              raise SystemExit("results.tsv missing")
+          rows = list(csv.DictReader(p.open(encoding="utf-8"), delimiter="\t"))
+          if len(rows) != 50:
+              raise SystemExit(f"expected 50 iterations, found {len(rows)}")
+
+          kept = [r for r in rows if r["verdict"] == "KEPT"]
+          rejected = [r for r in rows if r["verdict"] == "REJECTED"]
+          crashes = [r for r in rows if r["verdict"] == "CRASH"]
+
+          print(
+              f"iterations={len(rows)} kept={len(kept)} "
+              f"rejected={len(rejected)} crashes={len(crashes)}"
+          )
+          if len(crashes) > 5:
+              raise SystemExit(f"too many model/runtime crashes: {len(crashes)}")
+
+          base = json.loads(Path("baseline.json").read_text())
+          print("final champion", base)
+
+      - name: Build campaign report and archive
+        if: always()
+        shell: python
+        env:
+          RESEARCH_OUTCOME: ${{ steps.research.outcome }}
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          import csv
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+
+          run_id = os.environ["RUN_ID"]
+          out = Path("campaigns") / run_id
+          out.mkdir(parents=True, exist_ok=True)
+
+          rows = []
+          if Path("results.tsv").exists():
+              rows = list(csv.DictReader(
+                  Path("results.tsv").open(encoding="utf-8"),
+                  delimiter="\t",
+              ))
+
+          def num(row, key):
+              try:
+                  return float(row.get(key, "nan"))
+              except Exception:
+                  return float("-inf")
+
+          kept = [r for r in rows if r.get("verdict") == "KEPT"]
+          rejected = [r for r in rows if r.get("verdict") == "REJECTED"]
+          crashes = [r for r in rows if r.get("verdict") == "CRASH"]
+          valid = [r for r in rows if r.get("verdict") != "CRASH"]
+          top = sorted(valid, key=lambda r: num(r, "score"), reverse=True)[:10]
+
+          seed = None
+          final = None
+          if Path("campaign-baseline.log").exists():
+              pass
+          if Path("baseline.json").exists():
+              final = json.loads(Path("baseline.json").read_text())
+
+          # The seed metrics are recoverable from the first row's base values,
+          # but preserve a dedicated copy before final baseline evolves.
+          # We reconstruct only the invariant fields used in the scoreboard.
+          seed_score = rows[0].get("base_score") if rows else "unknown"
+
+          lines = [
+              "# NVIDIA AUTORESEARCH — 50-iteration campaign",
+              "",
+              f"Run: {os.environ.get('RUN_URL', '')}",
+              "",
+              "## Integrity",
+              "",
+              "- Data: checksum-verified Binance Data Vision ETHUSDT 6h",
+              "- Research window: 2017-08-17 through 2022-12-31 only",
+              "- OOS 2023+ was not downloaded or opened",
+              "- Backtest commission: frozen at 0.20% per order",
+              "- Candidate execution: next-bar (trade_on_close=False)",
+              "",
+              "## Run status",
+              "",
+              f"- research process: {os.environ.get('RESEARCH_OUTCOME', '')}",
+              f"- campaign audit: {os.environ.get('AUDIT_OUTCOME', '')}",
+              f"- iterations: {len(rows)}",
+              f"- kept: {len(kept)}",
+              f"- rejected: {len(rejected)}",
+              f"- crashes: {len(crashes)}",
+              f"- starting K: {seed_score}",
+              "",
+          ]
+
+          if final:
+              lines += [
+                  "## Final champion",
+                  "",
+                  f"- K: **{final['score']}**",
+                  f"- return: **{final['return_pct']}%**",
+                  f"- signed Sharpe: **{final['sharpe']}**",
+                  f"- annualized vol: **{final['ann_vol_pct']}%**",
+                  f"- max DD: **{final['max_dd_pct']}%**",
+                  f"- trades: **{final['trades']}**",
+                  f"- win rate: **{final['win_pct']}%**",
+                  f"- profit factor: **{final['pf']}**",
+                  "",
+              ]
+
+          lines += ["## Kept improvements", ""]
+          if kept:
+              for r in kept:
+                  lines.append(
+                      f"- iter {r['iter']}: K {r['base_score']} -> {r['score']} "
+                      f"| return {r['ret_pct']}% | Sharpe {r['sharpe']} "
+                      f"| DD {r['max_dd']}% | {r['desc']}"
+                  )
+          else:
+              lines.append("- none")
+          lines += ["", "## Top 10 scored candidates", ""]
+
+          if top:
+              cols = [
+                  "iter", "verdict", "base_score", "score", "ret_pct",
+                  "sharpe", "ann_vol", "trades", "max_dd", "desc",
+              ]
+              lines.append("| " + " | ".join(cols) + " |")
+              lines.append("|" + "|".join(["---"] * len(cols)) + "|")
+              for r in top:
+                  vals = [
+                      str(r.get(c, "")).replace("|", "\\|")
+                      for c in cols
+                  ]
+                  lines.append("| " + " | ".join(vals) + " |")
+          else:
+              lines.append("No valid candidates.")
+
+          lines += [
+              "",
+              "## Interpretation",
+              "",
+              "This is in-sample research, not evidence of future profitability. "
+              "Any champion must remain sealed from 2023+ until the research "
+              "campaign is frozen and an explicit OOS validation is authorized.",
+              "",
+          ]
+
+          report = "\n".join(lines)
+          Path("CAMPAIGN_REPORT.md").write_text(report, encoding="utf-8")
+          (out / "CAMPAIGN_REPORT.md").write_text(report, encoding="utf-8")
+
+          for name in [
+              "baseline.json", "last_run.json", "results.tsv",
+              "strategy.py", "strategy_best.py", "proposal.txt",
+              "campaign.log", "campaign-baseline.log",
+          ]:
+              p = Path(name)
+              if p.exists():
+                  shutil.copy2(p, out / p.name)
+
+          if Path("keepers").exists():
+              shutil.copytree(
+                  "keepers",
+                  out / "keepers",
+                  dirs_exist_ok=True,
+              )
+
+      - name: Upload full campaign artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nvidia-autoresearch-campaign-${{ github.run_id }}
+          path: |
+            moondev_autoresearch_reconstruction/CAMPAIGN_REPORT.md
+            moondev_autoresearch_reconstruction/campaigns/${{ github.run_id }}/
+            moondev_autoresearch_reconstruction/logs/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Preserve campaign result branch
+        if: always()
+        shell: bash
+        run: |
+          cd ..
+          BRANCH="nvidia-campaign-${RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add "moondev_autoresearch_reconstruction/campaigns/${RUN_ID}"
+          if git diff --cached --quiet; then
+            echo "No campaign artifacts to commit."
+          else
+            git commit -m "Archive NVIDIA AUTORESEARCH campaign ${RUN_ID}"
+            git push origin "$BRANCH"
+          fi
+          echo "RESULT_BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+      - name: Comment campaign report on PR
+        if: always()
+        shell: bash
+        run: |
+          {
+            cat CAMPAIGN_REPORT.md
+            echo
+            echo "Archived branch: \`$RESULT_BRANCH\`"
+          } > campaign-comment.md
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file campaign-comment.md
+
+      - name: Fail job if research or audit failed
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.research.outcome }}" = "success"
+          test "${{ steps.audit.outcome }}" = "success"
