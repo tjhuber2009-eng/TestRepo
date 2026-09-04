@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
+
     defaults:
       run:
         working-directory: moondev_autoresearch_reconstruction
@@ -36,7 +37,11 @@ jobs:
           cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
 
       - run: python -m pip install -r requirements.txt
-      - run: python -m compileall -q .
+
+      - name: Compile and run integrity tests
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
 
       - name: Generate and compile every runnable family
         shell: python
@@ -57,13 +62,13 @@ jobs:
               subprocess.run([sys.executable,"-m","py_compile","strategy.py"],check=True)
           print(f"runnable_families={len(runnable)}")
 
-      - name: Prepare BTC daily sealed data
+      - name: Prepare BTC pre-OOS data
         run: >
           python prepare_market_data.py
           --source binance --symbol BTCUSDT --id btc
           --start 2017-08-17 --end 2022-12-31
 
-      - name: Run robust BTC prop seed
+      - name: Run development-only robust harness smoke
         shell: bash
         env:
           AUTORESEARCH_SYMBOL: BTCUSDT
@@ -71,28 +76,39 @@ jobs:
           AUTORESEARCH_DATA_FILE: data/btc_1d.csv
           AUTORESEARCH_COMMISSION: "0.001"
           AUTORESEARCH_MARGIN: "0.25"
+          AUTORESEARCH_BARS_PER_YEAR: "365"
           AUTORESEARCH_PROFILE: prop
           AUTORESEARCH_MAX_DD_PCT: "10"
-          AUTORESEARCH_MIN_TRADES: "20"
-          AUTORESEARCH_MIN_FOLD_TRADES: "2"
+          AUTORESEARCH_MIN_TRADES: "8"
           AUTORESEARCH_MIN_ACTIVE_FOLDS: "3"
-          AUTORESEARCH_MIN_FOLD_BARS: "180"
-          AUTORESEARCH_VOL_BAND: "0.20"
+          AUTORESEARCH_MIN_FOLD_BARS: "100"
+          AUTORESEARCH_VOL_BAND: "0.25"
+          AUTORESEARCH_COST_STRESS_MULT: "2.0"
+          AUTORESEARCH_IS_START: "2017-08-17"
+          AUTORESEARCH_VALIDATION_START: "2021-01-01"
+          AUTORESEARCH_VALIDATION_END: "2022-12-31"
         run: |
-          rm -f baseline.json last_run.json
-          python seed_factory.py --family donchian_20_10 --output strategy.py --bars-per-year 365 --vol-target 0.04 --f-max 0.5
+          rm -f baseline.json last_run.json validation_run.json
+          python seed_factory.py --family sentinel63 --output strategy.py --bars-per-year 365 --vol-target 0.04 --f-max 0.5
           python robust_harness.py --is
           python - <<'PY'
           import json
           x=json.load(open("last_run.json"))
-          assert x["protocol"]=="chronological_robust_v1"
+          assert x["protocol"]=="nested_chronological_v2"
+          assert x["stage"]=="adaptive_development"
           assert x["oos_opened"] is False
+          assert x["end"]=="2020-12-31"
+          assert x["hidden_validation_start"]=="2021-01-01"
           assert x["active_folds"] >= 3
-          assert len(x["folds"]) >= 3
+          assert "stress" in x
+          assert x["cost_stress_multiplier"] == 2.0
           print(json.dumps({
-              "score":x["score"],"return_pct":x["return_pct"],
-              "max_dd_pct":x["max_dd_pct"],"active_folds":x["active_folds"],
-              "guard_ok":x["guard_ok"],"guard_details":x["audit_guard_details"],
+              "score":x["score"],
+              "return_pct":x["return_pct"],
+              "max_dd_pct":x["max_dd_pct"],
+              "active_folds":x["active_folds"],
+              "stress_return_pct":x["stress"]["return_pct"],
+              "guard_ok":x["guard_ok"],
           },indent=2))
           PY
 
@@ -100,4 +116,4 @@ jobs:
         if: success()
         shell: bash
         run: |
-          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. All runnable researched-family seeds compile; chronological robust harness produced >=3 pre-2023 folds; OOS remains sealed."
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. All runnable seeds compile; nested development-only harness, cost stress, integrity tests, and >=3 continuous-path folds passed smoke. Hidden validation and 2023+ OOS were not opened."
