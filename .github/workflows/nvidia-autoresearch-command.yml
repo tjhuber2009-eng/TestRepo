@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   smoke:
@@ -19,6 +21,7 @@ jobs:
     env:
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       NVIDIA_MODEL: nvidia/nemotron-3-super-120b-a12b
+      GH_TOKEN: ${{ github.token }}
     defaults:
       run:
         working-directory: moondev_autoresearch_reconstruction
@@ -52,4 +55,34 @@ jobs:
           echo "NVIDIA_API_KEY is present (value not displayed)."
 
       - name: NVIDIA NIM smoke test
-        run: python nvidia_smoke.py
+        id: smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python nvidia_smoke.py 2>&1 | tee smoke.log
+
+      - name: Comment smoke-test result on PR
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.smoke.outcome }}" = "success" ]; then
+            {
+              echo "NVIDIA smoke test: **PASS**"
+              echo
+              echo "Last output lines:"
+              tail -n 8 smoke.log
+            } > smoke-comment.md
+          else
+            {
+              echo "NVIDIA smoke test: **FAIL**"
+              echo
+              echo "Last output lines:"
+              tail -n 20 smoke.log 2>/dev/null || true
+            } > smoke-comment.md
+          fi
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file smoke-comment.md
+
+      - name: Fail job if smoke test failed
+        if: steps.smoke.outcome != 'success'
+        run: exit 1
