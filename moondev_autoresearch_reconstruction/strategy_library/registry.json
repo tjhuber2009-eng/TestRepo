@@ -1,12 +1,28 @@
 {
-  "version": 1,
+  "version": 2,
   "principles": [
     "No strategy is promoted from a single aggregate backtest.",
     "2023+ remains sealed for final one-look OOS.",
     "Exact published rules are distinguished from research-inspired proxies.",
-    "Blocked families remain in the library until their required data/engine exists; they are never silently approximated as exact."
+    "Blocked families remain in the library until their required data/engine exists; they are never silently approximated as exact.",
+    "Adaptive NVIDIA search uses development data only; hidden pre-OOS validation is opened only after the research universe is frozen.",
+    "Transaction-cost stress is part of robustness qualification, not a post-hoc sensitivity chart."
   ],
   "families": [
+    {
+      "id": "sentinel65",
+      "status": "runnable",
+      "exactness": "frozen_exact",
+      "origin": "Dual Signal Trend Sentinel 65-day robustness neighbor from prior independently reconstructed research",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "sentinel65",
+      "min_trades": 8
+    },
     {
       "id": "tsmom_252",
       "status": "runnable",
@@ -18,7 +34,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "tsmom_252"
+      "factory": "tsmom_252",
+      "min_trades": 4
     },
     {
       "id": "btc_rsi_adx",
@@ -28,7 +45,8 @@
       "markets": [
         "crypto"
       ],
-      "factory": "btc_rsi_adx"
+      "factory": "btc_rsi_adx",
+      "min_trades": 10
     },
     {
       "id": "connors_double7",
@@ -39,7 +57,8 @@
         "etf",
         "stock"
       ],
-      "factory": "connors_double7"
+      "factory": "connors_double7",
+      "min_trades": 8
     },
     {
       "id": "connors_rsi2",
@@ -50,7 +69,8 @@
         "etf",
         "stock"
       ],
-      "factory": "connors_rsi2"
+      "factory": "connors_rsi2",
+      "min_trades": 6
     },
     {
       "id": "ibs_deep_pullback",
@@ -61,7 +81,8 @@
         "etf",
         "stock"
       ],
-      "factory": "ibs_deep_pullback"
+      "factory": "ibs_deep_pullback",
+      "min_trades": 10
     },
     {
       "id": "sentinel63",
@@ -74,7 +95,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "sentinel63"
+      "factory": "sentinel63",
+      "min_trades": 8
     },
     {
       "id": "donchian_20_10",
@@ -113,7 +135,8 @@
         "crypto",
         "futures_proxy"
       ],
-      "factory": "sma175_regime_proxy"
+      "factory": "sma175_regime_proxy",
+      "min_trades": 6
     },
     {
       "id": "sma200_roc126_proxy",
@@ -126,7 +149,8 @@
         "crypto",
         "futures_proxy"
       ],
-      "factory": "sma200_roc126_proxy"
+      "factory": "sma200_roc126_proxy",
+      "min_trades": 6
     },
     {
       "id": "roc126_regime",
@@ -139,7 +163,8 @@
         "crypto",
         "futures_proxy"
       ],
-      "factory": "roc126_regime"
+      "factory": "roc126_regime",
+      "min_trades": 6
     },
     {
       "id": "zanger_volume_breakout_proxy",
