@@ -1,0 +1,49 @@
+Start                                             2017-08-17 00:00:00+00:00
+End                                               2022-12-31 18:00:00+00:00
+Duration                                                 1962 days 18:00:00
+Exposure Time [%]                                                 38.898802
+Equity Final [$]                                              71755404.1217
+Equity Peak [$]                                              98999777.79748
+Return [%]                                                       617.554041
+Buy & Hold Return [%]                                            294.632135
+Return (Ann.) [%]                                                 44.257204
+Volatility (Ann.) [%]                                             50.890004
+Sharpe Ratio                                                       0.869664
+Sortino Ratio                                                      2.293888
+Calmar Ratio                                                       1.382104
+Max. Drawdown [%]                                                -32.021624
+Avg. Drawdown [%]                                                 -5.708825
+Max. Drawdown Duration                                    430 days 18:00:00
+Avg. Drawdown Duration                                     30 days 16:00:00
+# Trades                                                                108
+Win Rate [%]                                                      37.037037
+Best Trade [%]                                                    69.714811
+Worst Trade [%]                                                  -16.191878
+Avg. Trade [%]                                                     1.995379
+Max. Trade Duration                                        20 days 12:00:00
+Avg. Trade Duration                                         6 days 20:00:00
+Profit Factor                                                      1.866821
+Expectancy [%]                                                     2.928451
+SQN                                                                1.457718
+_strategy                                                      MoonStrategy
+_equity_curve                                              Equity  Drawd...
+_trades                         Size  EntryBar  ...                  Exi...
+
+SUMMARY
+{
+  "ann_vol_pct": 50.89,
+  "asset": "ETH",
+  "bars": 7846,
+  "end": "2022-12-31 18:00:00+00:00",
+  "guard_ok": true,
+  "guard_reason": "ok",
+  "max_dd_pct": -32.02,
+  "mode": "is",
+  "pf": 1.867,
+  "return_pct": 617.55,
+  "score": 1.7138,
+  "sharpe": 0.87,
+  "start": "2017-08-17 00:00:00+00:00",
+  "trades": 108,
+  "win_pct": 37.04
+}

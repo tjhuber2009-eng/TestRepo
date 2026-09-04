@@ -1,0 +1,398 @@
+MOON DEV AUTORESEARCH — NVIDIA NIM
+model=nvidia/nemotron-3-super-120b-a12b
+endpoint=https://integrate.api.nvidia.com/v1
+key=NVIDIA_API_KEY environment variable
+
+ITERATION 1 baseline K=1.7138
+[1/4] AGENT
+proposal: Add 50-period SMA filter to require price above SMA for long entries
+[2/4] BACKTEST
+K=1.6722 return=596.92% sharpe=0.861 vol=50.48% dd=-29.6% trades=103 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.6722 did not beat 1.7138
+[4/4] SCOREBOARD tries=1 kept=0 rejected=1 crash=0 current_K=1.7138
+
+ITERATION 2 baseline K=1.7138
+[1/4] AGENT
+proposal: Add bullish bar condition (close > open) to long entry requirement
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_2.txt
+[4/4] SCOREBOARD tries=2 kept=0 rejected=1 crash=1 current_K=1.7138
+
+ITERATION 3 baseline K=1.7138
+[1/4] AGENT
+proposal: Add ATR multiplier to entry breakout condition requiring price to exceed hh by entry_atr_multiplier * atr
+[2/4] BACKTEST
+K=1.4977 return=484.89% sharpe=0.848 vol=45.85% dd=-22.32% trades=76 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.4977 did not beat 1.7138
+[4/4] SCOREBOARD tries=3 kept=0 rejected=2 crash=1 current_K=1.7138
+
+ITERATION 4 baseline K=1.7138
+[1/4] AGENT
+proposal: Change exit lookback from 10 to 20 bars to use symmetric Donchian channels for entry and exit.
+[2/4] BACKTEST
+K=2.3213 return=1224.55% sharpe=0.898 vol=68.64% dd=-41.85% trades=78 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 68.6% outside +-10% of baseline 50.9%
+[4/4] SCOREBOARD tries=4 kept=0 rejected=3 crash=1 current_K=1.7138
+
+ITERATION 5 baseline K=1.7138
+[1/4] AGENT
+proposal: Increase entry lookback from 20 to 50 bars to require longer-term breakouts for entry
+[2/4] BACKTEST
+K=1.8048 return=555.77% sharpe=0.96 vol=43.62% dd=-20.34% trades=66 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 43.6% outside +-10% of baseline 50.9%
+[4/4] SCOREBOARD tries=5 kept=0 rejected=4 crash=1 current_K=1.7138
+
+ITERATION 6 baseline K=1.7138
+[1/4] AGENT
+proposal: Reduce stop loss ATR multiplier from 3.0 to 2.5 to tighten risk management.
+[2/4] BACKTEST
+K=1.2576 return=408.62% sharpe=0.773 vol=45.67% dd=-34.25% trades=112 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: ann vol 45.7% outside +-10% of baseline 50.9%
+[4/4] SCOREBOARD tries=6 kept=0 rejected=5 crash=1 current_K=1.7138
+
+ITERATION 7 baseline K=1.7138
+[1/4] AGENT
+proposal: Require entry breakout to exceed the highest high by at least 0.5 * ATR to filter false breakouts
+[2/4] BACKTEST
+K=1.4977 return=484.89% sharpe=0.848 vol=45.85% dd=-22.32% trades=76 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.4977 did not beat 1.7138
+[4/4] SCOREBOARD tries=7 kept=0 rejected=6 crash=1 current_K=1.7138
+
+ITERATION 8 baseline K=1.7138
+[1/4] AGENT
+proposal: Decrease exit lookback from 10 to 5 bars to increase trade frequency and capture shorter reversals.
+[2/4] BACKTEST
+K=2.0371 return=661.9% sharpe=1.003 vol=45.73% dd=-30.76% trades=126 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 45.7% outside +-10% of baseline 50.9%
+[4/4] SCOREBOARD tries=8 kept=0 rejected=7 crash=1 current_K=1.7138
+
+ITERATION 9 baseline K=1.7138
+[1/4] AGENT
+proposal: Add bullish close momentum filter (close > prior close) to long entry requirement
+[2/4] BACKTEST
+K=1.7138 return=617.55% sharpe=0.87 vol=50.89% dd=-32.02% trades=108 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.7138 did not beat 1.7138
+[4/4] SCOREBOARD tries=9 kept=0 rejected=8 crash=1 current_K=1.7138
+
+ITERATION 10 baseline K=1.7138
+[1/4] AGENT
+proposal: Increase stop-loss ATR multiplier from 3.0 to 3.5 to allow wider stops and capture larger trends.
+[2/4] BACKTEST
+K=1.8478 return=670.44% sharpe=0.905 vol=51.03% dd=-33.88% trades=105 runtime=1.0s
+[3/4] VERDICT KEPT: K 1.7138 -> 1.8478
+[4/4] SCOREBOARD tries=10 kept=1 rejected=8 crash=1 current_K=1.8478
+
+ITERATION 11 baseline K=1.8478
+[1/4] AGENT
+proposal: Decrease ATR lookback for stop loss from 20 to 10 to make stop loss more responsive to recent volatility.
+[2/4] BACKTEST
+K=1.5912 return=557.33% sharpe=0.845 vol=49.61% dd=-34.6% trades=109 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.5912 did not beat 1.8478
+[4/4] SCOREBOARD tries=11 kept=1 rejected=9 crash=1 current_K=1.8478
+
+ITERATION 12 baseline K=1.8478
+[1/4] AGENT
+proposal: Enter only when current realized volatility is below its 60-period moving average (low volatility regime)
+[2/4] BACKTEST
+K=1.2113 return=392.54% sharpe=0.76 vol=45.42% dd=-28.98% trades=87 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 45.4% outside +-10% of baseline 51.0%
+[4/4] SCOREBOARD tries=12 kept=1 rejected=10 crash=1 current_K=1.8478
+
+ITERATION 13 baseline K=1.8478
+[1/4] AGENT
+proposal: Increase stop-loss ATR multiplier from 3.5 to 4.0 to allow even wider stops and capture larger trends.
+[2/4] BACKTEST
+K=1.8884 return=686.77% sharpe=0.915 vol=51.06% dd=-33.88% trades=105 runtime=1.1s
+[3/4] VERDICT KEPT: K 1.8478 -> 1.8884
+[4/4] SCOREBOARD tries=13 kept=2 rejected=10 crash=1 current_K=1.8884
+
+ITERATION 14 baseline K=1.8884
+[1/4] AGENT
+proposal: Increase exit lookback from 10 to 15 bars to use a symmetric Donchian channel for exits, aiming to reduce whipsaws while maintaining volatility within guardrails.
+[2/4] BACKTEST
+K=2.0254 return=843.57% sharpe=0.902 vol=57.39% dd=-44.05% trades=91 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 57.4% outside +-10% of baseline 51.1%
+[4/4] SCOREBOARD tries=14 kept=2 rejected=11 crash=1 current_K=1.8884
+
+ITERATION 15 baseline K=1.8884
+[1/4] AGENT
+proposal: Decrease entry lookback from 20 to 10 to increase trade frequency and capture earlier breakouts
+[2/4] BACKTEST
+K=1.2259 return=446.12% sharpe=0.722 vol=51.4% dd=-39.92% trades=155 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.2259 did not beat 1.8884
+[4/4] SCOREBOARD tries=15 kept=2 rejected=12 crash=1 current_K=1.8884
+
+ITERATION 16 baseline K=1.8884
+[1/4] AGENT
+proposal: Enter long only when price exceeds the highest high and the highest high is rising (hh[-1] > hh[-2])
+[2/4] BACKTEST
+K=0.9491 return=249.92% sharpe=0.758 vol=34.61% dd=-25.11% trades=66 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 34.6% outside +-10% of baseline 51.1%
+[4/4] SCOREBOARD tries=16 kept=2 rejected=13 crash=1 current_K=1.8884
+
+ITERATION 17 baseline K=1.8884
+[1/4] AGENT
+proposal: Decrease entry lookback to 18 and increase exit lookback to 12 to balance trade frequency and volatility.
+[2/4] BACKTEST
+K=1.7064 return=638.62% sharpe=0.853 vol=52.77% dd=-48.07% trades=107 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.7064 did not beat 1.8884
+[4/4] SCOREBOARD tries=17 kept=2 rejected=14 crash=1 current_K=1.8884
+
+ITERATION 18 baseline K=1.8884
+[1/4] AGENT
+proposal: Increase stop-loss ATR multiplier from 4.0 to 4.5 to allow even wider stops and capture larger trends.
+[2/4] BACKTEST
+K=1.8225 return=658.18% sharpe=0.9 vol=50.84% dd=-34.02% trades=105 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.8225 did not beat 1.8884
+[4/4] SCOREBOARD tries=18 kept=2 rejected=15 crash=1 current_K=1.8884
+
+ITERATION 19 baseline K=1.8884
+[1/4] AGENT
+proposal: Increase ATR lookback for stop loss from 20 to 30 to use a longer-term volatility measure for stop distance
+[2/4] BACKTEST
+K=1.8111 return=653.14% sharpe=0.897 vol=50.79% dd=-33.98% trades=105 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.8111 did not beat 1.8884
+[4/4] SCOREBOARD tries=19 kept=2 rejected=16 crash=1 current_K=1.8884
+
+ITERATION 20 baseline K=1.8884
+[1/4] AGENT
+proposal: Add SMA(30) filter to exit condition: exit if price breaks below Donchian low OR SMA(30)
+[2/4] BACKTEST
+K=2.1803 return=790.09% sharpe=0.997 vol=50.29% dd=-31.32% trades=116 runtime=1.0s
+[3/4] VERDICT KEPT: K 1.8884 -> 2.1803
+[4/4] SCOREBOARD tries=20 kept=3 rejected=16 crash=1 current_K=2.1803
+
+ITERATION 21 baseline K=2.1803
+[1/4] AGENT
+proposal: Add SMA(30) filter to entry condition: require price above SMA(30) for long entries
+[2/4] BACKTEST
+K=2.1803 return=790.09% sharpe=0.997 vol=50.29% dd=-31.32% trades=116 runtime=1.1s
+[3/4] VERDICT REJECTED: K 2.1803 did not beat 2.1803
+[4/4] SCOREBOARD tries=21 kept=3 rejected=17 crash=1 current_K=2.1803
+
+ITERATION 22 baseline K=2.1803
+[1/4] AGENT
+proposal: Decrease SMA lookback for exit filter from 30 to 20 to increase responsiveness
+[2/4] BACKTEST
+K=2.279 return=712.34% sharpe=1.088 vol=43.77% dd=-31.46% trades=128 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: ann vol 43.8% outside +-10% of baseline 50.3%
+[4/4] SCOREBOARD tries=22 kept=3 rejected=18 crash=1 current_K=2.1803
+
+ITERATION 23 baseline K=2.1803
+[1/4] AGENT
+proposal: Replace SMA(30) exit filter with EMA(30) for faster adaptive exits
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_23.txt
+[4/4] SCOREBOARD tries=23 kept=3 rejected=18 crash=2 current_K=2.1803
+
+ITERATION 24 baseline K=2.1803
+[1/4] AGENT
+proposal: Change exit condition to require both Donchian low break and SMA break (AND instead of OR)
+[2/4] BACKTEST
+K=1.8437 return=680.21% sharpe=0.897 vol=51.84% dd=-39.64% trades=100 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.8437 did not beat 2.1803
+[4/4] SCOREBOARD tries=24 kept=3 rejected=19 crash=2 current_K=2.1803
+
+ITERATION 25 baseline K=2.1803
+[1/4] AGENT
+proposal: Increase SMA lookback for exit filter from 30 to 40 to smooth exit signal and potentially improve risk-adjusted returns.
+[2/4] BACKTEST
+K=1.6427 return=560.14% sharpe=0.87 vol=48.3% dd=-33.19% trades=121 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.6427 did not beat 2.1803
+[4/4] SCOREBOARD tries=25 kept=3 rejected=20 crash=2 current_K=2.1803
+
+ITERATION 26 baseline K=2.1803
+[1/4] AGENT
+proposal: Replace SMA(30) exit filter with EMA(30) for adaptive exits
+[2/4] BACKTEST
+K=2.0579 return=733.03% sharpe=0.971 vol=49.77% dd=-33.96% trades=120 runtime=1.0s
+[3/4] VERDICT REJECTED: K 2.0579 did not beat 2.1803
+[4/4] SCOREBOARD tries=26 kept=3 rejected=21 crash=2 current_K=2.1803
+
+ITERATION 27 baseline K=2.1803
+[1/4] AGENT
+proposal: Add rising SMA(30) condition to long entry requirement
+[2/4] BACKTEST
+K=1.5713 return=484.07% sharpe=0.89 vol=43.62% dd=-27.84% trades=97 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: ann vol 43.6% outside +-10% of baseline 50.3%
+[4/4] SCOREBOARD tries=27 kept=3 rejected=22 crash=2 current_K=2.1803
+
+ITERATION 28 baseline K=2.1803
+[1/4] AGENT
+proposal: Change SMA lookback for exit filter from 30 to 25 to potentially improve risk-adjusted returns while staying within volatility guard.
+[2/4] BACKTEST
+K=2.0929 return=688.38% sharpe=1.014 vol=46.18% dd=-33.46% trades=121 runtime=1.0s
+[3/4] VERDICT REJECTED: K 2.0929 did not beat 2.1803
+[4/4] SCOREBOARD tries=28 kept=3 rejected=23 crash=2 current_K=2.1803
+
+ITERATION 29 baseline K=2.1803
+[1/4] AGENT
+proposal: Add ATR multiplier to exit condition: exit if price breaks below Donchian low OR below SMA(30) by atr_exit_multiplier * ATR
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_29.txt
+[4/4] SCOREBOARD tries=29 kept=3 rejected=23 crash=3 current_K=2.1803
+
+ITERATION 30 baseline K=2.1803
+[1/4] AGENT
+proposal: Increase ATR lookback for stop loss from 20 to 25 to use a medium-term volatility measure for stop distance.
+[2/4] BACKTEST
+K=2.1764 return=788.38% sharpe=0.996 vol=50.28% dd=-31.29% trades=116 runtime=1.1s
+[3/4] VERDICT REJECTED: K 2.1764 did not beat 2.1803
+[4/4] SCOREBOARD tries=30 kept=3 rejected=24 crash=3 current_K=2.1803
+
+ITERATION 31 baseline K=2.1803
+[1/4] AGENT
+proposal: Exit only when price breaks below Donchian low OR (price below SMA and SMA is falling)
+[2/4] BACKTEST
+K=1.6857 return=579.63% sharpe=0.88 vol=48.67% dd=-31.97% trades=113 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.6857 did not beat 2.1803
+[4/4] SCOREBOARD tries=31 kept=3 rejected=25 crash=3 current_K=2.1803
+
+ITERATION 32 baseline K=2.1803
+[1/4] AGENT
+proposal: Require two consecutive closes below SMA(30) for SMA-based exit to reduce whipsaws
+[2/4] BACKTEST
+K=1.8363 return=636.28% sharpe=0.92 vol=48.87% dd=-30.75% trades=113 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.8363 did not beat 2.1803
+[4/4] SCOREBOARD tries=32 kept=3 rejected=26 crash=3 current_K=2.1803
+
+ITERATION 33 baseline K=2.1803
+[1/4] AGENT
+proposal: Add bullish bar condition (close > open) to long entry requirement
+[2/4] BACKTEST
+K=2.1803 return=790.09% sharpe=0.997 vol=50.29% dd=-31.32% trades=116 runtime=1.0s
+[3/4] VERDICT REJECTED: K 2.1803 did not beat 2.1803
+[4/4] SCOREBOARD tries=33 kept=3 rejected=27 crash=3 current_K=2.1803
+
+ITERATION 34 baseline K=2.1803
+[1/4] AGENT
+proposal: Add bearish bar condition (close < open) to exit requirement: exit only when price breaks below Donchian low OR SMA AND the bar is bearish.
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_34.txt
+[4/4] SCOREBOARD tries=34 kept=3 rejected=27 crash=4 current_K=2.1803
+
+ITERATION 35 baseline K=2.1803
+[1/4] AGENT
+proposal: Add long SMA(50) filter to entry condition: require price above both Donchian high and SMA(50) for long entries
+[2/4] BACKTEST
+K=2.2847 return=840.15% sharpe=1.02 vol=50.7% dd=-27.77% trades=108 runtime=1.0s
+[3/4] VERDICT KEPT: K 2.1803 -> 2.2847
+[4/4] SCOREBOARD tries=35 kept=4 rejected=27 crash=4 current_K=2.2847
+
+ITERATION 36 baseline K=2.2847
+[1/4] AGENT
+proposal: Add rising SMA(50) condition to long entry requirement: require current SMA(50) > prior SMA(50)
+[2/4] BACKTEST
+K=2.2203 return=680.67% sharpe=1.08 vol=43.07% dd=-17.54% trades=80 runtime=1.1s
+[3/4] VERDICT REJECTED: guard: ann vol 43.1% outside +-10% of baseline 50.7%
+[4/4] SCOREBOARD tries=36 kept=4 rejected=28 crash=4 current_K=2.2847
+
+ITERATION 37 baseline K=2.2847
+[1/4] AGENT
+proposal: Require Donchian high to exceed SMA(50) for long entry to filter breakouts below long-term average
+[2/4] BACKTEST
+K=2.3607 return=875.12% sharpe=1.037 vol=50.86% dd=-26.45% trades=104 runtime=1.0s
+[3/4] VERDICT KEPT: K 2.2847 -> 2.3607
+[4/4] SCOREBOARD tries=37 kept=5 rejected=28 crash=4 current_K=2.3607
+
+ITERATION 38 baseline K=2.3607
+[1/4] AGENT
+proposal: Change exit condition to use SMA(50) break instead of SMA(30) break for exiting long positions
+[2/4] BACKTEST
+K=1.8592 return=651.95% sharpe=0.922 vol=49.39% dd=-28.41% trades=105 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.8592 did not beat 2.3607
+[4/4] SCOREBOARD tries=38 kept=5 rejected=29 crash=4 current_K=2.3607
+
+ITERATION 39 baseline K=2.3607
+[1/4] AGENT
+proposal: Replace SMA(50) of Close in entry filter with SMA(50) of High to require that the recent high exceeds the long-term average high.
+[2/4] BACKTEST
+K=2.2621 return=801.9% sharpe=1.029 vol=49.12% dd=-23.31% trades=99 runtime=1.0s
+[3/4] VERDICT REJECTED: K 2.2621 did not beat 2.3607
+[4/4] SCOREBOARD tries=39 kept=5 rejected=30 crash=4 current_K=2.3607
+
+ITERATION 40 baseline K=2.3607
+[1/4] AGENT
+proposal: Replace SMA(50) entry filter with EMA(50) for more responsive trend following
+[2/4] BACKTEST
+K=2.0505 return=714.99% sharpe=0.977 vol=48.82% dd=-27.15% trades=110 runtime=1.0s
+[3/4] VERDICT REJECTED: K 2.0505 did not beat 2.3607
+[4/4] SCOREBOARD tries=40 kept=5 rejected=31 crash=4 current_K=2.3607
+
+ITERATION 41 baseline K=2.3607
+[1/4] AGENT
+proposal: Add condition to long entry requiring price to exceed SMA(50) by at least 0.5 * ATR
+[2/4] BACKTEST
+K=2.4039 return=896.8% sharpe=1.045 vol=51.03% dd=-24.79% trades=102 runtime=1.0s
+[3/4] VERDICT KEPT: K 2.3607 -> 2.4039
+[4/4] SCOREBOARD tries=41 kept=6 rejected=31 crash=4 current_K=2.4039
+
+ITERATION 42 baseline K=2.4039
+[1/4] AGENT
+proposal: Exit only on SMA(30) break, removing Donchian low condition
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_42.txt
+[4/4] SCOREBOARD tries=42 kept=6 rejected=31 crash=5 current_K=2.4039
+
+ITERATION 43 baseline K=2.4039
+[1/4] AGENT
+proposal: Change exit condition to use SMA(50) break instead of SMA(30) break for exiting long positions
+[2/4] BACKTEST
+K=1.8697 return=656.26% sharpe=0.924 vol=49.42% dd=-26.8% trades=103 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.8697 did not beat 2.4039
+[4/4] SCOREBOARD tries=43 kept=6 rejected=32 crash=5 current_K=2.4039
+
+ITERATION 44 baseline K=2.4039
+[1/4] AGENT
+proposal: Change exit condition to require price to fall below SMA(50) by at least 0.5*ATR (in addition to Donchian low break)
+[2/4] BACKTEST
+K=1.643 return=557.57% sharpe=0.872 vol=48.07% dd=-28.04% trades=101 runtime=1.1s
+[3/4] VERDICT REJECTED: K 1.643 did not beat 2.4039
+[4/4] SCOREBOARD tries=44 kept=6 rejected=33 crash=5 current_K=2.4039
+
+ITERATION 45 baseline K=2.4039
+[1/4] AGENT
+proposal: Require price to exceed Donchian high by at least 0.5*ATR in addition to existing entry conditions
+[2/4] BACKTEST
+K=2.0766 return=694.56% sharpe=1.002 vol=46.93% dd=-20.1% trades=70 runtime=1.0s
+[3/4] VERDICT REJECTED: K 2.0766 did not beat 2.4039
+[4/4] SCOREBOARD tries=45 kept=6 rejected=34 crash=5 current_K=2.4039
+
+ITERATION 46 baseline K=2.4039
+[1/4] AGENT
+proposal: Remove the requirement that the entry lookback high must exceed the SMA(50) for long entries
+[2/4] BACKTEST
+K=2.429 return=913.36% sharpe=1.049 vol=51.31% dd=-24.79% trades=103 runtime=1.0s
+[3/4] VERDICT KEPT: K 2.4039 -> 2.429
+[4/4] SCOREBOARD tries=46 kept=7 rejected=34 crash=5 current_K=2.429
+
+ITERATION 47 baseline K=2.429
+[1/4] AGENT
+proposal: Change entry condition to use SMA(30) instead of SMA(50) for the ATR offset filter
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_47.txt
+[4/4] SCOREBOARD tries=47 kept=7 rejected=34 crash=6 current_K=2.429
+
+ITERATION 48 baseline K=2.429
+[1/4] AGENT
+proposal: Reduce ATR multiplier for SMA(50) entry filter from 0.5 to 0.3 to allow more long entries
+[2/4] BACKTEST
+K=2.3261 return=860.85% sharpe=1.028 vol=50.88% dd=-26.45% trades=106 runtime=1.1s
+[3/4] VERDICT REJECTED: K 2.3261 did not beat 2.429
+[4/4] SCOREBOARD tries=48 kept=7 rejected=35 crash=6 current_K=2.429
+
+ITERATION 49 baseline K=2.429
+[1/4] AGENT
+proposal: Add ATR multiple to SMA-based exit condition: exit if price breaks below Donchian low OR below SMA(30) by 0.5 * ATR
+[2/4] BACKTEST
+K=1.9309 return=676.27% sharpe=0.942 vol=49.23% dd=-24.0% trades=101 runtime=1.0s
+[3/4] VERDICT REJECTED: K 1.9309 did not beat 2.429
+[4/4] SCOREBOARD tries=49 kept=7 rejected=36 crash=6 current_K=2.429
+
+ITERATION 50 baseline K=2.429
+[1/4] AGENT
+proposal: Increase SMA long lookback for entry filter from 50 to 60 to require stronger long-term trend alignment
+[2/4] BACKTEST
+K=2.6069 return=979.1% sharpe=1.096 vol=50.76% dd=-19.68% trades=96 runtime=1.0s
+[3/4] VERDICT KEPT: K 2.429 -> 2.6069
+[4/4] SCOREBOARD tries=50 kept=8 rejected=36 crash=6 current_K=2.6069
