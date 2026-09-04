@@ -30,6 +30,8 @@ BASELINE = HERE / "baseline.json"
 LAST_RUN = HERE / "last_run.json"
 VALIDATION_RUN = HERE / "validation_run.json"
 STRATEGY_FILE = HERE / "strategy.py"
+HARNESS_FILE = HERE / "robust_harness.py"
+PROGRAM_FILE = HERE / os.environ.get("AUTORESEARCH_PROGRAM", "program_robust.md")
 
 SYMBOL = os.environ["AUTORESEARCH_SYMBOL"]
 MARKET = os.environ["AUTORESEARCH_MARKET"]
@@ -515,6 +517,8 @@ def common_metadata(summary, stage):
         "stage": stage,
         "strategy_sha256": sha256_file(STRATEGY_FILE),
         "data_sha256": sha256_file(DATA_FILE),
+        "harness_sha256": sha256_file(HARNESS_FILE),
+        "program_sha256": sha256_file(PROGRAM_FILE) if PROGRAM_FILE.exists() else None,
         "adaptive_development_end": DEV_END,
         "hidden_validation_start": VALIDATION_START,
         "hidden_validation_end": VALIDATION_END,
