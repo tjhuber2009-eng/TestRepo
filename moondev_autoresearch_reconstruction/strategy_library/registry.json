@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "principles": [
     "No strategy is promoted from a single aggregate backtest.",
     "2023+ remains sealed for final one-look OOS.",
@@ -9,6 +9,56 @@
     "Transaction-cost stress is part of robustness qualification, not a post-hoc sensitivity chart."
   ],
   "families": [
+    {
+      "id": "bear_four_up_rsi2_nextopen",
+      "status": "runnable",
+      "exactness": "execution_corrected",
+      "origin": "Prior short-term trading research: below SMA200, four consecutive up closes then short, cover RSI2<30; shifted to next-open execution",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "factory": "bear_four_up_rsi2_nextopen",
+      "min_trades": 6
+    },
+    {
+      "id": "cumulative_rsi3_45_nextopen",
+      "status": "runnable",
+      "exactness": "execution_corrected",
+      "origin": "Prior short-term trading research: 3-day sum RSI2<45, exit RSI2>65; source close execution shifted to next-open",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "factory": "cumulative_rsi3_45_nextopen",
+      "min_trades": 8
+    },
+    {
+      "id": "connors_rsi2_65_nextopen",
+      "status": "runnable",
+      "exactness": "execution_corrected",
+      "origin": "Connors RSI(2) core: above SMA200, RSI2<5 entry, RSI2>65 exit; source close execution shifted to next-open causal project convention",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "factory": "connors_rsi2_65_nextopen",
+      "min_trades": 8
+    },
+    {
+      "id": "sma200_regime",
+      "status": "runnable",
+      "exactness": "canonical_family",
+      "origin": "Prior LRS/leveraged-index research: close above SMA200 risk-on, below SMA200 cash; single-instrument regime seed",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "factory": "sma200_regime",
+      "min_trades": 6
+    },
     {
       "id": "sentinel65",
       "status": "runnable",
