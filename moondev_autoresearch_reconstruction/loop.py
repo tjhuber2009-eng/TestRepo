@@ -11,6 +11,7 @@ import difflib
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -315,6 +316,7 @@ ALLOWED_IMPORT_ROOTS = {
 }
 FORBIDDEN_CALL_NAMES = {
     "open", "exec", "eval", "compile", "__import__", "input", "breakpoint",
+    "getattr", "setattr", "delattr", "globals", "locals", "vars", "dir",
 }
 FORBIDDEN_ATTR_CALLS = {
     "read_csv", "read_json", "read_pickle", "read_parquet", "read_excel",
@@ -341,7 +343,29 @@ def validate_source_safety(tree):
     if numeric_literals > 140:
         raise ValueError("strategy has too many numeric literals / degrees of freedom")
 
+    allow_calendar = os.environ.get("AUTORESEARCH_ALLOW_CALENDAR") == "1"
     for node in nodes:
+        if isinstance(node, ast.Attribute):
+            if node.attr.startswith("__"):
+                raise ValueError("dunder/introspection attribute access is forbidden")
+            if (
+                not allow_calendar
+                and node.attr in {
+                    "index", "year", "month", "day", "date",
+                    "datetime", "dayofweek", "weekday",
+                }
+            ):
+                raise ValueError(
+                    f"calendar/index access forbidden in this non-calendar family: {node.attr}"
+                )
+        if isinstance(node, ast.Constant) and not allow_calendar:
+            if isinstance(node.value, int) and 1990 <= node.value <= 2030:
+                raise ValueError("year-like integer literal forbidden in non-calendar family")
+            if isinstance(node.value, str) and re.search(
+                r"\\b(?:19|20)\\d{2}[-/]", node.value
+            ):
+                raise ValueError("date-like string literal forbidden in non-calendar family")
+
         if isinstance(node, ast.Import):
             names = [alias.name for alias in node.names]
         elif isinstance(node, ast.ImportFrom):
