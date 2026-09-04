@@ -146,7 +146,7 @@ def result_counts_at(path):
     path = Path(path)
     counts = {
         "attempts": 0, "valid": 0, "kept": 0, "rejected": 0,
-        "crashes": 0, "duplicates": 0, "parameter_only": 0,
+        "crashes": 0, "duplicates": 0, "parameter_only": 0, "too_broad": 0,
     }
     if not path.exists():
         return counts
@@ -170,6 +170,8 @@ def result_counts_at(path):
                 counts["duplicates"] += 1
             elif verdict == "PARAMETER_ONLY":
                 counts["parameter_only"] += 1
+            elif verdict == "TOO_BROAD":
+                counts["too_broad"] += 1
     return counts
 
 
@@ -724,7 +726,7 @@ def write_progress(
         "validation_pass": 0, "validation_fail": 0,
         "searching": 0,
     }
-    total_valid = total_attempts = total_crashes = total_duplicates = total_parameter_only = 0
+    total_valid = total_attempts = total_crashes = total_duplicates = total_parameter_only = total_too_broad = 0
 
     selections = load_json(SELECTIONS) if SELECTIONS.exists() else {}
     depth_ids = set(selections.get("depth_ids", []))
@@ -738,6 +740,7 @@ def write_progress(
         total_crashes += rc["crashes"]
         total_duplicates += rc["duplicates"]
         total_parameter_only += rc["parameter_only"]
+        total_too_broad += rc["too_broad"]
         val = validation_state(track)
 
         if m and m.get("status") == "data_insufficient":
@@ -786,6 +789,7 @@ def write_progress(
         "total_crashes": total_crashes,
         "total_duplicates": total_duplicates,
         "total_parameter_only": total_parameter_only,
+        "total_too_broad": total_too_broad,
         "all_runnable_tracks_terminal": terminal == len(tracks),
         "blocked_family_count": len(blocked_families),
         "blocked_families": blocked_families,
