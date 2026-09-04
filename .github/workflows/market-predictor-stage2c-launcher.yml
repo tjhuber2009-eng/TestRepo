@@ -1,0 +1,12 @@
+name: Market Predictor - Run Stage 2C
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage2c:
+    uses: tjhuber2009-eng/TestRepo/.github/workflows/market-predictor-quantrocket-stage2c.yml@market-predictor-stage2c
+    secrets: inherit
