@@ -102,9 +102,19 @@ def build_prompt(iteration, base):
             "Do not change position size merely to increase returns.",
             "Do not use future data or OOS information.",
             "Do not run a backtest yourself.",
-            "Return valid JSON only with exactly these fields:",
-            '{"proposal":"one-line description","strategy_py":"complete Python source"}',
-            "No markdown fences and no commentary outside the JSON object.",
+            "",
+            "For safety, strategy.py may import ordinary numeric/trading libraries",
+            "such as numpy, pandas, math, statistics, and backtesting only.",
+            "Do not use filesystem, shell, subprocess, network, environment,",
+            "dynamic-import, eval, exec, or file I/O APIs.",
+            "",
+            "OUTPUT FORMAT — EXACTLY THESE MARKERS, RAW PYTHON, NO JSON:",
+            "<<<PROPOSAL>>>",
+            "one-line description of the single conceptual change",
+            "<<<STRATEGY_PY>>>",
+            "<complete raw Python source for strategy.py>",
+            "<<<END_STRATEGY_PY>>>",
+            "Do not use markdown code fences. Do not add text outside the markers.",
         ]
     )
     with open(os.path.join(LOGS, f"prompt_{iteration}.txt"), "w", encoding="utf-8") as f:
@@ -128,37 +138,107 @@ def retryable(exc):
     return "timeout" in name or "connection" in name
 
 
-def extract_json(text):
-    text = (text or "").strip()
+def parse_delimited_response(raw):
+    text = (raw or "").strip()
+    p = text.find("<<<PROPOSAL>>>")
+    s = text.find("<<<STRATEGY_PY>>>")
+    e = text.rfind("<<<END_STRATEGY_PY>>>")
+    if p < 0 or s < 0 or e < 0 or not (p < s < e):
+        raise ValueError("required output markers missing or out of order")
+    if text[:p].strip() or text[e + len("<<<END_STRATEGY_PY>>>"):].strip():
+        raise ValueError("unexpected text outside output markers")
+    proposal = text[p + len("<<<PROPOSAL>>>"):s].strip()
+    source = text[s + len("<<<STRATEGY_PY>>>"):e].strip()
+    return proposal, source
+
+
+def parse_json_fallback(raw):
+    text = (raw or "").strip()
     try:
-        return json.loads(text)
+        payload = json.loads(text)
     except json.JSONDecodeError:
         first = text.find("{")
         last = text.rfind("}")
-        if first >= 0 and last > first:
-            return json.loads(text[first:last + 1])
-        raise
-
-
-def validate_payload(payload):
+        if first < 0 or last <= first:
+            raise
+        payload = json.loads(text[first:last + 1])
     if not isinstance(payload, dict):
-        raise ValueError("response JSON must be an object")
-    proposal = payload.get("proposal")
-    source = payload.get("strategy_py")
+        raise ValueError("JSON fallback response must be an object")
+    return payload.get("proposal"), payload.get("strategy_py")
+
+
+FORBIDDEN_IMPORT_ROOTS = {
+    "os", "sys", "subprocess", "socket", "urllib", "requests", "http",
+    "pathlib", "shutil", "glob", "tempfile", "importlib", "ftplib",
+    "smtplib", "asyncio",
+}
+FORBIDDEN_CALL_NAMES = {
+    "open", "exec", "eval", "compile", "__import__", "input", "breakpoint",
+}
+
+
+def validate_source_safety(tree):
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            names = [node.module] if node.module else []
+        else:
+            names = []
+        for name in names:
+            root = name.split(".", 1)[0]
+            if root in FORBIDDEN_IMPORT_ROOTS:
+                raise ValueError(f"forbidden import in strategy.py: {name}")
+
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_CALL_NAMES:
+                raise ValueError(f"forbidden call in strategy.py: {node.func.id}")
+
+
+def validate_payload(proposal, source):
     if not isinstance(proposal, str) or not proposal.strip():
         raise ValueError("missing non-empty proposal")
     if not isinstance(source, str) or not source.strip():
-        raise ValueError("missing non-empty strategy_py")
+        raise ValueError("missing non-empty strategy source")
     if chr(96) * 3 in source:
-        raise ValueError("strategy_py contains markdown fences")
+        raise ValueError("strategy source contains markdown fences")
     tree = ast.parse(source, filename=STRATEGY)
     if not any(
         isinstance(node, ast.ClassDef) and node.name == "MoonStrategy"
         for node in ast.walk(tree)
     ):
-        raise ValueError("strategy_py does not define class MoonStrategy")
+        raise ValueError("strategy.py does not define class MoonStrategy")
+    validate_source_safety(tree)
     proposal = proposal.strip().splitlines()[0].replace("\t", " ")[:200]
     return proposal, source.rstrip() + "\n"
+
+
+def parse_and_validate(raw):
+    first_error = None
+    try:
+        proposal, source = parse_delimited_response(raw)
+        return validate_payload(proposal, source)
+    except Exception as exc:
+        first_error = exc
+    try:
+        proposal, source = parse_json_fallback(raw)
+        return validate_payload(proposal, source)
+    except Exception as exc:
+        raise ValueError(
+            f"delimiter parse failed ({first_error}); JSON fallback failed ({exc})"
+        ) from exc
+
+
+def log_agent_attempt(iteration, attempt, raw, error=None):
+    path = os.path.join(LOGS, f"agent_{iteration}_attempt_{attempt}.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(f"timestamp={now()}\n")
+        f.write(f"attempt={attempt}\n")
+        if error:
+            f.write(f"error={type(error).__name__}: {str(error)[:1000]}\n")
+        f.write(f"response_characters={len(raw or '')}\n")
+        f.write("\n--- RAW MODEL RESPONSE ---\n")
+        f.write((raw or "")[:50000])
 
 
 def run_agent(iteration, prompt, model):
@@ -175,19 +255,53 @@ def run_agent(iteration, prompt, model):
     client = OpenAI(base_url=NVIDIA_BASE_URL, api_key=key, timeout=180.0)
     log_path = os.path.join(LOGS, f"agent_{iteration}.txt")
     t0 = time.time()
-    raw = ""
+    last_raw = ""
     last_exc = None
+    repair_note = ""
 
     for attempt in range(1, MAX_API_RETRIES + 1):
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a precise quantitative strategy code editor. "
+                    "Follow the requested output protocol exactly."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
+        if repair_note:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Your previous response was rejected before backtesting. "
+                        f"Validation error: {repair_note}\n"
+                        "Return one valid candidate again using the exact markers."
+                    ),
+                }
+            )
+
         try:
             response = client.chat.completions.create(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.25,
+                messages=messages,
+                temperature=0.15,
                 max_tokens=12000,
             )
             raw = response.choices[0].message.content or ""
-            proposal, source = validate_payload(extract_json(raw))
+            last_raw = raw
+            try:
+                proposal, source = parse_and_validate(raw)
+            except Exception as exc:
+                last_exc = exc
+                repair_note = str(exc)[:800]
+                log_agent_attempt(iteration, attempt, raw, exc)
+                if attempt < MAX_API_RETRIES:
+                    continue
+                break
+
+            log_agent_attempt(iteration, attempt, raw)
             with open(PROPOSAL, "w", encoding="utf-8", newline="\n") as f:
                 f.write(proposal + "\n")
             with open(STRATEGY, "w", encoding="utf-8", newline="\n") as f:
@@ -206,9 +320,11 @@ def run_agent(iteration, prompt, model):
             return proposal
         except Exception as exc:
             last_exc = exc
-            if not (retryable(exc) and attempt < MAX_API_RETRIES):
-                break
-            time.sleep(min(2 ** (attempt - 1), 8))
+            log_agent_attempt(iteration, attempt, last_raw, exc)
+            if retryable(exc) and attempt < MAX_API_RETRIES:
+                time.sleep(min(2 ** (attempt - 1), 8))
+                continue
+            break
 
     elapsed = time.time() - t0
     with open(log_path, "w", encoding="utf-8") as f:
@@ -217,11 +333,27 @@ def run_agent(iteration, prompt, model):
         f.write(f"endpoint={NVIDIA_BASE_URL}\n")
         f.write("api_success=false\n")
         f.write(f"duration_seconds={elapsed:.3f}\n")
-        f.write(f"response_characters={len(raw)}\n")
+        f.write(f"response_characters={len(last_raw)}\n")
         f.write(f"error_type={type(last_exc).__name__ if last_exc else 'unknown'}\n")
         f.write(f"error={str(last_exc)[:1000] if last_exc else 'unknown'}\n")
     raise RuntimeError(f"NVIDIA research-agent call failed: {last_exc}")
 
+
+def safe_backtest_env():
+    env = dict(os.environ)
+    for key in list(env):
+        upper = key.upper()
+        if (
+            upper == "NVIDIA_API_KEY"
+            or upper == "GH_TOKEN"
+            or upper == "GITHUB_TOKEN"
+            or upper.endswith("_TOKEN")
+            or upper.endswith("_API_KEY")
+            or upper.endswith("_SECRET")
+        ):
+            env.pop(key, None)
+    env["PYTHONNOUSERSITE"] = "1"
+    return env
 
 def run_backtest(iteration):
     path = os.path.join(LOGS, f"run_{iteration}.txt")
@@ -232,6 +364,7 @@ def run_backtest(iteration):
             stdout=f,
             stderr=subprocess.STDOUT,
             text=True,
+            env=safe_backtest_env(),
         )
     if r.returncode != 0:
         return None, f"harness exited {r.returncode}; see {path}", time.time() - t0
