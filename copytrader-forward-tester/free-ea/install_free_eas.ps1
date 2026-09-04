@@ -2,7 +2,7 @@ param(
   [string]$Mql5Path,
   [switch]$ListTerminals,
   [switch]$SkipSafeScalper,
-  [switch]$SkipApex
+  [switch]$SkipFvgGold
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,9 +23,8 @@ if ($ListTerminals) {
 
 if (-not $Mql5Path) {
   $terms = @(Get-Terminals)
-  if ($terms.Count -eq 1) {
-    $Mql5Path = $terms[0]
-  } else {
+  if ($terms.Count -eq 1) { $Mql5Path = $terms[0] }
+  else {
     Write-Host "Found $($terms.Count) MT5 data folders:"
     $terms | ForEach-Object { Write-Host "  $_" }
     throw "Specify -Mql5Path '...\MQL5' so the installer cannot choose the wrong terminal."
@@ -44,53 +43,45 @@ if (Test-Path $reporter) {
 }
 
 if (-not $SkipSafeScalper) {
-  Write-Host "Installing SafeScalper CodeBase v1.20 from MQL5..."
-  $srcUrl = "https://www.mql5.com/en/code/download/71189/ASQ_SafeScalping_CodeBase.mq5"
-  $setUrl = "https://www.mql5.com/en/code/download/71189/ASQ_SafeScalping_XAUUSD_M5_v2.set"
-  Invoke-WebRequest -UseBasicParsing $srcUrl -OutFile (Join-Path $experts "ASQ_SafeScalping_CodeBase.mq5")
-  Invoke-WebRequest -UseBasicParsing $setUrl -OutFile (Join-Path $presets "ASQ_SafeScalping_XAUUSD_M5_v2.set")
+  Write-Host "Installing official MQL5 CodeBase SafeScalper v1.20..."
+  Invoke-WebRequest -UseBasicParsing "https://www.mql5.com/en/code/download/71189/ASQ_SafeScalping_CodeBase.mq5" -OutFile (Join-Path $experts "ASQ_SafeScalping_CodeBase.mq5")
+  Invoke-WebRequest -UseBasicParsing "https://www.mql5.com/en/code/download/71189/ASQ_SafeScalping_XAUUSD_M5_v2.set" -OutFile (Join-Path $presets "ASQ_SafeScalping_XAUUSD_M5_v2.set")
 }
 
-if (-not $SkipApex) {
+if (-not $SkipFvgGold) {
   if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw "Git is required to install the pinned ApexBreakout upstream. Install Git for Windows or rerun with -SkipApex."
+    throw "Git is required for the pinned MIT FvgGold install. Install Git for Windows or rerun with -SkipFvgGold."
   }
-  $sha = "3dab20e20a846edae9ac6fcf56d6b090dbba9f98"
-  $tmp = Join-Path $env:TEMP ("copytrader-apex-" + [guid]::NewGuid().ToString("N"))
+  $sha = "a8a521c2c6e619a5f9fc7f80cad63242d1e236b5"
+  $tmp = Join-Path $env:TEMP ("copytrader-fvggold-" + [guid]::NewGuid().ToString("N"))
   try {
-    git clone --quiet --no-checkout https://github.com/sbrakni/MQL5-trading-bot-claude-experiment.git $tmp
+    git clone --quiet --no-checkout https://github.com/foeed/FvgGold-EA.git $tmp
     Push-Location $tmp
     git checkout --quiet $sha
     $actual = (git rev-parse HEAD).Trim()
-    if ($actual -ne $sha) { throw "Pinned Apex commit mismatch: $actual" }
+    if ($actual -ne $sha) { throw "Pinned FvgGold commit mismatch: $actual" }
+    if (-not (Select-String -Path "LICENSE" -Pattern "MIT License" -Quiet)) {
+      throw "Pinned FvgGold license verification failed."
+    }
     Pop-Location
-
-    Copy-Item (Join-Path $tmp "MQL5\Experts\ApexBreakout.mq5") (Join-Path $experts "ApexBreakout.mq5") -Force
-    foreach ($p in @(
-      "ApexBreakout_XAUUSD_H1_Donchian.set",
-      "ApexBreakout_USDJPY_H1_Session_V3_Turbo.set",
-      "ApexBreakout_USDJPY_H1_Session_V2_Guarded.set"
-    )) {
-      Copy-Item (Join-Path $tmp "MQL5\Presets\$p") (Join-Path $presets $p) -Force
-    }
-
-    if (Test-Path (Join-Path $experts "ApexBreakoutRecovery.mq5")) {
-      throw "Recovery/martingale EA appeared in tournament install path; refusing."
-    }
+    Copy-Item (Join-Path $tmp "FvgGold.mq5") (Join-Path $experts "FvgGold.mq5") -Force
   } finally {
     if ((Get-Location).Path -eq $tmp) { Pop-Location }
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
   }
 }
 
+# Fail closed: legacy no-license candidates are not installed by this script.
+foreach ($legacy in @("ApexBreakout.mq5","ApexBreakoutRecovery.mq5")) {
+  if (Test-Path (Join-Path $experts $legacy)) {
+    Write-Warning "$legacy already exists from an older launch pack. It is not an active licensed tournament candidate; remove or isolate it before baseline."
+  }
+}
+
 Write-Host ""
-Write-Host "Installed tournament files to:"
-Write-Host "  Experts: $experts"
-Write-Host "  Presets: $presets"
+Write-Host "Automatic licensed/official-source installation complete."
+Write-Host "Experts: $experts"
+Write-Host "Presets: $presets"
 Write-Host ""
-Write-Host "Next:"
-Write-Host "1. Open MetaEditor and compile each .mq5 under Experts\CopyTraderFree."
-Write-Host "2. Use separate DEMO accounts for each candidate."
-Write-Host "3. Load the exact preset from FREE_EA_START_MANIFEST.json."
-Write-Host "4. Attach CopyTraderDemoReporter to a spare chart with the matching CandidateId."
-Write-Host "5. Do not deposit, withdraw, or manually trade after baseline."
+Write-Host "Manual MQL5 Market candidates must be installed inside MT5 only after the product page shows FREE."
+Write-Host "Freeze the exact version at baseline; do not silently substitute versions."
