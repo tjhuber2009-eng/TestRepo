@@ -1,12 +1,13 @@
 {
-  "version": 3,
+  "version": 4,
   "principles": [
     "No strategy is promoted from a single aggregate backtest.",
     "2023+ remains sealed for final one-look OOS.",
     "Exact published rules are distinguished from research-inspired proxies.",
     "Blocked families remain in the library until their required data/engine exists; they are never silently approximated as exact.",
     "Adaptive NVIDIA search uses development data only; hidden pre-OOS validation is opened only after the research universe is frozen.",
-    "Transaction-cost stress is part of robustness qualification, not a post-hoc sensitivity chart."
+    "Transaction-cost stress is part of robustness qualification, not a post-hoc sensitivity chart.",
+    "Previously falsified or explicitly overfit strategies remain in the registry as terminal negative evidence rather than being silently rediscovered and retested."
   ],
   "families": [
     {
@@ -19,7 +20,8 @@
         "stock"
       ],
       "factory": "bear_four_up_rsi2_nextopen",
-      "min_trades": 6
+      "min_trades": 6,
+      "priority": 3
     },
     {
       "id": "cumulative_rsi3_45_nextopen",
@@ -31,7 +33,8 @@
         "stock"
       ],
       "factory": "cumulative_rsi3_45_nextopen",
-      "min_trades": 8
+      "min_trades": 8,
+      "priority": 1
     },
     {
       "id": "connors_rsi2_65_nextopen",
@@ -43,7 +46,8 @@
         "stock"
       ],
       "factory": "connors_rsi2_65_nextopen",
-      "min_trades": 8
+      "min_trades": 8,
+      "priority": 1
     },
     {
       "id": "sma200_regime",
@@ -57,7 +61,8 @@
         "futures_proxy"
       ],
       "factory": "sma200_regime",
-      "min_trades": 6
+      "min_trades": 6,
+      "priority": 1
     },
     {
       "id": "sentinel65",
@@ -71,7 +76,8 @@
         "futures_proxy"
       ],
       "factory": "sentinel65",
-      "min_trades": 8
+      "min_trades": 8,
+      "priority": 1
     },
     {
       "id": "tsmom_252",
@@ -85,7 +91,8 @@
         "futures_proxy"
       ],
       "factory": "tsmom_252",
-      "min_trades": 4
+      "min_trades": 4,
+      "priority": 1
     },
     {
       "id": "btc_rsi_adx",
@@ -96,7 +103,8 @@
         "crypto"
       ],
       "factory": "btc_rsi_adx",
-      "min_trades": 10
+      "min_trades": 10,
+      "priority": 2
     },
     {
       "id": "connors_double7",
@@ -108,7 +116,8 @@
         "stock"
       ],
       "factory": "connors_double7",
-      "min_trades": 8
+      "min_trades": 8,
+      "priority": 1
     },
     {
       "id": "connors_rsi2",
@@ -120,7 +129,8 @@
         "stock"
       ],
       "factory": "connors_rsi2",
-      "min_trades": 6
+      "min_trades": 6,
+      "priority": 1
     },
     {
       "id": "ibs_deep_pullback",
@@ -132,7 +142,8 @@
         "stock"
       ],
       "factory": "ibs_deep_pullback",
-      "min_trades": 10
+      "min_trades": 10,
+      "priority": 1
     },
     {
       "id": "sentinel63",
@@ -146,7 +157,8 @@
         "futures_proxy"
       ],
       "factory": "sentinel63",
-      "min_trades": 8
+      "min_trades": 8,
+      "priority": 1
     },
     {
       "id": "donchian_20_10",
@@ -159,7 +171,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "donchian_20_10"
+      "factory": "donchian_20_10",
+      "priority": 2
     },
     {
       "id": "turtle_55_20",
@@ -172,7 +185,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "turtle_55_20"
+      "factory": "turtle_55_20",
+      "priority": 2
     },
     {
       "id": "sma175_regime_proxy",
@@ -186,7 +200,8 @@
         "futures_proxy"
       ],
       "factory": "sma175_regime_proxy",
-      "min_trades": 6
+      "min_trades": 6,
+      "priority": 2
     },
     {
       "id": "sma200_roc126_proxy",
@@ -200,7 +215,8 @@
         "futures_proxy"
       ],
       "factory": "sma200_roc126_proxy",
-      "min_trades": 6
+      "min_trades": 6,
+      "priority": 2
     },
     {
       "id": "roc126_regime",
@@ -214,7 +230,8 @@
         "futures_proxy"
       ],
       "factory": "roc126_regime",
-      "min_trades": 6
+      "min_trades": 6,
+      "priority": 2
     },
     {
       "id": "zanger_volume_breakout_proxy",
@@ -226,7 +243,8 @@
         "etf",
         "crypto"
       ],
-      "factory": "zanger_volume_breakout_proxy"
+      "factory": "zanger_volume_breakout_proxy",
+      "priority": 2
     },
     {
       "id": "swing_terminal_breakout_proxy",
@@ -239,7 +257,8 @@
         "crypto",
         "futures_proxy"
       ],
-      "factory": "swing_terminal_breakout_proxy"
+      "factory": "swing_terminal_breakout_proxy",
+      "priority": 2
     },
     {
       "id": "swing_terminal_pullback_proxy",
@@ -252,7 +271,8 @@
         "crypto",
         "futures_proxy"
       ],
-      "factory": "swing_terminal_pullback_proxy"
+      "factory": "swing_terminal_pullback_proxy",
+      "priority": 2
     },
     {
       "id": "zscore_mean_reversion",
@@ -265,7 +285,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "zscore_mean_reversion"
+      "factory": "zscore_mean_reversion",
+      "priority": 3
     },
     {
       "id": "bollinger_mean_reversion",
@@ -278,7 +299,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "bollinger_mean_reversion"
+      "factory": "bollinger_mean_reversion",
+      "priority": 3
     },
     {
       "id": "atr_channel_trend",
@@ -291,7 +313,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "atr_channel_trend"
+      "factory": "atr_channel_trend",
+      "priority": 3
     },
     {
       "id": "vol_contraction_breakout",
@@ -304,7 +327,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "vol_contraction_breakout"
+      "factory": "vol_contraction_breakout",
+      "priority": 3
     },
     {
       "id": "qqe_proxy",
@@ -317,7 +341,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "qqe_proxy"
+      "factory": "qqe_proxy",
+      "priority": 3
     },
     {
       "id": "halftrend_proxy",
@@ -330,7 +355,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "halftrend_proxy"
+      "factory": "halftrend_proxy",
+      "priority": 3
     },
     {
       "id": "calendar_monthly",
@@ -358,7 +384,8 @@
         "stock",
         "futures_proxy"
       ],
-      "factory": "donchian_sma50"
+      "factory": "donchian_sma50",
+      "priority": 2
     },
     {
       "id": "pead",
@@ -502,6 +529,106 @@
         "historical timestamped source signals",
         "execution mapping"
       ]
+    },
+    {
+      "id": "boto_pumpdump_30m",
+      "status": "prior_rejected",
+      "name": "BoTo Pump&Dump 30m",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Long-history prior test: weak/negative after realistic cost stress; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "supertrend_10x3_1h",
+      "status": "prior_rejected",
+      "name": "SuperTrend 10x3 1H",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior long-history test approximately -83% total with severe drawdown; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "macd_30_63_30_30m",
+      "status": "prior_rejected",
+      "name": "MACD 30/63/30 30m",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior long-history test approximately -85% total; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "donchian_doubleconfirm_1h",
+      "status": "prior_rejected",
+      "name": "Donchian double-confirmation 1H",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior long-history test approximately -68% total; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "bollinger_42_2p5_1h",
+      "status": "prior_rejected",
+      "name": "Bollinger 42 x 2.5 breakout 1H",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior long-history result only weakly positive with poor risk/reward; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "heiken_ashi_supertrend",
+      "status": "prior_rejected",
+      "name": "Heiken-Ashi + SuperTrend",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior long-history test materially negative; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "qqe_ssl_wae",
+      "status": "prior_rejected",
+      "name": "QQE + SSL + WAE",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior normalized long-history test materially negative with severe drawdown; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "lazybear_squeeze",
+      "status": "prior_rejected",
+      "name": "LazyBear Squeeze",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Prior long-history test materially negative with severe drawdown; rejected.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "eight_rule_post_sweep",
+      "status": "prior_rejected_overfit",
+      "name": "The 8th Rule post-2026 sweep",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Explicit 500-million-combination parameter sweep contaminated historical defaults; not eligible for retrospective promotion.",
+      "requires": [],
+      "priority": 99
+    },
+    {
+      "id": "crazy_sma",
+      "status": "prior_rejected_overfit",
+      "name": "Crazy SMA",
+      "exactness": "prior_project_terminal",
+      "origin": "Prior trading-strategy research",
+      "evidence": "Author described it as overfit; failed older history and had suspect data handling.",
+      "requires": [],
+      "priority": 99
     }
   ]
 }
