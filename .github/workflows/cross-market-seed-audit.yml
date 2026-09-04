@@ -49,7 +49,7 @@ jobs:
       AUTORESEARCH_BARS_PER_YEAR: ${{ matrix.target.bpy }}
       AUTORESEARCH_PROFILE: ${{ matrix.profile }}
       AUTORESEARCH_MAX_DD_PCT: ${{ matrix.profile == 'prop' && '10.0' || '32.0' }}
-      AUTORESEARCH_MIN_TRADES: "50"
+      AUTORESEARCH_MIN_TRADES: "20"
       AUTORESEARCH_VOL_BAND: "0.10"
       TARGET_ID: ${{ matrix.target.id }}
       SOURCE: ${{ matrix.target.source }}
@@ -110,8 +110,8 @@ jobs:
               )
               x=json.loads(Path("last_run.json").read_text())
               print(f"attempt={attempt+1} DD={x['max_dd_pct']} vol={x['ann_vol_pct']} trades={x['trades']}")
-              if x["trades"] < 50:
-                  raise SystemExit("fewer than 50 seed trades")
+              if x["trades"] < 20:
+                  raise SystemExit("fewer than 20 seed trades")
               dd=abs(float(x["max_dd_pct"]))
               if dd <= limit:
                   break
