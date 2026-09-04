@@ -12,6 +12,7 @@ import hashlib
 import io
 import json
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import zipfile
@@ -50,9 +51,18 @@ def prepare_binance(symbol, start, end, out):
     m = datetime(start.year, start.month, 1, tzinfo=timezone.utc)
     last = datetime(end.year, end.month, 1, tzinfo=timezone.utc)
     rows = []
+    found_first = False
     while m <= last:
         stem = f"{symbol}-1d-{m.year:04d}-{m.month:02d}.zip"
-        blob = request_bytes(f"{root}/{stem}")
+        try:
+            blob = request_bytes(f"{root}/{stem}")
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404 and not found_first:
+                print(f"{stem}: not listed yet; skipping leading month")
+                m = next_month(m)
+                continue
+            raise
+        found_first = True
         check = request_bytes(f"{root}/{stem}.CHECKSUM").decode().strip().split()[0]
         got = hashlib.sha256(blob).hexdigest()
         if got.lower() != check.lower():
@@ -75,6 +85,8 @@ def prepare_binance(symbol, start, end, out):
         m = next_month(m)
 
     rows.sort(key=lambda x: x[0])
+    if not rows:
+        raise RuntimeError(f"no Binance daily rows found for {symbol}")
     with out.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["Date","Open","High","Low","Close","Volume"])
