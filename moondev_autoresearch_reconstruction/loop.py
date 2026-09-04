@@ -7,7 +7,6 @@ proposes one complete replacement for strategy.py at a time.
 
 import argparse
 import ast
-import difflib
 import hashlib
 import json
 import os
@@ -75,13 +74,86 @@ def structural_ast_hash(source):
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def structural_similarity(a, b):
-    return difflib.SequenceMatcher(
-        None,
-        structural_ast_dump(a),
-        structural_ast_dump(b),
-        autojunk=False,
-    ).ratio()
+def ast_complexity(source):
+    tree = ast.parse(source, filename=STRATEGY)
+    nodes = list(ast.walk(tree))
+    return {
+        "nodes": len(nodes),
+        "ifs": sum(isinstance(x, ast.If) for x in nodes),
+        "calls": sum(isinstance(x, ast.Call) for x in nodes),
+        "numeric_literals": sum(
+            isinstance(x, ast.Constant)
+            and isinstance(x.value, (int, float))
+            and not isinstance(x.value, bool)
+            for x in nodes
+        ),
+    }
+
+
+def _node_hash(node):
+    return hashlib.sha256(
+        ast.dump(node, annotate_fields=True, include_attributes=False).encode("utf-8")
+    ).hexdigest()
+
+
+def semantic_units(source):
+    """Return stable hashes for meaningful top-level/class units.
+
+    This intentionally ignores formatting/comments and compares regenerated
+    complete files by function/method/assignment identity rather than one giant
+    whole-file similarity ratio.
+    """
+    tree = ast.parse(source, filename=STRATEGY)
+    units = {}
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            units[f"func:{node.name}"] = _node_hash(node)
+        elif isinstance(node, ast.ClassDef) and node.name == "MoonStrategy":
+            for item in node.body:
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    units[f"MoonStrategy.{item.name}"] = _node_hash(item)
+                elif isinstance(item, (ast.Assign, ast.AnnAssign)):
+                    targets = item.targets if isinstance(item, ast.Assign) else [item.target]
+                    for target in targets:
+                        if isinstance(target, ast.Name):
+                            units[f"MoonStrategy.assign:{target.id}"] = _node_hash(item)
+    return units
+
+
+def changed_semantic_units(candidate, baseline):
+    a = semantic_units(candidate)
+    b = semantic_units(baseline)
+    keys = sorted(set(a) | set(b))
+    return [k for k in keys if a.get(k) != b.get(k)]
+
+
+def local_change_guard(candidate, baseline):
+    changed = changed_semantic_units(candidate, baseline)
+    # A normal conceptual change may add one indicator helper and modify init/next.
+    # More than four semantic units is almost always a wholesale rewrite.
+    if len(changed) > 4:
+        return False, f"too many semantic units changed ({len(changed)}): {changed[:8]}"
+
+    changed_methods = [x for x in changed if x.startswith("MoonStrategy.")]
+    if len(changed_methods) > 3:
+        return False, f"too many MoonStrategy units changed ({len(changed_methods)}): {changed_methods}"
+
+    base_c = ast_complexity(baseline)
+    cand_c = ast_complexity(candidate)
+    limits = {
+        "nodes": 650,
+        "ifs": 18,
+        "calls": 60,
+        "numeric_literals": 40,
+    }
+    for key, allowance in limits.items():
+        if cand_c[key] > base_c[key] + allowance:
+            return (
+                False,
+                f"complexity jump too large for {key}: "
+                f"{base_c[key]} -> {cand_c[key]} (allow +{allowance})",
+            )
+    return True, changed
 
 
 def risk_control_fingerprint(source):
@@ -242,6 +314,9 @@ def build_prompt(iteration, base):
             "You may change strategy.py only.",
             "Make exactly ONE conceptual strategy change.",
             "Return the COMPLETE replacement strategy.py, not a patch.",
+            "COPY the current file verbatim except for the smallest code region needed",
+            "for that one conceptual change. Do not rewrite unchanged helpers/imports.",
+            "A normal accepted edit changes at most one helper plus init/next.",
             "Preserve class MoonStrategy and obey every law in program.md.",
             "Do not change position size merely to increase returns.",
             "Do not use future data or OOS information.",
@@ -328,20 +403,20 @@ FORBIDDEN_ATTR_CALLS = {
 
 def validate_source_safety(tree):
     nodes = list(ast.walk(tree))
-    if len(nodes) > 1800:
-        raise ValueError(f"strategy AST too large: {len(nodes)} nodes > 1800")
-    if sum(isinstance(x, ast.If) for x in nodes) > 60:
-        raise ValueError("strategy has too many conditional branches")
-    if sum(isinstance(x, ast.Call) for x in nodes) > 140:
-        raise ValueError("strategy has too many function calls")
+    if len(nodes) > 4000:
+        raise ValueError(f"strategy AST too large: {len(nodes)} nodes > 4000")
+    if sum(isinstance(x, ast.If) for x in nodes) > 140:
+        raise ValueError("strategy has pathologically many conditional branches")
+    if sum(isinstance(x, ast.Call) for x in nodes) > 360:
+        raise ValueError("strategy has pathologically many function calls")
     numeric_literals = sum(
         isinstance(x, ast.Constant)
         and isinstance(x.value, (int, float))
         and not isinstance(x.value, bool)
         for x in nodes
     )
-    if numeric_literals > 140:
-        raise ValueError("strategy has too many numeric literals / degrees of freedom")
+    if numeric_literals > 280:
+        raise ValueError("strategy has pathologically many numeric literals / degrees of freedom")
 
     allow_calendar = os.environ.get("AUTORESEARCH_ALLOW_CALENDAR") == "1"
     for node in nodes:
@@ -474,7 +549,9 @@ def run_agent(iteration, prompt, model):
                     "content": (
                         "Your previous response was rejected before backtesting. "
                         f"Validation error: {repair_note}\n"
-                        "Return one valid candidate again using the exact markers."
+                        "Return one valid candidate again using the exact markers. "
+                        "Copy the current strategy verbatim and make only one localized "
+                        "conceptual edit; do not regenerate or refactor unrelated code."
                     ),
                 }
             )
@@ -702,67 +779,72 @@ def main():
                 seen.add(fingerprint)
                 save_seen_hashes(seen)
                 shutil.copy(BEST, STRATEGY)
-            elif structural_similarity(candidate_source, best_source) < 0.60:
-                verdict = "TOO_BROAD"
-                reason = "candidate rewrote too much of the family in one experiment"
-                score = ret = sharpe = vol = dd = "nan"
-                trades = 0
-                seen.add(fingerprint)
-                save_seen_hashes(seen)
-                shutil.copy(BEST, STRATEGY)
             else:
-                seen.add(fingerprint)
-                save_seen_hashes(seen)
-                print("[2/4] BACKTEST")
-                result, err, secs = run_backtest(iteration)
-                if result is None:
-                    verdict = "CRASH"
-                    reason = err
+                local_ok, local_detail = local_change_guard(
+                    candidate_source, best_source
+                )
+                if not local_ok:
+                    verdict = "TOO_BROAD"
+                    reason = f"localized-change guard: {local_detail}"
                     score = ret = sharpe = vol = dd = "nan"
                     trades = 0
+                    seen.add(fingerprint)
+                    save_seen_hashes(seen)
                     shutil.copy(BEST, STRATEGY)
                 else:
-                    score = result["score"]
-                    ret = result["return_pct"]
-                    sharpe = result["sharpe"]
-                    vol = result["ann_vol_pct"]
-                    dd = result["max_dd_pct"]
-                    trades = result["trades"]
-                    print(
-                        f"K={score} return={ret}% sharpe={sharpe} vol={vol}% "
-                        f"dd={dd}% trades={trades} runtime={secs:.1f}s"
-                    )
-                    if not result["guard_ok"]:
-                        verdict = "REJECTED"
-                        reason = f"guard: {result['guard_reason']}"
-                    else:
-                        base_score = float(base["score"])
-                        min_delta = max(
-                            0.005,
-                            min(0.02, 0.01 * max(abs(base_score), 0.10)),
-                        )
-                        if float(score) > base_score + min_delta:
-                            verdict = "KEPT"
-                            reason = (
-                                f"K {base_score} -> {score} "
-                                f"(required delta {min_delta:.4f})"
-                            )
-                        else:
-                            verdict = "REJECTED"
-                            reason = (
-                                f"K {score} did not exceed {base_score} "
-                                f"by required delta {min_delta:.4f}"
-                            )
-
-                    if verdict == "KEPT":
-                        shutil.copy(STRATEGY, BEST)
-                        shutil.copy(
-                            STRATEGY,
-                            os.path.join(KEEPERS, f"{iteration:03d}_K{score}.py"),
-                        )
-                        shutil.copy(LAST_RUN, BASELINE)
-                    else:
+                    seen.add(fingerprint)
+                    save_seen_hashes(seen)
+                    print(f"localized semantic change: {local_detail}")
+                    print("[2/4] BACKTEST")
+                    result, err, secs = run_backtest(iteration)
+                    if result is None:
+                        verdict = "CRASH"
+                        reason = err
+                        score = ret = sharpe = vol = dd = "nan"
+                        trades = 0
                         shutil.copy(BEST, STRATEGY)
+                    else:
+                        score = result["score"]
+                        ret = result["return_pct"]
+                        sharpe = result["sharpe"]
+                        vol = result["ann_vol_pct"]
+                        dd = result["max_dd_pct"]
+                        trades = result["trades"]
+                        print(
+                            f"K={score} return={ret}% sharpe={sharpe} vol={vol}% "
+                            f"dd={dd}% trades={trades} runtime={secs:.1f}s"
+                        )
+                        if not result["guard_ok"]:
+                            verdict = "REJECTED"
+                            reason = f"guard: {result['guard_reason']}"
+                        else:
+                            base_score = float(base["score"])
+                            min_delta = max(
+                                0.005,
+                                min(0.02, 0.01 * max(abs(base_score), 0.10)),
+                            )
+                            if float(score) > base_score + min_delta:
+                                verdict = "KEPT"
+                                reason = (
+                                    f"K {base_score} -> {score} "
+                                    f"(required delta {min_delta:.4f})"
+                                )
+                            else:
+                                verdict = "REJECTED"
+                                reason = (
+                                    f"K {score} did not exceed {base_score} "
+                                    f"by required delta {min_delta:.4f}"
+                                )
+
+                        if verdict == "KEPT":
+                            shutil.copy(STRATEGY, BEST)
+                            shutil.copy(
+                                STRATEGY,
+                                os.path.join(KEEPERS, f"{iteration:03d}_K{score}.py"),
+                            )
+                            shutil.copy(LAST_RUN, BASELINE)
+                        else:
+                            shutil.copy(BEST, STRATEGY)
 
         print(f"[3/4] VERDICT {verdict}: {reason}")
         append_result(
