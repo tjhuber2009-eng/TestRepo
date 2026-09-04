@@ -13,6 +13,7 @@ to NVIDIA NIM.
 - margin = 0.25
 - minimum trades = 50
 - annual-volatility guard = +/-10% of the frozen baseline
+- hard maximum historical drawdown = 10.0%
 - K = ln(1 + total return) * signed Sharpe
 - keep/revert behavior
 - only strategy.py is the research artifact
