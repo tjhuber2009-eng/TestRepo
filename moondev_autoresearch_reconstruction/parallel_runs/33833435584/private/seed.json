@@ -1,0 +1,19 @@
+{
+  "ann_vol_pct": 49.08,
+  "asset": "ETH",
+  "bars": 7846,
+  "end": "2022-12-31 18:00:00+00:00",
+  "guard_ok": true,
+  "guard_reason": "ok",
+  "max_dd_limit_pct": 32.0,
+  "max_dd_pct": -31.25,
+  "mode": "is",
+  "pf": 1.867,
+  "profile": "private",
+  "return_pct": 585.15,
+  "score": 1.6871,
+  "sharpe": 0.877,
+  "start": "2017-08-17 00:00:00+00:00",
+  "trades": 108,
+  "win_pct": 37.04
+}

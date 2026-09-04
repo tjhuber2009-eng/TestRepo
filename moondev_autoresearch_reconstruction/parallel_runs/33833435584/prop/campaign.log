@@ -1,0 +1,404 @@
+MOON DEV AUTORESEARCH — NVIDIA NIM
+model=nvidia/nemotron-3-super-120b-a12b
+endpoint=https://integrate.api.nvidia.com/v1
+key=NVIDIA_API_KEY environment variable
+profile=prop
+max_dd_limit=10.0%
+
+ITERATION 1 baseline K=0.5643
+[1/4] AGENT
+proposal: Add bullish close condition (close > open) to entry signal to reduce false breakouts.
+[2/4] BACKTEST
+K=0.5643 return=68.73% sharpe=1.079 vol=9.47% dd=-8.26% trades=108 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.5643 did not beat 0.5643
+[4/4] SCOREBOARD tries=1 kept=0 rejected=1 crash=0 current_K=0.5643
+
+ITERATION 2 baseline K=0.5643
+[1/4] AGENT
+proposal: Require two consecutive closes below exit lookback low to exit position
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_2.txt
+[4/4] SCOREBOARD tries=2 kept=0 rejected=1 crash=1 current_K=0.5643
+
+ITERATION 3 baseline K=0.5643
+[1/4] AGENT
+proposal: Require two consecutive closes below exit lookback low to exit position
+[2/4] BACKTEST
+K=0.708 return=107.84% sharpe=0.968 vol=15.06% dd=-12.84% trades=65 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -12.84% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=3 kept=0 rejected=2 crash=1 current_K=0.5643
+
+ITERATION 4 baseline K=0.5643
+[1/4] AGENT
+proposal: Add bearish close condition (close < open) to exit signal to avoid exiting on bullish reversals.
+[2/4] BACKTEST
+K=0.5643 return=68.73% sharpe=1.079 vol=9.47% dd=-8.26% trades=108 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.5643 did not beat 0.5643
+[4/4] SCOREBOARD tries=4 kept=0 rejected=3 crash=1 current_K=0.5643
+
+ITERATION 5 baseline K=0.5643
+[1/4] AGENT
+proposal: Require entry bar to open below the prior highest high and close above it for stronger breakout validation
+[2/4] BACKTEST
+K=0.5621 return=68.54% sharpe=1.077 vol=9.47% dd=-8.25% trades=108 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.5621 did not beat 0.5643
+[4/4] SCOREBOARD tries=5 kept=0 rejected=4 crash=1 current_K=0.5643
+
+ITERATION 6 baseline K=0.5643
+[1/4] AGENT
+proposal: Require close to exceed highest high by 0.5 * ATR for entry to filter weak breakouts.
+[2/4] BACKTEST
+K=0.4731 return=58.7% sharpe=1.024 vol=8.75% dd=-5.92% trades=76 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.4731 did not beat 0.5643
+[4/4] SCOREBOARD tries=6 kept=0 rejected=5 crash=1 current_K=0.5643
+
+ITERATION 7 baseline K=0.5643
+[1/4] AGENT
+proposal: Increase exit lookback period from 10 to 20 to reduce exit frequency and let winners run
+[2/4] BACKTEST
+K=0.7979 return=102.82% sharpe=1.128 vol=12.45% dd=-11.48% trades=78 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -11.48% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=7 kept=0 rejected=6 crash=1 current_K=0.5643
+
+ITERATION 8 baseline K=0.5643
+[1/4] AGENT
+proposal: Adjust exit condition to require price to be below lowest low minus 0.2*ATR to let winners run slightly more
+[2/4] BACKTEST
+K=0.5695 return=71.09% sharpe=1.061 vol=9.9% dd=-9.96% trades=101 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.5643 -> 0.5695
+[4/4] SCOREBOARD tries=8 kept=1 rejected=6 crash=1 current_K=0.5695
+
+ITERATION 9 baseline K=0.5695
+[1/4] AGENT
+proposal: Add ATR-scaled entry filter requiring breakout to exceed highest high by 0.2*ATR to reduce false breakouts
+[2/4] BACKTEST
+[3/4] VERDICT CRASH: harness exited 1; see logs/run_9.txt
+[4/4] SCOREBOARD tries=9 kept=1 rejected=6 crash=2 current_K=0.5695
+
+ITERATION 10 baseline K=0.5695
+[1/4] AGENT
+proposal: Decrease exit lookback from 10 to 5 bars to make exit more responsive
+[2/4] BACKTEST
+K=0.6143 return=70.23% sharpe=1.155 vol=9.0% dd=-8.42% trades=114 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.5695 -> 0.6143
+[4/4] SCOREBOARD tries=10 kept=2 rejected=6 crash=2 current_K=0.6143
+
+ITERATION 11 baseline K=0.6143
+[1/4] AGENT
+proposal: Decrease entry lookback from 20 to 15 to capture earlier breakouts.
+[2/4] BACKTEST
+K=0.542 return=65.39% sharpe=1.077 vol=9.1% dd=-9.89% trades=140 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.542 did not beat 0.6143
+[4/4] SCOREBOARD tries=11 kept=2 rejected=7 crash=2 current_K=0.6143
+
+ITERATION 12 baseline K=0.6143
+[1/4] AGENT
+proposal: Add ATR-scaled entry filter requiring breakout to exceed highest high by 0.1*ATR to reduce false breakouts.
+[2/4] BACKTEST
+K=0.5672 return=65.2% sharpe=1.13 vol=8.66% dd=-7.73% trades=108 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.5672 did not beat 0.6143
+[4/4] SCOREBOARD tries=12 kept=2 rejected=8 crash=2 current_K=0.6143
+
+ITERATION 13 baseline K=0.6143
+[1/4] AGENT
+proposal: Increase exit ATR multiple from 0.2 to 0.25 to allow slightly more room for winners before exiting
+[2/4] BACKTEST
+K=0.5539 return=65.9% sharpe=1.094 vol=9.02% dd=-8.4% trades=113 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.5539 did not beat 0.6143
+[4/4] SCOREBOARD tries=13 kept=2 rejected=9 crash=2 current_K=0.6143
+
+ITERATION 14 baseline K=0.6143
+[1/4] AGENT
+proposal: Increase entry lookback from 20 to 25 to require a more significant breakout for entry.
+[2/4] BACKTEST
+K=0.5989 return=67.85% sharpe=1.156 vol=8.74% dd=-5.64% trades=101 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.5989 did not beat 0.6143
+[4/4] SCOREBOARD tries=14 kept=2 rejected=10 crash=2 current_K=0.6143
+
+ITERATION 15 baseline K=0.6143
+[1/4] AGENT
+proposal: Decrease exit ATR multiple from 0.2 to 0.15 to exit earlier and reduce drawdown
+[2/4] BACKTEST
+K=0.631 return=70.94% sharpe=1.177 vol=8.91% dd=-8.7% trades=117 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.6143 -> 0.631
+[4/4] SCOREBOARD tries=15 kept=3 rejected=10 crash=2 current_K=0.631
+
+ITERATION 16 baseline K=0.631
+[1/4] AGENT
+proposal: Decrease stop loss multiplier from 3.0 to 2.5 to tighten stop loss and reduce drawdown
+[2/4] BACKTEST
+K=0.4729 return=57.25% sharpe=1.045 vol=8.41% dd=-9.82% trades=120 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.4729 did not beat 0.631
+[4/4] SCOREBOARD tries=16 kept=3 rejected=11 crash=2 current_K=0.631
+
+ITERATION 17 baseline K=0.631
+[1/4] AGENT
+proposal: Decrease entry lookback from 20 to 18 to capture earlier breakouts.
+[2/4] BACKTEST
+K=0.5945 return=68.76% sharpe=1.136 vol=9.0% dd=-10.44% trades=129 runtime=0.9s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.44% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=17 kept=3 rejected=12 crash=2 current_K=0.631
+
+ITERATION 18 baseline K=0.631
+[1/4] AGENT
+proposal: Add requirement that breakout bar closes in the upper half of its range to entry condition
+[2/4] BACKTEST
+K=0.6451 return=71.96% sharpe=1.19 vol=8.91% dd=-8.92% trades=115 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.631 -> 0.6451
+[4/4] SCOREBOARD tries=18 kept=4 rejected=12 crash=2 current_K=0.6451
+
+ITERATION 19 baseline K=0.6451
+[1/4] AGENT
+proposal: Increase ATR lookback from 20 to 30 for smoother volatility measure in stops and exits
+[2/4] BACKTEST
+K=0.6097 return=68.21% sharpe=1.172 vol=8.66% dd=-9.18% trades=115 runtime=1.1s
+[3/4] VERDICT REJECTED: K 0.6097 did not beat 0.6451
+[4/4] SCOREBOARD tries=19 kept=4 rejected=13 crash=2 current_K=0.6451
+
+ITERATION 20 baseline K=0.6451
+[1/4] AGENT
+proposal: Increase stop loss multiplier from 3.0 to 3.5 to reduce premature stop outs and let winners run
+[2/4] BACKTEST
+K=0.673 return=73.44% sharpe=1.222 vol=8.82% dd=-9.37% trades=114 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.6451 -> 0.673
+[4/4] SCOREBOARD tries=20 kept=5 rejected=13 crash=2 current_K=0.673
+
+ITERATION 21 baseline K=0.673
+[1/4] AGENT
+proposal: Add bullish close condition (close > open) to entry signal to reduce false breakouts
+[2/4] BACKTEST
+K=0.673 return=73.44% sharpe=1.222 vol=8.82% dd=-9.37% trades=114 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.673 did not beat 0.673
+[4/4] SCOREBOARD tries=21 kept=5 rejected=14 crash=2 current_K=0.673
+
+ITERATION 22 baseline K=0.673
+[1/4] AGENT
+proposal: Add requirement that exit bar closes in the lower half of its range to exit condition to avoid exiting on bullish reversals.
+[2/4] BACKTEST
+K=0.7221 return=77.42% sharpe=1.259 vol=8.93% dd=-9.37% trades=113 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.673 -> 0.7221
+[4/4] SCOREBOARD tries=22 kept=6 rejected=14 crash=2 current_K=0.7221
+
+ITERATION 23 baseline K=0.7221
+[1/4] AGENT
+proposal: Require breakout bar to close in upper half of its range and have a strong bullish body (close - open > 0.5 * (high - low)) to filter weak breakouts.
+[2/4] BACKTEST
+K=0.6386 return=70.49% sharpe=1.197 vol=8.71% dd=-9.98% trades=110 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.6386 did not beat 0.7221
+[4/4] SCOREBOARD tries=23 kept=6 rejected=15 crash=2 current_K=0.7221
+
+ITERATION 24 baseline K=0.7221
+[1/4] AGENT
+proposal: Add requirement that entry bar opens below the prior highest high to avoid buying into exhaustion
+[2/4] BACKTEST
+K=0.7194 return=77.22% sharpe=1.257 vol=8.93% dd=-9.37% trades=113 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.7194 did not beat 0.7221
+[4/4] SCOREBOARD tries=24 kept=6 rejected=16 crash=2 current_K=0.7221
+
+ITERATION 25 baseline K=0.7221
+[1/4] AGENT
+proposal: Add bearish close condition (close < open) to exit signal to avoid exiting on bullish reversals.
+[2/4] BACKTEST
+K=0.7221 return=77.42% sharpe=1.259 vol=8.93% dd=-9.37% trades=113 runtime=1.1s
+[3/4] VERDICT REJECTED: K 0.7221 did not beat 0.7221
+[4/4] SCOREBOARD tries=25 kept=6 rejected=17 crash=2 current_K=0.7221
+
+ITERATION 26 baseline K=0.7221
+[1/4] AGENT
+proposal: Decrease ATR lookback from 20 to 10 for more responsive volatility measurement
+[2/4] BACKTEST
+K=0.6665 return=73.47% sharpe=1.21 vol=8.91% dd=-10.75% trades=115 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.75% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=26 kept=6 rejected=18 crash=2 current_K=0.7221
+
+ITERATION 27 baseline K=0.7221
+[1/4] AGENT
+proposal: Add requirement that entry bar has a strong bullish body (close - open > 0.5 * (high - low)) in addition to closing in the upper half of its range to filter weak breakouts.
+[2/4] BACKTEST
+K=0.6386 return=70.49% sharpe=1.197 vol=8.71% dd=-9.98% trades=110 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.6386 did not beat 0.7221
+[4/4] SCOREBOARD tries=27 kept=6 rejected=19 crash=2 current_K=0.7221
+
+ITERATION 28 baseline K=0.7221
+[1/4] AGENT
+proposal: Add requirement that exit bar has a strong bearish body (open - close > 0.5 * (high - low)) to exit condition to avoid exiting on weak bearish bars
+[2/4] BACKTEST
+K=0.6599 return=74.55% sharpe=1.185 vol=9.21% dd=-9.35% trades=110 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.6599 did not beat 0.7221
+[4/4] SCOREBOARD tries=28 kept=6 rejected=20 crash=2 current_K=0.7221
+
+ITERATION 29 baseline K=0.7221
+[1/4] AGENT
+proposal: Add ATR-scaled entry filter requiring breakout to exceed highest high by 0.05*ATR to reduce false breakouts
+[2/4] BACKTEST
+K=0.6739 return=73.76% sharpe=1.22 vol=8.87% dd=-10.1% trades=113 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.10% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=29 kept=6 rejected=21 crash=2 current_K=0.7221
+
+ITERATION 30 baseline K=0.7221
+[1/4] AGENT
+proposal: Add bearish close condition (close < open) to exit signal in addition to existing lower half close condition to avoid exiting on bullish reversals
+[2/4] BACKTEST
+K=0.7221 return=77.42% sharpe=1.259 vol=8.93% dd=-9.37% trades=113 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.7221 did not beat 0.7221
+[4/4] SCOREBOARD tries=30 kept=6 rejected=22 crash=2 current_K=0.7221
+
+ITERATION 31 baseline K=0.7221
+[1/4] AGENT
+proposal: Decrease vol_lookback from 30 to 20 for more responsive volatility measurement in sizing.
+[2/4] BACKTEST
+K=0.7088 return=82.28% sharpe=1.181 vol=10.0% dd=-10.98% trades=113 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.98% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=31 kept=6 rejected=23 crash=2 current_K=0.7221
+
+ITERATION 32 baseline K=0.7221
+[1/4] AGENT
+proposal: Decrease exit lookback from 5 to 4 to make exit more responsive
+[2/4] BACKTEST
+K=0.7961 return=79.79% sharpe=1.357 vol=8.49% dd=-9.69% trades=120 runtime=1.1s
+[3/4] VERDICT KEPT: K 0.7221 -> 0.7961
+[4/4] SCOREBOARD tries=32 kept=7 rejected=23 crash=2 current_K=0.7961
+
+ITERATION 33 baseline K=0.7961
+[1/4] AGENT
+proposal: Increase exit ATR multiple from 0.15 to 0.18 to allow slightly more room for winners before exiting
+[2/4] BACKTEST
+K=0.8401 return=83.87% sharpe=1.379 vol=8.69% dd=-10.06% trades=119 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.06% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=33 kept=7 rejected=24 crash=2 current_K=0.7961
+
+ITERATION 34 baseline K=0.7961
+[1/4] AGENT
+proposal: Decrease exit ATR multiple from 0.15 to 0.10 to exit earlier and reduce drawdown
+[2/4] BACKTEST
+K=0.823 return=80.67% sharpe=1.391 vol=8.36% dd=-9.47% trades=123 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.7961 -> 0.823
+[4/4] SCOREBOARD tries=34 kept=8 rejected=24 crash=2 current_K=0.823
+
+ITERATION 35 baseline K=0.823
+[1/4] AGENT
+proposal: Decrease exit ATR multiple from 0.10 to 0.05 to exit earlier and reduce drawdown
+[2/4] BACKTEST
+K=0.7843 return=77.5% sharpe=1.367 vol=8.24% dd=-9.14% trades=125 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.7843 did not beat 0.823
+[4/4] SCOREBOARD tries=35 kept=8 rejected=25 crash=2 current_K=0.823
+
+ITERATION 36 baseline K=0.823
+[1/4] AGENT
+proposal: Decrease exit lookback from 4 to 3 to make exit more responsive to recent lows
+[2/4] BACKTEST
+K=0.762 return=74.83% sharpe=1.364 vol=8.02% dd=-9.74% trades=131 runtime=1.1s
+[3/4] VERDICT REJECTED: K 0.762 did not beat 0.823
+[4/4] SCOREBOARD tries=36 kept=8 rejected=26 crash=2 current_K=0.823
+
+ITERATION 37 baseline K=0.823
+[1/4] AGENT
+proposal: Change entry highest high calculation to use Close instead of High
+[2/4] BACKTEST
+K=0.8188 return=84.44% sharpe=1.338 vol=9.01% dd=-9.62% trades=169 runtime=1.2s
+[3/4] VERDICT REJECTED: K 0.8188 did not beat 0.823
+[4/4] SCOREBOARD tries=37 kept=8 rejected=27 crash=2 current_K=0.823
+
+ITERATION 38 baseline K=0.823
+[1/4] AGENT
+proposal: Add requirement that entry bar's volume is above its 20-bar average to filter low-confidence breakouts
+[2/4] BACKTEST
+K=0.8299 return=81.65% sharpe=1.39 vol=8.44% dd=-8.91% trades=114 runtime=1.2s
+[3/4] VERDICT KEPT: K 0.823 -> 0.8299
+[4/4] SCOREBOARD tries=38 kept=9 rejected=27 crash=2 current_K=0.8299
+
+ITERATION 39 baseline K=0.8299
+[1/4] AGENT
+proposal: Increase volume threshold for entry from 1.0 to 1.2 times the 20-bar average to require stronger volume confirmation
+[2/4] BACKTEST
+K=0.7563 return=74.95% sharpe=1.352 vol=8.11% dd=-7.29% trades=103 runtime=1.1s
+[3/4] VERDICT REJECTED: K 0.7563 did not beat 0.8299
+[4/4] SCOREBOARD tries=39 kept=9 rejected=28 crash=2 current_K=0.8299
+
+ITERATION 40 baseline K=0.8299
+[1/4] AGENT
+proposal: Increase exit lookback from 4 to 5 to allow more time for exits to develop
+[2/4] BACKTEST
+K=0.7393 return=78.11% sharpe=1.281 vol=8.85% dd=-8.38% trades=108 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.7393 did not beat 0.8299
+[4/4] SCOREBOARD tries=40 kept=9 rejected=29 crash=2 current_K=0.8299
+
+ITERATION 41 baseline K=0.8299
+[1/4] AGENT
+proposal: Change exit lookback to use lowest close instead of lowest low for smoother exit signal
+[2/4] BACKTEST
+K=0.2218 return=29.18% sharpe=0.866 vol=5.63% dd=-5.42% trades=153 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: ann vol 5.6% outside +-10% of baseline 8.4%
+[4/4] SCOREBOARD tries=41 kept=9 rejected=30 crash=2 current_K=0.8299
+
+ITERATION 42 baseline K=0.8299
+[1/4] AGENT
+proposal: Decrease volume average lookback from 20 to 10 for more responsive volume filter
+[2/4] BACKTEST
+K=0.6389 return=66.97% sharpe=1.246 vol=8.02% dd=-9.17% trades=119 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.6389 did not beat 0.8299
+[4/4] SCOREBOARD tries=42 kept=9 rejected=31 crash=2 current_K=0.8299
+
+ITERATION 43 baseline K=0.8299
+[1/4] AGENT
+proposal: Decrease volume threshold for entry from 1.0 to 0.9 times the 20-bar average to allow more breakouts while maintaining volume filter
+[2/4] BACKTEST
+K=0.8327 return=81.56% sharpe=1.396 vol=8.4% dd=-9.12% trades=117 runtime=1.1s
+[3/4] VERDICT KEPT: K 0.8299 -> 0.8327
+[4/4] SCOREBOARD tries=43 kept=10 rejected=31 crash=2 current_K=0.8327
+
+ITERATION 44 baseline K=0.8327
+[1/4] AGENT
+proposal: Tighten entry condition by requiring breakout bar to close in upper 40% of its range (low + 0.6*range) instead of upper 50%
+[2/4] BACKTEST
+K=0.7373 return=74.49% sharpe=1.324 vol=8.24% dd=-10.3% trades=117 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.30% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=44 kept=10 rejected=32 crash=2 current_K=0.8327
+
+ITERATION 45 baseline K=0.8327
+[1/4] AGENT
+proposal: Decrease stop loss multiplier from 3.5 to 3.0 to tighten stop loss and reduce drawdown
+[2/4] BACKTEST
+K=0.8194 return=80.46% sharpe=1.388 vol=8.36% dd=-8.62% trades=118 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.8194 did not beat 0.8327
+[4/4] SCOREBOARD tries=45 kept=10 rejected=33 crash=2 current_K=0.8327
+
+ITERATION 46 baseline K=0.8327
+[1/4] AGENT
+proposal: Change exit condition to require breakout bar to close in lower 40% of its range (instead of lower 50%) to avoid exiting on weak bearish bars.
+[2/4] BACKTEST
+K=0.8139 return=81.9% sharpe=1.36 vol=8.65% dd=-9.12% trades=112 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.8139 did not beat 0.8327
+[4/4] SCOREBOARD tries=46 kept=10 rejected=34 crash=2 current_K=0.8327
+
+ITERATION 47 baseline K=0.8327
+[1/4] AGENT
+proposal: Add volume confirmation (above 20-bar average) to exit signal to avoid low-volume breakdowns
+[2/4] BACKTEST
+K=0.9437 return=91.68% sharpe=1.45 vol=8.87% dd=-8.16% trades=110 runtime=1.0s
+[3/4] VERDICT KEPT: K 0.8327 -> 0.9437
+[4/4] SCOREBOARD tries=47 kept=11 rejected=34 crash=2 current_K=0.9437
+
+ITERATION 48 baseline K=0.9437
+[1/4] AGENT
+proposal: Add requirement that entry bar is bullish (close > open) to entry signal to reduce false breakouts
+[2/4] BACKTEST
+K=0.9437 return=91.68% sharpe=1.45 vol=8.87% dd=-8.16% trades=110 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.9437 did not beat 0.9437
+[4/4] SCOREBOARD tries=48 kept=11 rejected=35 crash=2 current_K=0.9437
+
+ITERATION 49 baseline K=0.9437
+[1/4] AGENT
+proposal: Increase volume average lookback from 20 to 30 for more stable volume filter in entry and exit
+[2/4] BACKTEST
+K=0.8509 return=83.64% sharpe=1.4 vol=8.55% dd=-10.17% trades=109 runtime=1.0s
+[3/4] VERDICT REJECTED: guard: max drawdown -10.17% exceeds 10.0% limit
+[4/4] SCOREBOARD tries=49 kept=11 rejected=36 crash=2 current_K=0.9437
+
+ITERATION 50 baseline K=0.9437
+[1/4] AGENT
+proposal: Increase exit ATR multiplier from 0.10 to 0.12 to give winners more room before exiting
+[2/4] BACKTEST
+K=0.8853 return=87.95% sharpe=1.403 vol=8.87% dd=-8.51% trades=110 runtime=1.0s
+[3/4] VERDICT REJECTED: K 0.8853 did not beat 0.9437
+[4/4] SCOREBOARD tries=50 kept=11 rejected=37 crash=2 current_K=0.9437
