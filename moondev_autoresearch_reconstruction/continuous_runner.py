@@ -245,7 +245,7 @@ def target_env(track):
         ),
         "AUTORESEARCH_MIN_ACTIVE_FOLDS": "3",
         "AUTORESEARCH_MIN_FOLD_BARS": "100",
-        "AUTORESEARCH_VOL_BAND": "0.25",
+        "AUTORESEARCH_VOL_BAND": "0.50",
         "AUTORESEARCH_COST_STRESS_MULT": str(
             cfg.get("protocol", {}).get("cost_stress_multiplier", 2.0)
         ),
