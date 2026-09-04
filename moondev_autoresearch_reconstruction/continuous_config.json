@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "profiles": {
     "prop": {
       "max_dd_pct": 10,
@@ -21,7 +21,10 @@
       "enabled": true,
       "bars_per_year": 365,
       "commission": 0.001,
-      "margin": 0.25
+      "margin": 0.25,
+      "start": "2017-08-17",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "eth",
@@ -31,7 +34,10 @@
       "enabled": true,
       "bars_per_year": 365,
       "commission": 0.001,
-      "margin": 0.25
+      "margin": 0.25,
+      "start": "2017-08-17",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "sol",
@@ -41,7 +47,10 @@
       "enabled": true,
       "bars_per_year": 365,
       "commission": 0.001,
-      "margin": 0.25
+      "margin": 0.25,
+      "start": "2020-08-11",
+      "validation_start": "2022-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "spy",
@@ -51,7 +60,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.0002,
-      "margin": 0.5
+      "margin": 0.5,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "qqq",
@@ -61,7 +73,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.0002,
-      "margin": 0.5
+      "margin": 0.5,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "tqqq",
@@ -71,7 +86,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.0002,
-      "margin": 0.5
+      "margin": 0.5,
+      "start": "2010-02-11",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "aapl",
@@ -81,7 +99,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.0002,
-      "margin": 0.5
+      "margin": 0.5,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "nvda",
@@ -91,7 +112,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.0002,
-      "margin": 0.5
+      "margin": 0.5,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "es",
@@ -101,7 +125,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.00015,
-      "margin": 0.1
+      "margin": 0.1,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "nq",
@@ -111,7 +138,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.00015,
-      "margin": 0.1
+      "margin": 0.1,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "gold",
@@ -121,7 +151,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.00015,
-      "margin": 0.1
+      "margin": 0.1,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "oil",
@@ -131,7 +164,10 @@
       "enabled": true,
       "bars_per_year": 252,
       "commission": 0.00015,
-      "margin": 0.1
+      "margin": 0.1,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "eurusd",
@@ -142,7 +178,10 @@
       "blocked_reason": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
       "bars_per_year": 252,
       "commission": 0.0001,
-      "margin": 0.05
+      "margin": 0.05,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "gbpusd",
@@ -153,7 +192,10 @@
       "blocked_reason": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
       "bars_per_year": 252,
       "commission": 0.0001,
-      "margin": 0.05
+      "margin": 0.05,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     },
     {
       "id": "usdjpy",
@@ -164,7 +206,15 @@
       "blocked_reason": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
       "bars_per_year": 252,
       "commission": 0.0001,
-      "margin": 0.05
+      "margin": 0.05,
+      "start": "2010-01-01",
+      "validation_start": "2021-01-01",
+      "validation_end": "2022-12-31"
     }
-  ]
+  ],
+  "protocol": {
+    "development_validation_split": "target-specific pre-2023 nested chronology",
+    "final_oos_start": "2023-01-01",
+    "cost_stress_multiplier": 2
+  }
 }
