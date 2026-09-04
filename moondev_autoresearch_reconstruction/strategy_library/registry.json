@@ -190,16 +190,18 @@
     },
     {
       "id": "calendar_monthly",
-      "status": "runnable",
-      "exactness": "family",
-      "origin": "Monthly seasonality/calendar research",
+      "status": "blocked",
+      "exactness": "unrecovered",
+      "origin": "Monthly seasonality research; exact frozen rule not yet recovered",
       "markets": [
         "etf",
         "stock",
         "crypto",
         "futures_proxy"
       ],
-      "factory": "calendar_monthly"
+      "requires": [
+        "frozen monthly seasonality rule from prior project"
+      ]
     },
     {
       "id": "donchian_sma50",
