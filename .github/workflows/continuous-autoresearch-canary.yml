@@ -104,11 +104,14 @@ jobs:
         shell: bash
         run: |
           if test -f canary-result.json; then
-            body="$(cat canary-result.json)"
+            {
+              echo "Admission canary result:"
+              echo
+              echo '\`\`\`json'
+              cat canary-result.json
+              echo '\`\`\`'
+            } > canary-comment.md
           else
-            body='{"admission_fixed":false,"reason":"workflow failed before result file"}'
+            echo "Admission canary failed before producing canary-result.json." > canary-comment.md
           fi
-          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body "Admission canary result:
-```json
-$body
-```"
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file canary-comment.md
