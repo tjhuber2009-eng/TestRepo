@@ -33,6 +33,7 @@ jobs:
     env:
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       GH_TOKEN: ${{ github.token }}
+
     defaults:
       run:
         working-directory: moondev_autoresearch_reconstruction
@@ -54,12 +55,14 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Verify secret and compile
+      - name: Integrity checks
         shell: bash
         run: |
           test -n "$NVIDIA_API_KEY"
           python -m compileall -q .
-          python nvidia_smoke.py
+          if test -f test_autoresearch_integrity.py; then
+            python -m unittest -v test_autoresearch_integrity.py
+          fi
 
       - name: Restore persistent research state
         shell: bash
@@ -73,12 +76,17 @@ jobs:
             echo "no prior state branch; starting clean"
           fi
 
-      - name: Advance breadth-first research
+      - name: Advance exhaustive nested research
         run: >
           python continuous_runner.py
-          --batch-size 4
           --iters-per-visit 2
-          --required-valid-attempts 10
+          --max-visits 12
+          --max-seconds 2400
+          --breadth-target 10
+          --depth-target 30
+          --elite-target 60
+          --depth-fraction 0.25
+          --elite-fraction 0.20
           --model nvidia/nemotron-3-super-120b-a12b
 
       - name: Build cycle report
@@ -86,42 +94,79 @@ jobs:
         run: |
           import json
           from pathlib import Path
-          p=Path("continuous_state/leaderboard_latest.json")
-          q=Path("continuous_state/first_pass_progress.json")
+
+          p=Path("continuous_state/progress.json")
+          q=Path("continuous_state/leaderboard_latest.json")
           if not p.exists() or not q.exists():
-              raise SystemExit("leaderboard/progress missing")
-          x=json.loads(p.read_text())
-          progress=json.loads(q.read_text())
-          rows=x.get("rows",[])[:10]
+              raise SystemExit("progress/leaderboard missing")
+
+          progress=json.loads(p.read_text())
+          board=json.loads(q.read_text())
+          rows=board.get("rows",[])[:12]
+
           out=[
               "# Continuous AUTORESEARCH cycle",
               "",
-              f"Protocol: **{x.get('protocol')}**",
-              f"Exhaustive runnable-track progress: **{progress.get('completed_track_count',0)}/{progress.get('runnable_track_count',0)}**",
-              f"Validated tracks: **{progress.get('validated_track_count',0)}**; seed-rejected tracks: **{progress.get('seed_rejected_track_count',0)}**; pending: **{progress.get('pending_track_count',0)}**",
-              f"Target: **{progress.get('required_valid_attempts_per_viable_track')} valid NVIDIA candidates per viable track** (CRASH rows do not count).",
-              f"Special-engine families still blocked: **{progress.get('blocked_family_count',0)}**",
+              f"Protocol: **{progress.get('protocol')}**",
+              f"Phase: **{progress.get('phase')}**",
+              f"Runnable tracks: **{progress.get('runnable_track_count',0)}**",
+              f"Valid NVIDIA candidates accumulated: **{progress.get('total_valid_candidates',0)}**",
+              f"Terminal tracks: **{progress.get('terminal_track_count',0)}**",
+              f"Hidden validation pass/fail: **{progress.get('validation_pass_count',0)}/{progress.get('validation_fail_count',0)}**",
+              f"Insufficient-data tracks: **{progress.get('data_insufficient_count',0)}**",
+              f"Seed-blocked tracks: **{progress.get('seed_blocked_count',0)}**",
+              f"Model crashes: **{progress.get('total_crashes',0)}**; semantic duplicates: **{progress.get('total_duplicates',0)}**",
+              f"Search budgets: breadth **{progress.get('breadth_target')}**, depth **{progress.get('depth_target')}**, elite **{progress.get('elite_target')}** valid candidates.",
+              f"Special-engine families still catalogued as blocked: **{progress.get('blocked_family_count',0)}**",
               "",
-              "| Rank | Family | Target | Profile | Attempts | Score | Return | Sharpe | DD | PF |",
-              "|---:|---|---|---|---:|---:|---:|---:|---:|---:|",
+              "| Rank | Family | Target | Profile | Dev K | Dev Ret | Dev Sharpe | Dev DD | Hidden pass | Hidden Ret | Hidden DD |",
+              "|---:|---|---|---|---:|---:|---:|---:|---|---:|---:|",
           ]
           for i,r in enumerate(rows,1):
+              hp=r.get("hidden_validation_pass")
+              hptext="—" if hp is None else ("PASS" if hp else "FAIL")
               out.append(
                   f"| {i} | {r.get('family')} | {r.get('target')} | {r.get('profile')} | "
-                  f"{r.get('attempts')} | {r.get('score')} | {r.get('return_pct')}% | "
-                  f"{r.get('sharpe')} | {r.get('max_dd_pct')}% | {r.get('pf')} |"
+                  f"{r.get('development_score')} | {r.get('development_return_pct')}% | "
+                  f"{r.get('development_sharpe')} | {r.get('development_max_dd_pct')}% | "
+                  f"{hptext} | {r.get('hidden_return_pct')} | {r.get('hidden_max_dd_pct')} |"
               )
           out += [
               "",
-              "Selection uses chronological pre-2023 robustness; 2023+ OOS remains sealed.",
-              "The scheduler advances up to four incomplete family/market/profile tracks per cycle and runs up to two NVIDIA experiments per visit.",
-              "Completed viable tracks are not repeated during this exhaustive pass. Failed/CRASH-only tracks remain pending and are retried.",
-              "Seed strategies that cannot pass the hard chronological risk/robustness gate are recorded as tested/rejected rather than silently skipped.",
+              "Adaptive NVIDIA search sees development data only. Hidden 2021–2022 (or target-specific pre-2023) validation is not opened until all adaptive search is frozen.",
+              "Every candidate is cost-stressed and evaluated on continuous equity-path chronological folds; fold boundaries do not reset strategy state.",
+              "2023+ final OOS remains absent from the research dataset.",
           ]
           Path("cycle-report.md").write_text("\n".join(out)+"\n")
           print("\n".join(out))
 
-      - name: Persist state branch
+      - name: Prepare one-time completion notification
+        id: completion
+        shell: python
+        run: |
+          import json
+          import os
+          from pathlib import Path
+
+          p=Path("continuous_state/progress.json")
+          x=json.loads(p.read_text())
+          marker=Path("continuous_state/ALL_RUNNABLE_TRACKS_TERMINAL")
+          is_new=bool(x.get("all_runnable_tracks_terminal")) and not marker.exists()
+          if is_new:
+              marker.write_text(x.get("updated_at","")+"\n")
+              Path("completion-note.md").write_text(
+                  "# Continuous AUTORESEARCH exhaustive pass complete\n\n"
+                  f"Terminal tracks: **{x['terminal_track_count']}/{x['runnable_track_count']}**.\n\n"
+                  f"Hidden validation passes: **{x['validation_pass_count']}**; failures: **{x['validation_fail_count']}**.\n\n"
+                  f"Data-insufficient: **{x['data_insufficient_count']}**; seed-blocked: **{x['seed_blocked_count']}**.\n\n"
+                  f"Total valid NVIDIA candidates evaluated: **{x['total_valid_candidates']}**.\n\n"
+                  f"Special-engine families still not runnable in this engine: **{x['blocked_family_count']}**.\n\n"
+                  "2023+ final OOS remained sealed.\n"
+              )
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"new_completion={'true' if is_new else 'false'}\n")
+
+      - name: Persist research state branch
         shell: bash
         working-directory: .
         run: |
@@ -136,67 +181,17 @@ jobs:
           fi
           git push --force-with-lease origin continuous-autoresearch-state
 
-      - name: Notify once when runnable exhaustive pass completes
-        shell: bash
-        working-directory: .
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path("moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json")
-          x=json.loads(p.read_text())
-          marker=Path("moondev_autoresearch_reconstruction/continuous_state/RUNNABLE_FIRST_PASS_COMPLETE")
-          if x.get("runnable_first_pass_complete") and not marker.exists():
-              marker.write_text(x.get("updated_at","")+"\n")
-              Path("completion-note.md").write_text(
-                  "# Continuous AUTORESEARCH runnable pass complete\n\n"
-                  f"Completed tracks: **{x['completed_track_count']}/{x['runnable_track_count']}**.\n\n"
-                  f"Every viable track reached at least **{x['required_valid_attempts_per_viable_track']} valid NVIDIA candidates**; "
-                  "seed-invalid tracks were recorded as tested/rejected. CRASH rows did not count toward completion.\n\n"
-                  f"Special-engine families still explicitly blocked/pending: **{x['blocked_family_count']}**.\n\n"
-                  "2023+ OOS remained sealed throughout this pass.\n"
-              )
-              print("NOTIFY_COMPLETION=1")
-          else:
-              print("NOTIFY_COMPLETION=0")
-          PY
-          if grep -q '^NOTIFY_COMPLETION=1
-        with:
-          name: continuous-autoresearch-${{ github.run_id }}
-          path: |
-            moondev_autoresearch_reconstruction/continuous_state/leaderboard_latest.json
-            moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json
-            moondev_autoresearch_reconstruction/continuous_state/cycles.jsonl
-            moondev_autoresearch_reconstruction/cycle-report.md
-          retention-days: 14
-
-      - name: Comment manual cycle result
-        if: github.event_name == 'issue_comment'
-        shell: bash
-        working-directory: .
-        run: >
-          gh pr comment 13
-          --repo tjhuber2009-eng/TestRepo
-          --body-file moondev_autoresearch_reconstruction/cycle-report.md
- <(python - <<'PY'
-          import json
-          from pathlib import Path
-          x=json.loads(Path("moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json").read_text())
-          print("NOTIFY_COMPLETION=1" if x.get("runnable_first_pass_complete") and Path("completion-note.md").exists() else "NOTIFY_COMPLETION=0")
-          PY
-          ); then
-            gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file completion-note.md
-          fi
-
-      - name: Upload current leaderboard
+      - name: Upload current research state summary
         uses: actions/upload-artifact@v4
         with:
           name: continuous-autoresearch-${{ github.run_id }}
           path: |
             moondev_autoresearch_reconstruction/continuous_state/leaderboard_latest.json
-            moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json
+            moondev_autoresearch_reconstruction/continuous_state/progress.json
+            moondev_autoresearch_reconstruction/continuous_state/search_selections.json
             moondev_autoresearch_reconstruction/continuous_state/cycles.jsonl
             moondev_autoresearch_reconstruction/cycle-report.md
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Comment manual cycle result
@@ -207,3 +202,12 @@ jobs:
           gh pr comment 13
           --repo tjhuber2009-eng/TestRepo
           --body-file moondev_autoresearch_reconstruction/cycle-report.md
+
+      - name: Comment final exhaustive completion
+        if: steps.completion.outputs.new_completion == 'true'
+        shell: bash
+        working-directory: .
+        run: >
+          gh pr comment 13
+          --repo tjhuber2009-eng/TestRepo
+          --body-file moondev_autoresearch_reconstruction/completion-note.md
