@@ -4,7 +4,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pandas as pd
+
 import continuous_runner
+import loop
 import seed_factory
 
 HERE = Path(__file__).resolve().parent
@@ -88,6 +91,69 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         breadth, depth, elite = 10, 30, 60
         self.assertLessEqual(breadth, depth)
         self.assertLessEqual(depth, elite)
+
+    def test_numeric_only_mutation_is_structurally_detectable(self):
+        a = """
+class MoonStrategy:
+    vol_target = 0.08
+    f_max = 0.5
+    vol_lookback = 30
+    def _units(self, px, rv):
+        return int(px)
+    def next(self):
+        if 1 < 2:
+            return
+"""
+        b = a.replace("1 < 2", "1 < 3")
+        self.assertNotEqual(loop.canonical_ast_hash(a), loop.canonical_ast_hash(b))
+        self.assertEqual(loop.structural_ast_hash(a), loop.structural_ast_hash(b))
+
+    def test_risk_control_changes_are_detectable(self):
+        a = """
+class MoonStrategy:
+    vol_target = 0.08
+    f_max = 0.5
+    vol_lookback = 30
+    def _units(self, px, rv):
+        return int(px)
+"""
+        b = a.replace("vol_target = 0.08", "vol_target = 0.09")
+        self.assertNotEqual(
+            loop.risk_control_fingerprint(a),
+            loop.risk_control_fingerprint(b),
+        )
+
+    def test_short_history_falls_back_to_half_year_folds(self):
+        env = {
+            "AUTORESEARCH_SYMBOL": "SOLUSDT",
+            "AUTORESEARCH_MARKET": "crypto",
+            "AUTORESEARCH_DATA_FILE": "data/sol_1d.csv",
+            "AUTORESEARCH_COMMISSION": "0.001",
+            "AUTORESEARCH_MARGIN": "0.25",
+            "AUTORESEARCH_BARS_PER_YEAR": "365",
+            "AUTORESEARCH_PROFILE": "prop",
+            "AUTORESEARCH_MAX_DD_PCT": "10",
+            "AUTORESEARCH_VALIDATION_START": "2022-01-01",
+            "AUTORESEARCH_VALIDATION_END": "2022-12-31",
+            "AUTORESEARCH_MIN_FOLD_BARS": "100",
+        }
+        old = {k: os.environ.get(k) for k in env}
+        try:
+            os.environ.update(env)
+            import importlib
+            import robust_harness
+            robust_harness = importlib.reload(robust_harness)
+            idx = pd.date_range("2020-08-11", "2021-12-31", freq="D", tz="UTC")
+            windows = robust_harness.fold_windows(
+                idx, "2020-08-11", "2021-12-31"
+            )
+            self.assertGreaterEqual(len(windows), 3)
+        finally:
+            for k, v in old.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
 
 
 if __name__ == "__main__":
