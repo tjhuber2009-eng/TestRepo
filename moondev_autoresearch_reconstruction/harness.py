@@ -26,6 +26,7 @@ IS_END = "2022-12-31"
 OOS_START = "2023-01-01"
 MIN_TRADES = 50
 VOL_BAND = 0.10
+MAX_DD_PCT = 10.0
 
 
 def signed_sharpe(stats):
@@ -75,6 +76,11 @@ def guard(summary):
         return False, f"trades {summary['trades']} < {MIN_TRADES}"
     if not np.isfinite(summary["score"]):
         return False, "score not finite"
+    if summary["max_dd_pct"] < -MAX_DD_PCT:
+        return False, (
+            f"max drawdown {summary['max_dd_pct']:.2f}% exceeds "
+            f"{MAX_DD_PCT:.1f}% limit"
+        )
     if BASELINE.exists():
         with open(BASELINE, encoding="utf-8") as f:
             base = json.load(f)
@@ -231,6 +237,10 @@ def main():
         if mode != "is" or asset != ASSET:
             raise RuntimeError(
                 "--set-baseline is only valid with default ETH --is"
+            )
+        if not ok:
+            raise RuntimeError(
+                f"refusing to freeze invalid baseline: {reason}"
             )
         write_json(BASELINE, summary)
 
