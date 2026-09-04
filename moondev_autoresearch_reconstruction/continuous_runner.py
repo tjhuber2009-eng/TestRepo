@@ -192,7 +192,16 @@ def track_meta(track):
 
 
 def track_counts(track):
-    return result_counts_at(TRACKS / track["id"] / "results.tsv")
+    track_dir = TRACKS / track["id"]
+    meta_path = track_dir / "state_meta.json"
+    if meta_path.exists():
+        try:
+            meta = load_json(meta_path)
+        except Exception:
+            meta = {}
+        if meta.get("protocol") != PROTOCOL:
+            return result_counts_at(Path("__missing_stale_protocol_results__"))
+    return result_counts_at(track_dir / "results.tsv")
 
 
 def is_terminal_block(track):
