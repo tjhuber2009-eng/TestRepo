@@ -60,6 +60,10 @@ def _rolling_max_now(x, n):
     return pd.Series(x, dtype=float).rolling(n).max().to_numpy()
 
 
+def _rolling_sum_now(x, n):
+    return pd.Series(x, dtype=float).rolling(n).sum().to_numpy()
+
+
 def _roc_now(x, n):
     s = pd.Series(x, dtype=float)
     return (s / s.shift(n) - 1.0).to_numpy()
@@ -165,6 +169,87 @@ __BODY__
 
 
 BODIES = {
+"sma200_regime": r'''
+    def init(self):
+        self.sma200 = self.I(_sma_now, self.data.Close, 200)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 220:
+            return
+        px=float(self.data.Close[-1]); sma=float(self.sma200[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,sma,rv]).all() or rv <= 0:
+            return
+        if not self.position and px > sma:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and px < sma:
+            self.position.close()
+''',
+
+"connors_rsi2_65_nextopen": r'''
+    def init(self):
+        self.sma200 = self.I(_sma_now, self.data.Close, 200)
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 220:
+            return
+        px=float(self.data.Close[-1]); sma=float(self.sma200[-1]); r=float(self.rsi2[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,sma,r,rv]).all() or rv <= 0:
+            return
+        if not self.position and px > sma and r < 5:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and r > 65:
+            self.position.close()
+''',
+
+"cumulative_rsi3_45_nextopen": r'''
+    def init(self):
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.rsi3sum = self.I(_rolling_sum_now, self.rsi2, 3)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 50:
+            return
+        px=float(self.data.Close[-1]); r=float(self.rsi2[-1]); s=float(self.rsi3sum[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,r,s,rv]).all() or rv <= 0:
+            return
+        if not self.position and s < 45:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.buy(size=units)
+        elif self.position and r > 65:
+            self.position.close()
+''',
+
+"bear_four_up_rsi2_nextopen": r'''
+    def init(self):
+        self.sma200 = self.I(_sma_now, self.data.Close, 200)
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.rv = self.I(_realized_vol, self.data.Close, self.vol_lookback)
+
+    def next(self):
+        if len(self.data.Close) < 220:
+            return
+        px=float(self.data.Close[-1]); sma=float(self.sma200[-1]); r=float(self.rsi2[-1]); rv=float(self.rv[-1])
+        if not np.isfinite([px,sma,r,rv]).all() or rv <= 0:
+            return
+        closes=[float(self.data.Close[-i]) for i in range(1,6)]
+        four_up = closes[0] > closes[1] > closes[2] > closes[3] > closes[4]
+        if not self.position and px < sma and four_up:
+            units=self._units(px,rv)
+            if units >= 1:
+                self.sell(size=units)
+        elif self.position and r < 30:
+            self.position.close()
+''',
+
 "sentinel63": r'''
     def init(self):
         self.ema63 = self.I(_ema_now, self.data.Close, 63)
