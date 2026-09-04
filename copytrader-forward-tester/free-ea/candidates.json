@@ -1,8 +1,66 @@
 {
-  "schema_version": 2,
-  "frozen_at": "2026-09-04T04:45:00Z",
-  "objective": "Prospectively rank actually obtainable free MT5 EAs/presets by demo return, PF, equity DD, trade count, robustness and reproducibility.",
+  "schema_version": 3,
+  "frozen_at": "2026-09-04T05:10:00Z",
+  "search_status": "EXHAUSTIVE_PUBLIC_SEARCH_COMPLETE_TO_DIMINISHING_RETURNS",
+  "objective": "Prospectively rank legitimate $0 MT5 EAs by actual demo return, PF, return/max equity DD, evidence quality and reproducibility.",
   "candidates": [
+    {
+      "id": "APEX_ORIGIN_V120",
+      "name": "Apex Origin v1.20",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "MULTI_FX",
+      "timeframe": "H1",
+      "source_url": "https://www.mql5.com/en/market/product/166552",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 1,
+      "evidence": {
+        "type": "exact_live_signal",
+        "signal_id": "2369091",
+        "growth_pct": 85.45,
+        "true_return_pct": 85.45,
+        "trades": 212,
+        "profit_factor": 3.13,
+        "equity_dd_pct": 19.62,
+        "algo_pct": 100,
+        "weeks": 22
+      },
+      "risk_flags": [
+        "linear_position_scaling_0_01_0_02_0_03",
+        "seller_says_no_heavy_martingale_not_no_martingale",
+        "one_user_called_it_grid_after_backtest",
+        "equity_dd_materially_above_balance_dd"
+      ]
+    },
+    {
+      "id": "DARUMA001_V118",
+      "name": "Daruma001 v1.18",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "MULTI_7",
+      "timeframe": "MULTI",
+      "source_url": "https://www.mql5.com/en/market/product/192791",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 2,
+      "evidence": {
+        "type": "seller_real_tick_validation",
+        "period": "2020-03 to 2026-08",
+        "trades": 4118,
+        "profit_factor": 1.77,
+        "equity_dd_pct": 4.57,
+        "win_rate_pct": 85.6,
+        "recovery_factor": 10.89
+      },
+      "risk_flags": [
+        "published_2026_08_27",
+        "forward_track_record_not_yet_mature",
+        "seller_validation_not_independent"
+      ]
+    },
     {
       "id": "SAFE_SCALPER_CODEBASE_V120",
       "name": "ASQ Safe Scalping CodeBase v1.20",
@@ -12,83 +70,171 @@
       "primary_symbol": "XAUUSD",
       "timeframe": "M5",
       "source_url": "https://www.mql5.com/en/code/71189",
-      "source_code": true,
       "launch_status": "READY",
-      "priority": 1,
+      "provenance_status": "OFFICIAL_SOURCE",
+      "priority": 3,
       "risk_flags": [
-        "older_than_market_v3_44",
-        "author_monte_carlo_claim_not_independently_reproduced"
+        "older_branch_than_market_v3_x",
+        "author_results_not_independently_reproduced"
       ]
     },
     {
-      "id": "APEX_USDJPY_V3_TURBO",
-      "name": "ApexBreakout USDJPY V3 Turbo",
-      "source_type": "public_github_upstream",
-      "cost_usd": 0,
-      "platform": "MT5",
-      "primary_symbol": "USDJPY",
-      "timeframe": "H1",
-      "source_url": "https://github.com/sbrakni/MQL5-trading-bot-claude-experiment",
-      "source_code": true,
-      "launch_status": "READY",
-      "priority": 2,
-      "risk_flags": [
-        "repository_has_no_declared_license_so_install_from_upstream_only",
-        "published_results_require_independent_forward_test",
-        "recovery_edition_explicitly_excluded"
-      ]
-    },
-    {
-      "id": "APEX_XAUUSD_DONCHIAN",
-      "name": "ApexBreakout XAUUSD Donchian",
-      "source_type": "public_github_upstream",
+      "id": "FVG_GOLD_V200",
+      "name": "FvgGold v2.00",
+      "source_type": "licensed_public_source",
+      "license": "MIT",
       "cost_usd": 0,
       "platform": "MT5",
       "primary_symbol": "XAUUSD",
-      "timeframe": "H1",
-      "source_url": "https://github.com/sbrakni/MQL5-trading-bot-claude-experiment",
-      "source_code": true,
+      "timeframe": "M15",
+      "source_url": "https://github.com/foeed/FvgGold-EA",
       "launch_status": "READY",
-      "priority": 3,
+      "provenance_status": "PERMISSIVE_SOURCE",
+      "priority": 4,
+      "evidence": {
+        "type": "developer_backtest",
+        "period": "2026 first 6 months",
+        "return_pct": 48.7,
+        "trades": 64
+      },
       "risk_flags": [
-        "repository_has_no_declared_license_so_install_from_upstream_only",
-        "published_results_require_independent_forward_test",
-        "recovery_edition_explicitly_excluded"
+        "developer_backtest_only",
+        "small_historical_sample"
       ]
     },
     {
-      "id": "SAFE_SCALPER_MARKET_V344",
-      "name": "SafeScalperPro Market v3.44",
+      "id": "SAFE_SCALPER_MARKET_CURRENT",
+      "name": "SafeScalperPro Market",
       "source_type": "mql5_market_free",
       "cost_usd": 0,
       "platform": "MT5",
       "primary_symbol": "XAUUSD",
       "timeframe": "M5",
       "source_url": "https://www.mql5.com/en/market/product/165581",
-      "source_code": false,
       "launch_status": "MANUAL_MARKET_INSTALL",
-      "priority": 4,
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 5,
       "risk_flags": [
-        "current_market_logic_defaults_differ_from_codebase_v1_20",
-        "no_verified_live_provider_record_in_registry"
+        "market_branch_differs_from_codebase_v1_20",
+        "freeze_exact_installed_version_at_baseline"
       ]
     },
     {
-      "id": "APEX_ORIGIN_V120",
-      "name": "Apex Origin v1.20",
+      "id": "NUMBIT_V121",
+      "name": "Numbit v1.21",
       "source_type": "mql5_market_free",
       "cost_usd": 0,
       "platform": "MT5",
-      "primary_symbol": "AUDCAD",
-      "timeframe": "H1",
-      "source_url": "https://www.mql5.com/en/market/product/166552",
-      "source_code": false,
+      "primary_symbol": "BTCUSD",
+      "timeframe": "SWING",
+      "source_url": "https://www.mql5.com/en/market/product/193631",
       "launch_status": "MANUAL_MARKET_INSTALL",
-      "priority": 5,
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 6,
+      "evidence": {
+        "type": "seller_real_tick_validation",
+        "period": "2022-01 to 2026-08",
+        "net_profit_usd": 1396,
+        "initial_usd": 10000,
+        "return_pct": 13.96,
+        "trades": 482,
+        "profit_factor": 2.42,
+        "win_rate_pct": 86.7,
+        "max_margin_dd_pct": 3.15
+      },
       "risk_flags": [
-        "uses_linear_position_scaling_0_01_0_02_0_03",
-        "seller_describes_no_heavy_martingale_not_no_martingale",
-        "historical_oos_claim_not_prospective"
+        "published_2026_09_01",
+        "seller_validation_not_independent",
+        "up_to_three_same_direction_positions"
+      ]
+    },
+    {
+      "id": "NANG_KWAK_GOLD_V10",
+      "name": "Nang Kwak Gold Trader v1.0",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "H1_HOST_MULTI",
+      "source_url": "https://www.mql5.com/en/market/product/192232",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 7,
+      "risk_flags": [
+        "published_2026_08_24",
+        "no_independent_performance_record",
+        "six_concurrent_strategy_slots_possible"
+      ]
+    },
+    {
+      "id": "EA34_TANIN_FORCE_V120",
+      "name": "EA34 Tanin Force v1.20",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "EURUSD",
+      "timeframe": "M15",
+      "source_url": "https://www.mql5.com/en/market/product/176142",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 8,
+      "evidence": {
+        "type": "seller_stress_test_plus_user_backtest",
+        "period": "2020-2026",
+        "user_backtest_return_pct": 9.23,
+        "user_backtest_dd_pct": 2.46
+      },
+      "risk_flags": [
+        "optimized_set_files",
+        "seller_test_not_independent",
+        "up_to_three_positions"
+      ]
+    },
+    {
+      "id": "UNIVERSAL_BREAKOUT_V26",
+      "name": "Universal Breakout MT5 v2.6",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "EURUSD",
+      "timeframe": "H1",
+      "source_url": "https://www.mql5.com/en/market/product/93732",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 9,
+      "risk_flags": [
+        "related_live_signal_is_paid_PRO_not_exact_free_build",
+        "exact_free_live_evidence_missing"
+      ]
+    },
+    {
+      "id": "EMA_SLOPE_DISTANCE_XAU",
+      "name": "EMA Slope Distance Cocktail XAUUSD",
+      "source_type": "licensed_public_source",
+      "license": "MIT_repository_with_metaquotes_headers",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "H1",
+      "source_url": "https://github.com/zhutoutoutousan/profitable-expert-advisor",
+      "launch_status": "MANUAL_SOURCE_REVIEW",
+      "provenance_status": "PERMISSIVE_REPO_SOURCE",
+      "priority": 10,
+      "evidence": {
+        "type": "repository_backtest",
+        "yearly_return_pct": 28,
+        "profit_factor": 1.222,
+        "recovery_factor": 7.17,
+        "sharpe": 4.11,
+        "max_dd_pct": 14,
+        "win_rate_pct": 64.65,
+        "trades": 2863
+      },
+      "risk_flags": [
+        "optimization_heavy_research_pipeline",
+        "up_to_48_trades_per_crossover_input",
+        "individual_file_metaquotes_copyright_header_requires_review",
+        "no_live_track_record"
       ]
     },
     {
@@ -100,13 +246,49 @@
       "primary_symbol": "XAUUSD",
       "timeframe": "SELLER_SCHEDULE",
       "source_url": "https://www.mql5.com/en/market/product/149983",
-      "source_code": false,
       "launch_status": "MANUAL_MARKET_INSTALL",
-      "priority": 6,
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 11,
       "risk_flags": [
-        "seller_claims_no_grid_no_martingale_no_averaging",
         "community_reported_stop_loss_anomaly",
-        "version_changed_materially"
+        "version_changed_materially",
+        "seller_claims_no_grid_no_martingale_no_averaging"
+      ]
+    },
+    {
+      "id": "KABUT001_V123",
+      "name": "Kabut001 v1.23",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "MULTI_3",
+      "timeframe": "MULTI",
+      "source_url": "https://www.mql5.com/en/market/product/193705",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 12,
+      "risk_flags": [
+        "published_2026_09_01",
+        "seller_validation_only",
+        "no_independent_forward_record"
+      ]
+    },
+    {
+      "id": "LONDONCALLING001_V120",
+      "name": "Londoncalling001 v1.20",
+      "source_type": "mql5_market_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "MULTI_14",
+      "timeframe": "M1_HOST",
+      "source_url": "https://www.mql5.com/en/market/product/193617",
+      "launch_status": "MANUAL_MARKET_INSTALL",
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 13,
+      "risk_flags": [
+        "published_2026_09_01",
+        "low_frequency",
+        "seller_validation_only"
       ]
     },
     {
@@ -118,11 +300,10 @@
       "primary_symbol": "XAUUSD",
       "timeframe": "M5",
       "source_url": "https://www.mql5.com/en/market/product/169680",
-      "source_code": false,
       "launch_status": "MANUAL_MARKET_INSTALL",
-      "priority": 7,
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 14,
       "risk_flags": [
-        "seller_claims_no_martingale_no_grid_no_averaging",
         "community_reported_large_live_vs_backtest_gap",
         "broker_sensitive",
         "defaults_genetically_optimized"
@@ -137,39 +318,118 @@
       "primary_symbol": "XAUUSD",
       "timeframe": "M5",
       "source_url": "https://www.mql5.com/en/market/product/147332",
-      "source_code": false,
       "launch_status": "MANUAL_MARKET_INSTALL",
-      "priority": 8,
+      "provenance_status": "OFFICIAL_FREE",
+      "priority": 15,
       "risk_flags": [
         "community_reported_57pct_default_backtest_drawdown",
-        "mean_reversion_multi_system_logic",
-        "version_updated_2026_09_03"
+        "mean_reversion_multi_system_logic"
+      ]
+    },
+    {
+      "id": "APEX_BREAKOUT_RESEARCH",
+      "name": "ApexBreakout base variants",
+      "source_type": "public_github_no_license",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD_USDJPY",
+      "timeframe": "H1",
+      "source_url": "https://github.com/sbrakni/MQL5-trading-bot-claude-experiment",
+      "launch_status": "RESEARCH_ONLY_LICENSE_UNCLEAR",
+      "provenance_status": "NO_DECLARED_LICENSE",
+      "priority": 90,
+      "risk_flags": [
+        "repository_has_no_declared_license",
+        "recovery_martingale_edition_exists_separately",
+        "developer_historical_results_only"
+      ]
+    },
+    {
+      "id": "DONCHIAN_TURTLE_RESEARCH",
+      "name": "DonchianTurtle EA v3.13",
+      "source_type": "public_github_no_license",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "D1",
+      "source_url": "https://github.com/ymodulus21/donchianturtle-ea",
+      "launch_status": "RESEARCH_ONLY_LICENSE_UNCLEAR",
+      "provenance_status": "NO_DECLARED_LICENSE",
+      "priority": 91,
+      "risk_flags": [
+        "no_declared_license",
+        "low_trade_frequency",
+        "developer_walk_forward_claim_only"
       ]
     },
     {
       "id": "EMA_GOLD_TRADER",
       "name": "EMA Gold Trader EA",
-      "source_type": "public_github_upstream",
+      "source_type": "public_github_no_license",
       "cost_usd": 0,
       "platform": "MT5",
       "primary_symbol": "XAUUSD",
       "timeframe": "H1",
       "source_url": "https://github.com/koichi055/ema-gold-trader-ea",
-      "source_code": true,
       "launch_status": "QUARANTINED",
-      "priority": 9,
-      "claimed_test": {
-        "period": "2025-01 to 2026-03",
-        "return_pct": 110.4,
-        "profit_factor": 1.92,
-        "trades": 650,
-        "win_rate_pct": 72.46,
-        "max_equity_dd_pct": 9.57
-      },
+      "provenance_status": "NO_DECLARED_LICENSE",
+      "priority": 92,
       "risk_flags": [
         "published_source_contains_apparent_markdown_code_fences",
-        "repository_has_no_declared_license",
-        "claimed_backtest_not_independently_reproduced"
+        "no_declared_license",
+        "backtest_not_independently_reproduced"
+      ]
+    },
+    {
+      "id": "GOLD_PROP_REAPER_RELABEL",
+      "name": "Gold Prop Firm Robot / Gold Reaper relabel",
+      "source_type": "third_party_mirror_identity_conflict",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "XAUUSD",
+      "timeframe": "UNKNOWN",
+      "source_url": "https://www.mql5.com/en/signals/2265877",
+      "launch_status": "QUARANTINED",
+      "provenance_status": "IDENTITY_CONFLICT",
+      "priority": 93,
+      "risk_flags": [
+        "relabel_matches_gold_reaper_account",
+        "algocheck_martingale_confirmed",
+        "unlimited_loss_design_conflict",
+        "third_party_free_distribution"
+      ]
+    },
+    {
+      "id": "MT5PHOENIX_UNAVAILABLE",
+      "name": "MT5Phoenix",
+      "source_type": "mql5_market_formerly_free",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "UNKNOWN",
+      "timeframe": "UNKNOWN",
+      "source_url": "https://www.mql5.com/en/market",
+      "launch_status": "UNAVAILABLE",
+      "provenance_status": "PRODUCT_UNAVAILABLE",
+      "priority": 94,
+      "risk_flags": [
+        "not_available_for_purchase"
+      ]
+    },
+    {
+      "id": "THIRD_PARTY_COMMERCIAL_MIRRORS",
+      "name": "FX Portfolio / Smart Owl / assorted commercial mirrors",
+      "source_type": "third_party_mirror",
+      "cost_usd": 0,
+      "platform": "MT5",
+      "primary_symbol": "MULTI",
+      "timeframe": "MULTI",
+      "source_url": "https://www.forexcracked.com/",
+      "launch_status": "RESEARCH_ONLY_PROVENANCE_DENIED",
+      "provenance_status": "COMMERCIAL_MIRROR_UNVERIFIED",
+      "priority": 95,
+      "risk_flags": [
+        "commercial_origin_or_license_unclear",
+        "do_not_install_from_mirror"
       ]
     }
   ]
