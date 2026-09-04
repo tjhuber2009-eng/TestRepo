@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "effective_at": "2026-09-04T05:10:00Z",
+  "executable_provenance": [
+    {
+      "kind": "mql5_market_free",
+      "requirement": "exact product currently shows FREE on official MQL5 Market"
+    },
+    {
+      "kind": "mql5_codebase_free_source",
+      "requirement": "source distributed by official MQL5 CodeBase"
+    },
+    {
+      "kind": "licensed_public_source",
+      "requirement": "repository has an explicit license permitting use; installer pins an exact commit"
+    }
+  ],
+  "denied_ready_provenance": [
+    "third_party_mirror_of_paid_or_unknown_commercial_ea",
+    "public_source_without_declared_license",
+    "repacked_or_relabelled_ea_with_identity_conflict",
+    "product_no_longer_available"
+  ],
+  "rules": {
+    "exact_version_required": true,
+    "seller_backtest_is_not_live_evidence": true,
+    "related_paid_signal_is_not_exact_free_ea_evidence": true,
+    "demo_forward_test_required": true,
+    "paid_signal_subscription_allowed": false,
+    "paid_ea_allowed": false,
+    "small_sample_exclusion": false
+  }
+}
