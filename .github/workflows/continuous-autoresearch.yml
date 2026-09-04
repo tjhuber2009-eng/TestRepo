@@ -136,6 +136,58 @@ jobs:
           fi
           git push --force-with-lease origin continuous-autoresearch-state
 
+      - name: Notify once when runnable exhaustive pass completes
+        shell: bash
+        working-directory: .
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json")
+          x=json.loads(p.read_text())
+          marker=Path("moondev_autoresearch_reconstruction/continuous_state/RUNNABLE_FIRST_PASS_COMPLETE")
+          if x.get("runnable_first_pass_complete") and not marker.exists():
+              marker.write_text(x.get("updated_at","")+"\n")
+              Path("completion-note.md").write_text(
+                  "# Continuous AUTORESEARCH runnable pass complete\n\n"
+                  f"Completed tracks: **{x['completed_track_count']}/{x['runnable_track_count']}**.\n\n"
+                  f"Every viable track reached at least **{x['required_valid_attempts_per_viable_track']} valid NVIDIA candidates**; "
+                  "seed-invalid tracks were recorded as tested/rejected. CRASH rows did not count toward completion.\n\n"
+                  f"Special-engine families still explicitly blocked/pending: **{x['blocked_family_count']}**.\n\n"
+                  "2023+ OOS remained sealed throughout this pass.\n"
+              )
+              print("NOTIFY_COMPLETION=1")
+          else:
+              print("NOTIFY_COMPLETION=0")
+          PY
+          if grep -q '^NOTIFY_COMPLETION=1
+        with:
+          name: continuous-autoresearch-${{ github.run_id }}
+          path: |
+            moondev_autoresearch_reconstruction/continuous_state/leaderboard_latest.json
+            moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json
+            moondev_autoresearch_reconstruction/continuous_state/cycles.jsonl
+            moondev_autoresearch_reconstruction/cycle-report.md
+          retention-days: 14
+
+      - name: Comment manual cycle result
+        if: github.event_name == 'issue_comment'
+        shell: bash
+        working-directory: .
+        run: >
+          gh pr comment 13
+          --repo tjhuber2009-eng/TestRepo
+          --body-file moondev_autoresearch_reconstruction/cycle-report.md
+ <(python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path("moondev_autoresearch_reconstruction/continuous_state/first_pass_progress.json").read_text())
+          print("NOTIFY_COMPLETION=1" if x.get("runnable_first_pass_complete") and Path("completion-note.md").exists() else "NOTIFY_COMPLETION=0")
+          PY
+          ); then
+            gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body-file completion-note.md
+          fi
+
       - name: Upload current leaderboard
         uses: actions/upload-artifact@v4
         with:
