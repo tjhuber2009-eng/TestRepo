@@ -71,10 +71,9 @@ async def run(duration_seconds: float) -> int:
         for lane in ("crypto_twap_taker", "crypto_late_resolution")
     }
 
-    # Keep enough raw source history for the 120-second volatility window,
-    # reconnection jitter, and the late-resolution known TWAP segment.
     raw_points: deque[tuple[float, float]] = deque()
     states: dict[float, dict] = {}
+    missed_strike_windows: set[float] = set()
     started_monotonic = time.monotonic()
 
     async for tick in stream_ticks(
@@ -136,10 +135,25 @@ async def run(duration_seconds: float) -> int:
                         "strike_source_lag_seconds": strike_lag_ms / 1000.0,
                     },
                 )
+            elif (
+                start_ms not in states
+                and start_ms not in missed_strike_windows
+                and strike_lag_ms > max_strike_lag_ms
+                and strike_lag_ms <= 10_000.0
+            ):
+                missed_strike_windows.add(start_ms)
+                append_jsonl(
+                    scan_log,
+                    {
+                        "kind": "crypto_strike_missed",
+                        "observed_at": _utc_from_ms(receive_ms),
+                        "spec_sha256": spec_sha,
+                        "implementation_sha256": impl_sha,
+                        "window_start_ms": start_ms,
+                        "first_seen_twap_lag_seconds": strike_lag_ms / 1000.0,
+                    },
+                )
 
-        # Discover each captured timestamp-derived Gamma event before its
-        # checkpoints. Temporary discovery failure is retried, but a missed
-        # checkpoint is never rescued retroactively.
         for start_ms, state in list(states.items()):
             end_ms = start_ms + WINDOW_MS
             if receive_ms > end_ms + 60_000:
@@ -189,6 +203,7 @@ async def run(duration_seconds: float) -> int:
             for lane, cfg in lane_configs.items():
                 if lane in state["done"]:
                     continue
+
                 target_remaining = float(cfg["entry_seconds_remaining"])
                 checkpoint_ms = end_ms - target_remaining * 1000.0
                 max_lag_ms = float(cfg["checkpoint_max_lag_seconds"]) * 1000.0
@@ -216,7 +231,6 @@ async def run(duration_seconds: float) -> int:
                 if receive_ms < checkpoint_ms:
                     continue
 
-                # Exactly one evaluation attempt per lane/window.
                 state["done"].add(lane)
                 if state["market"] is None or state["event"] is None:
                     append_jsonl(
@@ -259,7 +273,6 @@ async def run(duration_seconds: float) -> int:
                         strike=float(state["strike"]),
                         raw_points=list(raw_points),
                         window_start_ms=start_ms,
-                        observed_at=datetime.now(timezone.utc),
                         lane_cfg=cfg,
                         size_usd=paper_stake_usd,
                     )
