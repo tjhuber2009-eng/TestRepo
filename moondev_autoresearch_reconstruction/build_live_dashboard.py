@@ -139,24 +139,68 @@ f"- {'🟢' if not hidden_open else '🟡'} Hidden pre-OOS validation: **{'SEALE
 "",
 "## Current development champions",
 "",
-"| # | Family | Target | Profile | Robust K | CAGR | Cum. Return | Years | Sharpe | PF | DD | Valid |",
-"|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+"| # | Family | Target | Profile | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence |",
+"|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
 ]
 for i,r in enumerate((board.get("rows",[]) or [])[:15],1):
     _start,_end,_years,_cagr=development_period(
         r.get("track_id"),
         r.get("development_return_pct"),
     )
+    _cagr = r.get("development_cagr_pct") if r.get("development_cagr_pct") is not None else _cagr
+    _psr = r.get("development_psr_zero")
+    _q = r.get("multiple_test_qvalue")
+    _pbo = r.get("pbo")
     out.append(
         f"| {i} | {r.get('family','—')} | {str(r.get('target','—')).upper()} | "
         f"{r.get('profile','—')} | {f(r.get('development_score'),6)} | "
-        f"{pct(_cagr,1)} | {pct(r.get('development_return_pct'),1)} | "
-        f"{f(_years,1)} | {f(r.get('development_sharpe'),3)} | "
-        f"{f(r.get('development_pf'),2)} | {pct(r.get('development_max_dd_pct'),2)} | "
-        f"{int(r.get('valid_attempts',0) or 0)} |"
+        f"{pct(_cagr,1)} | {pct(r.get('excess_cagr_vs_buyhold_pct'),1)} | "
+        f"{pct(r.get('benchmark_cagr_pct'),1)} | {f(_years,1)} | "
+        f"{f(r.get('development_sharpe'),3)} | {f(r.get('development_pf'),2)} | "
+        f"{pct(r.get('development_max_dd_pct'),2)} | "
+        f"{pct(None if _psr is None else 100*float(_psr),1)} | "
+        f"{pct(None if _q is None else 100*float(_q),1)} | "
+        f"{pct(None if _pbo is None else 100*float(_pbo),1)} | "
+        f"{r.get('evidence_grade') or '—'} |"
+    )
+
+# A separate equal-time return view prevents cumulative-return duration bias.
+_cagr_rows=[]
+for r in (board.get("rows",[]) or []):
+    v=r.get("development_cagr_pct")
+    if v is None:
+        _,_,_,v=development_period(r.get("track_id"),r.get("development_return_pct"))
+    try:
+        vv=float(v)
+    except Exception:
+        continue
+    if math.isfinite(vv):
+        _cagr_rows.append((vv,r))
+_cagr_rows.sort(key=lambda x:x[0],reverse=True)
+out += [
+"",
+"## Equal-time return leaderboard (CAGR)",
+"",
+"| # | Track | Profile | CAGR | Robust K | DD | Years | Evidence |",
+"|---:|---|---|---:|---:|---:|---:|---|",
+]
+for i,(cg,r) in enumerate(_cagr_rows[:12],1):
+    _,_,yrs,_=development_period(r.get("track_id"),r.get("development_return_pct"))
+    out.append(
+        f"| {i} | {r.get('family')} / {str(r.get('target','')).upper()} | "
+        f"{r.get('profile')} | {pct(cg,1)} | {f(r.get('development_score'),6)} | "
+        f"{pct(r.get('development_max_dd_pct'),2)} | {f(yrs,1)} | "
+        f"{r.get('evidence_grade') or '—'} |"
     )
 
 out += [
+"",
+"## Project health",
+"",
+f"- Protocol migration: **{progress.get('protocol','—')}**",
+"- Prior protocol v2 state is preserved on branch **continuous-autoresearch-v2-archive-20260905**.",
+"- Candidate selection now uses duration-normalized K, 2×/3× cost stress, PSR, block-bootstrap diagnostics and CSCV PBO when enough candidates exist.",
+"- Multiple-testing FDR q-values are reported across current champions rather than silently treating 514 searches as independent.",
 "",
 "## Search-quality diagnostics",
 "",
