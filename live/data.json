@@ -1,0 +1,309 @@
+{
+  "generated_at": "2026-09-05T09:13:49Z",
+  "leaderboard": [],
+  "phase": "initializing",
+  "progress": {
+    "breadth_target": 10,
+    "depth_target": 30,
+    "elite_target": 60,
+    "phase": "initializing",
+    "protocol": "nested_chronological_v3",
+    "rows": [],
+    "runnable_track_count": 0,
+    "terminal_track_count": 0,
+    "total_valid_candidates": 0,
+    "validation_fail_count": 0,
+    "validation_pass_count": 0
+  },
+  "progress_derived": {
+    "breadth_pct": 0,
+    "breadth_target": 10,
+    "breadth_total_candidates": 0,
+    "depth_target": 30,
+    "elite_target": 60,
+    "touched_tracks": 0,
+    "tracks_valid_ge_1": 0,
+    "tracks_valid_ge_10": 0,
+    "tracks_valid_ge_2": 0,
+    "tracks_valid_ge_5": 0
+  },
+  "project": "Moon Dev AUTORESEARCH reconstruction",
+  "protocol": "nested_chronological_v3",
+  "recent_cycles": [],
+  "safeguards": {
+    "cost_stress_multiplier": 2.0,
+    "final_oos_opened": false,
+    "final_oos_start": "2023-01-01",
+    "hidden_validation_opened": false,
+    "private_dd_cap_pct": 32,
+    "prop_dd_cap_pct": 10,
+    "protocol": "nested_chronological_v3",
+    "protocol_stale_state_detected": true
+  },
+  "selections": {},
+  "stale_state": {
+    "leaderboard_count": 66,
+    "leaderboard_protocol": "nested_chronological_v2",
+    "progress_protocol": "nested_chronological_v2",
+    "progress_updated_at": "2026-09-05T00:10:23Z"
+  },
+  "state_is_active": false,
+  "tournament": null,
+  "tracks": [],
+  "workflow": {
+    "continuous_runs": [
+      {
+        "conclusion": "skipped",
+        "created_at": "2026-09-05T00:57:47Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33934665907",
+        "id": 33934665907,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 42,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:57:48Z"
+      },
+      {
+        "conclusion": "skipped",
+        "created_at": "2026-09-05T00:47:48Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33934138522",
+        "id": 33934138522,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 41,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:47:56Z"
+      },
+      {
+        "conclusion": "skipped",
+        "created_at": "2026-09-05T00:45:32Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33934023273",
+        "id": 33934023273,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 40,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:45:33Z"
+      },
+      {
+        "conclusion": "skipped",
+        "created_at": "2026-09-05T00:44:42Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33933975536",
+        "id": 33933975536,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 39,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:44:43Z"
+      },
+      {
+        "conclusion": "skipped",
+        "created_at": "2026-09-05T00:35:19Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33933472055",
+        "id": 33933472055,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 38,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:38:11Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:26:07Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33932962771",
+        "id": 33932962771,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 37,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:35:20Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:25:10Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33932908811",
+        "id": 33932908811,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 36,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:26:08Z"
+      },
+      {
+        "conclusion": "failure",
+        "created_at": "2026-09-05T00:24:29Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33932871421",
+        "id": 33932871421,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 35,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:38:10Z"
+      }
+    ],
+    "tournament_jobs": [
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280623889,
+        "name": "model (deepseek-v4-pro, nvidia, deepseek-ai/deepseek-v4-pro-0813)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280623892,
+        "name": "model (nemotron-lightning, nvidia, nvidia/nemotron-3.5-lightning-30b-a3b)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280623893,
+        "name": "model (groq-gpt-oss-120b, groq, openai/gpt-oss-120b)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280623925,
+        "name": "model (gemini-2-5-pro, gemini, gemini-2.5-pro)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": "Run matched model benchmark",
+        "id": 101280623930,
+        "name": "model (nemotron-super, nvidia, nvidia/nemotron-3-super-120b-a12b)",
+        "started_at": "2026-09-05T08:53:09Z",
+        "status": "in_progress"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280623932,
+        "name": "model (glm-5-2, nvidia, z-ai/glm-5.2)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280623936,
+        "name": "model (poolside-laguna, nvidia, poolside/laguna-xs-2.1)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      },
+      {
+        "completed_at": null,
+        "conclusion": null,
+        "current_step": null,
+        "id": 101280624012,
+        "name": "model (nemotron-ultra, nvidia, nvidia/nemotron-3-ultra-550b-a55b)",
+        "started_at": "2026-09-05T08:53:06Z",
+        "status": "queued"
+      }
+    ],
+    "tournament_runs": [
+      {
+        "conclusion": null,
+        "created_at": "2026-09-05T08:53:00Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33956473825",
+        "id": 33956473825,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 10,
+        "status": "queued",
+        "updated_at": "2026-09-05T08:53:06Z"
+      },
+      {
+        "conclusion": "skipped",
+        "created_at": "2026-09-05T00:57:47Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33934665843",
+        "id": 33934665843,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 9,
+        "status": "completed",
+        "updated_at": "2026-09-05T01:39:14Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:47:48Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33934138581",
+        "id": 33934138581,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 8,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:57:48Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:45:33Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33934023440",
+        "id": 33934023440,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 7,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:47:50Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:44:42Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33933975490",
+        "id": 33933975490,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 6,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:45:34Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:35:19Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33933472027",
+        "id": 33933472027,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 5,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:44:43Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:26:07Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33932962769",
+        "id": 33932962769,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 4,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:35:20Z"
+      },
+      {
+        "conclusion": "cancelled",
+        "created_at": "2026-09-05T00:25:09Z",
+        "event": "issue_comment",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/33932908551",
+        "id": 33932908551,
+        "name": "Zero-fee AI strategy model tournament",
+        "run_number": 3,
+        "status": "completed",
+        "updated_at": "2026-09-05T00:26:08Z"
+      }
+    ]
+  }
+}
