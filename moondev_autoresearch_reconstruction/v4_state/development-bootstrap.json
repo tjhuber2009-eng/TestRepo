@@ -21053,6 +21053,7 @@
     "max_gross": 1.5,
     "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
   },
+  "portfolio_authoritative_concentration_cap": 0.65,
   "portfolio_concentration_sensitivity": {
     "0.50": {
       "candidates_evaluated": 1000,
