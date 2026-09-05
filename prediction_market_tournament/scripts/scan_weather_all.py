@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from tournament.adapters.polymarket import list_events
@@ -13,6 +13,7 @@ from tournament.weather_market import weather_signal_from_market
 from tournament.weather_discovery import (
     is_temperature_event,
     target_date_from_event,
+    target_date_in_scan_window,
 )
 def existing_weather_markets(ledger_path: Path) -> set[str]:
     seen: set[str] = set()
@@ -79,12 +80,9 @@ def main() -> int:
             errors.append(f"date:{event.get('id')}:{exc}")
             continue
 
-        # Event dates are station-local calendar dates, not UTC dates.
-        # Allow one UTC-day of backward overlap and eight forward days so
-        # worldwide timezone offsets cannot drop a still-live local "today".
-        if (
-            target < now.date() - timedelta(days=1)
-            or target > now.date() + timedelta(days=8)
+        if not target_date_in_scan_window(
+            target,
+            now_utc=now,
         ):
             continue
 
