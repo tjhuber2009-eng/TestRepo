@@ -46,6 +46,15 @@ jobs:
       - name: Prepare SPY development data
         run: python prepare_market_data.py --source yahoo --symbol SPY --id spy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
+      - name: Prepare IEF development data
+        run: python prepare_market_data.py --source yahoo --symbol IEF --id ief --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+
+      - name: Prepare GLD development data
+        run: python prepare_market_data.py --source yahoo --symbol GLD --id gld --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+
+      - name: Prepare SHY development data
+        run: python prepare_market_data.py --source yahoo --symbol SHY --id shy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+
       - name: Prepare BTC development data
         run: python prepare_market_data.py --source binance --symbol BTCUSDT --id btc --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
 
