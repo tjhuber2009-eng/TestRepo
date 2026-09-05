@@ -54,6 +54,9 @@ jobs:
             /v4-prop-bootstrap)
               gh workflow run autoresearch-v4-prop-bootstrap.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /v4-prop-intraday)
+              gh workflow run autoresearch-v4-prop-intraday.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             /v4-harvest)
               gh workflow run autoresearch-v4-harvest.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
