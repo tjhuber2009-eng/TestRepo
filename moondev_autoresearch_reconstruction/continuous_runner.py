@@ -13,6 +13,7 @@ State persists on a dedicated GitHub branch between scheduled invocations.
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -33,6 +34,8 @@ CURSOR = STATE / "cursor.json"
 LEDGER = STATE / "cycles.jsonl"
 PROGRESS = STATE / "progress.json"
 SELECTIONS = STATE / "search_selections.json"
+TOURNAMENT_STATE = HERE / "tournament_state" / "tournament-summary.json"
+DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
 
 RUNTIME_FILES = [
     "baseline.json",
@@ -45,7 +48,7 @@ RUNTIME_FILES = [
     "seen_hashes.json",
     "experiments.jsonl",
 ]
-PROTOCOL = "nested_chronological_v2"
+PROTOCOL = "nested_chronological_v3"
 
 
 def now():
@@ -258,6 +261,12 @@ def target_env(track):
         "AUTORESEARCH_COST_STRESS_MULT": str(
             cfg.get("protocol", {}).get("cost_stress_multiplier", 2.0)
         ),
+        "AUTORESEARCH_EXTREME_COST_STRESS_MULT": str(
+            cfg.get("protocol", {}).get("extreme_cost_stress_multiplier", 3.0)
+        ),
+        "AUTORESEARCH_BOOTSTRAP_REPS": str(
+            cfg.get("protocol", {}).get("bootstrap_reps", 500)
+        ),
         "AUTORESEARCH_IS_START": t.get("start", "2017-08-17"),
         "AUTORESEARCH_VALIDATION_START": t.get("validation_start", "2021-01-01"),
         "AUTORESEARCH_VALIDATION_END": t.get("validation_end", "2022-12-31"),
@@ -378,7 +387,11 @@ def initialize_track(track, track_dir, env):
 
         dds = [abs(float(last.get("max_dd_pct", 0.0)))]
         stress = last.get("stress") or {}
+        extreme = last.get("extreme_stress") or {}
         dds.append(abs(float(stress.get("max_dd_pct", 0.0))))
+        dds.append(abs(float(stress.get("intrabar_dd_proxy_pct", 0.0))))
+        dds.append(abs(float(extreme.get("max_dd_pct", 0.0))))
+        dds.append(abs(float(extreme.get("intrabar_dd_proxy_pct", 0.0))))
         worst_dd = max(dds)
 
         if worst_dd <= limit:
@@ -495,6 +508,80 @@ def discard_stale_track_state(track_dir):
     if payload.get("protocol") != PROTOCOL:
         print(f"[state reset] discarding stale protocol state in {track_dir.name}")
         shutil.rmtree(track_dir)
+
+
+def reset_stale_protocol_state():
+    """Discard active-state files from older scoring protocols.
+
+    The prior branch is archived before v3 starts, so this reset cannot destroy
+    the v2 audit trail. A protocol change must never mix old and new scores.
+    """
+    if not TRACKS.exists():
+        return 0
+    removed = 0
+    for track_dir in TRACKS.iterdir():
+        if not track_dir.is_dir():
+            continue
+        meta = track_dir / "state_meta.json"
+        try:
+            payload = load_json(meta) if meta.exists() else {}
+        except Exception:
+            payload = {}
+        if payload.get("protocol") != PROTOCOL:
+            shutil.rmtree(track_dir)
+            removed += 1
+    for path in [CURSOR, SELECTIONS, PROGRESS]:
+        if path.exists():
+            try:
+                payload = load_json(path)
+            except Exception:
+                payload = {}
+            if payload.get("protocol") != PROTOCOL:
+                path.unlink()
+    if removed:
+        print(f"[protocol migration] removed {removed} stale track states")
+    return removed
+
+
+def tournament_model_pool():
+    if not TOURNAMENT_STATE.exists():
+        return []
+    try:
+        payload = load_json(TOURNAMENT_STATE)
+    except Exception:
+        return []
+    rows = payload.get("ranking", [])
+    pool = []
+    for row in rows:
+        if row.get("provider") != "nvidia":
+            continue
+        model = row.get("model")
+        if not model:
+            continue
+        if int(row.get("admitted", 0) or 0) <= 0:
+            continue
+        pool.append(model)
+        if len(pool) >= 3:
+            break
+    return pool
+
+
+def select_research_model(track, requested_model, valid_count):
+    if requested_model != "auto":
+        return requested_model
+    pool = tournament_model_pool()
+    if not pool:
+        return DEFAULT_MODEL
+    # Deterministic weighted diversity: best model gets 50%, second 30%,
+    # third 20%. This avoids a single-model monoculture while favoring the
+    # matched tournament winner.
+    weights = [5, 3, 2][:len(pool)]
+    wheel = []
+    for model, weight in zip(pool, weights):
+        wheel.extend([model] * weight)
+    material = f"{track['id']}|{valid_count}|{PROTOCOL}".encode()
+    idx = int(hashlib.sha256(material).hexdigest()[:8], 16) % len(wheel)
+    return wheel[idx]
 
 
 def process_track(track, iters, model):
@@ -787,6 +874,15 @@ def write_progress(
             "valid_attempts": rc["valid"],
             "attempts": rc["attempts"],
             "development_score": development_score(track),
+            "development_cagr_pct": (
+                (m.get("baseline") or {}).get("cagr_pct") if m else None
+            ),
+            "evidence_grade": (
+                (m.get("baseline") or {}).get("evidence_grade") if m else None
+            ),
+            "psr_zero": (
+                (m.get("baseline") or {}).get("psr_zero") if m else None
+            ),
             "depth_selected": track["id"] in depth_ids,
             "elite_selected": track["id"] in elite_ids,
         })
@@ -845,15 +941,49 @@ def rebuild_leaderboard(tracks):
             "valid_attempts": m.get("valid", m.get("valid_attempts", 0)),
             "development_score": b.get("score"),
             "development_return_pct": b.get("return_pct"),
+            "development_cagr_pct": b.get("cagr_pct"),
+            "development_years": b.get("development_years"),
             "development_sharpe": b.get("sharpe"),
             "development_max_dd_pct": b.get("max_dd_pct"),
             "development_pf": b.get("pf"),
+            "development_calmar": b.get("calmar"),
+            "development_ulcer_index_pct": b.get("ulcer_index_pct"),
+            "development_psr_zero": b.get("psr_zero"),
+            "development_bootstrap_pvalue": b.get("bootstrap_mean_positive_pvalue"),
+            "evidence_grade": b.get("evidence_grade"),
+            "benchmark_cagr_pct": b.get("benchmark_cagr_pct"),
+            "excess_cagr_vs_buyhold_pct": b.get("excess_cagr_vs_buyhold_pct"),
+            "sharpe_minus_buyhold": b.get("sharpe_minus_buyhold"),
+            "extreme_stress_return_pct": (b.get("extreme_stress") or {}).get("return_pct"),
             "hidden_validation_pass": None if val is None else bool(val.get("guard_ok")),
             "hidden_return_pct": None if val is None else val.get("return_pct"),
+            "hidden_cagr_pct": None if val is None else val.get("cagr_pct"),
             "hidden_sharpe": None if val is None else val.get("sharpe"),
             "hidden_max_dd_pct": None if val is None else val.get("max_dd_pct"),
             "hidden_pf": None if val is None else val.get("pf"),
         })
+    # Benjamini-Hochberg FDR diagnostic across current champions. This is
+    # reported, not used as a hard gate, so low-sample ideas remain eligible
+    # for the user's requested forward/hidden validation process.
+    p_rows = []
+    for idx, row in enumerate(rows):
+        try:
+            p = float(row.get("development_bootstrap_pvalue"))
+        except Exception:
+            continue
+        if math.isfinite(p):
+            p_rows.append((p, idx))
+    p_rows.sort()
+    mtests = len(p_rows)
+    running = 1.0
+    for rank in range(mtests, 0, -1):
+        p, idx = p_rows[rank - 1]
+        q = min(running, p * mtests / rank)
+        running = q
+        rows[idx]["multiple_test_qvalue"] = round(min(1.0, q), 6)
+    for row in rows:
+        row.setdefault("multiple_test_qvalue", None)
+
     rows.sort(
         key=lambda x: (
             1 if x["hidden_validation_pass"] is True else 0,
@@ -881,7 +1011,7 @@ def main():
     ap.add_argument("--elite-target", type=int, default=60)
     ap.add_argument("--depth-fraction", type=float, default=0.25)
     ap.add_argument("--elite-fraction", type=float, default=0.20)
-    ap.add_argument("--model", default="nvidia/nemotron-3-super-120b-a12b")
+    ap.add_argument("--model", default="auto")
     args = ap.parse_args()
 
     if not os.environ.get("NVIDIA_API_KEY"):
@@ -896,6 +1026,7 @@ def main():
     tracks = build_tracks()
     if not tracks:
         raise SystemExit("no runnable tracks")
+    reset_stale_protocol_state()
 
     started = time.monotonic()
     cursor = read_cursor(len(tracks))
@@ -945,7 +1076,9 @@ def main():
         current = track_counts(track)["valid"]
         visit_iters = min(args.iters_per_visit, max(1, target - current))
         try:
-            process_track(track, visit_iters, args.model)
+            chosen_model = select_research_model(track, args.model, current)
+            print(f"[model router] {track['id']} -> {chosen_model}")
+            process_track(track, visit_iters, chosen_model)
         except Exception as exc:
             append_cycle({
                 "ts": now(), "track_id": track["id"],
