@@ -128,12 +128,26 @@ class RobustPortfolioOptimizer:
     def _candidate_compositions(
         self, n: int, rng: np.random.Generator
     ) -> list[np.ndarray]:
+        if n < 1:
+            raise ValueError("portfolio requires at least one strategy")
+        if self.max_weight * n < 1.0 - 1e-12:
+            raise ValueError(
+                "max_weight is infeasible for the number of strategies"
+            )
+
         out = []
-        for i in range(n):
-            w = np.zeros(n)
-            w[i] = 1.0
-            out.append(w)
-        out.append(np.full(n, 1.0 / n))
+        # Deterministic seeds must obey the same concentration constraint as
+        # randomized candidates. Previously one-hot seeds bypassed max_weight.
+        if self.max_weight >= 1.0 - 1e-12:
+            for i in range(n):
+                w = np.zeros(n)
+                w[i] = 1.0
+                out.append(w)
+
+        equal = np.full(n, 1.0 / n)
+        if equal.max() <= self.max_weight + 1e-12:
+            out.append(equal)
+
         while len(out) < self.n_candidates:
             w = rng.dirichlet(np.ones(n))
             if w.max() <= self.max_weight + 1e-12:
