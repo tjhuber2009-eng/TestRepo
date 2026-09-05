@@ -381,6 +381,70 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     # ------------------------------------------------------------------
+    # Family A1b: walk-forward meta-filter on the winning rotation structure
+    # ------------------------------------------------------------------
+    meta_param = None
+    meta_pbo = None
+    meta_family_ok = False
+    meta_optimized = None
+    if rotation_param.chosen is not None:
+        base_rotation = rotation_param.chosen.params
+        meta_probs = rotation_meta_probabilities(core, store, base_rotation)
+        target0 = float(base_rotation["target_vol"])
+        meta_targets = tuple(sorted(set([
+            round(target0, 4),
+            round(min(target0 + 0.04, 0.40), 4),
+            round(min(target0 + 0.08, 0.40), 4),
+        ])))
+        meta_specs = [
+            ParameterSpec("threshold", (0.45, 0.50, 0.55, 0.60, 0.65)),
+            ParameterSpec("below_scale", (0.0, 0.50, 0.75)),
+            ParameterSpec("target_vol", meta_targets),
+        ]
+        meta_trial_count = int(np.prod([len(s.values) for s in meta_specs]))
+
+        def evaluate_meta(params):
+            res = eng.run(
+                build_meta_rotation_strategy(
+                    params, base_rotation, meta_probs
+                ),
+                risk_policy=private,
+                num_trials=meta_trial_count,
+                cost_stress_multiplier=cost_stress,
+            )
+            return {
+                "fold_scores": fold_cagr_scores(
+                    res.returns, 252.0, private.max_dd_pct
+                ),
+                "primary_score": float(res.metrics.cost_stress_cagr_pct),
+                "gate_ok": bool(res.gate_ok),
+                "structural_fingerprint": "rotation_walkforward_meta_filter_v1",
+            }
+
+        meta_param = StableParameterOptimizer(
+            meta_specs,
+            max_trials=60,
+            plateau_neighbors=5,
+            dispersion_penalty=0.20,
+            multiple_test_penalty=0.16,
+        ).optimize(
+            evaluate_meta,
+            frozen_structure="rotation_walkforward_meta_filter_v1",
+        )
+        meta_pbo = optimizer_pbo(meta_param)
+        meta_family_ok = pbo_gate(meta_pbo, private.max_pbo)
+        if meta_param.chosen is not None:
+            meta_optimized = eng.run(
+                build_meta_rotation_strategy(
+                    meta_param.chosen.params, base_rotation, meta_probs
+                ),
+                risk_policy=private,
+                num_trials=meta_trial_count,
+                pbo=None if meta_pbo is None else meta_pbo["pbo"],
+                cost_stress_multiplier=cost_stress,
+            )
+
+    # ------------------------------------------------------------------
     # Family A2: QQQ signal -> TQQQ, otherwise cash
     # ------------------------------------------------------------------
     cash_raw_strategy = leveraged_regime_rotation(
@@ -743,6 +807,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     ):
         eligible_returns["rotation_risk_budgeted"] = rotation_optimized.returns
     if (
+        meta_optimized is not None
+        and meta_optimized.gate_ok
+        and meta_family_ok
+    ):
+        eligible_returns["rotation_walkforward_meta_filter"] = meta_optimized.returns
+    if (
         cash_optimized is not None
         and cash_optimized.gate_ok
         and cash_family_ok
@@ -801,6 +871,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     }
     if rotation_optimized is not None:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
+    if meta_optimized is not None:
+        strategies["rotation_walkforward_meta_filter"] = meta_optimized.summary()
     if cash_optimized is not None:
         strategies["cash_rotation_risk_budgeted"] = cash_optimized.summary()
     if vix_optimized is not None:
@@ -842,6 +914,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "selection_diagnostics": {
             "rotation_pbo": rotation_pbo,
             "rotation_family_ok": rotation_family_ok,
+            "meta_pbo": meta_pbo,
+            "meta_family_ok": meta_family_ok,
             "cash_pbo": cash_pbo,
             "cash_family_ok": cash_family_ok,
             "vix_pbo": vix_pbo,
@@ -854,6 +928,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "momentum_family_ok": momentum_family_ok,
         },
         "rotation_parameter_optimizer": rotation_param.to_dict(),
+        "meta_parameter_optimizer": (
+            None if meta_param is None else meta_param.to_dict()
+        ),
         "cash_parameter_optimizer": cash_param.to_dict(),
         "vix_parameter_optimizer": (
             None if vix_param is None else vix_param.to_dict()
