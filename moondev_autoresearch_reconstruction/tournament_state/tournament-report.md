@@ -1,6 +1,6 @@
 # Zero-fee AI model tournament — matched repeated-trial ranking
 
-> **Provisional recovery:** Nemotron Lightning timed out at trial 19/20 in the original run and is being retried separately.
+> **Recovery note:** Nemotron Lightning still did not produce a complete artifact; ranking excludes it.
 
 Protocol: **nested_chronological_v3**
 Frozen continuous-state SHA: `00d01b8c28bfc88763c94d6641fca45d52f289f0`

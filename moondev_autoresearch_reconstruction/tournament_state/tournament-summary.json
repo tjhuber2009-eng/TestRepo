@@ -3,7 +3,7 @@
   "case_count": 10,
   "final_oos_opened": false,
   "hidden_validation_opened": false,
-  "note": "Recovered from completed source-run artifacts while Nemotron Lightning is retried separately.",
+  "lightning_recovery_result": "cancelled",
   "protocol": "nested_chronological_v3",
   "provisional": true,
   "ranking": [
@@ -484,7 +484,7 @@
     "idea diversity",
     "speed"
   ],
-  "source_run_id": 33956473825,
+  "recovered_from_run_id": 33956473825,
   "state_sha": "00d01b8c28bfc88763c94d6641fca45d52f289f0",
   "unavailable": [
     {
