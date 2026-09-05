@@ -53,6 +53,7 @@ export function matchStorefrontVariant(
   if (adminId) {
     const byId = storefront.filter((variant) => String(variant.id) === adminId);
     if (byId.length === 1) return { variant: byId[0], strategy: "ID" as const, ambiguous: false };
+    return { variant: null, strategy: "ID" as const, ambiguous: byId.length > 1 };
   }
 
   const sku = normalizedSku(admin.sku);
