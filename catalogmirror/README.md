@@ -56,6 +56,14 @@ The queue is deliberately generation-aware. If another webhook updates the same 
 
 A successful full manual catalog audit removes only queue work that existed before that audit started. Webhooks arriving during the manual scan remain queued.
 
+## Periodic reconciliation
+
+Webhook delivery is not guaranteed, so CatalogMirror also runs periodic reconciliation. The scheduler uses Shopify's `updated_at` product search filter and persists a watermark only after successful discovery ingestion.
+
+For large discovery windows, reconciliation uses Shopify GraphQL Bulk Operations. The bulk result is streamed line-by-line from JSONL, and discovered product IDs are placed into low-priority targeted audit tasks. Live product and inventory webhook tasks have higher queue priority, so background reconciliation cannot starve recent merchant changes.
+
+The first reconciliation discovers all products up to a one-minute safety cutoff. Later runs use an overlapping updated-at window to tolerate delayed updates and clock-boundary effects. Failed runs do not advance the watermark.
+
 ## Audit behavior
 
 Audits are ordered by Shopify product update time so recently changed products are checked first. `AUDIT_PRODUCT_LIMIT` is a safety cap, currently limited by the application to at most 500 products per interactive run.
@@ -105,6 +113,13 @@ GitHub Actions used by the security/build workflows are pinned to commit SHAs ra
 - `AUTO_AUDIT_DEBOUNCE_SECONDS`: resource debounce window, clamped to 5–300 seconds.
 - `AUTO_AUDIT_POLL_MS`: idle queue polling interval, clamped to 1–60 seconds.
 - `AUTO_AUDIT_PRODUCT_LIMIT`: safety cap for fallback shop-level automatic audits; never exceeds the manual audit cap.
+- `RECONCILIATION_ENABLED`: periodic missed-webhook reconciliation; defaults on in production.
+- `RECONCILIATION_INTERVAL_MINUTES`: interval between successful reconciliation windows, clamped to 30 minutes–7 days.
+- `RECONCILIATION_SCHEDULER_POLL_MS`: scheduler scan interval, clamped to 1–30 minutes.
+- `RECONCILIATION_OVERLAP_MINUTES`: overlap before the previous watermark, clamped to 1–60 minutes.
+- `RECONCILIATION_BULK_POLL_SECONDS`: Shopify bulk-operation polling interval, clamped to 15–300 seconds.
+- `RECONCILIATION_MAX_RESULT_MB`: streamed JSONL safety cap, clamped to 10 MB–2 GB.
+- `RECONCILIATION_MAX_PRODUCTS`: discovered-product safety cap, clamped to 1,000–2,000,000.
 
 ## App Store / Built for Shopify readiness checklist
 
