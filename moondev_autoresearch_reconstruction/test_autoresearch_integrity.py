@@ -9,6 +9,7 @@ import pandas as pd
 
 import continuous_runner
 import loop
+import overfit_diagnostics
 import research_metrics
 import seed_factory
 
@@ -274,6 +275,25 @@ class MoonStrategy:
             )
         finally:
             continuous_runner.TOURNAMENT_STATE = old
+
+
+
+    def test_pbo_diagnostic_stays_in_probability_bounds(self):
+        # Strategies alternate between excellent and poor halves, a pattern
+        # that should look unstable under CSCV.
+        matrix = np.array([
+            [2, 2, 2, -2, -2, -2],
+            [-2, -2, -2, 2, 2, 2],
+            [1.5, 1.5, -1, -1, 1.5, -1],
+            [-1, -1, 1.5, 1.5, -1, 1.5],
+            [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+            [0.2, -0.1, 0.2, -0.1, 0.2, -0.1],
+        ], dtype=float)
+        d = overfit_diagnostics.cscv_pbo(matrix)
+        self.assertIsNotNone(d)
+        self.assertGreaterEqual(d["pbo"], 0.0)
+        self.assertLessEqual(d["pbo"], 1.0)
+        self.assertGreater(d["cscv_splits"], 0)
 
 
 
