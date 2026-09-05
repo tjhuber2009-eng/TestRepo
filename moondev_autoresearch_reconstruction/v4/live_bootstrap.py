@@ -86,6 +86,74 @@ def load_data(root: Path) -> dict[str, pd.DataFrame]:
     return out
 
 
+
+def select_portfolio_history_cohort(
+    eligible_returns: dict[str, pd.Series],
+    *,
+    periods_per_year: float = 252.0,
+    min_core_years: float = 8.0,
+    min_relative_coverage: float = 0.75,
+) -> tuple[dict[str, pd.Series], dict]:
+    """Prevent short-history alphas from truncating the core portfolio sample.
+
+    Core strategies must have a development history close to the longest
+    eligible strategy. Shorter-history strategies remain reported as
+    supplemental hypotheses, but cannot define the evidence window for the
+    authoritative robust portfolio.
+    """
+    if not eligible_returns:
+        return {}, {
+            "policy": "long_history_core_v1",
+            "core_strategy_names": [],
+            "supplemental_strategy_names": [],
+            "history": {},
+            "core_min_years": None,
+        }
+
+    history = {}
+    max_years = 0.0
+    for name, series in eligible_returns.items():
+        valid = series.replace([np.inf, -np.inf], np.nan).dropna()
+        years = len(valid) / float(periods_per_year)
+        max_years = max(max_years, years)
+        history[name] = {
+            "observations": int(len(valid)),
+            "years": float(years),
+            "start": None if valid.empty else valid.index.min().strftime("%Y-%m-%d"),
+            "end": None if valid.empty else valid.index.max().strftime("%Y-%m-%d"),
+        }
+
+    threshold = min(
+        max_years,
+        max(float(min_core_years), max_years * float(min_relative_coverage)),
+    )
+    core_names = sorted(
+        name for name, row in history.items()
+        if float(row["years"]) + 1e-12 >= threshold
+    )
+    if not core_names:
+        longest = max(history, key=lambda name: history[name]["years"])
+        core_names = [longest]
+    supplemental = sorted(set(eligible_returns) - set(core_names))
+    core = {name: eligible_returns[name] for name in core_names}
+    metadata = {
+        "policy": "long_history_core_v1",
+        "periods_per_year": float(periods_per_year),
+        "minimum_absolute_years": float(min_core_years),
+        "minimum_relative_coverage": float(min_relative_coverage),
+        "longest_history_years": float(max_years),
+        "core_min_years": float(threshold),
+        "core_strategy_names": core_names,
+        "supplemental_strategy_names": supplemental,
+        "history": history,
+        "interpretation": (
+            "short-history strategies are retained as supplemental research "
+            "but cannot truncate the evidence window of the authoritative "
+            "robust portfolio"
+        ),
+    }
+    return core, metadata
+
 def fold_cagr_scores(returns: pd.Series, periods_per_year: float, dd_cap_pct: float) -> list[float]:
     """CAGR-first fold utility with explicit drawdown-over-cap penalty."""
     arr = returns.to_numpy(dtype=float)
@@ -948,18 +1016,38 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     portfolio = None
-    if eligible_returns:
+    portfolio_core_returns, portfolio_history_policy = (
+        select_portfolio_history_cohort(eligible_returns)
+    )
+    if portfolio_core_returns:
         returns = pd.concat(
-            [series.rename(name) for name, series in eligible_returns.items()],
+            [
+                series.rename(name)
+                for name, series in portfolio_core_returns.items()
+            ],
             axis=1,
         ).dropna()
+        portfolio_history_policy["common_overlap_observations"] = int(
+            len(returns)
+        )
+        portfolio_history_policy["common_overlap_years"] = float(
+            len(returns) / 252.0
+        )
+        portfolio_history_policy["common_overlap_start"] = (
+            None if returns.empty else returns.index.min().strftime("%Y-%m-%d")
+        )
+        portfolio_history_policy["common_overlap_end"] = (
+            None if returns.empty else returns.index.max().strftime("%Y-%m-%d")
+        )
         if len(returns) >= 50:
             portfolio = RobustPortfolioOptimizer(
                 dd_cap_pct=private.max_dd_pct,
                 n_candidates=1000,
                 bootstrap_reps=120,
                 block=20,
-                max_weight=1.0 if len(eligible_returns) == 1 else 0.90,
+                max_weight=(
+                    1.0 if len(portfolio_core_returns) == 1 else 0.90
+                ),
             ).optimize(returns)
 
     strategies = {
@@ -1046,6 +1134,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         ),
         "momentum_parameter_optimizer": momentum_param.to_dict(),
         "portfolio": None if portfolio is None else portfolio.to_dict(),
+        "portfolio_history_policy": portfolio_history_policy,
         "eligible_strategy_names": sorted(eligible_returns),
     }
     safe = json_safe(payload)
