@@ -40,6 +40,7 @@ from v4.prop_intraday_bootstrap import (
     aggregate_prague_days_scaled,
     hourly_rotation_strategy,
     hourly_tsmom_strategy,
+    program_with_analysis_horizon,
     read_hourly,
 )
 from v4.regime_engine import RegimeEngine
@@ -579,6 +580,24 @@ class V4AlphaGenerationTests(unittest.TestCase):
                 funded_max_loss_breach_cap=0.05,
                 funded_survival_floor=0.85,
             )
+        )
+
+    def test_ftmo_horizon_override_is_research_only(self):
+        longer = program_with_analysis_horizon(FTMO_2STEP, 504)
+        self.assertEqual(longer.challenge.analysis_horizon_days, 504)
+        self.assertEqual(longer.verification.analysis_horizon_days, 504)
+        self.assertEqual(
+            longer.challenge.max_daily_loss_pct,
+            FTMO_2STEP.challenge.max_daily_loss_pct,
+        )
+        self.assertEqual(
+            longer.challenge.max_loss_pct,
+            FTMO_2STEP.challenge.max_loss_pct,
+        )
+        self.assertEqual(longer.reward_share, FTMO_2STEP.reward_share)
+        self.assertEqual(
+            FTMO_2STEP.challenge.analysis_horizon_days,
+            252,
         )
 
     def test_prop_stage_rewards_lower_risk_when_daily_limit_is_tight(self):

@@ -8,6 +8,7 @@ limits at midnight Europe/Prague.
 from __future__ import annotations
 
 from pathlib import Path
+from dataclasses import replace
 import argparse
 import json
 import subprocess
@@ -15,7 +16,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 
-from .account_profiles import FTMO_1STEP, FTMO_2STEP
+from .account_profiles import FTMO_1STEP, FTMO_2STEP, PropFirmProgram
 from .live_bootstrap import json_safe
 from .multi_asset_engine import AssetCost, MultiAssetBacktester, PortfolioLimits
 from .prop_firm_engine import active_day_proxy, optimize_prop_exposure
@@ -519,6 +520,31 @@ def _frontier_structural_mutations(
             out.append(candidate)
     return out
 
+def program_with_analysis_horizon(
+    program: PropFirmProgram,
+    days: int,
+) -> PropFirmProgram:
+    """Clone evaluation stages with a research horizon, not a firm deadline."""
+    horizon = int(days)
+    if horizon < 30:
+        raise ValueError("analysis horizon must be >=30 days")
+    return replace(
+        program,
+        challenge=replace(
+            program.challenge,
+            analysis_horizon_days=horizon,
+        ),
+        verification=(
+            None
+            if program.verification is None
+            else replace(
+                program.verification,
+                analysis_horizon_days=horizon,
+            )
+        ),
+    )
+
+
 def run(data_dir: str | Path, output: str | Path) -> dict:
     data = load_data(Path(data_dir))
 
@@ -794,6 +820,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     "base": base,
                     "daily_ret": d_ret,
                     "daily_adv": d_adv,
+                    "opened": opened,
+                    "scaled_ret": scaled_ret,
+                    "scaled_adv": scaled_adv,
                     "optimization": final_prop,
                 }
 
@@ -808,6 +837,61 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "view": (
                     None if candidate is None else candidate.to_dict()
                 ),
+            }
+
+        # FTMO has no maximum evaluation duration. The 252-day broad
+        # search horizon is therefore a computational screen, not a firm
+        # timeout. Re-evaluate the risk-relevant frontier leaders at longer
+        # research horizons to expose timeout/failure trade-offs explicitly.
+        horizon_sensitivity = {}
+        for view_name in (
+            "max_evaluation_pass",
+            "balanced",
+            "conservative",
+        ):
+            leader = leaders[program.id][view_name]
+            if leader is None:
+                horizon_sensitivity[view_name] = None
+                continue
+            params = leader["params"]
+            key = tuple(sorted(params.items()))
+            ref = refined_cache[key]
+            sensitivity_rows = {}
+            for horizon in (252, 365, 504):
+                if horizon == 252:
+                    sensitivity_prop = ref["optimization"]
+                else:
+                    sensitivity_program = program_with_analysis_horizon(
+                        program,
+                        horizon,
+                    )
+                    sensitivity_prop = optimize_prop_exposure(
+                        ref["daily_ret"].to_numpy(dtype=float),
+                        ref["daily_adv"].to_numpy(dtype=float),
+                        ref["opened"].to_numpy(dtype=bool),
+                        sensitivity_program,
+                        exposure_scales=PROP_SCALES,
+                        paths=2000,
+                        block=10,
+                        seed=20279900 + pidx * 100000 + horizon,
+                        input_precision=(
+                            "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                            "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
+                        ),
+                        prescaled_returns_by_scale=ref["scaled_ret"],
+                        prescaled_adverse_by_scale=ref["scaled_adv"],
+                    )
+                candidate = sensitivity_prop.views.get(view_name)
+                sensitivity_rows[str(horizon)] = {
+                    "analysis_horizon_days": horizon,
+                    "firm_time_limit_days": None,
+                    "view": (
+                        None if candidate is None else candidate.to_dict()
+                    ),
+                }
+            horizon_sensitivity[view_name] = {
+                "params": params,
+                "horizons": sensitivity_rows,
             }
 
         max_payout = refined_frontiers["max_payout_efficiency"]
@@ -842,6 +926,16 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 for name in view_names
             },
             "refined_frontiers": refined_frontiers,
+            "evaluation_horizon_policy": {
+                "firm_time_limit_days": None,
+                "broad_search_horizon_days": 252,
+                "sensitivity_horizons_days": [252, 365, 504],
+                "interpretation": (
+                    "research horizons only; FTMO evaluation has no maximum "
+                    "time limit, so horizon timeouts are not firm-rule failures"
+                ),
+            },
+            "horizon_sensitivity": horizon_sensitivity,
             "refined_winner": refined_winner,
         }
 
