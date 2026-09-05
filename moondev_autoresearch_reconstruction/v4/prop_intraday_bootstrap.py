@@ -86,10 +86,32 @@ def hourly_rotation_strategy(params, symbols):
     lookback = int(params["lookback"])
     trend = int(params["trend"])
     top_k = int(params["top_k"])
+    rebalance_hours = int(params.get("rebalance_hours", 1))
+    execution_session = str(params.get("execution_session", "all"))
+    if rebalance_hours not in (1, 2, 4, 8, 12, 24):
+        raise ValueError("unsupported rebalance_hours")
+    if execution_session not in (
+        "all",
+        "avoid_funding_hours",
+        "europe_us",
+    ):
+        raise ValueError("unsupported execution_session")
+
+    def execution_allowed(ts) -> bool:
+        hour = int(ts.tz_convert("UTC").hour)
+        if execution_session == "all":
+            return True
+        if execution_session == "avoid_funding_hours":
+            # Peer-reviewed crypto microstructure evidence identifies
+            # recurring volatility/volume bursts around 00, 08 and 16 UTC.
+            return hour not in {0, 8, 16}
+        # Predeclared liquid core spanning Europe and US hours.
+        return 7 <= hour < 22
 
     def strategy(data, features=None):
         index = next(iter(data.values())).index
-        out = pd.DataFrame(0.0, index=index, columns=sorted(data))
+        columns = sorted(data)
+        desired = pd.DataFrame(0.0, index=index, columns=columns)
         momentum = pd.DataFrame({
             s: data[s]["Close"] / data[s]["Close"].shift(lookback) - 1.0
             for s in symbols
@@ -105,11 +127,27 @@ def hourly_rotation_strategy(params, symbols):
             row = momentum.loc[ts].where(healthy.loc[ts]).dropna()
             row = row[row > 0.0].sort_values(ascending=False).head(top_k)
             if len(row):
-                out.loc[ts, row.index] = 1.0 / len(row)
+                desired.loc[ts, row.index] = 1.0 / len(row)
+
+        # Target[t] executes no earlier than open[t+1]. Session and rebalance
+        # decisions therefore use the known clock of the next execution bar,
+        # while alpha inputs remain restricted to information through t.
+        out = pd.DataFrame(0.0, index=index, columns=columns)
+        prior_target = pd.Series(0.0, index=columns)
+        for i, ts in enumerate(index):
+            if i + 1 >= len(index):
+                out.loc[ts] = 0.0
+                continue
+            next_ts = index[i + 1]
+            if not execution_allowed(next_ts):
+                prior_target = pd.Series(0.0, index=columns)
+            elif int(next_ts.tz_convert("UTC").hour) % rebalance_hours == 0:
+                prior_target = desired.loc[ts].copy()
+            out.loc[ts] = prior_target
 
         # Force exposure to zero for execution at the first hourly bar of each
-        # new Prague day. The next bar may reopen. This makes the midnight
-        # balance/equity reset explicit and realizes daily P/L.
+        # new Prague day. The next eligible rebalance may reopen. This makes
+        # the midnight balance/equity reset explicit and realizes daily P/L.
         local_dates = pd.Series(
             index.tz_convert(PRAGUE).date,
             index=index,

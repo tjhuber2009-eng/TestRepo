@@ -585,6 +585,82 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertLessEqual(float(da.min()), -0.02)
         self.assertTrue(bool(opened.iloc[0]))
 
+    def test_prop_intraday_session_filter_uses_next_execution_hour(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=48,
+            freq="h",
+            tz="UTC",
+        )
+        close = 100.0 * (1.002 ** np.arange(len(idx)))
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+                "Volume": 1.0,
+            },
+            index=idx,
+        )
+        params = {
+            "lookback": 2,
+            "trend": 2,
+            "top_k": 1,
+            "execution_session": "avoid_funding_hours",
+            "rebalance_hours": 1,
+        }
+        target = hourly_rotation_strategy(
+            params,
+            ("BTCUSDT",),
+        )({"BTCUSDT": frame})
+        for i in range(len(idx) - 1):
+            next_hour = idx[i + 1].hour
+            if next_hour in {0, 8, 16}:
+                self.assertAlmostEqual(
+                    float(target.iloc[i].abs().sum()),
+                    0.0,
+                )
+
+    def test_prop_intraday_rebalance_carries_target_causally(self):
+        idx = pd.date_range(
+            "2020-01-01T01:00:00Z",
+            periods=12,
+            freq="h",
+            tz="UTC",
+        )
+        close = 100.0 * (1.003 ** np.arange(len(idx)))
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+                "Volume": 1.0,
+            },
+            index=idx,
+        )
+        params = {
+            "lookback": 2,
+            "trend": 2,
+            "top_k": 1,
+            "execution_session": "all",
+            "rebalance_hours": 4,
+        }
+        target = hourly_rotation_strategy(
+            params,
+            ("BTCUSDT",),
+        )({"BTCUSDT": frame})
+        # Once a 4-hour execution rebalance has established exposure, the
+        # target is carried between rebalances rather than churned hourly.
+        changes = target.diff().abs().sum(axis=1).fillna(
+            target.abs().sum(axis=1)
+        )
+        for i in range(1, len(idx) - 1):
+            if changes.iloc[i] > 1e-12:
+                next_hour = idx[i + 1].hour
+                self.assertEqual(next_hour % 4, 0)
+
     def test_prop_intraday_scale_compounds_before_daily_aggregation(self):
         idx = pd.date_range(
             "2020-01-01T00:00:00Z",
