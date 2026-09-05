@@ -8,6 +8,7 @@ from pathlib import Path
 from tournament.adapters.polymarket import list_events
 from tournament.freeze import load_frozen_spec, require_forward_started
 from tournament.ledger import append_jsonl, record_signal
+from tournament.settlement import read_jsonl
 from tournament.weather_market import weather_signal_from_market
 
 from tournament.weather_discovery import (
@@ -17,13 +18,7 @@ from tournament.weather_discovery import (
 )
 def existing_weather_markets(ledger_path: Path) -> set[str]:
     seen: set[str] = set()
-    if not ledger_path.exists():
-        return seen
-    for line in ledger_path.read_text(encoding="utf-8").splitlines():
-        try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+    for row in read_jsonl(ledger_path):
         if (
             row.get("kind") == "signal"
             and row.get("lane") == "weather_ensemble_taker"
