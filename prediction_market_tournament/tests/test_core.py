@@ -128,6 +128,16 @@ def test_ensemble_bracket_smoothing():
     assert 0 < probability < 1
 
 
+def test_temperature_probability_respects_whole_degree_bins():
+    probability = bracket_probability(
+        [75.49, 75.50, 77.49, 77.50],
+        lower=76,
+        upper=77,
+    )
+    # 75.50 and 77.49 map into whole-degree outcomes 76/77.
+    assert probability == 0.5
+
+
 def test_spec_hash_stable():
     assert spec_hash(
         {"b": 2, "a": 1}
