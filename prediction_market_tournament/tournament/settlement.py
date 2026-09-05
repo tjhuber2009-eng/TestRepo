@@ -80,6 +80,15 @@ def terminal_outcome(
     if market.get("closed") is not True:
         return None
 
+    resolution_status = str(
+        market.get("umaResolutionStatus") or ""
+    ).strip().lower()
+    if resolution_status and resolution_status not in {
+        "resolved",
+        "settled",
+    }:
+        return None
+
     outcomes = [
         str(x)
         for x in parse_jsonish_list(market.get("outcomes"))
@@ -118,8 +127,10 @@ def resolve_signal(signal: Signal, market: dict) -> ResolvedTrade | None:
     outcome = terminal_outcome(market)
     if outcome is None:
         return None
+    # closedTime can precede oracle finality. Prefer the later Gamma update
+    # that delivered the final resolution state; fall back only when absent.
     resolved_at = _dt(
-        market.get("closedTime") or market.get("updatedAt")
+        market.get("updatedAt") or market.get("closedTime")
     )
     return settle_binary_signal(
         signal,
