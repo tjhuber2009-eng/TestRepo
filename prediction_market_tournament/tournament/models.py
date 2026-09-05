@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Literal, Optional
 
@@ -21,6 +21,8 @@ class Signal:
     size_usd: float = 1.0
     fee_rate: float = 0.0
     fee_exponent: float = 1.0
+    executed_shares: float | None = None
+    entry_fee_usd: float | None = None
     notes: str = ""
     metadata: dict[str, object] = field(default_factory=dict)
 
@@ -37,11 +39,19 @@ class Signal:
             raise ValueError("size_usd must be > 0")
         if self.fee_rate < 0 or self.fee_exponent < 0:
             raise ValueError("fee rate/exponent must be >= 0")
+        if self.executed_shares is not None and self.executed_shares <= 0:
+            raise ValueError("executed_shares must be > 0 when provided")
+        if self.entry_fee_usd is not None and self.entry_fee_usd < 0:
+            raise ValueError("entry_fee_usd must be >= 0 when provided")
+        if (self.executed_shares is None) != (self.entry_fee_usd is None):
+            raise ValueError(
+                "executed_shares and entry_fee_usd must be provided together"
+            )
 
     def as_json(self) -> dict:
-        d = asdict(self)
-        d["observed_at"] = self.observed_at.astimezone(timezone.utc).isoformat()
-        return d
+        data = asdict(self)
+        data["observed_at"] = self.observed_at.astimezone(timezone.utc).isoformat()
+        return data
 
 
 @dataclass(frozen=True)
@@ -56,8 +66,8 @@ class ResolvedTrade:
     resolved_at: Optional[datetime] = None
 
     def as_json(self) -> dict:
-        d = asdict(self)
-        d["signal"] = self.signal.as_json()
+        data = asdict(self)
+        data["signal"] = self.signal.as_json()
         if self.resolved_at is not None:
-            d["resolved_at"] = self.resolved_at.astimezone(timezone.utc).isoformat()
-        return d
+            data["resolved_at"] = self.resolved_at.astimezone(timezone.utc).isoformat()
+        return data
