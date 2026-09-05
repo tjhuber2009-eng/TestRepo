@@ -134,3 +134,55 @@ export async function enqueueReconciliationProducts(
   if (syncPending) await syncPendingAuditCount(shop);
   return uniqueIds.length;
 }
+
+export async function wakeReconciliationTask(shop: string, operationId: string) {
+  const state = await db.shopAuditState.findUnique({
+    where: { shop },
+    select: { reconciliationBulkOperationId: true },
+  });
+  if (state?.reconciliationBulkOperationId !== operationId) return false;
+
+  const now = new Date();
+  const existing = await db.auditTask.findUnique({
+    where: {
+      shop_resourceType_resourceId: {
+        shop,
+        resourceType: "RECONCILE",
+        resourceId: shop,
+      },
+    },
+    select: { id: true, lockedUntil: true },
+  });
+
+  if (!existing) {
+    await enqueueAutoAuditTask({
+      shop,
+      topic: "BULK_OPERATIONS_FINISH",
+      resourceType: "RECONCILE",
+      resourceId: shop,
+      recordWebhook: false,
+    });
+    await db.auditTask.updateMany({
+      where: { shop, resourceType: "RECONCILE", resourceId: shop },
+      data: { availableAt: now },
+    });
+    return true;
+  }
+
+  if (existing.lockedUntil && existing.lockedUntil > now) return false;
+
+  const updated = await db.auditTask.updateMany({
+    where: {
+      id: existing.id,
+      OR: [
+        { lockedUntil: null },
+        { lockedUntil: { lt: now } },
+      ],
+    },
+    data: {
+      availableAt: now,
+      lastError: null,
+    },
+  });
+  return updated.count === 1;
+}
