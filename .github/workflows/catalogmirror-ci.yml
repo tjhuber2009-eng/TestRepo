@@ -56,9 +56,9 @@ jobs:
         run: npx prisma validate
       - name: Apply migrations to clean PostgreSQL
         run: npm run migrate
+      - run: npx prisma generate
       - name: Automatic audit queue integration test
         run: npm run test:queue
-      - run: npx prisma generate
       - run: npm run typecheck
       - run: npm run build
       - name: Production runtime smoke test
