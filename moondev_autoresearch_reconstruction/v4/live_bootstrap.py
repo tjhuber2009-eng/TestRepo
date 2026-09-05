@@ -129,6 +129,57 @@ def build_momentum_strategy(params, symbols):
     )
 
 
+def build_defensive_strategy(params):
+    base = leveraged_defensive_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbols=("IEF", "GLD", "SHY"),
+        risk_sma_window=int(params["risk_sma"]),
+        risk_momentum_window=int(params["risk_mom"]),
+        defensive_momentum_window=int(params["def_mom"]),
+        defensive_trend_window=int(params["def_trend"]),
+    )
+    return volatility_target_overlay(
+        base,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
+
+def build_defensive_brake_strategy(params, base_params):
+    base = leveraged_defensive_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbols=("IEF", "GLD", "SHY"),
+        risk_sma_window=int(base_params["risk_sma"]),
+        risk_momentum_window=int(base_params["risk_mom"]),
+        defensive_momentum_window=int(base_params["def_mom"]),
+        defensive_trend_window=int(base_params["def_trend"]),
+    )
+    braked = drawdown_brake_overlay(
+        base,
+        soft_drawdown=float(params["soft_dd"]),
+        hard_drawdown=float(params["hard_dd"]),
+        soft_scale=float(params["soft_scale"]),
+        hard_scale=float(params["hard_scale"]),
+    )
+    return volatility_target_overlay(
+        braked,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(base_params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
+
+def pbo_gate(diagnostic, max_pbo):
+    return diagnostic is None or float(diagnostic["pbo"]) <= float(max_pbo)
+
+
 def run(data_dir: str | Path, output: str | Path) -> dict:
     data = load_data(Path(data_dir))
     assert_v4_data_boundary(data, stage="development")
