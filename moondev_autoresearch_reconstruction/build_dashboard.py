@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE / "dashboard_src"
+SRC = HERE / "dashboard_src"\nACTIVE_PROTOCOL = "nested_chronological_v3"
 
 
 def load_json(path, default=None):
@@ -206,6 +206,43 @@ def main():
     cycles = load_jsonl(state / "cycles.jsonl", limit=120)
     tournament = load_json(tournament_state / "tournament-summary.json", None)
 
+    # Never render protocol-stale state as the active control room. The v2
+    # archive is useful historical evidence, but its scores are not comparable
+    # to v3 and must not silently populate the v3 leaderboard before the first
+    # v3 continuous cycle has initialized persistent state.
+    stale_state = None
+    state_protocol = progress.get("protocol")
+    board_protocol = board.get("protocol")
+    state_is_active = (
+        state_protocol == ACTIVE_PROTOCOL and board_protocol == ACTIVE_PROTOCOL
+    )
+    if not state_is_active:
+        stale_state = {
+            "progress_protocol": state_protocol,
+            "leaderboard_protocol": board_protocol,
+            "leaderboard_count": len(board.get("rows", []) or []),
+            "progress_updated_at": progress.get("updated_at"),
+        }
+        progress = {
+            "protocol": ACTIVE_PROTOCOL,
+            "phase": "initializing",
+            "rows": [],
+            "runnable_track_count": 0,
+            "total_valid_candidates": 0,
+            "terminal_track_count": 0,
+            "validation_pass_count": 0,
+            "validation_fail_count": 0,
+            "breadth_target": 10,
+            "depth_target": 30,
+            "elite_target": 60,
+        }
+        board = {"protocol": ACTIVE_PROTOCOL, "rows": []}
+        selections = {}
+        cycles = []
+
+    if tournament and tournament.get("protocol") != ACTIVE_PROTOCOL:
+        tournament = None
+
     continuous_runs = workflow_runs(
         load_json(runtime / "continuous_runs.json", {}) or {}
     )
@@ -234,7 +271,9 @@ def main():
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "project": "Moon Dev AUTORESEARCH reconstruction",
-        "protocol": progress.get("protocol"),
+        "protocol": ACTIVE_PROTOCOL,
+        "state_is_active": state_is_active,
+        "stale_state": stale_state,
         "phase": progress.get("phase"),
         "progress": progress,
         "progress_derived": summarize_progress(progress),
@@ -258,7 +297,8 @@ def main():
             "prop_dd_cap_pct": 10,
             "private_dd_cap_pct": 32,
             "cost_stress_multiplier": 2.0,
-            "protocol": progress.get("protocol"),
+            "protocol": ACTIVE_PROTOCOL,
+            "protocol_stale_state_detected": not state_is_active,
         },
     }
 
