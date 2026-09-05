@@ -375,7 +375,7 @@ def metrics_from_stats(stats, start, end, price_df=None):
 
     raw_k = annualized_k(total, years, sharpe)
     intrabar_proxy = intrabar_drawdown_proxy(stats, price_df, start, end)
-    tail = tail_metrics(eq.to_numpy(dtype=float), rets.to_numpy(dtype=float), cagr)
+    tail = tail_metrics(\n        eq.to_numpy(dtype=float), rets.to_numpy(dtype=float), cagr, BARS_PER_YEAR\n    )
     psr = probabilistic_sharpe_ratio(rets.to_numpy(dtype=float), 0.0)
     bench = benchmark_metrics(price_df, start, end)
 
@@ -562,7 +562,7 @@ def evaluate_search(df):
     full.update({
         "score": round(score, 6) if np.isfinite(score) else float("-inf"),
         "raw_full_k": full.pop("raw_k"),
-        "score_definition": "annualized_log_growth_x_sharpe_robust_v3",
+        "score_definition": "sign_safe_annualized_log_growth_x_sharpe_robust_v3",
         "stress": stress,
         "extreme_stress": extreme,
         "folds": folds,
