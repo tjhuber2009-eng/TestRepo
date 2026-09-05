@@ -1,7 +1,9 @@
 """Reconcile AUTORESEARCH v4 evidence data at the return level.
 
-The comparison is intentionally based on economically comparable open-to-open
-returns with explicit next-day dividend cash rather than nominal price levels.
+Cross-source comparison intentionally uses open-to-open PRICE returns because
+Yahoo OHLC are split-adjusted while its dividend cash events can use a different
+split basis. Total-return integrity is checked independently inside Tiingo by
+comparing raw OHLC + explicit corporate actions with Tiingo adjusted prices.
 No hidden-validation or final-OOS data is permitted.
 """
 from __future__ import annotations
@@ -42,9 +44,21 @@ def _cagr(ret: pd.Series, periods_per_year: float = 252.0) -> float | None:
     return (growth ** (1.0 / years) - 1.0) * 100.0
 
 
+def open_to_open_price_returns(path: Path) -> pd.Series:
+    x = pd.read_csv(path)
+    if "Date" not in x or "Open" not in x:
+        raise ValueError(f"{path}: Date and Open required")
+    idx = pd.DatetimeIndex(pd.to_datetime(x["Date"], utc=True)).normalize().tz_localize(None)
+    open_ = pd.Series(pd.to_numeric(x["Open"], errors="coerce").to_numpy(), index=idx, dtype=float)
+    if idx.has_duplicates:
+        raise ValueError(f"{path}: duplicate normalized dates")
+    ret = open_.shift(-1) / open_ - 1.0
+    return ret.iloc[:-1].replace([np.inf, -np.inf], np.nan).dropna()
+
+
 def compare_return_files(left: Path, right: Path) -> dict:
-    a = open_to_open_total_returns(left).rename("primary")
-    b = open_to_open_total_returns(right).rename("reference")
+    a = open_to_open_price_returns(left).rename("primary")
+    b = open_to_open_price_returns(right).rename("reference")
     joined = pd.concat([a, b], axis=1, join="inner").dropna()
     if len(joined) < 20:
         raise RuntimeError(f"insufficient return overlap: {left.name} vs {right.name}")
@@ -110,9 +124,9 @@ def reconcile(primary_dir: Path, reference_dir: Path, ids: list[str]) -> dict:
     return {
         "protocol": "alpha_generation_v4",
         "stage": "development_only",
-        "comparison": "open_to_open_total_return_with_next_day_explicit_dividend",
+        "comparison": "cross_source_open_to_open_price_return_plus_tiingo_total_return_self_parity",
         "primary_source": "tiingo_raw_plus_explicit_actions",
-        "reference_source": "yahoo_split_dividend_v2",
+        "reference_source": "yahoo_provider_split_adjusted_price_shadow",
         "hidden_validation_opened": False,
         "final_oos_opened": False,
         "policy": {
