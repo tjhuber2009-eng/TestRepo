@@ -119,7 +119,9 @@ function renderChampions(){
       <td>${esc(String(r.target||"").toUpperCase())}</td>
       <td><span class="profile-chip ${esc(r.profile)}">${esc(r.profile)}</span></td>
       <td class="num ${scoreClass}">${fmt(r.development_score,6)}</td>
+      <td class="num score-pos">${pct(r.development_cagr_pct,1)}</td>
       <td class="num">${pct(r.development_return_pct,1)}</td>
+      <td class="num">${fmt(r.development_years,1)}</td>
       <td class="num">${fmt(r.development_sharpe,3)}</td>
       <td class="num">${fmt(r.development_pf,2)}</td>
       <td class="num">${pct(r.development_max_dd_pct,2)}</td>
