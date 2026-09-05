@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd, numpy as np, yfinance as yf
 
 OUT=Path("indicator_validation/output_tqqq_ibs_core"); OUT.mkdir(parents=True,exist_ok=True)
-END="2026-09-03"; COSTS=[.0007,.0015,.0025]; NSIM=3000; BLOCKS=[5,20,60]; SEED=20260905
+END="2026-09-03"; COSTS=[.0007,.0015,.0025]; NSIM=1000; BLOCKS=[20,60]; SEED=20260905
 d=yf.download("TQQQ",start="2010-02-01",end=END,interval="1d",auto_adjust=True,progress=False,threads=False)
 if isinstance(d.columns,pd.MultiIndex): d.columns=d.columns.get_level_values(0)
 d=d.rename(columns=str.lower).reset_index(); d=d.rename(columns={d.columns[0]:"datetime"}); d["datetime"]=pd.to_datetime(d["datetime"],utc=True)
@@ -66,7 +66,7 @@ for skip in [False,True]:
       front.append({"variant":"core_skip_sep" if skip else "core","cost_bps":cost*10000,**w.to_dict()})
 pd.DataFrame(front).to_csv(OUT/"historical_3pct_frontier.csv",index=False)
 
-boot=[]; bscales=np.arange(.01,.501,.005)
+boot=[]; bscales=np.arange(.01,.301,.01)
 for skip in [False,True]:
     g,idx,curves=run_grid(skip,.0007,periods[0][1],periods[0][2],bscales)
     ret=np.ones_like(curves); ret[1:]=curves[1:]/curves[:-1]; n=len(idx)
