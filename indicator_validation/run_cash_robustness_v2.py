@@ -5,9 +5,9 @@ import pandas as pd, numpy as np, yfinance as yf
 OUT=Path("indicator_validation/output_cash_robustness_v2"); OUT.mkdir(parents=True,exist_ok=True)
 START=pd.Timestamp("2020-09-01",tz="UTC"); CUT=pd.Timestamp("2023-01-01",tz="UTC"); END="2026-09-03"
 BASE_COST=.0007; COSTS=[.0007,.0010,.0015,.0025]; HAIRCUTS=[0,.25,.50,.75,1.0]
-PROXIES=["SGOV","BIL","SHV"]; BLOCKS=[5,20,60]; NSIM=3000; SEED=20260905
+PROXIES=["SGOV","BIL","SHV"]; BLOCKS=[5,20,60]; NSIM=1000; SEED=20260905
 FROZEN_SW=.20; FROZEN_SCALAR=.525
-GRID_SCALARS=np.arange(.10,.8001,.005)
+GRID_SCALARS=np.arange(.10,.8001,.005)\nBOOT_SCALARS=np.arange(.10,.6501,.015)
 C12=["BTC-USD","ETH-USD","BNB-USD","SOL-USD","XRP-USD","ADA-USD","DOGE-USD","LTC-USD","BCH-USD","LINK-USD","DOT-USD","AVAX-USD"]
 E11=["SPY","QQQ","IWM","GLD","SLV","IEF","TLT","DBC","VNQ","EFA","EEM"]; ALL=C12+E11
 
@@ -155,7 +155,7 @@ pd.DataFrame(select).to_csv(OUT/"haircut_train_selected_3pct.csv",index=False)
 # 3) Bootstrap the frozen train-selected 20/80 family at SGOV 100%, 75%, 50%.
 boot=[]
 for h in [.5,.75,1.0]:
-    z,dates,curves=simulate(FROZEN_SW,GRID_SCALARS,START,pd.Timestamp("2100-01-01",tz="UTC"),BASE_COST,"SGOV",h,True)
+    z,dates,curves=simulate(FROZEN_SW,BOOT_SCALARS,START,pd.Timestamp("2100-01-01",tz="UTC"),BASE_COST,"SGOV",h,True)
     ret=np.ones_like(curves); ret[1:]=curves[1:]/curves[:-1]; N=len(dates)
     for block in BLOCKS:
         rng=np.random.default_rng(SEED+block+int(h*100)); nb=int(np.ceil(N/block)); starts=rng.integers(0,N,size=(NSIM,nb))
