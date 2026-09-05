@@ -17,7 +17,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0

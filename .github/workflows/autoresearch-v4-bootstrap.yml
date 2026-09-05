@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: moondev_autoresearch_reconstruction
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: autoresearch-v4-alpha-generation
           fetch-depth: 0
