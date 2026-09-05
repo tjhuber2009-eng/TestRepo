@@ -56,7 +56,8 @@ def test_book_level_fee_is_integrated_at_each_price():
     assert math.isclose(quote.shares, 12.325)
     assert math.isclose(quote.average_price, 3.86 / 12.325)
     assert math.isclose(quote.fee_usd, 0.13804)
-    assert math.isclose(quote.spent_usd, 3.86)\n    assert math.isclose(quote.spent_usd + quote.fee_usd, 3.99804)
+    assert math.isclose(quote.spent_usd, 3.86)
+    assert math.isclose(quote.spent_usd + quote.fee_usd, 3.99804)
 
     # A nonlinear fee applied only to VWAP would be materially wrong here.
     vwap_approx_fee = (
