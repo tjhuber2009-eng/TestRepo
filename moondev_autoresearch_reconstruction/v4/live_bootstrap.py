@@ -618,8 +618,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         if len(returns) >= 50:
             portfolio = RobustPortfolioOptimizer(
                 dd_cap_pct=private.max_dd_pct,
-                n_candidates=2400,
-                bootstrap_reps=200,
+                n_candidates=1000,
+                bootstrap_reps=120,
                 block=20,
                 max_weight=1.0 if len(eligible_returns) == 1 else 0.90,
             ).optimize(returns)
