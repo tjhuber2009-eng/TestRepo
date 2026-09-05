@@ -31,15 +31,34 @@ class TemperatureBracket:
 
 
 def extract_station_code(*texts: str | None) -> str:
+    """Extract the market's named weather-station identifier.
+
+    Current Polymarket daily-temperature rules commonly use Wunderground
+    history URLs ending in an ICAO station code (for example .../KLAX).
+    Older/source variants may expose the same code in a ?site= query.
+    """
     blob = " ".join(text or "" for text in texts)
-    match = re.search(
+
+    query_match = re.search(
         r"[?&]site=([a-z0-9]{3,6})",
         blob,
         flags=re.I,
     )
-    if not match:
-        raise ValueError("could not find resolution station code")
-    return match.group(1).upper()
+    if query_match:
+        return query_match.group(1).upper()
+
+    wunderground_match = re.search(
+        r"wunderground\.com/history/daily/"
+        r"[^\s\"'<>?#]+/"
+        r"([a-z0-9]{3,6})"
+        r"(?:[/?#\s\"'<>]|$)",
+        blob,
+        flags=re.I,
+    )
+    if wunderground_match:
+        return wunderground_match.group(1).upper()
+
+    raise ValueError("could not find resolution station code")
 
 
 def parse_temperature_bracket(question: str) -> TemperatureBracket:
