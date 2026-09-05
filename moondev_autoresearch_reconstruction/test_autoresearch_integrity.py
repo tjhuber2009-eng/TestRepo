@@ -35,6 +35,85 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         text = (HERE / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("validation_data/", text)
 
+    def test_v3_state_json_is_strict_and_nonfinite_becomes_null(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "strict.json"
+            continuous_runner.save_json(
+                p,
+                {"neg_inf": float("-inf"), "nan": float("nan"), "ok": 1.25},
+            )
+            raw = p.read_text(encoding="utf-8")
+            self.assertNotIn("Infinity", raw)
+            self.assertNotIn("NaN", raw)
+            parsed = json.loads(raw)
+            self.assertIsNone(parsed["neg_inf"])
+            self.assertIsNone(parsed["nan"])
+            self.assertEqual(parsed["ok"], 1.25)
+
+    def test_experiment_json_sanitizer_is_strict(self):
+        payload = loop.json_safe(
+            {"score": float("inf"), "folds": [1.0, float("-inf"), float("nan")]}
+        )
+        raw = json.dumps(payload, allow_nan=False)
+        self.assertNotIn("Infinity", raw)
+        self.assertNotIn("NaN", raw)
+        self.assertEqual(json.loads(raw)["folds"], [1.0, None, None])
+
+    def test_stale_v2_reset_removes_all_active_protocol_artifacts(self):
+        names = [
+            "STATE", "TRACKS", "CURSOR", "LEDGER", "PROGRESS",
+            "SELECTIONS", "LEADERBOARD",
+        ]
+        old = {name: getattr(continuous_runner, name) for name in names}
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                state = Path(td) / "continuous_state"
+                tracks = state / "tracks"
+                tracks.mkdir(parents=True)
+                stale_track = tracks / "stale"
+                stale_track.mkdir()
+                (stale_track / "state_meta.json").write_text(
+                    json.dumps({"protocol": "nested_chronological_v2"}),
+                    encoding="utf-8",
+                )
+                paths = {
+                    "STATE": state,
+                    "TRACKS": tracks,
+                    "CURSOR": state / "cursor.json",
+                    "LEDGER": state / "cycles.jsonl",
+                    "PROGRESS": state / "progress.json",
+                    "SELECTIONS": state / "search_selections.json",
+                    "LEADERBOARD": state / "leaderboard_latest.json",
+                }
+                for name, value in paths.items():
+                    setattr(continuous_runner, name, value)
+                for p in [
+                    paths["CURSOR"], paths["PROGRESS"],
+                    paths["SELECTIONS"], paths["LEADERBOARD"],
+                ]:
+                    p.write_text(
+                        json.dumps({"protocol": "nested_chronological_v2"}),
+                        encoding="utf-8",
+                    )
+                paths["LEDGER"].write_text('{"legacy":"v2"}\n', encoding="utf-8")
+                (state / "ALL_RUNNABLE_TRACKS_TERMINAL").write_text(
+                    "legacy\n", encoding="utf-8"
+                )
+                dash = state / "dashboard"
+                dash.mkdir()
+                (dash / "old.html").write_text("v2", encoding="utf-8")
+
+                removed = continuous_runner.reset_stale_protocol_state()
+                self.assertEqual(removed, 1)
+                self.assertFalse(stale_track.exists())
+                for key in ["CURSOR", "PROGRESS", "SELECTIONS", "LEADERBOARD", "LEDGER"]:
+                    self.assertFalse(paths[key].exists(), key)
+                self.assertFalse((state / "ALL_RUNNABLE_TRACKS_TERMINAL").exists())
+                self.assertFalse(dash.exists())
+        finally:
+            for name, value in old.items():
+                setattr(continuous_runner, name, value)
+
     def test_protocol_is_nested_v3(self):
         self.assertEqual(continuous_runner.PROTOCOL, "nested_chronological_v3")
         text = (HERE / "robust_harness.py").read_text(encoding="utf-8")
