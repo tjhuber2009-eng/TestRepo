@@ -43,6 +43,7 @@ RUNTIME_FILES = [
     "baseline.json",
     "last_run.json",
     "validation_run.json",
+    "lookahead_audit.json",
     "results.tsv",
     "proposal.txt",
     "STOP",
