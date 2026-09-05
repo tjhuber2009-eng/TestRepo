@@ -1148,6 +1148,28 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreater(float(braked[1.0].iloc[0]), 0.015)
         self.assertLess(float(braked[1.0].iloc[0]), float(plain[1.0].iloc[0]))
 
+    def test_prop_day_brake_preserves_trigger_hour_adverse_excursion(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=3,
+            freq="h",
+            tz="UTC",
+        )
+        returns = pd.Series([0.02, 0.02, 0.0], index=idx)
+        adverse = pd.Series([-0.06, -0.002, 0.0], index=idx)
+        weights = pd.DataFrame({"A": [1.0, 1.0, 0.0]}, index=idx)
+        _, braked_adv, _ = aggregate_prague_days_scaled(
+            returns,
+            adverse,
+            weights,
+            scales=(1.0,),
+            day_profit_cap=0.015,
+            day_loss_cap=0.015,
+        )
+        # Hitting the profit brake at the close of the first bar cannot erase
+        # an adverse excursion that already occurred inside that trigger bar.
+        self.assertLessEqual(float(braked_adv[1.0].iloc[0]), -0.06 + 1e-12)
+
     def test_prop_day_brake_mutations_are_compact(self):
         leader = {
             "params": {
