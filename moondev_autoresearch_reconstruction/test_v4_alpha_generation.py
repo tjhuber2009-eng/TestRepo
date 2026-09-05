@@ -10,13 +10,14 @@ from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, paret
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
-from v4.live_bootstrap import read_market_csv
+from v4.live_bootstrap import json_safe, read_market_csv
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.regime_engine import RegimeEngine
+from v4.risk_overlays import volatility_target_overlay
 from v4.research_allocator import ResearchAllocator, ResearchCell, ResearchObservation
 from v4.strategy_examples import pead_event_weights
 from v4.strategy_intake import HypothesisQueue, StrategyHypothesis
@@ -51,6 +52,46 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(res.execution_weights.iloc[1, 0], 0.0)
         self.assertEqual(res.execution_weights.iloc[2, 0], 1.0)
         self.assertGreater(res.returns.iloc[2], 0.09)
+
+    def test_cost_stress_is_reported_and_worse_than_base_when_turnover_exists(self):
+        idx = pd.date_range("2019-01-01", periods=180, freq="D")
+        r = np.where(np.arange(len(idx)) % 2 == 0, 0.01, -0.004)
+        open_ = 100.0 * np.cumprod(1.0 + r)
+        frame = pd.DataFrame({
+            "Open": open_,
+            "High": open_ * 1.01,
+            "Low": open_ * 0.99,
+            "Close": open_,
+        }, index=idx)
+        engine = MultiAssetBacktester(
+            {"A": frame},
+            limits=PortfolioLimits(gross_leverage=1, net_min=0, net_max=1, per_asset_abs_weight=1),
+            periods_per_year=365,
+        )
+        def strat(data, features=None):
+            w = pd.DataFrame(0.0, index=idx, columns=["A"])
+            w.iloc[::2, 0] = 1.0
+            return w
+        res = engine.run(strat, cost_stress_multiplier=5.0)
+        self.assertIsNotNone(res.metrics.cost_stress_cagr_pct)
+        self.assertLess(res.metrics.cost_stress_cagr_pct, res.metrics.cagr_pct)
+
+    def test_volatility_target_overlay_is_prefix_invariant(self):
+        data = synthetic_daily_market(bars=500)
+        def base(d, features=None):
+            idx = next(iter(d.values())).index
+            return pd.DataFrame({"QQQ": 1.0}, index=idx)
+        overlay = volatility_target_overlay(
+            base, target_vol=0.15, periods_per_year=252, lookback=20, max_gross=1.0
+        )
+        a = overlay({"QQQ": data["QQQ"].iloc[:350]})
+        b = overlay({"QQQ": data["QQQ"]})
+        pd.testing.assert_frame_equal(a, b.loc[a.index])
+
+    def test_strict_v4_json_sanitizes_nonfinite_values(self):
+        payload = json_safe({"bad": float("-inf"), "nested": [float("nan"), 1.0]})
+        raw = json.dumps(payload, allow_nan=False)
+        self.assertEqual(json.loads(raw), {"bad": None, "nested": [None, 1.0]})
 
     def test_feature_context_join_is_backward_and_lagged(self):
         data = synthetic_daily_market(bars=300)
