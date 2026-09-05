@@ -263,7 +263,6 @@ def append_experiment_record(
         record["fold_return_pct"] = [
             x.get("return_pct") for x in (result.get("folds") or [])
         ]
-    }
     with open(EXPERIMENTS, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, sort_keys=True) + "\n")
 
