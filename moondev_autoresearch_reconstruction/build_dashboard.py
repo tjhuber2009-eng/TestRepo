@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SRC = HERE / "dashboard_src"\nACTIVE_PROTOCOL = "nested_chronological_v3"
+SRC = HERE / "dashboard_src"
+ACTIVE_PROTOCOL = "nested_chronological_v3"
 
 
 def load_json(path, default=None):
