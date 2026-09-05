@@ -1,5 +1,5 @@
 {
-  "comparison": "open_to_open_total_return_with_next_day_explicit_dividend",
+  "comparison": "cross_source_open_to_open_price_return_plus_tiingo_total_return_self_parity",
   "final_oos_opened": false,
   "hidden_validation_opened": false,
   "policy": {
@@ -11,7 +11,7 @@
   "promotion_blocked": true,
   "protocol": "alpha_generation_v4",
   "reconciliation_pass": false,
-  "reference_source": "yahoo_split_dividend_v2",
+  "reference_source": "yahoo_provider_split_adjusted_price_shadow",
   "stage": "development_only",
   "symbols": {
     "gld": {
@@ -85,7 +85,7 @@
       "reference_manifest_sha256": "6d45795d61a6f56b83d318759da0fbdbff6fb57031ca7c3333dc658305a77dea"
     },
     "ief": {
-      "abs_cagr_gap_pct_points": 0.0004080640065184937,
+      "abs_cagr_gap_pct_points": 1.0611622691669709e-07,
       "cross_source_pass": true,
       "days_over_10bp": 3,
       "days_over_50bp": 0,
@@ -132,12 +132,12 @@
         }
       ],
       "max_abs_diff_bp": 43.59547048630175,
-      "median_abs_diff_bp": 0.00022414225753220052,
+      "median_abs_diff_bp": 0.00020501403019679287,
       "observations": 2768,
       "overlap_end": "2020-12-30",
       "overlap_start": "2010-01-04",
-      "p95_abs_diff_bp": 0.004625127691670914,
-      "primary_cagr_pct": 4.897242551203762,
+      "p95_abs_diff_bp": 0.0005721561051053037,
+      "primary_cagr_pct": 2.773814285997034,
       "primary_manifest_sha256": "1df67531615cf63ff594e452abb1a8d19f33c56b048c6b3f0a80a22adacb6976",
       "provider_self_parity": {
         "max_abs_diff_bp": 0.2358166120530747,
@@ -151,13 +151,13 @@
         }
       },
       "provider_self_parity_pass": true,
-      "reference_cagr_pct": 4.896834487197244,
+      "reference_cagr_pct": 2.7738143921132608,
       "reference_manifest_sha256": "ad6f19af6fd7dad16eb4256abf823da1e2337c219c5f870664a5e56a96bff6f7"
     },
     "qqq": {
-      "abs_cagr_gap_pct_points": 0.012407241375324674,
+      "abs_cagr_gap_pct_points": 0.0023391194684556638,
       "cross_source_pass": false,
-      "days_over_10bp": 75,
+      "days_over_10bp": 73,
       "days_over_50bp": 6,
       "largest_difference_dates": [
         {
@@ -202,12 +202,12 @@
         }
       ],
       "max_abs_diff_bp": 84.46910182757338,
-      "median_abs_diff_bp": 1.1457952657639714,
+      "median_abs_diff_bp": 1.1465023796336515,
       "observations": 2768,
       "overlap_end": "2020-12-30",
       "overlap_start": "2010-01-04",
       "p95_abs_diff_bp": 7.426442479960724,
-      "primary_cagr_pct": 20.180956436837526,
+      "primary_cagr_pct": 18.994461024456257,
       "primary_manifest_sha256": "2450b5422b2e791d85e2698cf995b1a37c9c438295b84495e8cf0a8076dd8c90",
       "provider_self_parity": {
         "max_abs_diff_bp": 0.4940991042667875,
@@ -221,11 +221,11 @@
         }
       },
       "provider_self_parity_pass": true,
-      "reference_cagr_pct": 20.19336367821285,
+      "reference_cagr_pct": 18.9921219049878,
       "reference_manifest_sha256": "b177aac7475a1431520a7bd0eeb09c9cbbabd9dd0e44cf1ef594ffafe8f25d5f"
     },
     "shy": {
-      "abs_cagr_gap_pct_points": 0.0022530920142704858,
+      "abs_cagr_gap_pct_points": 0.0003703636886731587,
       "cross_source_pass": true,
       "days_over_10bp": 0,
       "days_over_50bp": 0,
@@ -247,16 +247,12 @@
           "date": "2010-03-18"
         },
         {
-          "abs_diff_bp": 3.3645638506552,
-          "date": "2014-10-30"
-        },
-        {
-          "abs_diff_bp": 3.3105506400010754,
+          "abs_diff_bp": 3.3682270688339955,
           "date": "2014-10-31"
         },
         {
-          "abs_diff_bp": 2.637802829266178,
-          "date": "2012-10-31"
+          "abs_diff_bp": 3.3645638506552,
+          "date": "2014-10-30"
         },
         {
           "abs_diff_bp": 2.36689114576194,
@@ -269,15 +265,19 @@
         {
           "abs_diff_bp": 1.1925533596657267,
           "date": "2011-09-12"
+        },
+        {
+          "abs_diff_bp": 1.192473288331719,
+          "date": "2011-09-09"
         }
       ],
       "max_abs_diff_bp": 5.930799803381959,
-      "median_abs_diff_bp": 0.0002535456178343054,
+      "median_abs_diff_bp": 0.00025301365780272533,
       "observations": 2768,
       "overlap_end": "2020-12-30",
       "overlap_start": "2010-01-04",
-      "p95_abs_diff_bp": 0.0124838322304033,
-      "primary_cagr_pct": 1.265459820481163,
+      "p95_abs_diff_bp": 0.0007576328532321597,
+      "primary_cagr_pct": 0.3611224346629083,
       "primary_manifest_sha256": "5a1726af9bc78979319a26592aa5719cc3ffdc0f589c5edd883af9fb3c9c74e4",
       "provider_self_parity": {
         "max_abs_diff_bp": 0.041882884687094446,
@@ -291,11 +291,11 @@
         }
       },
       "provider_self_parity_pass": true,
-      "reference_cagr_pct": 1.2632067284668924,
+      "reference_cagr_pct": 0.3607520709742351,
       "reference_manifest_sha256": "1279b3069f9fc67cd84437a10543a416585c7b8fd0059e2ff5cb111abdc2de65"
     },
     "spy": {
-      "abs_cagr_gap_pct_points": 6.7745057137358344e-06,
+      "abs_cagr_gap_pct_points": 2.8146540742568504e-07,
       "cross_source_pass": true,
       "days_over_10bp": 8,
       "days_over_50bp": 6,
@@ -342,12 +342,12 @@
         }
       ],
       "max_abs_diff_bp": 52.459734144039146,
-      "median_abs_diff_bp": 0.00021638364988696424,
+      "median_abs_diff_bp": 0.00021240796954646868,
       "observations": 2768,
       "overlap_end": "2020-12-30",
       "overlap_start": "2010-01-04",
-      "p95_abs_diff_bp": 0.0008263547819353794,
-      "primary_cagr_pct": 13.744429949812599,
+      "p95_abs_diff_bp": 0.00075901876250839,
+      "primary_cagr_pct": 11.508473140073573,
       "primary_manifest_sha256": "88fa8ccd1770184b149b93b350d55fe76de9b10928ad06dd95625a9116d5ec33",
       "provider_self_parity": {
         "max_abs_diff_bp": 3.5254263897677163,
@@ -361,35 +361,15 @@
         }
       },
       "provider_self_parity_pass": true,
-      "reference_cagr_pct": 13.744423175306885,
+      "reference_cagr_pct": 11.508472858608165,
       "reference_manifest_sha256": "4624407267137acfa87b98c892e292f8c4c6925c7d360c19f45a839a4202211c"
     },
     "tqqq": {
-      "abs_cagr_gap_pct_points": 65.91225891230039,
-      "cross_source_pass": false,
-      "days_over_10bp": 5,
-      "days_over_50bp": 5,
+      "abs_cagr_gap_pct_points": 4.859205105134379e-05,
+      "cross_source_pass": true,
+      "days_over_10bp": 0,
+      "days_over_50bp": 0,
       "largest_difference_dates": [
-        {
-          "abs_diff_bp": 20960.29029162471,
-          "date": "2018-05-23"
-        },
-        {
-          "abs_diff_bp": 10259.110638437392,
-          "date": "2011-02-24"
-        },
-        {
-          "abs_diff_bp": 9970.128290678895,
-          "date": "2017-01-11"
-        },
-        {
-          "abs_diff_bp": 9834.836847496563,
-          "date": "2014-01-23"
-        },
-        {
-          "abs_diff_bp": 9682.133792493736,
-          "date": "2012-05-10"
-        },
         {
           "abs_diff_bp": 0.180152939817102,
           "date": "2020-08-18"
@@ -399,7 +379,7 @@
           "date": "2020-08-19"
         },
         {
-          "abs_diff_bp": 0.13289197502430738,
+          "abs_diff_bp": 0.13289197502208694,
           "date": "2017-09-06"
         },
         {
@@ -407,17 +387,37 @@
           "date": "2017-09-05"
         },
         {
-          "abs_diff_bp": 0.06819908141997288,
-          "date": "2018-12-24"
+          "abs_diff_bp": 0.047390633017840855,
+          "date": "2010-07-01"
+        },
+        {
+          "abs_diff_bp": 0.039181897553142164,
+          "date": "2020-09-09"
+        },
+        {
+          "abs_diff_bp": 0.03848246212134754,
+          "date": "2010-09-15"
+        },
+        {
+          "abs_diff_bp": 0.03469539462841453,
+          "date": "2010-02-18"
+        },
+        {
+          "abs_diff_bp": 0.03436196491790611,
+          "date": "2020-09-10"
+        },
+        {
+          "abs_diff_bp": 0.03389877944570685,
+          "date": "2010-05-21"
         }
       ],
-      "max_abs_diff_bp": 20960.29029162471,
-      "median_abs_diff_bp": 0.001243346532397993,
+      "max_abs_diff_bp": 0.180152939817102,
+      "median_abs_diff_bp": 0.0012385511460877296,
       "observations": 2741,
       "overlap_end": "2020-12-30",
       "overlap_start": "2010-02-11",
-      "p95_abs_diff_bp": 0.015924602894124007,
-      "primary_cagr_pct": 54.18954924171035,
+      "p95_abs_diff_bp": 0.01498454365034263,
+      "primary_cagr_pct": 54.15470285648239,
       "primary_manifest_sha256": "a39f291794e627b252956edd98859f4a463fedad283a58a7cc5388c83092cdee",
       "provider_self_parity": {
         "max_abs_diff_bp": 1.6205501119304078,
@@ -431,8 +431,8 @@
         }
       },
       "provider_self_parity_pass": true,
-      "reference_cagr_pct": 120.10180815401074,
-      "reference_manifest_sha256": "da2c5a79b7584054b931bf4987cf3b0643a73ae79d07e768a99038a37f24dd8b"
+      "reference_cagr_pct": 54.154654264431336,
+      "reference_manifest_sha256": "d3de7a62c59e8f410792b5df70d54f087ba76c298519d80fa07946d91753cfb2"
     }
   }
 }
