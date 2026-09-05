@@ -85,6 +85,7 @@ def main() -> int:
         window_days=int(spec["ranking"]["primary_window_days"]),
         risk_fraction=float(spec["risk"]["risk_fraction_per_trade"]),
         max_concurrent_positions=int(spec["risk"]["max_concurrent_positions"]),
+        paper_account_usd=float(spec["risk"]["paper_account_usd"]),
     )
 
     def safe_row(row):
