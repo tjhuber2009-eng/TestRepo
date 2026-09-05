@@ -61,14 +61,29 @@ def bracket_probability(
     *,
     lower: float | None = None,
     upper: float | None = None,
+    resolution_increment: float = 1.0,
 ) -> float:
+    """Smoothed probability after mapping continuous forecasts to source bins.
+
+    Polymarket daily-temperature rules currently resolve using whole-degree
+    station history. Instead of Python rounding (which uses ties-to-even), use
+    half-increment bin boundaries. For a 76-77 whole-degree bracket this means
+    continuous model values in [75.5, 77.5) are treated as bracket-consistent.
+    """
     if not values:
         raise ValueError("values cannot be empty")
+    if resolution_increment <= 0:
+        raise ValueError("resolution_increment must be > 0")
+
+    half = resolution_increment / 2.0
+    effective_lower = None if lower is None else lower - half
+    effective_upper = None if upper is None else upper + half
+
     hit = 0
     for x in values:
-        if lower is not None and x < lower:
+        if effective_lower is not None and x < effective_lower:
             continue
-        if upper is not None and x > upper:
+        if effective_upper is not None and x >= effective_upper:
             continue
         hit += 1
     return (hit + 0.5) / (len(values) + 1.0)
