@@ -1,0 +1,3021 @@
+{
+  "data_end": "2020-12-31",
+  "deployment_blockers": [
+    "exact FTMO CFD spreads/swaps/session history not yet reconstructed",
+    "daily-loss screening currently uses conservative daily OHLC adverse proxy",
+    "intraday equity path aligned to FTMO reset timezone required before deployment"
+  ],
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "market_mapping": {
+    "BTCUSDT": {
+      "intended_prop_symbol": "BTCUSD",
+      "research_source": "Binance spot development history",
+      "venue_execution_verified": false
+    },
+    "ETHUSDT": {
+      "intended_prop_symbol": "ETHUSD",
+      "research_source": "Binance spot development history",
+      "venue_execution_verified": false
+    }
+  },
+  "objective": "separate prop optimization: maximize evaluation pass probability and survival-adjusted reward efficiency",
+  "private_track_independent": true,
+  "programs": {
+    "ftmo_1step_2026": {
+      "development_leaderboard": [
+        {
+          "base_cagr_pct": 123.4156418317304,
+          "base_max_dd_pct": -51.173101093787565,
+          "params": {
+            "lookback": 20,
+            "top_k": 1,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.77,
+              "fail_probability": 0.77,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 18.0,
+              "p75_days_to_pass": 30.0,
+              "pass_probability": 0.23,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.23,
+            "expected_evaluation_days_if_passed": 18.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.43,
+              "expected_reward_pct": 1.443955632010543,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.447892079809769,
+              "paths": 500,
+              "positive_reward_probability": 0.248,
+              "reward_window_days": 14,
+              "survival_probability": 0.57
+            },
+            "payout_efficiency_score": 0.005915705729893194,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 175.19390779415377,
+          "base_max_dd_pct": -54.40928401425349,
+          "params": {
+            "lookback": 20,
+            "top_k": 1,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.702,
+              "fail_probability": 0.704,
+              "max_loss_breach_probability": 0.002,
+              "median_days_to_pass": 24.0,
+              "p75_days_to_pass": 38.0,
+              "pass_probability": 0.296,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.296,
+            "expected_evaluation_days_if_passed": 24.0,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.402,
+              "expected_reward_pct": 1.243166370919158,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.5224606520092197,
+              "paths": 500,
+              "positive_reward_probability": 0.284,
+              "reward_window_days": 14,
+              "survival_probability": 0.598
+            },
+            "payout_efficiency_score": 0.005790799815359429,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 82.03827442758237,
+          "base_max_dd_pct": -71.09900881433559,
+          "params": {
+            "lookback": 60,
+            "top_k": 1,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.75,
+              "fail_probability": 0.754,
+              "max_loss_breach_probability": 0.004,
+              "median_days_to_pass": 18.0,
+              "p75_days_to_pass": 28.0,
+              "pass_probability": 0.246,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.246,
+            "expected_evaluation_days_if_passed": 18.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.486,
+              "expected_reward_pct": 1.2112721524936887,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.728418039825734,
+              "paths": 500,
+              "positive_reward_probability": 0.214,
+              "reward_window_days": 14,
+              "survival_probability": 0.514
+            },
+            "payout_efficiency_score": 0.0047861905015597495,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 120.13822192916189,
+          "base_max_dd_pct": -54.84039940292899,
+          "params": {
+            "lookback": 20,
+            "top_k": 2,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.794,
+              "fail_probability": 0.796,
+              "max_loss_breach_probability": 0.002,
+              "median_days_to_pass": 17.0,
+              "p75_days_to_pass": 29.75,
+              "pass_probability": 0.204,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.204,
+            "expected_evaluation_days_if_passed": 17.0,
+            "exposure_scale": 0.55,
+            "funded": {
+              "daily_loss_breach_probability": 0.518,
+              "expected_reward_pct": 1.4690656777595892,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.517121949982467,
+              "paths": 500,
+              "positive_reward_probability": 0.26,
+              "reward_window_days": 14,
+              "survival_probability": 0.482
+            },
+            "payout_efficiency_score": 0.00465968677299177,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 35.67399225765715,
+          "base_max_dd_pct": -65.17369926823238,
+          "params": {
+            "lookback": 60,
+            "top_k": 1,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.75,
+              "fail_probability": 0.75,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 28.0,
+              "p75_days_to_pass": 52.0,
+              "pass_probability": 0.25,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.25,
+            "expected_evaluation_days_if_passed": 28.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.342,
+              "expected_reward_pct": 1.1136432458501262,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.37931009427333,
+              "paths": 500,
+              "positive_reward_probability": 0.198,
+              "reward_window_days": 14,
+              "survival_probability": 0.658
+            },
+            "payout_efficiency_score": 0.004361769379579661,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 67.73306426746517,
+          "base_max_dd_pct": -36.301035675004435,
+          "params": {
+            "lookback": 20,
+            "top_k": 1,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.76,
+              "fail_probability": 0.76,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 41.5,
+              "p75_days_to_pass": 72.25,
+              "pass_probability": 0.24,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.24,
+            "expected_evaluation_days_if_passed": 41.5,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.23,
+              "expected_reward_pct": 1.2120215060122876,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.401452101464094,
+              "paths": 500,
+              "positive_reward_probability": 0.284,
+              "reward_window_days": 14,
+              "survival_probability": 0.77
+            },
+            "payout_efficiency_score": 0.004035704041640914,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 30.581472351954385,
+          "base_max_dd_pct": -64.65571653840075,
+          "params": {
+            "lookback": 126,
+            "top_k": 1,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.77,
+              "fail_probability": 0.77,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 28.0,
+              "p75_days_to_pass": 46.5,
+              "pass_probability": 0.23,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.23,
+            "expected_evaluation_days_if_passed": 28.0,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.334,
+              "expected_reward_pct": 1.088749682853285,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.4592423529013665,
+              "paths": 500,
+              "positive_reward_probability": 0.248,
+              "reward_window_days": 14,
+              "survival_probability": 0.666
+            },
+            "payout_efficiency_score": 0.003970825629034909,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 72.06258102776953,
+          "base_max_dd_pct": -65.17369926823238,
+          "params": {
+            "lookback": 60,
+            "top_k": 1,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.718,
+              "fail_probability": 0.718,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 21.0,
+              "p75_days_to_pass": 37.0,
+              "pass_probability": 0.282,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.282,
+            "expected_evaluation_days_if_passed": 21.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.5,
+              "expected_reward_pct": 0.9658454786836497,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.322955527696957,
+              "paths": 500,
+              "positive_reward_probability": 0.2,
+              "reward_window_days": 14,
+              "survival_probability": 0.5
+            },
+            "payout_efficiency_score": 0.003890977499839845,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 96.92716455769823,
+          "base_max_dd_pct": -49.656230488492426,
+          "params": {
+            "lookback": 20,
+            "top_k": 2,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.816,
+              "fail_probability": 0.816,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 28.0,
+              "p75_days_to_pass": 49.0,
+              "pass_probability": 0.184,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.184,
+            "expected_evaluation_days_if_passed": 28.0,
+            "exposure_scale": 0.45,
+            "funded": {
+              "daily_loss_breach_probability": 0.364,
+              "expected_reward_pct": 1.2748224887326725,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.505961569788025,
+              "paths": 500,
+              "positive_reward_probability": 0.296,
+              "reward_window_days": 14,
+              "survival_probability": 0.636
+            },
+            "payout_efficiency_score": 0.0035520196886060064,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 18.920481160974912,
+          "base_max_dd_pct": -71.94708818622742,
+          "params": {
+            "lookback": 126,
+            "top_k": 1,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.77,
+              "fail_probability": 0.772,
+              "max_loss_breach_probability": 0.002,
+              "median_days_to_pass": 21.0,
+              "p75_days_to_pass": 43.75,
+              "pass_probability": 0.228,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.228,
+            "expected_evaluation_days_if_passed": 21.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.378,
+              "expected_reward_pct": 0.8343857958360443,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.231614716743452,
+              "paths": 500,
+              "positive_reward_probability": 0.194,
+              "reward_window_days": 14,
+              "survival_probability": 0.622
+            },
+            "payout_efficiency_score": 0.0033808358863509844,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 32.02848513751966,
+          "base_max_dd_pct": -66.7088926784372,
+          "params": {
+            "lookback": 126,
+            "top_k": 2,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.8,
+              "fail_probability": 0.802,
+              "max_loss_breach_probability": 0.002,
+              "median_days_to_pass": 18.0,
+              "p75_days_to_pass": 39.0,
+              "pass_probability": 0.198,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.198,
+            "expected_evaluation_days_if_passed": 18.0,
+            "exposure_scale": 0.55,
+            "funded": {
+              "daily_loss_breach_probability": 0.448,
+              "expected_reward_pct": 0.946546878677809,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.742458320230382,
+              "paths": 500,
+              "positive_reward_probability": 0.194,
+              "reward_window_days": 14,
+              "survival_probability": 0.552
+            },
+            "payout_efficiency_score": 0.003232930864124057,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 54.502169433022175,
+          "base_max_dd_pct": -70.37258182093554,
+          "params": {
+            "lookback": 60,
+            "top_k": 2,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.782,
+              "fail_probability": 0.786,
+              "max_loss_breach_probability": 0.004,
+              "median_days_to_pass": 15.0,
+              "p75_days_to_pass": 28.5,
+              "pass_probability": 0.214,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.214,
+            "expected_evaluation_days_if_passed": 15.0,
+            "exposure_scale": 0.55,
+            "funded": {
+              "daily_loss_breach_probability": 0.534,
+              "expected_reward_pct": 0.9241795819040437,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.205031431775116,
+              "paths": 500,
+              "positive_reward_probability": 0.184,
+              "reward_window_days": 14,
+              "survival_probability": 0.466
+            },
+            "payout_efficiency_score": 0.003178030504337892,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 41.38925334103909,
+          "base_max_dd_pct": -57.6024428465731,
+          "params": {
+            "lookback": 126,
+            "top_k": 1,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.768,
+              "fail_probability": 0.774,
+              "max_loss_breach_probability": 0.006,
+              "median_days_to_pass": 34.0,
+              "p75_days_to_pass": 59.0,
+              "pass_probability": 0.226,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.226,
+            "expected_evaluation_days_if_passed": 34.0,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.33,
+              "expected_reward_pct": 1.0000077614688816,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.830594379615461,
+              "paths": 500,
+              "positive_reward_probability": 0.242,
+              "reward_window_days": 14,
+              "survival_probability": 0.67
+            },
+            "payout_efficiency_score": 0.00315460781753371,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 10.547898365644626,
+          "base_max_dd_pct": -77.04283167953261,
+          "params": {
+            "lookback": 126,
+            "top_k": 2,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.752,
+              "fail_probability": 0.752,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 35.5,
+              "p75_days_to_pass": 65.25,
+              "pass_probability": 0.248,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.248,
+            "expected_evaluation_days_if_passed": 35.5,
+            "exposure_scale": 0.45,
+            "funded": {
+              "daily_loss_breach_probability": 0.32,
+              "expected_reward_pct": 0.8640217798155744,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.7509589496201614,
+              "paths": 500,
+              "positive_reward_probability": 0.244,
+              "reward_window_days": 14,
+              "survival_probability": 0.68
+            },
+            "payout_efficiency_score": 0.0029436087464262315,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 42.397498178421515,
+          "base_max_dd_pct": -57.6024428465731,
+          "params": {
+            "lookback": 126,
+            "top_k": 2,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.79,
+              "fail_probability": 0.792,
+              "max_loss_breach_probability": 0.002,
+              "median_days_to_pass": 37.0,
+              "p75_days_to_pass": 63.25,
+              "pass_probability": 0.208,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.208,
+            "expected_evaluation_days_if_passed": 37.0,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.294,
+              "expected_reward_pct": 0.9881770992872834,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.0124016494044636,
+              "paths": 500,
+              "positive_reward_probability": 0.276,
+              "reward_window_days": 14,
+              "survival_probability": 0.706
+            },
+            "payout_efficiency_score": 0.002845330013257627,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 45.62746093061993,
+          "base_max_dd_pct": -64.6461451034332,
+          "params": {
+            "lookback": 60,
+            "top_k": 2,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.774,
+              "fail_probability": 0.776,
+              "max_loss_breach_probability": 0.002,
+              "median_days_to_pass": 25.5,
+              "p75_days_to_pass": 44.25,
+              "pass_probability": 0.224,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.224,
+            "expected_evaluation_days_if_passed": 25.5,
+            "exposure_scale": 0.45,
+            "funded": {
+              "daily_loss_breach_probability": 0.464,
+              "expected_reward_pct": 0.9058897644949344,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.2266638009299546,
+              "paths": 500,
+              "positive_reward_probability": 0.224,
+              "reward_window_days": 14,
+              "survival_probability": 0.536
+            },
+            "payout_efficiency_score": 0.0027535379413751847,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 20.548506912019615,
+          "base_max_dd_pct": -68.14874108842572,
+          "params": {
+            "lookback": 60,
+            "top_k": 2,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.792,
+              "fail_probability": 0.792,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 39.0,
+              "p75_days_to_pass": 64.5,
+              "pass_probability": 0.206,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.002
+            },
+            "combined_evaluation_pass_probability": 0.206,
+            "expected_evaluation_days_if_passed": 39.0,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.25,
+              "expected_reward_pct": 0.8878172553789434,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.840377791982538,
+              "paths": 500,
+              "positive_reward_probability": 0.258,
+              "reward_window_days": 14,
+              "survival_probability": 0.75
+            },
+            "payout_efficiency_score": 0.0025880710557744675,
+            "verification": null
+          }
+        },
+        {
+          "base_cagr_pct": 38.74062507961333,
+          "base_max_dd_pct": -48.76613716943679,
+          "params": {
+            "lookback": 20,
+            "top_k": 2,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.772,
+              "fail_probability": 0.778,
+              "max_loss_breach_probability": 0.006,
+              "median_days_to_pass": 45.0,
+              "p75_days_to_pass": 81.75,
+              "pass_probability": 0.22,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.002
+            },
+            "combined_evaluation_pass_probability": 0.22,
+            "expected_evaluation_days_if_passed": 45.0,
+            "exposure_scale": 0.4,
+            "funded": {
+              "daily_loss_breach_probability": 0.214,
+              "expected_reward_pct": 0.8475527500515447,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.3163078423445205,
+              "paths": 500,
+              "positive_reward_probability": 0.274,
+              "reward_window_days": 14,
+              "survival_probability": 0.786
+            },
+            "payout_efficiency_score": 0.002484047822693443,
+            "verification": null
+          }
+        }
+      ],
+      "parameter_candidates": 18,
+      "program": {
+        "challenge": {
+          "horizon_days": 252,
+          "id": "challenge",
+          "max_daily_loss_pct": 3.0,
+          "max_loss_pct": 10.0,
+          "min_trading_days": 0,
+          "profit_target_pct": 10.0,
+          "trailing_max_loss": true
+        },
+        "first_reward_eligible_days": 14,
+        "funded": {
+          "horizon_days": 252,
+          "id": "funded",
+          "max_daily_loss_pct": 3.0,
+          "max_loss_pct": 10.0,
+          "min_trading_days": 0,
+          "profit_target_pct": null,
+          "trailing_max_loss": true
+        },
+        "id": "ftmo_1step_2026",
+        "instrument_policy": "venue_symbols_only",
+        "label": "FTMO 1-Step",
+        "reward_share": 0.9,
+        "rule_source": "https://ftmo.com/en/trading-objectives/",
+        "verification": null
+      },
+      "refined_winner": {
+        "optimization": {
+          "candidates": [
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.76025,
+                "fail_probability": 0.76025,
+                "max_loss_breach_probability": 0.0,
+                "median_days_to_pass": 16.0,
+                "p75_days_to_pass": 30.0,
+                "pass_probability": 0.23975,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.23975,
+              "expected_evaluation_days_if_passed": 16.0,
+              "exposure_scale": 0.55,
+              "funded": {
+                "daily_loss_breach_probability": 0.5065,
+                "expected_reward_pct": 1.1305794013170958,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.27577216008517,
+                "paths": 4000,
+                "positive_reward_probability": 0.192,
+                "reward_window_days": 14,
+                "survival_probability": 0.4935
+              },
+              "payout_efficiency_score": 0.004458877968611978,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.773,
+                "fail_probability": 0.77325,
+                "max_loss_breach_probability": 0.00025,
+                "median_days_to_pass": 19.0,
+                "p75_days_to_pass": 36.0,
+                "pass_probability": 0.22675,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.22675,
+              "expected_evaluation_days_if_passed": 19.0,
+              "exposure_scale": 0.5,
+              "funded": {
+                "daily_loss_breach_probability": 0.4665,
+                "expected_reward_pct": 1.1223660139544627,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 3.9388430769128213,
+                "paths": 4000,
+                "positive_reward_probability": 0.2075,
+                "reward_window_days": 14,
+                "survival_probability": 0.5335
+              },
+              "payout_efficiency_score": 0.004114359980904153,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.72875,
+                "fail_probability": 0.73225,
+                "max_loss_breach_probability": 0.0035,
+                "median_days_to_pass": 38.5,
+                "p75_days_to_pass": 64.0,
+                "pass_probability": 0.2675,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.00025
+              },
+              "combined_evaluation_pass_probability": 0.2675,
+              "expected_evaluation_days_if_passed": 38.5,
+              "exposure_scale": 0.35,
+              "funded": {
+                "daily_loss_breach_probability": 0.30325,
+                "expected_reward_pct": 1.0635969079279544,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 2.672125652810755,
+                "paths": 4000,
+                "positive_reward_probability": 0.303,
+                "reward_window_days": 14,
+                "survival_probability": 0.69675
+              },
+              "payout_efficiency_score": 0.0037758829799558013,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.74075,
+                "fail_probability": 0.7435,
+                "max_loss_breach_probability": 0.00275,
+                "median_days_to_pass": 31.0,
+                "p75_days_to_pass": 53.0,
+                "pass_probability": 0.2565,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.2565,
+              "expected_evaluation_days_if_passed": 31.0,
+              "exposure_scale": 0.4,
+              "funded": {
+                "daily_loss_breach_probability": 0.363,
+                "expected_reward_pct": 1.035159622599067,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 2.944738422906943,
+                "paths": 4000,
+                "positive_reward_probability": 0.25875,
+                "reward_window_days": 14,
+                "survival_probability": 0.637
+              },
+              "payout_efficiency_score": 0.0037585610736949517,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.77725,
+                "fail_probability": 0.77775,
+                "max_loss_breach_probability": 0.0005,
+                "median_days_to_pass": 23.0,
+                "p75_days_to_pass": 41.0,
+                "pass_probability": 0.22225,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.22225,
+              "expected_evaluation_days_if_passed": 23.0,
+              "exposure_scale": 0.45,
+              "funded": {
+                "daily_loss_breach_probability": 0.43625,
+                "expected_reward_pct": 1.0470124614579785,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 3.2843538514949366,
+                "paths": 4000,
+                "positive_reward_probability": 0.23175,
+                "reward_window_days": 14,
+                "survival_probability": 0.56375
+              },
+              "payout_efficiency_score": 0.003545507848686659,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.7,
+                "fail_probability": 0.7095,
+                "max_loss_breach_probability": 0.0095,
+                "median_days_to_pass": 48.0,
+                "p75_days_to_pass": 82.0,
+                "pass_probability": 0.28725,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.00325
+              },
+              "combined_evaluation_pass_probability": 0.28725,
+              "expected_evaluation_days_if_passed": 48.0,
+              "exposure_scale": 0.3,
+              "funded": {
+                "daily_loss_breach_probability": 0.22525,
+                "expected_reward_pct": 0.9366470503334864,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 2.0837514927811807,
+                "paths": 4000,
+                "positive_reward_probability": 0.32125,
+                "reward_window_days": 14,
+                "survival_probability": 0.77475
+              },
+              "payout_efficiency_score": 0.0033620634285504154,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.79825,
+                "fail_probability": 0.7985,
+                "max_loss_breach_probability": 0.00025,
+                "median_days_to_pass": 14.0,
+                "p75_days_to_pass": 27.0,
+                "pass_probability": 0.2015,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.2015,
+              "expected_evaluation_days_if_passed": 14.0,
+              "exposure_scale": 0.6,
+              "funded": {
+                "daily_loss_breach_probability": 0.53525,
+                "expected_reward_pct": 0.9524300687042039,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.589717348576827,
+                "paths": 4000,
+                "positive_reward_probability": 0.1545,
+                "reward_window_days": 14,
+                "survival_probability": 0.46475
+              },
+              "payout_efficiency_score": 0.0031854406320607565,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.78375,
+                "fail_probability": 0.784,
+                "max_loss_breach_probability": 0.00025,
+                "median_days_to_pass": 15.0,
+                "p75_days_to_pass": 28.0,
+                "pass_probability": 0.216,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.216,
+              "expected_evaluation_days_if_passed": 15.0,
+              "exposure_scale": 0.65,
+              "funded": {
+                "daily_loss_breach_probability": 0.54825,
+                "expected_reward_pct": 0.8735293984220058,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.222851664570908,
+                "paths": 4000,
+                "positive_reward_probability": 0.145,
+                "reward_window_days": 14,
+                "survival_probability": 0.45175
+              },
+              "payout_efficiency_score": 0.0029392155737662925,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.77575,
+                "fail_probability": 0.77575,
+                "max_loss_breach_probability": 0.0,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 25.0,
+                "pass_probability": 0.22425,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.22425,
+              "expected_evaluation_days_if_passed": 13.0,
+              "exposure_scale": 0.7,
+              "funded": {
+                "daily_loss_breach_probability": 0.56575,
+                "expected_reward_pct": 0.7665365239361204,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 3.953403304559307,
+                "paths": 4000,
+                "positive_reward_probability": 0.1305,
+                "reward_window_days": 14,
+                "survival_probability": 0.43425
+              },
+              "payout_efficiency_score": 0.002764657699173856,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.69525,
+                "fail_probability": 0.7105,
+                "max_loss_breach_probability": 0.01525,
+                "median_days_to_pass": 67.0,
+                "p75_days_to_pass": 109.0,
+                "pass_probability": 0.278,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0115
+              },
+              "combined_evaluation_pass_probability": 0.278,
+              "expected_evaluation_days_if_passed": 67.0,
+              "exposure_scale": 0.25,
+              "funded": {
+                "daily_loss_breach_probability": 0.156,
+                "expected_reward_pct": 0.9071253942924615,
+                "max_loss_breach_probability": 0.00025,
+                "median_positive_reward_pct": 1.855934185547651,
+                "paths": 4000,
+                "positive_reward_probability": 0.363,
+                "reward_window_days": 14,
+                "survival_probability": 0.84375
+              },
+              "payout_efficiency_score": 0.002626883954305253,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.781,
+                "fail_probability": 0.78125,
+                "max_loss_breach_probability": 0.00025,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 24.0,
+                "pass_probability": 0.21875,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.21875,
+              "expected_evaluation_days_if_passed": 13.0,
+              "exposure_scale": 0.75,
+              "funded": {
+                "daily_loss_breach_probability": 0.60075,
+                "expected_reward_pct": 0.6827586913854402,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.728059531676467,
+                "paths": 4000,
+                "positive_reward_probability": 0.1055,
+                "reward_window_days": 14,
+                "survival_probability": 0.39925
+              },
+              "payout_efficiency_score": 0.0022084951999415034,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.33725,
+                "fail_probability": 0.34625,
+                "max_loss_breach_probability": 0.009,
+                "median_days_to_pass": 134.0,
+                "p75_days_to_pass": 188.0,
+                "pass_probability": 0.42625,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.2275
+              },
+              "combined_evaluation_pass_probability": 0.42625,
+              "expected_evaluation_days_if_passed": 134.0,
+              "exposure_scale": 0.15,
+              "funded": {
+                "daily_loss_breach_probability": 0.0345,
+                "expected_reward_pct": 0.690726536753816,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 1.2330436552724011,
+                "paths": 4000,
+                "positive_reward_probability": 0.426,
+                "reward_window_days": 14,
+                "survival_probability": 0.9655
+              },
+              "payout_efficiency_score": 0.0019207068977315118,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.69375,
+                "fail_probability": 0.70125,
+                "max_loss_breach_probability": 0.0075,
+                "median_days_to_pass": 89.0,
+                "p75_days_to_pass": 140.0,
+                "pass_probability": 0.26475,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.034
+              },
+              "combined_evaluation_pass_probability": 0.26475,
+              "expected_evaluation_days_if_passed": 89.0,
+              "exposure_scale": 0.2,
+              "funded": {
+                "daily_loss_breach_probability": 0.129,
+                "expected_reward_pct": 0.7196871963714289,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 1.5008481321803613,
+                "paths": 4000,
+                "positive_reward_probability": 0.3675,
+                "reward_window_days": 14,
+                "survival_probability": 0.871
+              },
+              "payout_efficiency_score": 0.0016112416344025383,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.818,
+                "fail_probability": 0.81825,
+                "max_loss_breach_probability": 0.00025,
+                "median_days_to_pass": 12.0,
+                "p75_days_to_pass": 23.0,
+                "pass_probability": 0.18175,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.18175,
+              "expected_evaluation_days_if_passed": 12.0,
+              "exposure_scale": 0.8,
+              "funded": {
+                "daily_loss_breach_probability": 0.62975,
+                "expected_reward_pct": 0.5864098363614199,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.969742531876924,
+                "paths": 4000,
+                "positive_reward_probability": 0.08875,
+                "reward_window_days": 14,
+                "survival_probability": 0.37025
+              },
+              "payout_efficiency_score": 0.001517740017986702,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.8365,
+                "fail_probability": 0.83675,
+                "max_loss_breach_probability": 0.00025,
+                "median_days_to_pass": 11.0,
+                "p75_days_to_pass": 22.0,
+                "pass_probability": 0.16325,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.16325,
+              "expected_evaluation_days_if_passed": 11.0,
+              "exposure_scale": 0.85,
+              "funded": {
+                "daily_loss_breach_probability": 0.65925,
+                "expected_reward_pct": 0.559235375648034,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 5.581895447226479,
+                "paths": 4000,
+                "positive_reward_probability": 0.08225,
+                "reward_window_days": 14,
+                "survival_probability": 0.34075
+              },
+              "payout_efficiency_score": 0.0012443532362660015,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.836,
+                "fail_probability": 0.836,
+                "max_loss_breach_probability": 0.0,
+                "median_days_to_pass": 11.0,
+                "p75_days_to_pass": 19.25,
+                "pass_probability": 0.164,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.164,
+              "expected_evaluation_days_if_passed": 11.0,
+              "exposure_scale": 0.9,
+              "funded": {
+                "daily_loss_breach_probability": 0.6745,
+                "expected_reward_pct": 0.4792076587009843,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.786124888284073,
+                "paths": 4000,
+                "positive_reward_probability": 0.07125,
+                "reward_window_days": 14,
+                "survival_probability": 0.3255
+              },
+              "payout_efficiency_score": 0.001023242529471038,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.821,
+                "fail_probability": 0.821,
+                "max_loss_breach_probability": 0.0,
+                "median_days_to_pass": 7.0,
+                "p75_days_to_pass": 16.0,
+                "pass_probability": 0.179,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.179,
+              "expected_evaluation_days_if_passed": 7.0,
+              "exposure_scale": 1.0,
+              "funded": {
+                "daily_loss_breach_probability": 0.68875,
+                "expected_reward_pct": 0.3121417159881122,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 3.994599578889494,
+                "paths": 4000,
+                "positive_reward_probability": 0.0495,
+                "reward_window_days": 14,
+                "survival_probability": 0.31125
+              },
+              "payout_efficiency_score": 0.0008281231204348898,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.8395,
+                "fail_probability": 0.8395,
+                "max_loss_breach_probability": 0.0,
+                "median_days_to_pass": 11.0,
+                "p75_days_to_pass": 18.0,
+                "pass_probability": 0.1605,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.1605,
+              "expected_evaluation_days_if_passed": 11.0,
+              "exposure_scale": 0.95,
+              "funded": {
+                "daily_loss_breach_probability": 0.67825,
+                "expected_reward_pct": 0.37301300305735946,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 4.239122061384113,
+                "paths": 4000,
+                "positive_reward_probability": 0.0605,
+                "reward_window_days": 14,
+                "survival_probability": 0.32175
+              },
+              "payout_efficiency_score": 0.0007705087145703886,
+              "verification": null
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.2795,
+                "fail_probability": 0.2795,
+                "max_loss_breach_probability": 0.0,
+                "median_days_to_pass": 169.0,
+                "p75_days_to_pass": 211.0,
+                "pass_probability": 0.27675,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.44375
+              },
+              "combined_evaluation_pass_probability": 0.27675,
+              "expected_evaluation_days_if_passed": 169.0,
+              "exposure_scale": 0.1,
+              "funded": {
+                "daily_loss_breach_probability": 0.025,
+                "expected_reward_pct": 0.5214379065962561,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 0.8402398759219332,
+                "paths": 4000,
+                "positive_reward_probability": 0.459,
+                "reward_window_days": 14,
+                "survival_probability": 0.975
+              },
+              "payout_efficiency_score": 0.0007688537821543771,
+              "verification": null
+            }
+          ],
+          "input_precision": "daily_ohlc_conservative_proxy_binance_spot_to_ftmo_crypto_cfd",
+          "objective": "maximize combined evaluation-pass probability x funded survival x expected first-reward percent per expected evaluation+reward day",
+          "program": {
+            "challenge": {
+              "horizon_days": 252,
+              "id": "challenge",
+              "max_daily_loss_pct": 3.0,
+              "max_loss_pct": 10.0,
+              "min_trading_days": 0,
+              "profit_target_pct": 10.0,
+              "trailing_max_loss": true
+            },
+            "first_reward_eligible_days": 14,
+            "funded": {
+              "horizon_days": 252,
+              "id": "funded",
+              "max_daily_loss_pct": 3.0,
+              "max_loss_pct": 10.0,
+              "min_trading_days": 0,
+              "profit_target_pct": null,
+              "trailing_max_loss": true
+            },
+            "id": "ftmo_1step_2026",
+            "instrument_policy": "venue_symbols_only",
+            "label": "FTMO 1-Step",
+            "reward_share": 0.9,
+            "rule_source": "https://ftmo.com/en/trading-objectives/",
+            "verification": null
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.76025,
+              "fail_probability": 0.76025,
+              "max_loss_breach_probability": 0.0,
+              "median_days_to_pass": 16.0,
+              "p75_days_to_pass": 30.0,
+              "pass_probability": 0.23975,
+              "paths": 4000,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.23975,
+            "expected_evaluation_days_if_passed": 16.0,
+            "exposure_scale": 0.55,
+            "funded": {
+              "daily_loss_breach_probability": 0.5065,
+              "expected_reward_pct": 1.1305794013170958,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.27577216008517,
+              "paths": 4000,
+              "positive_reward_probability": 0.192,
+              "reward_window_days": 14,
+              "survival_probability": 0.4935
+            },
+            "payout_efficiency_score": 0.004458877968611978,
+            "verification": null
+          }
+        },
+        "params": {
+          "lookback": 20,
+          "top_k": 1,
+          "trend": 100
+        }
+      }
+    },
+    "ftmo_2step_2026": {
+      "development_leaderboard": [
+        {
+          "base_cagr_pct": 175.19390779415377,
+          "base_max_dd_pct": -54.40928401425349,
+          "params": {
+            "lookback": 20,
+            "top_k": 1,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.524,
+              "fail_probability": 0.562,
+              "max_loss_breach_probability": 0.038,
+              "median_days_to_pass": 17.0,
+              "p75_days_to_pass": 33.0,
+              "pass_probability": 0.438,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.250536,
+            "expected_evaluation_days_if_passed": 31.0,
+            "exposure_scale": 0.6,
+            "funded": {
+              "daily_loss_breach_probability": 0.3,
+              "expected_reward_pct": 1.9708854645264826,
+              "max_loss_breach_probability": 0.008,
+              "median_positive_reward_pct": 4.678417272778574,
+              "paths": 500,
+              "positive_reward_probability": 0.354,
+              "reward_window_days": 14,
+              "survival_probability": 0.692
+            },
+            "payout_efficiency_score": 0.007593204676277775,
+            "verification": {
+              "daily_loss_breach_probability": 0.382,
+              "fail_probability": 0.428,
+              "max_loss_breach_probability": 0.046,
+              "median_days_to_pass": 14.0,
+              "p75_days_to_pass": 26.0,
+              "pass_probability": 0.572,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 120.13822192916189,
+          "base_max_dd_pct": -54.84039940292899,
+          "params": {
+            "lookback": 20,
+            "top_k": 2,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.568,
+              "fail_probability": 0.59,
+              "max_loss_breach_probability": 0.022,
+              "median_days_to_pass": 14.0,
+              "p75_days_to_pass": 28.0,
+              "pass_probability": 0.41,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.19188,
+            "expected_evaluation_days_if_passed": 26.5,
+            "exposure_scale": 0.75,
+            "funded": {
+              "daily_loss_breach_probability": 0.432,
+              "expected_reward_pct": 2.0086920557974883,
+              "max_loss_breach_probability": 0.006,
+              "median_positive_reward_pct": 5.295405418139305,
+              "paths": 500,
+              "positive_reward_probability": 0.308,
+              "reward_window_days": 14,
+              "survival_probability": 0.562
+            },
+            "payout_efficiency_score": 0.0053484059604081285,
+            "verification": {
+              "daily_loss_breach_probability": 0.498,
+              "fail_probability": 0.532,
+              "max_loss_breach_probability": 0.034,
+              "median_days_to_pass": 12.5,
+              "p75_days_to_pass": 22.0,
+              "pass_probability": 0.468,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 72.06258102776953,
+          "base_max_dd_pct": -65.17369926823238,
+          "params": {
+            "lookback": 60,
+            "top_k": 1,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.538,
+              "fail_probability": 0.57,
+              "max_loss_breach_probability": 0.032,
+              "median_days_to_pass": 26.0,
+              "p75_days_to_pass": 50.0,
+              "pass_probability": 0.43,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.24767999999999998,
+            "expected_evaluation_days_if_passed": 45.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.256,
+              "expected_reward_pct": 1.5342052292161363,
+              "max_loss_breach_probability": 0.002,
+              "median_positive_reward_pct": 3.331430377972344,
+              "paths": 500,
+              "positive_reward_probability": 0.364,
+              "reward_window_days": 14,
+              "survival_probability": 0.742
+            },
+            "payout_efficiency_score": 0.004778881826606973,
+            "verification": {
+              "daily_loss_breach_probability": 0.404,
+              "fail_probability": 0.424,
+              "max_loss_breach_probability": 0.02,
+              "median_days_to_pass": 19.0,
+              "p75_days_to_pass": 34.0,
+              "pass_probability": 0.576,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 123.4156418317304,
+          "base_max_dd_pct": -51.173101093787565,
+          "params": {
+            "lookback": 20,
+            "top_k": 1,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.584,
+              "fail_probability": 0.608,
+              "max_loss_breach_probability": 0.024,
+              "median_days_to_pass": 28.0,
+              "p75_days_to_pass": 49.25,
+              "pass_probability": 0.392,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.232064,
+            "expected_evaluation_days_if_passed": 47.0,
+            "exposure_scale": 0.55,
+            "funded": {
+              "daily_loss_breach_probability": 0.274,
+              "expected_reward_pct": 1.660105239012344,
+              "max_loss_breach_probability": 0.006,
+              "median_positive_reward_pct": 3.781165132071856,
+              "paths": 500,
+              "positive_reward_probability": 0.314,
+              "reward_window_days": 14,
+              "survival_probability": 0.72
+            },
+            "payout_efficiency_score": 0.004547220930721896,
+            "verification": {
+              "daily_loss_breach_probability": 0.376,
+              "fail_probability": 0.408,
+              "max_loss_breach_probability": 0.032,
+              "median_days_to_pass": 19.0,
+              "p75_days_to_pass": 37.25,
+              "pass_probability": 0.592,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 32.02848513751966,
+          "base_max_dd_pct": -66.7088926784372,
+          "params": {
+            "lookback": 126,
+            "top_k": 2,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.47,
+              "fail_probability": 0.53,
+              "max_loss_breach_probability": 0.06,
+              "median_days_to_pass": 38.0,
+              "p75_days_to_pass": 68.75,
+              "pass_probability": 0.468,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.002
+            },
+            "combined_evaluation_pass_probability": 0.292968,
+            "expected_evaluation_days_if_passed": 62.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.2,
+              "expected_reward_pct": 1.439970561386135,
+              "max_loss_breach_probability": 0.004,
+              "median_positive_reward_pct": 2.780539084199205,
+              "paths": 500,
+              "positive_reward_probability": 0.388,
+              "reward_window_days": 14,
+              "survival_probability": 0.796
+            },
+            "payout_efficiency_score": 0.004418483883695078,
+            "verification": {
+              "daily_loss_breach_probability": 0.34,
+              "fail_probability": 0.374,
+              "max_loss_breach_probability": 0.034,
+              "median_days_to_pass": 24.0,
+              "p75_days_to_pass": 44.0,
+              "pass_probability": 0.626,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 67.73306426746517,
+          "base_max_dd_pct": -36.301035675004435,
+          "params": {
+            "lookback": 20,
+            "top_k": 1,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.518,
+              "fail_probability": 0.548,
+              "max_loss_breach_probability": 0.03,
+              "median_days_to_pass": 33.0,
+              "p75_days_to_pass": 61.0,
+              "pass_probability": 0.45,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.002
+            },
+            "combined_evaluation_pass_probability": 0.2583,
+            "expected_evaluation_days_if_passed": 58.0,
+            "exposure_scale": 0.6,
+            "funded": {
+              "daily_loss_breach_probability": 0.2,
+              "expected_reward_pct": 1.5351274688004257,
+              "max_loss_breach_probability": 0.004,
+              "median_positive_reward_pct": 4.268852028196486,
+              "paths": 500,
+              "positive_reward_probability": 0.292,
+              "reward_window_days": 14,
+              "survival_probability": 0.796
+            },
+            "payout_efficiency_score": 0.004383786756279935,
+            "verification": {
+              "daily_loss_breach_probability": 0.386,
+              "fail_probability": 0.424,
+              "max_loss_breach_probability": 0.038,
+              "median_days_to_pass": 25.0,
+              "p75_days_to_pass": 49.0,
+              "pass_probability": 0.574,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.002
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 30.581472351954385,
+          "base_max_dd_pct": -64.65571653840075,
+          "params": {
+            "lookback": 126,
+            "top_k": 1,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.516,
+              "fail_probability": 0.55,
+              "max_loss_breach_probability": 0.034,
+              "median_days_to_pass": 36.0,
+              "p75_days_to_pass": 64.0,
+              "pass_probability": 0.45,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.26189999999999997,
+            "expected_evaluation_days_if_passed": 56.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.224,
+              "expected_reward_pct": 1.3703462536472144,
+              "max_loss_breach_probability": 0.004,
+              "median_positive_reward_pct": 3.037395855711207,
+              "paths": 500,
+              "positive_reward_probability": 0.304,
+              "reward_window_days": 14,
+              "survival_probability": 0.772
+            },
+            "payout_efficiency_score": 0.003958084627384551,
+            "verification": {
+              "daily_loss_breach_probability": 0.39,
+              "fail_probability": 0.418,
+              "max_loss_breach_probability": 0.028,
+              "median_days_to_pass": 20.0,
+              "p75_days_to_pass": 38.5,
+              "pass_probability": 0.582,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 82.03827442758237,
+          "base_max_dd_pct": -71.09900881433559,
+          "params": {
+            "lookback": 60,
+            "top_k": 1,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.578,
+              "fail_probability": 0.602,
+              "max_loss_breach_probability": 0.024,
+              "median_days_to_pass": 28.0,
+              "p75_days_to_pass": 51.5,
+              "pass_probability": 0.398,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.22288000000000002,
+            "expected_evaluation_days_if_passed": 47.5,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.262,
+              "expected_reward_pct": 1.47336672515997,
+              "max_loss_breach_probability": 0.004,
+              "median_positive_reward_pct": 3.824908727086438,
+              "paths": 500,
+              "positive_reward_probability": 0.302,
+              "reward_window_days": 14,
+              "survival_probability": 0.734
+            },
+            "payout_efficiency_score": 0.00391924940108101,
+            "verification": {
+              "daily_loss_breach_probability": 0.424,
+              "fail_probability": 0.44,
+              "max_loss_breach_probability": 0.016,
+              "median_days_to_pass": 19.5,
+              "p75_days_to_pass": 37.25,
+              "pass_probability": 0.56,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 35.67399225765715,
+          "base_max_dd_pct": -65.17369926823238,
+          "params": {
+            "lookback": 60,
+            "top_k": 1,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.516,
+              "fail_probability": 0.552,
+              "max_loss_breach_probability": 0.036,
+              "median_days_to_pass": 43.0,
+              "p75_days_to_pass": 78.0,
+              "pass_probability": 0.448,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.269696,
+            "expected_evaluation_days_if_passed": 68.0,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.16,
+              "expected_reward_pct": 1.4057259309091195,
+              "max_loss_breach_probability": 0.004,
+              "median_positive_reward_pct": 3.664409954419492,
+              "paths": 500,
+              "positive_reward_probability": 0.288,
+              "reward_window_days": 14,
+              "survival_probability": 0.836
+            },
+            "payout_efficiency_score": 0.003865160979436847,
+            "verification": {
+              "daily_loss_breach_probability": 0.358,
+              "fail_probability": 0.398,
+              "max_loss_breach_probability": 0.04,
+              "median_days_to_pass": 25.0,
+              "p75_days_to_pass": 54.0,
+              "pass_probability": 0.602,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 41.38925334103909,
+          "base_max_dd_pct": -57.6024428465731,
+          "params": {
+            "lookback": 126,
+            "top_k": 1,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.542,
+              "fail_probability": 0.568,
+              "max_loss_breach_probability": 0.026,
+              "median_days_to_pass": 28.0,
+              "p75_days_to_pass": 47.0,
+              "pass_probability": 0.432,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.24192000000000002,
+            "expected_evaluation_days_if_passed": 49.0,
+            "exposure_scale": 0.55,
+            "funded": {
+              "daily_loss_breach_probability": 0.286,
+              "expected_reward_pct": 1.3696407658737895,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 3.1406699432431484,
+              "paths": 500,
+              "positive_reward_probability": 0.264,
+              "reward_window_days": 14,
+              "survival_probability": 0.714
+            },
+            "payout_efficiency_score": 0.0037552262662421208,
+            "verification": {
+              "daily_loss_breach_probability": 0.426,
+              "fail_probability": 0.44,
+              "max_loss_breach_probability": 0.014,
+              "median_days_to_pass": 21.0,
+              "p75_days_to_pass": 43.0,
+              "pass_probability": 0.56,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 96.92716455769823,
+          "base_max_dd_pct": -49.656230488492426,
+          "params": {
+            "lookback": 20,
+            "top_k": 2,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.448,
+              "fail_probability": 0.506,
+              "max_loss_breach_probability": 0.058,
+              "median_days_to_pass": 53.0,
+              "p75_days_to_pass": 99.0,
+              "pass_probability": 0.48,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.014
+            },
+            "combined_evaluation_pass_probability": 0.3264,
+            "expected_evaluation_days_if_passed": 89.0,
+            "exposure_scale": 0.35,
+            "funded": {
+              "daily_loss_breach_probability": 0.062,
+              "expected_reward_pct": 1.1966217454960255,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.1567485678516185,
+              "paths": 500,
+              "positive_reward_probability": 0.384,
+              "reward_window_days": 14,
+              "survival_probability": 0.938
+            },
+            "payout_efficiency_score": 0.0035569081824334834,
+            "verification": {
+              "daily_loss_breach_probability": 0.268,
+              "fail_probability": 0.32,
+              "max_loss_breach_probability": 0.052,
+              "median_days_to_pass": 36.0,
+              "p75_days_to_pass": 71.0,
+              "pass_probability": 0.68,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 45.62746093061993,
+          "base_max_dd_pct": -64.6461451034332,
+          "params": {
+            "lookback": 60,
+            "top_k": 2,
+            "trend": 100
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.524,
+              "fail_probability": 0.574,
+              "max_loss_breach_probability": 0.05,
+              "median_days_to_pass": 33.5,
+              "p75_days_to_pass": 55.25,
+              "pass_probability": 0.424,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.002
+            },
+            "combined_evaluation_pass_probability": 0.25185599999999997,
+            "expected_evaluation_days_if_passed": 55.5,
+            "exposure_scale": 0.5,
+            "funded": {
+              "daily_loss_breach_probability": 0.228,
+              "expected_reward_pct": 1.2699025258129208,
+              "max_loss_breach_probability": 0.006,
+              "median_positive_reward_pct": 2.919010257547159,
+              "paths": 500,
+              "positive_reward_probability": 0.328,
+              "reward_window_days": 14,
+              "survival_probability": 0.766
+            },
+            "payout_efficiency_score": 0.0035250611371872294,
+            "verification": {
+              "daily_loss_breach_probability": 0.38,
+              "fail_probability": 0.406,
+              "max_loss_breach_probability": 0.026,
+              "median_days_to_pass": 22.0,
+              "p75_days_to_pass": 41.0,
+              "pass_probability": 0.594,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 18.920481160974912,
+          "base_max_dd_pct": -71.94708818622742,
+          "params": {
+            "lookback": 126,
+            "top_k": 1,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.494,
+              "fail_probability": 0.532,
+              "max_loss_breach_probability": 0.038,
+              "median_days_to_pass": 42.0,
+              "p75_days_to_pass": 76.5,
+              "pass_probability": 0.464,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.004
+            },
+            "combined_evaluation_pass_probability": 0.289536,
+            "expected_evaluation_days_if_passed": 73.5,
+            "exposure_scale": 0.45,
+            "funded": {
+              "daily_loss_breach_probability": 0.168,
+              "expected_reward_pct": 1.2696743056090016,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.6880238151168356,
+              "paths": 500,
+              "positive_reward_probability": 0.358,
+              "reward_window_days": 14,
+              "survival_probability": 0.832
+            },
+            "payout_efficiency_score": 0.0034955069854972357,
+            "verification": {
+              "daily_loss_breach_probability": 0.328,
+              "fail_probability": 0.374,
+              "max_loss_breach_probability": 0.046,
+              "median_days_to_pass": 31.5,
+              "p75_days_to_pass": 62.25,
+              "pass_probability": 0.624,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.002
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 42.397498178421515,
+          "base_max_dd_pct": -57.6024428465731,
+          "params": {
+            "lookback": 126,
+            "top_k": 2,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.642,
+              "fail_probability": 0.662,
+              "max_loss_breach_probability": 0.02,
+              "median_days_to_pass": 27.0,
+              "p75_days_to_pass": 51.0,
+              "pass_probability": 0.338,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.178464,
+            "expected_evaluation_days_if_passed": 46.0,
+            "exposure_scale": 0.65,
+            "funded": {
+              "daily_loss_breach_probability": 0.3,
+              "expected_reward_pct": 1.6565854177365495,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.182464205393508,
+              "paths": 500,
+              "positive_reward_probability": 0.296,
+              "reward_window_days": 14,
+              "survival_probability": 0.7
+            },
+            "payout_efficiency_score": 0.0034491433665609153,
+            "verification": {
+              "daily_loss_breach_probability": 0.444,
+              "fail_probability": 0.472,
+              "max_loss_breach_probability": 0.028,
+              "median_days_to_pass": 19.0,
+              "p75_days_to_pass": 36.25,
+              "pass_probability": 0.528,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 54.502169433022175,
+          "base_max_dd_pct": -70.37258182093554,
+          "params": {
+            "lookback": 60,
+            "top_k": 2,
+            "trend": 50
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.64,
+              "fail_probability": 0.648,
+              "max_loss_breach_probability": 0.008,
+              "median_days_to_pass": 14.0,
+              "p75_days_to_pass": 28.0,
+              "pass_probability": 0.352,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.15417599999999998,
+            "expected_evaluation_days_if_passed": 28.0,
+            "exposure_scale": 0.8,
+            "funded": {
+              "daily_loss_breach_probability": 0.46,
+              "expected_reward_pct": 1.6434806424013728,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.428451114061307,
+              "paths": 500,
+              "positive_reward_probability": 0.224,
+              "reward_window_days": 14,
+              "survival_probability": 0.54
+            },
+            "payout_efficiency_score": 0.0032578106338655233,
+            "verification": {
+              "daily_loss_breach_probability": 0.552,
+              "fail_probability": 0.562,
+              "max_loss_breach_probability": 0.01,
+              "median_days_to_pass": 14.0,
+              "p75_days_to_pass": 25.5,
+              "pass_probability": 0.438,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 10.547898365644626,
+          "base_max_dd_pct": -77.04283167953261,
+          "params": {
+            "lookback": 126,
+            "top_k": 2,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.642,
+              "fail_probability": 0.658,
+              "max_loss_breach_probability": 0.016,
+              "median_days_to_pass": 29.0,
+              "p75_days_to_pass": 49.0,
+              "pass_probability": 0.342,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.17920800000000003,
+            "expected_evaluation_days_if_passed": 48.5,
+            "exposure_scale": 0.65,
+            "funded": {
+              "daily_loss_breach_probability": 0.278,
+              "expected_reward_pct": 1.5675873325508947,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 4.056403134356454,
+              "paths": 500,
+              "positive_reward_probability": 0.298,
+              "reward_window_days": 14,
+              "survival_probability": 0.722
+            },
+            "payout_efficiency_score": 0.0032452362508714515,
+            "verification": {
+              "daily_loss_breach_probability": 0.468,
+              "fail_probability": 0.476,
+              "max_loss_breach_probability": 0.008,
+              "median_days_to_pass": 19.5,
+              "p75_days_to_pass": 34.0,
+              "pass_probability": 0.524,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 38.74062507961333,
+          "base_max_dd_pct": -48.76613716943679,
+          "params": {
+            "lookback": 20,
+            "top_k": 2,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.592,
+              "fail_probability": 0.624,
+              "max_loss_breach_probability": 0.032,
+              "median_days_to_pass": 29.0,
+              "p75_days_to_pass": 54.0,
+              "pass_probability": 0.376,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.223344,
+            "expected_evaluation_days_if_passed": 53.0,
+            "exposure_scale": 0.6,
+            "funded": {
+              "daily_loss_breach_probability": 0.192,
+              "expected_reward_pct": 1.1906439716099035,
+              "max_loss_breach_probability": 0.0,
+              "median_positive_reward_pct": 2.7544636832808322,
+              "paths": 500,
+              "positive_reward_probability": 0.276,
+              "reward_window_days": 14,
+              "survival_probability": 0.808
+            },
+            "payout_efficiency_score": 0.003206954257518743,
+            "verification": {
+              "daily_loss_breach_probability": 0.38,
+              "fail_probability": 0.404,
+              "max_loss_breach_probability": 0.024,
+              "median_days_to_pass": 24.0,
+              "p75_days_to_pass": 45.0,
+              "pass_probability": 0.594,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.002
+            }
+          }
+        },
+        {
+          "base_cagr_pct": 20.548506912019615,
+          "base_max_dd_pct": -68.14874108842572,
+          "params": {
+            "lookback": 60,
+            "top_k": 2,
+            "trend": 200
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.564,
+              "fail_probability": 0.584,
+              "max_loss_breach_probability": 0.02,
+              "median_days_to_pass": 34.0,
+              "p75_days_to_pass": 62.0,
+              "pass_probability": 0.416,
+              "paths": 500,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.23878399999999997,
+            "expected_evaluation_days_if_passed": 57.0,
+            "exposure_scale": 0.6,
+            "funded": {
+              "daily_loss_breach_probability": 0.226,
+              "expected_reward_pct": 1.217408652894608,
+              "max_loss_breach_probability": 0.002,
+              "median_positive_reward_pct": 3.627585357082861,
+              "paths": 500,
+              "positive_reward_probability": 0.238,
+              "reward_window_days": 14,
+              "survival_probability": 0.772
+            },
+            "payout_efficiency_score": 0.0031608257802900113,
+            "verification": {
+              "daily_loss_breach_probability": 0.416,
+              "fail_probability": 0.426,
+              "max_loss_breach_probability": 0.01,
+              "median_days_to_pass": 23.0,
+              "p75_days_to_pass": 48.0,
+              "pass_probability": 0.574,
+              "paths": 500,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        }
+      ],
+      "parameter_candidates": 18,
+      "program": {
+        "challenge": {
+          "horizon_days": 252,
+          "id": "challenge",
+          "max_daily_loss_pct": 5.0,
+          "max_loss_pct": 10.0,
+          "min_trading_days": 4,
+          "profit_target_pct": 10.0,
+          "trailing_max_loss": false
+        },
+        "first_reward_eligible_days": 14,
+        "funded": {
+          "horizon_days": 252,
+          "id": "funded",
+          "max_daily_loss_pct": 5.0,
+          "max_loss_pct": 10.0,
+          "min_trading_days": 0,
+          "profit_target_pct": null,
+          "trailing_max_loss": false
+        },
+        "id": "ftmo_2step_2026",
+        "instrument_policy": "venue_symbols_only",
+        "label": "FTMO 2-Step",
+        "reward_share": 0.8,
+        "rule_source": "https://ftmo.com/en/trading-objectives/",
+        "verification": {
+          "horizon_days": 252,
+          "id": "verification",
+          "max_daily_loss_pct": 5.0,
+          "max_loss_pct": 10.0,
+          "min_trading_days": 4,
+          "profit_target_pct": 5.0,
+          "trailing_max_loss": false
+        }
+      },
+      "refined_winner": {
+        "optimization": {
+          "candidates": [
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.522,
+                "fail_probability": 0.552,
+                "max_loss_breach_probability": 0.03,
+                "median_days_to_pass": 18.0,
+                "p75_days_to_pass": 34.0,
+                "pass_probability": 0.448,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.260624,
+              "expected_evaluation_days_if_passed": 32.0,
+              "exposure_scale": 0.6,
+              "funded": {
+                "daily_loss_breach_probability": 0.3485,
+                "expected_reward_pct": 2.090033418685871,
+                "max_loss_breach_probability": 0.00425,
+                "median_positive_reward_pct": 4.799264050357115,
+                "paths": 4000,
+                "positive_reward_probability": 0.3345,
+                "reward_window_days": 14,
+                "survival_probability": 0.64725
+              },
+              "payout_efficiency_score": 0.007664465324365747,
+              "verification": {
+                "daily_loss_breach_probability": 0.39025,
+                "fail_probability": 0.41825,
+                "max_loss_breach_probability": 0.028,
+                "median_days_to_pass": 14.0,
+                "p75_days_to_pass": 25.0,
+                "pass_probability": 0.58175,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.511,
+                "fail_probability": 0.53775,
+                "max_loss_breach_probability": 0.02675,
+                "median_days_to_pass": 25.0,
+                "p75_days_to_pass": 44.0,
+                "pass_probability": 0.46225,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.28879068750000003,
+              "expected_evaluation_days_if_passed": 40.0,
+              "exposure_scale": 0.5,
+              "funded": {
+                "daily_loss_breach_probability": 0.28475,
+                "expected_reward_pct": 1.9049136567524003,
+                "max_loss_breach_probability": 0.00325,
+                "median_positive_reward_pct": 4.095745419612431,
+                "paths": 4000,
+                "positive_reward_probability": 0.3725,
+                "reward_window_days": 14,
+                "survival_probability": 0.712
+              },
+              "payout_efficiency_score": 0.007253451538664913,
+              "verification": {
+                "daily_loss_breach_probability": 0.34675,
+                "fail_probability": 0.37525,
+                "max_loss_breach_probability": 0.0285,
+                "median_days_to_pass": 15.0,
+                "p75_days_to_pass": 29.0,
+                "pass_probability": 0.62475,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.53275,
+                "fail_probability": 0.561,
+                "max_loss_breach_probability": 0.02825,
+                "median_days_to_pass": 20.0,
+                "p75_days_to_pass": 37.0,
+                "pass_probability": 0.439,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.257693,
+              "expected_evaluation_days_if_passed": 34.0,
+              "exposure_scale": 0.55,
+              "funded": {
+                "daily_loss_breach_probability": 0.3185,
+                "expected_reward_pct": 1.909321751196349,
+                "max_loss_breach_probability": 0.002,
+                "median_positive_reward_pct": 4.3608582759690515,
+                "paths": 4000,
+                "positive_reward_probability": 0.35175,
+                "reward_window_days": 14,
+                "survival_probability": 0.6795
+              },
+              "payout_efficiency_score": 0.006965141845751921,
+              "verification": {
+                "daily_loss_breach_probability": 0.3865,
+                "fail_probability": 0.413,
+                "max_loss_breach_probability": 0.0265,
+                "median_days_to_pass": 14.0,
+                "p75_days_to_pass": 26.0,
+                "pass_probability": 0.587,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.50975,
+                "fail_probability": 0.5425,
+                "max_loss_breach_probability": 0.03275,
+                "median_days_to_pass": 28.0,
+                "p75_days_to_pass": 48.75,
+                "pass_probability": 0.4575,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.286051875,
+              "expected_evaluation_days_if_passed": 45.0,
+              "exposure_scale": 0.45,
+              "funded": {
+                "daily_loss_breach_probability": 0.252,
+                "expected_reward_pct": 1.790461366894665,
+                "max_loss_breach_probability": 0.0025,
+                "median_positive_reward_pct": 3.60988086834551,
+                "paths": 4000,
+                "positive_reward_probability": 0.3885,
+                "reward_window_days": 14,
+                "survival_probability": 0.7455
+              },
+              "payout_efficiency_score": 0.006471506467736316,
+              "verification": {
+                "daily_loss_breach_probability": 0.3415,
+                "fail_probability": 0.37475,
+                "max_loss_breach_probability": 0.03325,
+                "median_days_to_pass": 17.0,
+                "p75_days_to_pass": 33.0,
+                "pass_probability": 0.62525,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.54025,
+                "fail_probability": 0.56575,
+                "max_loss_breach_probability": 0.0255,
+                "median_days_to_pass": 16.0,
+                "p75_days_to_pass": 31.0,
+                "pass_probability": 0.43425,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.2369919375,
+              "expected_evaluation_days_if_passed": 30.0,
+              "exposure_scale": 0.65,
+              "funded": {
+                "daily_loss_breach_probability": 0.404,
+                "expected_reward_pct": 1.983885060813715,
+                "max_loss_breach_probability": 0.00575,
+                "median_positive_reward_pct": 4.830447539704856,
+                "paths": 4000,
+                "positive_reward_probability": 0.3015,
+                "reward_window_days": 14,
+                "survival_probability": 0.59025
+              },
+              "payout_efficiency_score": 0.006307153457986773,
+              "verification": {
+                "daily_loss_breach_probability": 0.43125,
+                "fail_probability": 0.45425,
+                "max_loss_breach_probability": 0.023,
+                "median_days_to_pass": 14.0,
+                "p75_days_to_pass": 24.0,
+                "pass_probability": 0.54575,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.234,
+                "fail_probability": 0.2665,
+                "max_loss_breach_probability": 0.0325,
+                "median_days_to_pass": 70.0,
+                "p75_days_to_pass": 118.0,
+                "pass_probability": 0.6975,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.036
+              },
+              "combined_evaluation_pass_probability": 0.568288125,
+              "expected_evaluation_days_if_passed": 106.0,
+              "exposure_scale": 0.25,
+              "funded": {
+                "daily_loss_breach_probability": 0.0455,
+                "expected_reward_pct": 1.3790971116423496,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 2.0396610941953863,
+                "paths": 4000,
+                "positive_reward_probability": 0.518,
+                "reward_window_days": 14,
+                "survival_probability": 0.9545
+              },
+              "payout_efficiency_score": 0.006233875387355799,
+              "verification": {
+                "daily_loss_breach_probability": 0.1425,
+                "fail_probability": 0.176,
+                "max_loss_breach_probability": 0.0335,
+                "median_days_to_pass": 36.0,
+                "p75_days_to_pass": 68.0,
+                "pass_probability": 0.81475,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.00925
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.3485,
+                "fail_probability": 0.384,
+                "max_loss_breach_probability": 0.0355,
+                "median_days_to_pass": 57.0,
+                "p75_days_to_pass": 95.0,
+                "pass_probability": 0.60425,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.01175
+              },
+              "combined_evaluation_pass_probability": 0.45756831249999996,
+              "expected_evaluation_days_if_passed": 86.0,
+              "exposure_scale": 0.3,
+              "funded": {
+                "daily_loss_breach_probability": 0.08975,
+                "expected_reward_pct": 1.490947008826834,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 2.5149624849436414,
+                "paths": 4000,
+                "positive_reward_probability": 0.48175,
+                "reward_window_days": 14,
+                "survival_probability": 0.91025
+              },
+              "payout_efficiency_score": 0.006209817497655074,
+              "verification": {
+                "daily_loss_breach_probability": 0.2035,
+                "fail_probability": 0.24,
+                "max_loss_breach_probability": 0.0365,
+                "median_days_to_pass": 29.0,
+                "p75_days_to_pass": 53.0,
+                "pass_probability": 0.75725,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.00275
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.5105,
+                "fail_probability": 0.5405,
+                "max_loss_breach_probability": 0.03,
+                "median_days_to_pass": 34.0,
+                "p75_days_to_pass": 58.0,
+                "pass_probability": 0.4585,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.001
+              },
+              "combined_evaluation_pass_probability": 0.29504474999999997,
+              "expected_evaluation_days_if_passed": 53.0,
+              "exposure_scale": 0.4,
+              "funded": {
+                "daily_loss_breach_probability": 0.211,
+                "expected_reward_pct": 1.6192306730067594,
+                "max_loss_breach_probability": 0.00075,
+                "median_positive_reward_pct": 3.2209978402679162,
+                "paths": 4000,
+                "positive_reward_probability": 0.40275,
+                "reward_window_days": 14,
+                "survival_probability": 0.78825
+              },
+              "payout_efficiency_score": 0.00562064026202464,
+              "verification": {
+                "daily_loss_breach_probability": 0.323,
+                "fail_probability": 0.3565,
+                "max_loss_breach_probability": 0.0335,
+                "median_days_to_pass": 19.0,
+                "p75_days_to_pass": 37.0,
+                "pass_probability": 0.6435,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.48375,
+                "fail_probability": 0.5265,
+                "max_loss_breach_probability": 0.04275,
+                "median_days_to_pass": 43.0,
+                "p75_days_to_pass": 70.0,
+                "pass_probability": 0.47275,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.00075
+              },
+              "combined_evaluation_pass_probability": 0.32667025,
+              "expected_evaluation_days_if_passed": 66.0,
+              "exposure_scale": 0.35,
+              "funded": {
+                "daily_loss_breach_probability": 0.16375,
+                "expected_reward_pct": 1.5060156628783006,
+                "max_loss_breach_probability": 0.00025,
+                "median_positive_reward_pct": 2.8236241235560566,
+                "paths": 4000,
+                "positive_reward_probability": 0.4225,
+                "reward_window_days": 14,
+                "survival_probability": 0.836
+              },
+              "payout_efficiency_score": 0.005141091861857067,
+              "verification": {
+                "daily_loss_breach_probability": 0.27425,
+                "fail_probability": 0.30825,
+                "max_loss_breach_probability": 0.034,
+                "median_days_to_pass": 23.0,
+                "p75_days_to_pass": 43.0,
+                "pass_probability": 0.691,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.00075
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.2315,
+                "fail_probability": 0.24575,
+                "max_loss_breach_probability": 0.01425,
+                "median_days_to_pass": 86.0,
+                "p75_days_to_pass": 135.0,
+                "pass_probability": 0.6775,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.07675
+              },
+              "combined_evaluation_pass_probability": 0.558429375,
+              "expected_evaluation_days_if_passed": 133.0,
+              "exposure_scale": 0.2,
+              "funded": {
+                "daily_loss_breach_probability": 0.03225,
+                "expected_reward_pct": 1.187524122227798,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 1.7347666390817729,
+                "paths": 4000,
+                "positive_reward_probability": 0.5245,
+                "reward_window_days": 14,
+                "survival_probability": 0.96775
+              },
+              "payout_efficiency_score": 0.004365726659706194,
+              "verification": {
+                "daily_loss_breach_probability": 0.1435,
+                "fail_probability": 0.15925,
+                "max_loss_breach_probability": 0.01575,
+                "median_days_to_pass": 47.0,
+                "p75_days_to_pass": 85.0,
+                "pass_probability": 0.82425,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0165
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.61775,
+                "fail_probability": 0.64,
+                "max_loss_breach_probability": 0.02225,
+                "median_days_to_pass": 14.0,
+                "p75_days_to_pass": 25.0,
+                "pass_probability": 0.36,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.17064,
+              "expected_evaluation_days_if_passed": 27.0,
+              "exposure_scale": 0.75,
+              "funded": {
+                "daily_loss_breach_probability": 0.49025,
+                "expected_reward_pct": 1.9195343195053765,
+                "max_loss_breach_probability": 0.00725,
+                "median_positive_reward_pct": 5.569882383087776,
+                "paths": 4000,
+                "positive_reward_probability": 0.24625,
+                "reward_window_days": 14,
+                "survival_probability": 0.5025
+              },
+              "payout_efficiency_score": 0.004014476621485357,
+              "verification": {
+                "daily_loss_breach_probability": 0.50575,
+                "fail_probability": 0.526,
+                "max_loss_breach_probability": 0.02025,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 23.0,
+                "pass_probability": 0.474,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.60925,
+                "fail_probability": 0.63475,
+                "max_loss_breach_probability": 0.0255,
+                "median_days_to_pass": 15.0,
+                "p75_days_to_pass": 26.0,
+                "pass_probability": 0.36525,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.1735850625,
+              "expected_evaluation_days_if_passed": 28.0,
+              "exposure_scale": 0.7,
+              "funded": {
+                "daily_loss_breach_probability": 0.47325,
+                "expected_reward_pct": 1.803521673981961,
+                "max_loss_breach_probability": 0.0065,
+                "median_positive_reward_pct": 5.082471228114774,
+                "paths": 4000,
+                "positive_reward_probability": 0.25925,
+                "reward_window_days": 14,
+                "survival_probability": 0.52025
+              },
+              "payout_efficiency_score": 0.003877899185826702,
+              "verification": {
+                "daily_loss_breach_probability": 0.49975,
+                "fail_probability": 0.52475,
+                "max_loss_breach_probability": 0.025,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 24.0,
+                "pass_probability": 0.47525,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.63025,
+                "fail_probability": 0.64275,
+                "max_loss_breach_probability": 0.0125,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 23.0,
+                "pass_probability": 0.35725,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.160048,
+              "expected_evaluation_days_if_passed": 24.0,
+              "exposure_scale": 0.85,
+              "funded": {
+                "daily_loss_breach_probability": 0.5425,
+                "expected_reward_pct": 1.85182414697915,
+                "max_loss_breach_probability": 0.003,
+                "median_positive_reward_pct": 6.410093773971086,
+                "paths": 4000,
+                "positive_reward_probability": 0.2175,
+                "reward_window_days": 14,
+                "survival_probability": 0.4545
+              },
+              "payout_efficiency_score": 0.0035448697727345872,
+              "verification": {
+                "daily_loss_breach_probability": 0.541,
+                "fail_probability": 0.552,
+                "max_loss_breach_probability": 0.011,
+                "median_days_to_pass": 11.0,
+                "p75_days_to_pass": 21.0,
+                "pass_probability": 0.448,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.645,
+                "fail_probability": 0.65975,
+                "max_loss_breach_probability": 0.01475,
+                "median_days_to_pass": 14.0,
+                "p75_days_to_pass": 25.0,
+                "pass_probability": 0.34025,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.15285731249999998,
+              "expected_evaluation_days_if_passed": 27.0,
+              "exposure_scale": 0.8,
+              "funded": {
+                "daily_loss_breach_probability": 0.52825,
+                "expected_reward_pct": 1.7892310266932787,
+                "max_loss_breach_probability": 0.00175,
+                "median_positive_reward_pct": 5.380665835885523,
+                "paths": 4000,
+                "positive_reward_probability": 0.2345,
+                "reward_window_days": 14,
+                "survival_probability": 0.47
+              },
+              "payout_efficiency_score": 0.003135210041597967,
+              "verification": {
+                "daily_loss_breach_probability": 0.537,
+                "fail_probability": 0.55075,
+                "max_loss_breach_probability": 0.01375,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 23.0,
+                "pass_probability": 0.44925,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.66125,
+                "fail_probability": 0.67025,
+                "max_loss_breach_probability": 0.009,
+                "median_days_to_pass": 13.0,
+                "p75_days_to_pass": 23.0,
+                "pass_probability": 0.32975,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.1344555625,
+              "expected_evaluation_days_if_passed": 24.0,
+              "exposure_scale": 0.9,
+              "funded": {
+                "daily_loss_breach_probability": 0.58,
+                "expected_reward_pct": 1.8807576038228746,
+                "max_loss_breach_probability": 0.001,
+                "median_positive_reward_pct": 7.033812390870757,
+                "paths": 4000,
+                "positive_reward_probability": 0.1925,
+                "reward_window_days": 14,
+                "survival_probability": 0.419
+              },
+              "payout_efficiency_score": 0.002788316229702044,
+              "verification": {
+                "daily_loss_breach_probability": 0.58325,
+                "fail_probability": 0.59225,
+                "max_loss_breach_probability": 0.009,
+                "median_days_to_pass": 11.0,
+                "p75_days_to_pass": 20.0,
+                "pass_probability": 0.40775,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.228,
+                "fail_probability": 0.23325,
+                "max_loss_breach_probability": 0.00525,
+                "median_days_to_pass": 119.0,
+                "p75_days_to_pass": 170.0,
+                "pass_probability": 0.59725,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.1695
+              },
+              "combined_evaluation_pass_probability": 0.48198075,
+              "expected_evaluation_days_if_passed": 182.0,
+              "exposure_scale": 0.15,
+              "funded": {
+                "daily_loss_breach_probability": 0.02075,
+                "expected_reward_pct": 0.8106991430745033,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 1.251532011629477,
+                "paths": 4000,
+                "positive_reward_probability": 0.4985,
+                "reward_window_days": 14,
+                "survival_probability": 0.97925
+              },
+              "payout_efficiency_score": 0.0019522117211611518,
+              "verification": {
+                "daily_loss_breach_probability": 0.1285,
+                "fail_probability": 0.13425,
+                "max_loss_breach_probability": 0.00575,
+                "median_days_to_pass": 63.0,
+                "p75_days_to_pass": 110.0,
+                "pass_probability": 0.807,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.05875
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.69125,
+                "fail_probability": 0.6985,
+                "max_loss_breach_probability": 0.00725,
+                "median_days_to_pass": 11.5,
+                "p75_days_to_pass": 20.0,
+                "pass_probability": 0.3015,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.114645375,
+              "expected_evaluation_days_if_passed": 21.5,
+              "exposure_scale": 0.95,
+              "funded": {
+                "daily_loss_breach_probability": 0.6115,
+                "expected_reward_pct": 1.4962324560014535,
+                "max_loss_breach_probability": 0.002,
+                "median_positive_reward_pct": 6.289540202033948,
+                "paths": 4000,
+                "positive_reward_probability": 0.17275,
+                "reward_window_days": 14,
+                "survival_probability": 0.3865
+              },
+              "payout_efficiency_score": 0.0018675694262988555,
+              "verification": {
+                "daily_loss_breach_probability": 0.6135,
+                "fail_probability": 0.61975,
+                "max_loss_breach_probability": 0.00625,
+                "median_days_to_pass": 10.0,
+                "p75_days_to_pass": 20.0,
+                "pass_probability": 0.38025,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.702,
+                "fail_probability": 0.71025,
+                "max_loss_breach_probability": 0.00825,
+                "median_days_to_pass": 10.0,
+                "p75_days_to_pass": 20.0,
+                "pass_probability": 0.28975,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.0
+              },
+              "combined_evaluation_pass_probability": 0.0988771875,
+              "expected_evaluation_days_if_passed": 20.0,
+              "exposure_scale": 1.0,
+              "funded": {
+                "daily_loss_breach_probability": 0.6335,
+                "expected_reward_pct": 1.3909631473459294,
+                "max_loss_breach_probability": 0.00225,
+                "median_positive_reward_pct": 6.645048640558731,
+                "paths": 4000,
+                "positive_reward_probability": 0.153,
+                "reward_window_days": 14,
+                "survival_probability": 0.36425
+              },
+              "payout_efficiency_score": 0.001473439715880623,
+              "verification": {
+                "daily_loss_breach_probability": 0.65125,
+                "fail_probability": 0.65875,
+                "max_loss_breach_probability": 0.0075,
+                "median_days_to_pass": 10.0,
+                "p75_days_to_pass": 19.0,
+                "pass_probability": 0.34125,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.0
+              }
+            },
+            {
+              "challenge": {
+                "daily_loss_breach_probability": 0.0,
+                "fail_probability": 0.001,
+                "max_loss_breach_probability": 0.001,
+                "median_days_to_pass": 166.0,
+                "p75_days_to_pass": 206.0,
+                "pass_probability": 0.46525,
+                "paths": 4000,
+                "stage_id": "challenge",
+                "timeout_probability": 0.53375
+              },
+              "combined_evaluation_pass_probability": 0.37778300000000004,
+              "expected_evaluation_days_if_passed": 270.0,
+              "exposure_scale": 0.1,
+              "funded": {
+                "daily_loss_breach_probability": 0.0,
+                "expected_reward_pct": 0.5845994344941299,
+                "max_loss_breach_probability": 0.0,
+                "median_positive_reward_pct": 0.8936909283132088,
+                "paths": 4000,
+                "positive_reward_probability": 0.52575,
+                "reward_window_days": 14,
+                "survival_probability": 1.0
+              },
+              "payout_efficiency_score": 0.0007776469301461123,
+              "verification": {
+                "daily_loss_breach_probability": 0.0,
+                "fail_probability": 0.00175,
+                "max_loss_breach_probability": 0.00175,
+                "median_days_to_pass": 104.0,
+                "p75_days_to_pass": 155.0,
+                "pass_probability": 0.812,
+                "paths": 4000,
+                "stage_id": "verification",
+                "timeout_probability": 0.18625
+              }
+            }
+          ],
+          "input_precision": "daily_ohlc_conservative_proxy_binance_spot_to_ftmo_crypto_cfd",
+          "objective": "maximize combined evaluation-pass probability x funded survival x expected first-reward percent per expected evaluation+reward day",
+          "program": {
+            "challenge": {
+              "horizon_days": 252,
+              "id": "challenge",
+              "max_daily_loss_pct": 5.0,
+              "max_loss_pct": 10.0,
+              "min_trading_days": 4,
+              "profit_target_pct": 10.0,
+              "trailing_max_loss": false
+            },
+            "first_reward_eligible_days": 14,
+            "funded": {
+              "horizon_days": 252,
+              "id": "funded",
+              "max_daily_loss_pct": 5.0,
+              "max_loss_pct": 10.0,
+              "min_trading_days": 0,
+              "profit_target_pct": null,
+              "trailing_max_loss": false
+            },
+            "id": "ftmo_2step_2026",
+            "instrument_policy": "venue_symbols_only",
+            "label": "FTMO 2-Step",
+            "reward_share": 0.8,
+            "rule_source": "https://ftmo.com/en/trading-objectives/",
+            "verification": {
+              "horizon_days": 252,
+              "id": "verification",
+              "max_daily_loss_pct": 5.0,
+              "max_loss_pct": 10.0,
+              "min_trading_days": 4,
+              "profit_target_pct": 5.0,
+              "trailing_max_loss": false
+            }
+          },
+          "selected": {
+            "challenge": {
+              "daily_loss_breach_probability": 0.522,
+              "fail_probability": 0.552,
+              "max_loss_breach_probability": 0.03,
+              "median_days_to_pass": 18.0,
+              "p75_days_to_pass": 34.0,
+              "pass_probability": 0.448,
+              "paths": 4000,
+              "stage_id": "challenge",
+              "timeout_probability": 0.0
+            },
+            "combined_evaluation_pass_probability": 0.260624,
+            "expected_evaluation_days_if_passed": 32.0,
+            "exposure_scale": 0.6,
+            "funded": {
+              "daily_loss_breach_probability": 0.3485,
+              "expected_reward_pct": 2.090033418685871,
+              "max_loss_breach_probability": 0.00425,
+              "median_positive_reward_pct": 4.799264050357115,
+              "paths": 4000,
+              "positive_reward_probability": 0.3345,
+              "reward_window_days": 14,
+              "survival_probability": 0.64725
+            },
+            "payout_efficiency_score": 0.007664465324365747,
+            "verification": {
+              "daily_loss_breach_probability": 0.39025,
+              "fail_probability": 0.41825,
+              "max_loss_breach_probability": 0.028,
+              "median_days_to_pass": 14.0,
+              "p75_days_to_pass": 25.0,
+              "pass_probability": 0.58175,
+              "paths": 4000,
+              "stage_id": "verification",
+              "timeout_probability": 0.0
+            }
+          }
+        },
+        "params": {
+          "lookback": 20,
+          "top_k": 1,
+          "trend": 50
+        }
+      }
+    }
+  },
+  "protocol": "alpha_generation_v4",
+  "stage": "development_only",
+  "track": "prop_firm"
+}
