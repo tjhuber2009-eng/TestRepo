@@ -39,5 +39,8 @@
     "@types/react-dom": "^18.3.7",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.1"
   }
 }
