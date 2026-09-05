@@ -291,13 +291,13 @@ jobs:
           fetch-depth: 0
 
       - name: Download prop artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: parallel-prop-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/parallel_runs/${{ github.run_id }}/prop
 
       - name: Download private artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: parallel-private-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/parallel_runs/${{ github.run_id }}/private
