@@ -139,8 +139,8 @@ f"- {'🟢' if not hidden_open else '🟡'} Hidden pre-OOS validation: **{'SEALE
 "",
 "## Current development champions",
 "",
-"| # | Family | Target | Profile | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence |",
-"|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|",
+"| # | Family | Target | Profile | Eligible | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence | Data | Trades/yr |",
+"|---:|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---:|",
 ]
 for i,r in enumerate((board.get("rows",[]) or [])[:15],1):
     _start,_end,_years,_cagr=development_period(
@@ -153,20 +153,23 @@ for i,r in enumerate((board.get("rows",[]) or [])[:15],1):
     _pbo = r.get("pbo")
     out.append(
         f"| {i} | {r.get('family','—')} | {str(r.get('target','—')).upper()} | "
-        f"{r.get('profile','—')} | {f(r.get('development_score'),6)} | "
-        f"{pct(_cagr,1)} | {pct(r.get('excess_cagr_vs_buyhold_pct'),1)} | "
+        f"{r.get('profile','—')} | {'YES' if r.get('development_guard_ok') is not False else 'NO'} | "
+        f"{f(r.get('development_score'),6)} | {pct(_cagr,1)} | {pct(r.get('excess_cagr_vs_buyhold_pct'),1)} | "
         f"{pct(r.get('benchmark_cagr_pct'),1)} | {f(_years,1)} | "
         f"{f(r.get('development_sharpe'),3)} | {f(r.get('development_pf'),2)} | "
         f"{pct(r.get('development_max_dd_pct'),2)} | "
         f"{pct(None if _psr is None else 100*float(_psr),1)} | "
         f"{pct(None if _q is None else 100*float(_q),1)} | "
         f"{pct(None if _pbo is None else 100*float(_pbo),1)} | "
-        f"{r.get('evidence_grade') or '—'} |"
+        f"{r.get('evidence_grade') or '—'} | {r.get('data_quality_grade') or '—'} | "
+        f"{f(r.get('development_trades_per_year'),1)} |"
     )
 
 # A separate equal-time return view prevents cumulative-return duration bias.
 _cagr_rows=[]
 for r in (board.get("rows",[]) or []):
+    if r.get("development_guard_ok") is False:
+        continue
     v=r.get("development_cagr_pct")
     if v is None:
         _,_,_,v=development_period(r.get("track_id"),r.get("development_return_pct"))
@@ -210,6 +213,34 @@ f"- Parameter-only mutations rejected: **{int(progress.get('total_parameter_only
 f"- Too-broad rewrites rejected: **{int(progress.get('total_too_broad',0) or 0):,}**",
 f"- Risk/sizing-control changes rejected: **{int(progress.get('total_risk_control_changes',0) or 0):,}**",
 f"- Semantic duplicates rejected: **{int(progress.get('total_duplicates',0) or 0):,}**",
+"",
+"## Research-agent performance",
+"",
+]
+_model_rows=progress.get("model_performance",[]) or []
+if _model_rows:
+    out += [
+        "| Model | Attempts | Admission | Keeper | Crash | Mean ΔK | Unique ideas |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    for r in _model_rows:
+        out.append(
+            f"| {r.get('model')} | {int(r.get('attempts',0) or 0)} | "
+            f"{pct(100*float(r.get('admission_rate',0) or 0),1)} | "
+            f"{pct(100*float(r.get('keeper_rate',0) or 0),1)} | "
+            f"{pct(100*float(r.get('crash_rate',0) or 0),1)} | "
+            f"{f(r.get('mean_delta_k'),6)} | {int(r.get('unique_ideas',0) or 0)} |"
+        )
+else:
+    out.append("No protocol-v3 model attempts recorded yet.")
+
+out += [
+"",
+"## Data fidelity",
+"",
+"- **A:** checksum-verified Binance archive / exact spot instrument.",
+"- **B:** Yahoo adjusted daily stock/ETF snapshot; no archive checksum.",
+"- **C:** Yahoo continuous futures proxy; **not contract-exact**.",
 "",
 "## Automation status",
 "",
