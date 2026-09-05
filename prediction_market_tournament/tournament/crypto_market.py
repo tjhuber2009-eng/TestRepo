@@ -79,6 +79,7 @@ def discover_btc_5m_market(
     markets = event.get("markets") or []
     if not markets:
         raise LookupError("BTC 5m event has no markets")
+
     matches: list[dict] = []
     for market in markets:
         try:
@@ -94,6 +95,7 @@ def discover_btc_5m_market(
         if market.get("acceptingOrders") is False:
             continue
         matches.append(market)
+
     if len(matches) != 1:
         raise LookupError(
             f"expected exactly one active BTC 5m market, found {len(matches)}"
@@ -121,13 +123,16 @@ def crypto_signal_from_market(
     strike: float,
     raw_points: list[tuple[float, float]],
     window_start_ms: float,
-    observed_at: datetime,
     lane_cfg: dict,
     size_usd: float,
+    observed_at: datetime | None = None,
 ) -> Signal | None:
-    """Evaluate one frozen BTC 5m checkpoint using only causal raw data."""
-    if observed_at.tzinfo is None:
-        raise ValueError("observed_at must be timezone-aware")
+    """Evaluate one frozen BTC 5m checkpoint from causal raw data.
+
+    Live calls leave observed_at=None so the execution timestamp is captured
+    after both executable books and current market rules have been retrieved.
+    Tests may inject an explicit timestamp.
+    """
     if strike <= 0:
         raise ValueError("strike must be > 0")
     if lane not in {"crypto_twap_taker", "crypto_late_resolution"}:
@@ -139,6 +144,7 @@ def crypto_signal_from_market(
         market,
         expected_start_epoch_seconds=start_seconds,
     )
+
     condition_id = str(market.get("conditionId") or "").strip()
     market_id = str(market.get("id") or "").strip()
     if not condition_id or not market_id:
@@ -150,6 +156,10 @@ def crypto_signal_from_market(
         side: get_book(tokens[side])
         for side in ("UP", "DOWN")
     }
+
+    observed_at = observed_at or datetime.now(timezone.utc)
+    if observed_at.tzinfo is None:
+        raise ValueError("observed_at must be timezone-aware")
 
     observed_ms = observed_at.timestamp() * 1000.0
     end_ms = window_start_ms + WINDOW_SECONDS * 1000.0
@@ -165,6 +175,7 @@ def crypto_signal_from_market(
     if latest is None:
         return None
     latest_timestamp, current_spot = latest
+
     max_spot_age = float(lane_cfg.get("raw_spot_max_age_seconds", 3.0))
     if (observed_ms - latest_timestamp) / 1000.0 > max_spot_age:
         return None
@@ -205,9 +216,7 @@ def crypto_signal_from_market(
     )
     probability_up = distribution.probability_above_strike
 
-    candidates: list[
-        tuple[float, str, float, object]
-    ] = []
+    candidates: list[tuple[float, str, float, object]] = []
     for side, fair_probability in (
         ("UP", probability_up),
         ("DOWN", 1.0 - probability_up),
@@ -221,6 +230,7 @@ def crypto_signal_from_market(
         )
         if quote is None:
             continue
+
         edge = exact_execution_edge_per_share(
             fair_probability,
             shares=quote.shares,
@@ -231,6 +241,7 @@ def crypto_signal_from_market(
 
     if not candidates:
         return None
+
     edge, side, fair_probability, quote = max(
         candidates,
         key=lambda row: (row[0], row[1] == "UP"),
@@ -245,11 +256,9 @@ def crypto_signal_from_market(
         if edge < float(lane_cfg["min_edge"]):
             return None
 
-    signal_raw = (
-        f"{lane}|{market_id}|{side}|"
-        f"{int(checkpoint_ms)}|{observed_at.astimezone(timezone.utc).isoformat()}"
-    )
+    signal_raw = f"{lane}|{market_id}|{int(checkpoint_ms)}"
     signal_id = hashlib.sha256(signal_raw.encode()).hexdigest()[:24]
+
     return Signal(
         signal_id=signal_id,
         lane=lane,
