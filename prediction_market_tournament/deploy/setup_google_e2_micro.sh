@@ -19,9 +19,9 @@ sudo apt-get update
 sudo apt-get install -y python3.12 python3.12-venv git
 
 python3.12 -m venv "$ROOT/.venv"
-"$ROOT/.venv/bin/python" -m pip install --upgrade pip
+"$ROOT/.venv/bin/python" -m pip install pip==26.2.1
 "$ROOT/.venv/bin/python" -m pip install -e "$ROOT"
-"$ROOT/.venv/bin/python" -m pip install pytest
+"$ROOT/.venv/bin/python" -m pip install pytest==9.1.1
 
 cd "$ROOT"
 "$ROOT/.venv/bin/python" -m pytest -q
