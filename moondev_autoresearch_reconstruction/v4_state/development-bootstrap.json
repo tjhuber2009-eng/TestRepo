@@ -1,0 +1,359 @@
+{
+  "assets": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "QQQ",
+    "SPY",
+    "TQQQ"
+  ],
+  "data_end": "2020-12-31",
+  "feature_manifest": {
+    "assets": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "QQQ",
+      "SPY",
+      "TQQQ"
+    ],
+    "causal": true,
+    "context_join": "backward_asof_with_explicit_lag",
+    "context_lags": {},
+    "contexts": [],
+    "execution_convention": "features through close[t], execute open[t+1]",
+    "input_hashes": {
+      "BTCUSDT": "f054df89c19327f031d6a4c35d518f7f245e970021c06cf0c7b6223e84e07bc1",
+      "ETHUSDT": "2d8fad4697be5c1f9aea267c242ef2e478fcb6c3dfab445e0a18852ce83c2bb8",
+      "QQQ": "f57ab902e02fe4b5cfa477db724875c0c53bcefb34131b396ed1dfcf659109a4",
+      "SPY": "bd8f4b7b3c720c10eda799daa0a1765350dacbbf8473cfe1ce9c355b56acf703",
+      "TQQQ": "89dc332417577fb80f20f82fdab92cce18ebaf626616f09e946b360d7833e901"
+    },
+    "protocol": "alpha_generation_v4"
+  },
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "parameter_optimizer": {
+    "chosen": null,
+    "frozen_structure": "leveraged_regime_rotation_v1",
+    "search_hash": "a855c6ef3594993c632a762fc088e06137950df24173a349629935724a248dce",
+    "selection_policy": "hard-gate first; prefer broad local plateaus and strong worst-fold performance; penalize fold dispersion and search multiplicity",
+    "trials": [
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          1.2379058787504944,
+          0.7891548078955536,
+          0.3975663992811273,
+          0.951573483434395,
+          1.0261496285101408
+        ],
+        "gate_ok": false,
+        "median_score": 0.951573483434395,
+        "params": {
+          "mom": 60,
+          "sma": 150
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.3144729792978296,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.3975663992811273
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.9190132356135744,
+          0.7554973974069531,
+          0.6875854393239683,
+          1.2138121356209741,
+          0.9832699378830395
+        ],
+        "gate_ok": false,
+        "median_score": 0.9190132356135744,
+        "params": {
+          "mom": 126,
+          "sma": 150
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.20680545163309969,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.6875854393239683
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.9405932173415472,
+          0.770205914912493,
+          0.555758320242673,
+          1.2138121356209741,
+          1.1377613626222804
+        ],
+        "gate_ok": false,
+        "median_score": 0.9405932173415472,
+        "params": {
+          "mom": 200,
+          "sma": 150
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.26889318772257953,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.555758320242673
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.9762083245805461,
+          0.7891548078955536,
+          0.366514301639291,
+          0.951573483434395,
+          0.9448181404255523
+        ],
+        "gate_ok": false,
+        "median_score": 0.9448181404255523,
+        "params": {
+          "mom": 60,
+          "sma": 175
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.25635123818480293,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.366514301639291
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.5542930632497857,
+          1.0074691815749706,
+          0.7746167853738914,
+          1.0872973262239247,
+          1.0197883675217687
+        ],
+        "gate_ok": false,
+        "median_score": 1.0074691815749706,
+        "params": {
+          "mom": 126,
+          "sma": 175
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.221118834301836,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.5542930632497857
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.7432420397373617,
+          1.0184213105352957,
+          0.3979855304159953,
+          1.0872973262239247,
+          1.0984735779668982
+        ],
+        "gate_ok": false,
+        "median_score": 1.0184213105352957,
+        "params": {
+          "mom": 200,
+          "sma": 175
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.30012840316545414,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.3979855304159953
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.8757262475167094,
+          0.7664872976438064,
+          0.38117235674367367,
+          0.951573483434395,
+          0.9276645830086415
+        ],
+        "gate_ok": false,
+        "median_score": 0.8757262475167094,
+        "params": {
+          "mom": 60,
+          "sma": 200
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.23433443455078473,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.38117235674367367
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.4698120591179938,
+          1.0398924291916076,
+          0.7122136829923321,
+          1.1368544632356719,
+          0.9995394118884974
+        ],
+        "gate_ok": false,
+        "median_score": 0.9995394118884974,
+        "params": {
+          "mom": 126,
+          "sma": 200
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.27472181070899165,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.4698120591179938
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.7218793653596492,
+          1.075497248769438,
+          0.37107032486967706,
+          1.1368544632356719,
+          0.9713889450693795
+        ],
+        "gate_ok": false,
+        "median_score": 0.9713889450693795,
+        "params": {
+          "mom": 200,
+          "sma": 200
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.31365419815423773,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.37107032486967706
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.8458167173673643,
+          0.7664872976438064,
+          0.38117235674367367,
+          0.951573483434395,
+          1.0195009827745152
+        ],
+        "gate_ok": false,
+        "median_score": 0.8458167173673643,
+        "params": {
+          "mom": 60,
+          "sma": 225
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.2497712659949022,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.38117235674367367
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.3908499398649439,
+          1.1064357415803685,
+          0.7003789429088267,
+          1.1369141012341646,
+          1.0338165570794087
+        ],
+        "gate_ok": false,
+        "median_score": 1.0338165570794087,
+        "params": {
+          "mom": 126,
+          "sma": 225
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.3210409894230493,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.3908499398649439
+      },
+      {
+        "adjusted_score": -Infinity,
+        "fold_scores": [
+          0.780866967556598,
+          1.0964403829656455,
+          0.2823341709266916,
+          1.1369141012341646,
+          1.014337887304174
+        ],
+        "gate_ok": false,
+        "median_score": 1.014337887304174,
+        "params": {
+          "mom": 200,
+          "sma": 225
+        },
+        "plateau_score": -Infinity,
+        "score_std": 0.3522576368254686,
+        "structural_fingerprint": "leveraged_regime_rotation_v1",
+        "worst_score": 0.2823341709266916
+      }
+    ]
+  },
+  "portfolio": {
+    "candidates_evaluated": 1200,
+    "chosen": null,
+    "dd_cap_pct": 32.0,
+    "feasible_count": 0,
+    "policy": "maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown cap; small diversification/sharpe tie-breakers"
+  },
+  "protocol": "alpha_generation_v4",
+  "stage": "development_only",
+  "strategies": {
+    "cross_asset_momentum": {
+      "final_equity": 1.7953932044893561,
+      "gate_ok": true,
+      "gate_reasons": [],
+      "max_gross_exposure": 1.0,
+      "mean_gross_exposure": 0.6183745583038869,
+      "metrics": {
+        "cagr_pct": 18.962515128760483,
+        "cost_stress_cagr_pct": null,
+        "cumulative_return_pct": 79.53932044893561,
+        "dsr": 1.0,
+        "gross_exposure": 0.6183745583038869,
+        "max_dd_pct": -57.74799675129619,
+        "pbo": null,
+        "psr_zero": 1.0,
+        "sharpe": 0.638157256919261,
+        "sortino": 0.937035261428369,
+        "trades": 69,
+        "turnover_per_year": 20.769272948822096,
+        "years": 3.370363525602853
+      }
+    },
+    "rotation_baseline": {
+      "final_equity": 27.05500193860472,
+      "gate_ok": true,
+      "gate_reasons": [],
+      "max_gross_exposure": 1.0,
+      "mean_gross_exposure": 0.9996351696461145,
+      "metrics": {
+        "cagr_pct": 35.394783703642574,
+        "cost_stress_cagr_pct": null,
+        "cumulative_return_pct": 2605.500193860472,
+        "dsr": 1.0,
+        "gross_exposure": 0.9996351696461145,
+        "max_dd_pct": -61.51606509614756,
+        "pbo": null,
+        "psr_zero": 1.0,
+        "sharpe": 0.8921466333638156,
+        "sortino": 1.2287418546402893,
+        "trades": 74,
+        "turnover_per_year": 13.507081132075472,
+        "years": 10.883180352779318
+      }
+    },
+    "rotation_stable_params": {
+      "final_equity": 27.05500193860472,
+      "gate_ok": true,
+      "gate_reasons": [],
+      "max_gross_exposure": 1.0,
+      "mean_gross_exposure": 0.9996351696461145,
+      "metrics": {
+        "cagr_pct": 35.394783703642574,
+        "cost_stress_cagr_pct": null,
+        "cumulative_return_pct": 2605.500193860472,
+        "dsr": 1.0,
+        "gross_exposure": 0.9996351696461145,
+        "max_dd_pct": -61.51606509614756,
+        "pbo": null,
+        "psr_zero": 1.0,
+        "sharpe": 0.8921466333638156,
+        "sortino": 1.2287418546402893,
+        "trades": 74,
+        "turnover_per_year": 13.507081132075472,
+        "years": 10.883180352779318
+      }
+    }
+  }
+}
