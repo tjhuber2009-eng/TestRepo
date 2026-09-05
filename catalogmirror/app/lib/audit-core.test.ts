@@ -19,6 +19,7 @@ const baseVariant: AdminVariantCore = {
   title: "Large",
   sku: "SKU-L",
   price: "19.99",
+  availableForSale: true,
   inventoryQuantity: 4,
   inventoryPolicy: "DENY",
   inventoryItem: { tracked: true },
@@ -31,11 +32,10 @@ test("incident identity remains stable when observed values change", () => {
   );
 });
 
-test("availability respects tracking, continue-selling, and inventory", () => {
+test("availability uses Shopify's authoritative saleability field", () => {
   assert.equal(expectedAvailable(baseVariant), true);
-  assert.equal(expectedAvailable({ ...baseVariant, inventoryQuantity: 0 }), false);
-  assert.equal(expectedAvailable({ ...baseVariant, inventoryQuantity: 0, inventoryPolicy: "CONTINUE" }), true);
-  assert.equal(expectedAvailable({ ...baseVariant, inventoryItem: { tracked: false }, inventoryQuantity: 0 }), true);
+  assert.equal(expectedAvailable({ ...baseVariant, availableForSale: false, inventoryQuantity: 10 }), false);
+  assert.equal(expectedAvailable({ ...baseVariant, availableForSale: true, inventoryQuantity: 0 }), true);
 });
 
 test("variant matching prefers the Shopify variant ID", () => {
