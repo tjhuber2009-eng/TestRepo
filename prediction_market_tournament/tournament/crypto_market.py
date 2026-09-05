@@ -23,6 +23,24 @@ WINDOW_SECONDS = 300
 TWAP_STREAM_MARKER = "btc-usd-twap-60s"
 
 
+def strike_tick_is_on_time(
+    *,
+    source_timestamp_ms: float,
+    receive_timestamp_ms: float,
+    window_start_ms: float,
+    max_lag_seconds: float,
+) -> bool:
+    if max_lag_seconds < 0:
+        raise ValueError("max_lag_seconds must be >= 0")
+    limit_ms = max_lag_seconds * 1000.0
+    source_lag = source_timestamp_ms - window_start_ms
+    receive_lag = receive_timestamp_ms - window_start_ms
+    return (
+        0.0 <= source_lag <= limit_ms
+        and 0.0 <= receive_lag <= limit_ms
+    )
+
+
 def btc_5m_slug(start_epoch_seconds: int) -> str:
     start = int(start_epoch_seconds)
     if start % WINDOW_SECONDS != 0:
