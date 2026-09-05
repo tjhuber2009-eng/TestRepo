@@ -21028,23 +21028,96 @@
   "portfolio": {
     "candidates_evaluated": 1000,
     "chosen": {
-      "bootstrap_dd_q95_pct": 31.79709950885804,
-      "bootstrap_median_cagr_pct": 19.861346633648612,
-      "cagr_pct": 18.1623986887929,
-      "cash_weight": 0.3973046803721627,
-      "effective_n": 1.0,
-      "gross_exposure": 0.6026953196278373,
-      "max_dd_pct": -19.24071503305802,
-      "score": 19.892385030096765,
-      "sharpe": 1.051919822407635,
+      "bootstrap_dd_q95_pct": 31.854906079848654,
+      "bootstrap_median_cagr_pct": 13.36290436622869,
+      "cagr_pct": 13.257882798767827,
+      "cash_weight": 0.523239378524909,
+      "effective_n": 2.5648570457897524,
+      "gross_exposure": 0.476760621475091,
+      "max_dd_pct": -13.149440886938258,
+      "score": 13.40870309934776,
+      "sharpe": 1.0075081330585123,
       "weights": {
-        "cash_rotation_vix_stress": 0.6026953196278373
+        "cash_rotation_risk_budgeted": 0.0014100271740118567,
+        "cash_rotation_vix_stress": 0.11087958637498518,
+        "defensive_rotation_risk_budgeted": 0.03207633585957276,
+        "rotation_risk_budgeted": 0.055494686653442274,
+        "rotation_sma_hysteresis": 0.2686029204427267,
+        "rotation_walkforward_meta_filter": 0.008297064970352236
       }
     },
     "dd_cap_pct": 32.0,
     "feasible_count": 1000,
     "max_gross": 1.5,
     "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+  },
+  "portfolio_history_policy": {
+    "common_overlap_end": "2020-12-30",
+    "common_overlap_observations": 2741,
+    "common_overlap_start": "2010-02-11",
+    "common_overlap_years": 10.876984126984127,
+    "core_min_years": 8.157738095238095,
+    "core_strategy_names": [
+      "cash_rotation_risk_budgeted",
+      "cash_rotation_vix_stress",
+      "defensive_rotation_risk_budgeted",
+      "rotation_risk_budgeted",
+      "rotation_sma_hysteresis",
+      "rotation_walkforward_meta_filter"
+    ],
+    "history": {
+      "cash_rotation_risk_budgeted": {
+        "end": "2020-12-30",
+        "observations": 2741,
+        "start": "2010-02-11",
+        "years": 10.876984126984127
+      },
+      "cash_rotation_vix_stress": {
+        "end": "2020-12-30",
+        "observations": 2741,
+        "start": "2010-02-11",
+        "years": 10.876984126984127
+      },
+      "cross_asset_momentum_risk_budgeted": {
+        "end": "2020-12-30",
+        "observations": 849,
+        "start": "2017-08-17",
+        "years": 3.369047619047619
+      },
+      "defensive_rotation_risk_budgeted": {
+        "end": "2020-12-30",
+        "observations": 2741,
+        "start": "2010-02-11",
+        "years": 10.876984126984127
+      },
+      "rotation_risk_budgeted": {
+        "end": "2020-12-30",
+        "observations": 2741,
+        "start": "2010-02-11",
+        "years": 10.876984126984127
+      },
+      "rotation_sma_hysteresis": {
+        "end": "2020-12-30",
+        "observations": 2741,
+        "start": "2010-02-11",
+        "years": 10.876984126984127
+      },
+      "rotation_walkforward_meta_filter": {
+        "end": "2020-12-30",
+        "observations": 2741,
+        "start": "2010-02-11",
+        "years": 10.876984126984127
+      }
+    },
+    "interpretation": "short-history strategies are retained as supplemental research but cannot truncate the evidence window of the authoritative robust portfolio",
+    "longest_history_years": 10.876984126984127,
+    "minimum_absolute_years": 8.0,
+    "minimum_relative_coverage": 0.75,
+    "periods_per_year": 252.0,
+    "policy": "long_history_core_v1",
+    "supplemental_strategy_names": [
+      "cross_asset_momentum_risk_budgeted"
+    ]
   },
   "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
