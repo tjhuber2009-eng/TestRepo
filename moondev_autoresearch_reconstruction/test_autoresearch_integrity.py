@@ -23,9 +23,9 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         )
 
     def test_protocol_is_nested_v2(self):
-        self.assertEqual(continuous_runner.PROTOCOL, "nested_chronological_v2")
+        self.assertEqual(continuous_runner.PROTOCOL, "nested_chronological_v3")
         text = (HERE / "robust_harness.py").read_text(encoding="utf-8")
-        self.assertIn('PROTOCOL = "nested_chronological_v2"', text)
+        self.assertIn('PROTOCOL = "nested_chronological_v3"', text)
 
     def test_final_oos_never_enters_pre_oos_config(self):
         self.assertEqual(
