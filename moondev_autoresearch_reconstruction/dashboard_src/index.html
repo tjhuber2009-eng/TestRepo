@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AUTORESEARCH Control Room</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">MOON DEV AUTORESEARCH</div>
+        <h1>Control Room</h1>
+        <p id="subtitle">Loading research state…</p>
+      </div>
+      <div class="top-actions">
+        <span id="freshness" class="pill neutral">snapshot</span>
+        <button id="refreshBtn" type="button">Refresh snapshot</button>
+      </div>
+    </header>
+
+    <section id="alertBar" class="alert hidden"></section>
+
+    <main>
+      <section class="hero-grid">
+        <article class="card progress-card">
+          <div class="card-head">
+            <div>
+              <span class="kicker">SEARCH PIPELINE</span>
+              <h2 id="phaseTitle">—</h2>
+            </div>
+            <div id="progressRing" class="ring"><span id="progressPct">0%</span></div>
+          </div>
+          <div class="progress-track"><div id="progressFill"></div></div>
+          <div class="progress-copy">
+            <strong id="validCandidates">0</strong>
+            <span id="breadthGoal">of 0 breadth candidates</span>
+          </div>
+          <div class="mini-grid">
+            <div><span>Touched</span><strong id="touchedTracks">0</strong></div>
+            <div><span>Runnable</span><strong id="runnableTracks">0</strong></div>
+            <div><span>≥1 valid</span><strong id="validTracks">0</strong></div>
+            <div><span>Terminal</span><strong id="terminalTracks">0</strong></div>
+          </div>
+        </article>
+
+        <article class="card status-card">
+          <span class="kicker">RESEARCH INTEGRITY</span>
+          <h2>Separation gates</h2>
+          <div class="integrity-list">
+            <div><span class="dot safe"></span><span>Development search only</span><b id="protocolValue">—</b></div>
+            <div><span id="hiddenDot" class="dot safe"></span><span>Hidden pre-OOS validation</span><b id="hiddenState">SEALED</b></div>
+            <div><span class="dot safe"></span><span>Final 2023+ OOS</span><b>SEALED</b></div>
+            <div><span class="dot safe"></span><span>Cost stress</span><b>2×</b></div>
+            <div><span class="dot safe"></span><span>Prop / private DD caps</span><b>10% / 32%</b></div>
+          </div>
+        </article>
+
+        <article class="card workflow-card">
+          <span class="kicker">AUTOMATION</span>
+          <h2>Latest workflows</h2>
+          <div id="workflowSummary" class="workflow-summary"></div>
+        </article>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">LEADERBOARD</span>
+            <h2>Current development champions</h2>
+          </div>
+          <div class="filters">
+            <select id="profileFilter">
+              <option value="all">All profiles</option>
+              <option value="prop">Prop ≤10% DD</option>
+              <option value="private">Private ≤32% DD</option>
+            </select>
+            <select id="marketFilter"><option value="all">All markets</option></select>
+            <input id="championSearch" type="search" placeholder="Search family / target">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="championsTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Family</th><th>Target</th><th>Profile</th>
+                <th class="num">Robust K</th><th class="num">Return</th>
+                <th class="num">Sharpe</th><th class="num">PF</th>
+                <th class="num">DD</th><th class="num">Valid tests</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="two-col">
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">MODEL TOURNAMENT</span>
+              <h2>Zero-fee AI tournament</h2>
+            </div>
+            <span id="tournamentState" class="pill neutral">waiting</span>
+          </div>
+          <div id="tournamentPanel"></div>
+        </article>
+
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">SEARCH QUALITY</span>
+              <h2>Attempt outcomes</h2>
+            </div>
+          </div>
+          <div id="outcomeBars" class="outcomes"></div>
+        </article>
+      </section>
+
+      <section class="two-col">
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">COVERAGE</span>
+              <h2>Track search depth</h2>
+            </div>
+          </div>
+          <div id="coveragePanel"></div>
+        </article>
+
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">ACTIVITY</span>
+              <h2>Recent research cycles</h2>
+            </div>
+          </div>
+          <div id="activityList" class="activity-list"></div>
+        </article>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">FULL UNIVERSE</span>
+            <h2>514-track explorer</h2>
+          </div>
+          <div class="filters">
+            <select id="trackProfileFilter">
+              <option value="all">All profiles</option>
+              <option value="prop">Prop</option>
+              <option value="private">Private</option>
+            </select>
+            <input id="trackSearch" type="search" placeholder="Search all tracks">
+          </div>
+        </div>
+        <div class="table-wrap tall">
+          <table id="tracksTable">
+            <thead>
+              <tr>
+                <th>Track</th><th>Status</th><th class="num">K</th>
+                <th class="num">Attempts</th><th class="num">Valid</th>
+                <th>Depth</th><th>Elite</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Snapshot generated <b id="generatedAt">—</b></span>
+      <span>Private project dashboard — no hidden validation or 2023+ OOS is opened to build this view.</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
