@@ -42,6 +42,21 @@ def pct(v, digits=1):
     except Exception:
         return "—"
 
+def development_period(track_id, total_return_pct):
+    meta=load(STATE/"tracks"/str(track_id)/"state_meta.json",{}) or {}
+    baseline=meta.get("baseline") or {}
+    start=baseline.get("start")
+    end=baseline.get("end") or baseline.get("adaptive_development_end")
+    try:
+        s=datetime.fromisoformat(str(start).replace("Z","+00:00"))
+        e=datetime.fromisoformat(str(end).replace("Z","+00:00"))
+        years=(e-s).total_seconds()/(365.2425*86400.0)
+        multiple=1.0+float(total_return_pct)/100.0
+        cagr=(multiple**(1.0/years)-1.0)*100.0 if years>0 and multiple>0 else None
+        return start,end,years,cagr
+    except Exception:
+        return start,end,None,None
+
 def status_badge(status, conclusion=None):
     x=(conclusion or status or "").lower()
     if x in {"success","completed"}:
@@ -124,14 +139,19 @@ f"- {'🟢' if not hidden_open else '🟡'} Hidden pre-OOS validation: **{'SEALE
 "",
 "## Current development champions",
 "",
-"| # | Family | Target | Profile | Robust K | Return | Sharpe | PF | DD | Valid |",
-"|---:|---|---|---|---:|---:|---:|---:|---:|---:|",
+"| # | Family | Target | Profile | Robust K | CAGR | Cum. Return | Years | Sharpe | PF | DD | Valid |",
+"|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
 ]
 for i,r in enumerate((board.get("rows",[]) or [])[:15],1):
+    _start,_end,_years,_cagr=development_period(
+        r.get("track_id"),
+        r.get("development_return_pct"),
+    )
     out.append(
         f"| {i} | {r.get('family','—')} | {str(r.get('target','—')).upper()} | "
         f"{r.get('profile','—')} | {f(r.get('development_score'),6)} | "
-        f"{pct(r.get('development_return_pct'),1)} | {f(r.get('development_sharpe'),3)} | "
+        f"{pct(_cagr,1)} | {pct(r.get('development_return_pct'),1)} | "
+        f"{f(_years,1)} | {f(r.get('development_sharpe'),3)} | "
         f"{f(r.get('development_pf'),2)} | {pct(r.get('development_max_dd_pct'),2)} | "
         f"{int(r.get('valid_attempts',0) or 0)} |"
     )
@@ -201,6 +221,8 @@ else:
 out += [
 "",
 "---",
+"",
+"**Return comparison:** CAGR is the primary return percentage. It annualizes each development result geometrically, so a 3.4-year crypto backtest and an 11-year equity backtest are shown on the same per-year basis. Cumulative return and years are retained for context.",
 "",
 "**Interpretation:** all leaderboard numbers above are development-period results unless hidden validation is explicitly shown as open. They are research results, not production proof.",
 "",
