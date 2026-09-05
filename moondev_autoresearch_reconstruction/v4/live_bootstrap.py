@@ -22,7 +22,11 @@ from .parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from .portfolio_optimizer import RobustPortfolioOptimizer
 from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, vix_stress_overlay, volatility_target_overlay
 from .selection_diagnostics import optimizer_pbo
-from .strategy_examples import cross_sectional_momentum_rotation, leveraged_defensive_rotation
+from .strategy_examples import (
+    cross_sectional_momentum_rotation,
+    independent_trend_basket,
+    leveraged_defensive_rotation,
+)
 
 
 def json_safe(value):
@@ -336,6 +340,22 @@ def build_momentum_strategy(params, symbols):
         trend_window=200,
         top_k=min(2, len(symbols)),
         eligible_symbols=tuple(symbols),
+    )
+    return volatility_target_overlay(
+        base,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(params["vol_lookback"]),
+        max_gross=1.0,
+        max_scale=1.0,
+    )
+
+
+def build_long_history_trend_strategy(params, symbols):
+    base = independent_trend_basket(
+        symbols=tuple(symbols),
+        momentum_window=int(params["mom"]),
+        trend_window=int(params["trend"]),
     )
     return volatility_target_overlay(
         base,
@@ -1073,6 +1093,82 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     # ------------------------------------------------------------------
+    # Family C2: long-history diversified time-series trend basket.
+    # Unlike cross-sectional momentum, each asset is independently long/cash.
+    # ------------------------------------------------------------------
+    trend_assets = {
+        s: data[s] for s in ("SPY", "IEF", "GLD") if s in data
+    }
+    trend_eng = MultiAssetBacktester(
+        trend_assets,
+        limits=PortfolioLimits(
+            gross_leverage=1.0,
+            net_min=0.0,
+            net_max=1.0,
+            per_asset_abs_weight=1.0,
+        ),
+        periods_per_year=252.0,
+    )
+    trend_symbols = tuple(trend_assets)
+    trend_raw = trend_eng.run(
+        independent_trend_basket(
+            symbols=trend_symbols,
+            momentum_window=252,
+            trend_window=200,
+        ),
+        risk_policy=private,
+        num_trials=1,
+        cost_stress_multiplier=cost_stress,
+    )
+    trend_specs = [
+        ParameterSpec("mom", (126, 252)),
+        ParameterSpec("trend", (150, 200)),
+        ParameterSpec("target_vol", (0.10, 0.14, 0.18)),
+        ParameterSpec("vol_lookback", (20, 60)),
+    ]
+    trend_trial_count = int(np.prod([len(s.values) for s in trend_specs]))
+
+    def evaluate_long_history_trend(params):
+        res = trend_eng.run(
+            build_long_history_trend_strategy(params, trend_symbols),
+            risk_policy=private,
+            num_trials=trend_trial_count,
+            cost_stress_multiplier=cost_stress,
+        )
+        return {
+            "fold_scores": fold_cagr_scores(
+                res.returns, 252.0, private.max_dd_pct
+            ),
+            "primary_score": float(res.metrics.cost_stress_cagr_pct),
+            "gate_ok": bool(res.gate_ok),
+            "structural_fingerprint": "long_history_cross_asset_trend_basket_v1",
+        }
+
+    trend_param = StableParameterOptimizer(
+        trend_specs,
+        max_trials=30,
+        plateau_neighbors=4,
+        dispersion_penalty=0.20,
+        multiple_test_penalty=0.16,
+    ).optimize(
+        evaluate_long_history_trend,
+        frozen_structure="long_history_cross_asset_trend_basket_v1",
+    )
+    trend_pbo = optimizer_pbo(trend_param)
+    trend_family_ok = pbo_gate(trend_pbo, private.max_pbo)
+    trend_optimized = None
+    if trend_param.chosen is not None:
+        trend_optimized = trend_eng.run(
+            build_long_history_trend_strategy(
+                trend_param.chosen.params, trend_symbols
+            ),
+            risk_policy=private,
+            num_trials=trend_trial_count,
+            pbo=None if trend_pbo is None else trend_pbo["pbo"],
+            cost_stress_multiplier=cost_stress,
+        )
+
+    # ------------------------------------------------------------------
     # Portfolio-level optimization only uses fully eligible families.
     # ------------------------------------------------------------------
     eligible_returns = {}
@@ -1138,6 +1234,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         eligible_returns["cross_asset_momentum_risk_budgeted"] = (
             momentum_optimized.returns
         )
+    if (
+        trend_optimized is not None
+        and trend_optimized.gate_ok
+        and trend_family_ok
+    ):
+        eligible_returns["long_history_cross_asset_trend"] = (
+            trend_optimized.returns
+        )
 
     portfolio = None
     portfolio_core_returns, portfolio_history_policy = (
@@ -1178,6 +1282,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "rotation_raw_diagnostic": rotation_raw.summary(),
         "cash_rotation_raw_diagnostic": cash_raw.summary(),
         "cross_asset_momentum_raw_diagnostic": momentum_raw.summary(),
+        "long_history_cross_asset_trend_raw_diagnostic": trend_raw.summary(),
     }
     if rotation_optimized is not None:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
@@ -1204,6 +1309,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     if momentum_optimized is not None:
         strategies["cross_asset_momentum_risk_budgeted"] = (
             momentum_optimized.summary()
+        )
+    if trend_optimized is not None:
+        strategies["long_history_cross_asset_trend"] = (
+            trend_optimized.summary()
         )
 
     payload = {
@@ -1244,6 +1353,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "brake_family_ok": brake_family_ok,
             "momentum_pbo": momentum_pbo,
             "momentum_family_ok": momentum_family_ok,
+            "trend_pbo": trend_pbo,
+            "trend_family_ok": trend_family_ok,
         },
         "rotation_parameter_optimizer": rotation_param.to_dict(),
         "meta_parameter_optimizer": (
@@ -1262,6 +1373,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             None if brake_param is None else brake_param.to_dict()
         ),
         "momentum_parameter_optimizer": momentum_param.to_dict(),
+        "trend_parameter_optimizer": trend_param.to_dict(),
         "portfolio": None if portfolio is None else portfolio.to_dict(),
         "portfolio_history_policy": portfolio_history_policy,
         "eligible_strategy_names": sorted(eligible_returns),
