@@ -19,7 +19,8 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "data"
+BASE = Path(__file__).resolve().parent
+OUT = BASE / "data"
 OUT.mkdir(exist_ok=True)
 UA = "moondev-cross-market-autoresearch/1.0"
 
