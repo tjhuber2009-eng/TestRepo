@@ -1,0 +1,60 @@
+name: Prediction Market Tournament
+
+on:
+  push:
+    branches: [prediction-market-tournament]
+    paths:
+      - "prediction_market_tournament/**"
+      - ".github/workflows/prediction-market-tournament.yml"
+  pull_request:
+    paths:
+      - "prediction_market_tournament/**"
+      - ".github/workflows/prediction-market-tournament.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prediction-market-tournament
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prediction_market_tournament
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - run: python -m pip install pytest
+      - run: pytest -q
+
+  weather-forward-scan:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e prediction_market_tournament
+      - run: python prediction_market_tournament/scripts/scan_weather_all.py
+      - name: Persist new forward observations
+        run: |
+          if git diff --quiet -- prediction_market_tournament/data; then
+            echo "No new data."
+            exit 0
+          fi
+          git config user.name "PMT Forward Bot"
+          git config user.email "pmt-forward-bot@users.noreply.github.com"
+          git add prediction_market_tournament/data
+          git commit -m "PMT forward scan $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
