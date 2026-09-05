@@ -163,6 +163,13 @@ def weather_signal_from_market(
     if explicit_observed_at is not None and explicit_observed_at.tzinfo is None:
         raise ValueError("observed_at must be timezone-aware")
 
+    if (
+        market.get("closed") is True
+        or market.get("active") is False
+        or market.get("acceptingOrders") is False
+    ):
+        return None
+
     bracket = parse_temperature_bracket(str(market.get("question") or ""))
     station = extract_station_code(
         str(event.get("description") or ""),
