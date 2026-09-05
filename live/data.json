@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T13:51:57Z",
+  "generated_at": "2026-09-05T13:54:26Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 76.139,
@@ -13635,7 +13635,513 @@
   "selections": {},
   "stale_state": null,
   "state_is_active": true,
-  "tournament": null,
+  "tournament": {
+    "available_models": 4,
+    "case_count": 10,
+    "final_oos_opened": false,
+    "hidden_validation_opened": false,
+    "note": "Recovered from completed source-run artifacts while Nemotron Lightning is retried separately.",
+    "protocol": "nested_chronological_v3",
+    "provisional": true,
+    "ranking": [
+      {
+        "admitted": 20,
+        "api_success": 20,
+        "attempts": 20,
+        "case_aggregates": {
+          "connors_rsi2_65_nextopen__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.017021,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.017021,
+            "median_delta_k": -0.017021,
+            "trials": 2
+          },
+          "connors_rsi2__nvda__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.002117,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.057063,
+            "median_delta_k": -0.057063,
+            "trials": 2
+          },
+          "cumulative_rsi3_45_nextopen__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.01288,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": 0.01288,
+            "median_delta_k": 0.01288,
+            "trials": 2
+          },
+          "ibs_deep_pullback__aapl__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": null,
+            "median_delta_k": null,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.064202,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 1.0,
+            "mean_delta_k": 0.064202,
+            "median_delta_k": 0.064202,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.044277,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": 0.022979999999999997,
+            "median_delta_k": 0.022979999999999997,
+            "trials": 2
+          },
+          "sentinel63__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.026571,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": -0.0425265,
+            "median_delta_k": -0.0425265,
+            "trials": 2
+          },
+          "sentinel63__btc__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.130285,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": -0.013756999999999991,
+            "median_delta_k": -0.013756999999999991,
+            "trials": 2
+          },
+          "sentinel63__btc__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.0,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.0667075,
+            "median_delta_k": -0.0667075,
+            "trials": 2
+          },
+          "sentinel63__eth__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.076108,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.12681699999999999,
+            "median_delta_k": -0.12681699999999999,
+            "trials": 2
+          }
+        },
+        "guard_pass": 10,
+        "keep_rate": 0.3,
+        "keep_rate_ci95": [
+          0.1455,
+          0.519
+        ],
+        "matched_case_wins": 4.5,
+        "mean_delta_k": -0.02772,
+        "median_delta_k": 0.000842,
+        "model": "poolside/laguna-xs-2.1",
+        "paired_guard_median_ci95": [
+          -0.017021,
+          0.064202
+        ],
+        "paired_guard_median_delta_k": 0.01288,
+        "provider": "nvidia",
+        "total_seconds": 1129.089,
+        "trials_per_case": 2,
+        "unique_proposals": 12,
+        "would_keep": 6
+      },
+      {
+        "admitted": 11,
+        "api_success": 20,
+        "attempts": 20,
+        "case_aggregates": {
+          "connors_rsi2_65_nextopen__aapl__private": {
+            "admission_rate": 0.5,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.020951,
+            "median_delta_k": -0.020951,
+            "trials": 2
+          },
+          "connors_rsi2__nvda__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.004003,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.0326265,
+            "median_delta_k": -0.0326265,
+            "trials": 2
+          },
+          "cumulative_rsi3_45_nextopen__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.083095,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 1.0,
+            "mean_delta_k": 0.083095,
+            "median_delta_k": 0.083095,
+            "trials": 2
+          },
+          "ibs_deep_pullback__aapl__prop": {
+            "admission_rate": 0.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": null,
+            "median_delta_k": null,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.043515,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": -0.012035000000000004,
+            "median_delta_k": -0.012035000000000004,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.03745,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": 0.009519499999999998,
+            "median_delta_k": 0.009519499999999998,
+            "trials": 2
+          },
+          "sentinel63__aapl__private": {
+            "admission_rate": 0.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": null,
+            "median_delta_k": null,
+            "trials": 2
+          },
+          "sentinel63__btc__private": {
+            "admission_rate": 0.5,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.0,
+            "median_delta_k": 0.0,
+            "trials": 2
+          },
+          "sentinel63__btc__prop": {
+            "admission_rate": 0.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": null,
+            "median_delta_k": null,
+            "trials": 2
+          },
+          "sentinel63__eth__private": {
+            "admission_rate": 0.5,
+            "guard_mean_delta_k": 0.021654,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": 0.021654,
+            "median_delta_k": 0.021654,
+            "trials": 2
+          }
+        },
+        "guard_pass": 6,
+        "keep_rate": 0.25,
+        "keep_rate_ci95": [
+          0.1119,
+          0.4687
+        ],
+        "matched_case_wins": 2.0,
+        "mean_delta_k": 0.008783,
+        "median_delta_k": 0.0,
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "paired_guard_median_ci95": [
+          -0.004003,
+          0.083095
+        ],
+        "paired_guard_median_delta_k": 0.03745,
+        "provider": "nvidia",
+        "total_seconds": 1620.381,
+        "trials_per_case": 2,
+        "unique_proposals": 20,
+        "would_keep": 5
+      },
+      {
+        "admitted": 17,
+        "api_success": 20,
+        "attempts": 20,
+        "case_aggregates": {
+          "connors_rsi2_65_nextopen__aapl__private": {
+            "admission_rate": 0.5,
+            "guard_mean_delta_k": 0.00127,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.00127,
+            "median_delta_k": 0.00127,
+            "trials": 2
+          },
+          "connors_rsi2__nvda__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.002117,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.002117,
+            "median_delta_k": 0.002117,
+            "trials": 2
+          },
+          "cumulative_rsi3_45_nextopen__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.0678105,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 1.0,
+            "mean_delta_k": 0.0678105,
+            "median_delta_k": 0.0678105,
+            "trials": 2
+          },
+          "ibs_deep_pullback__aapl__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.0118415,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.0118415,
+            "median_delta_k": -0.0118415,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.067585,
+            "median_delta_k": -0.067585,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.033968,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": 0.007778499999999999,
+            "median_delta_k": 0.007778499999999999,
+            "trials": 2
+          },
+          "sentinel63__aapl__private": {
+            "admission_rate": 0.5,
+            "guard_mean_delta_k": 0.0,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.0,
+            "median_delta_k": 0.0,
+            "trials": 2
+          },
+          "sentinel63__btc__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.024387,
+            "median_delta_k": 0.024387,
+            "trials": 2
+          },
+          "sentinel63__btc__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.011703999999999999,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.011703999999999999,
+            "median_delta_k": -0.011703999999999999,
+            "trials": 2
+          },
+          "sentinel63__eth__private": {
+            "admission_rate": 0.5,
+            "guard_mean_delta_k": 0.007561,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": 0.007561,
+            "median_delta_k": 0.007561,
+            "trials": 2
+          }
+        },
+        "guard_pass": 12,
+        "keep_rate": 0.2,
+        "keep_rate_ci95": [
+          0.0807,
+          0.416
+        ],
+        "matched_case_wins": 1.5,
+        "mean_delta_k": 0.001809,
+        "median_delta_k": 0.0,
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "paired_guard_median_ci95": [
+          -0.005921,
+          0.033968
+        ],
+        "paired_guard_median_delta_k": 0.001694,
+        "provider": "nvidia",
+        "total_seconds": 1337.871,
+        "trials_per_case": 2,
+        "unique_proposals": 20,
+        "would_keep": 4
+      },
+      {
+        "admitted": 20,
+        "api_success": 20,
+        "attempts": 20,
+        "case_aggregates": {
+          "connors_rsi2_65_nextopen__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.0,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.0361505,
+            "median_delta_k": -0.0361505,
+            "trials": 2
+          },
+          "connors_rsi2__nvda__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.000316,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.000316,
+            "median_delta_k": 0.000316,
+            "trials": 2
+          },
+          "cumulative_rsi3_45_nextopen__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.012633499999999999,
+            "median_delta_k": 0.012633499999999999,
+            "trials": 2
+          },
+          "ibs_deep_pullback__aapl__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.0033049999999999998,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.0033049999999999998,
+            "median_delta_k": -0.0033049999999999998,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.054158,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.5,
+            "mean_delta_k": -0.006713500000000004,
+            "median_delta_k": -0.006713500000000004,
+            "trials": 2
+          },
+          "ibs_deep_pullback__tqqq__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.018411,
+            "median_delta_k": -0.018411,
+            "trials": 2
+          },
+          "sentinel63__aapl__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.017548,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.017548,
+            "median_delta_k": -0.017548,
+            "trials": 2
+          },
+          "sentinel63__btc__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": null,
+            "guard_pass_rate": 0.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.0210455,
+            "median_delta_k": 0.0210455,
+            "trials": 2
+          },
+          "sentinel63__btc__prop": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": 0.0001335,
+            "guard_pass_rate": 1.0,
+            "keep_rate": 0.0,
+            "mean_delta_k": 0.0001335,
+            "median_delta_k": 0.0001335,
+            "trials": 2
+          },
+          "sentinel63__eth__private": {
+            "admission_rate": 1.0,
+            "guard_mean_delta_k": -0.095525,
+            "guard_pass_rate": 0.5,
+            "keep_rate": 0.0,
+            "mean_delta_k": -0.1365255,
+            "median_delta_k": -0.1365255,
+            "trials": 2
+          }
+        },
+        "guard_pass": 11,
+        "keep_rate": 0.05,
+        "keep_rate_ci95": [
+          0.0089,
+          0.2361
+        ],
+        "matched_case_wins": 2.0,
+        "mean_delta_k": -0.018453,
+        "median_delta_k": 0.0,
+        "model": "deepseek-ai/deepseek-v4-pro-0813",
+        "paired_guard_median_ci95": [
+          -0.017548,
+          0.000316
+        ],
+        "paired_guard_median_delta_k": 0.0,
+        "provider": "nvidia",
+        "total_seconds": 1489.764,
+        "trials_per_case": 2,
+        "unique_proposals": 20,
+        "would_keep": 1
+      }
+    ],
+    "ranking_policy": [
+      "keep rate",
+      "matched-case wins",
+      "guard-pass rate",
+      "paired median guard-passing delta K",
+      "idea diversity",
+      "speed"
+    ],
+    "source_run_id": 33956473825,
+    "state_sha": "00d01b8c28bfc88763c94d6641fca45d52f289f0",
+    "unavailable": [
+      {
+        "detail": "GEMINI_API_KEY missing",
+        "model": "gemini-2.5-pro",
+        "provider": "gemini"
+      },
+      {
+        "detail": "APIStatusError: Error code: 410 - {'type': 'about:blank', 'title': 'Gone', 'status': 410, 'detail': \"The model 'z-ai/glm-5.2' has reached its end of life on 2026-08-21T09:00:00Z and is no longer available.\"}",
+        "model": "z-ai/glm-5.2",
+        "provider": "nvidia"
+      },
+      {
+        "detail": "GROQ_API_KEY missing",
+        "model": "openai/gpt-oss-120b",
+        "provider": "groq"
+      }
+    ],
+    "unavailable_models": 3
+  },
   "tracks": [
     {
       "attempts": 2,
@@ -24956,8 +25462,8 @@
         "id": 33970123704,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 47,
-        "status": "queued",
-        "updated_at": "2026-09-05T13:51:55Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-05T13:51:58Z"
       },
       {
         "conclusion": "success",
