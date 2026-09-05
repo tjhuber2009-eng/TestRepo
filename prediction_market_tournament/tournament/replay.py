@@ -61,8 +61,8 @@ def replay_resolved_trades(
     peak_equity = equity
     max_dd = 0.0
 
-    # signal_id -> (normalized entry cash, normalized payout)
-    open_positions: dict[str, tuple[float, float]] = {}
+    # signal_id -> (entry_cash, spent_on_shares, entry_fee, payout)
+    open_positions: dict[str, tuple[float, float, float, float]] = {}
     admitted: list[str] = []
     skipped: list[str] = []
     peak_committed = 0.0
@@ -73,9 +73,12 @@ def replay_resolved_trades(
             if position is None:
                 continue
 
-            entry_cash, payout = position
+            entry_cash, spent, _entry_fee, payout = position
             cash += payout
-            equity += payout - entry_cash
+            # Entry fee was recognized when the trade opened. Resolution
+            # replaces the share asset (carried at spent) with payout cash.
+            equity += payout - spent
+
             peak_equity = max(peak_equity, equity)
             dd = (
                 1.0 - equity / peak_equity
@@ -90,7 +93,9 @@ def replay_resolved_trades(
             continue
 
         target_entry_cash = risk_fraction * equity
-        original_entry_cash = trade.signal.size_usd + trade.fee_usd
+        original_spent = trade.signal.size_usd
+        original_fee = trade.fee_usd
+        original_entry_cash = original_spent + original_fee
         if original_entry_cash <= 0:
             skipped.append(signal_id)
             continue
@@ -101,20 +106,26 @@ def replay_resolved_trades(
             continue
 
         scale = entry_cash / original_entry_cash
+        spent = original_spent * scale
+        entry_fee = original_fee * scale
         payout = trade.payout_usd * scale
 
         cash -= entry_cash
-        open_positions[signal_id] = (entry_cash, payout)
+        equity -= entry_fee
+        open_positions[signal_id] = (
+            entry_cash,
+            spent,
+            entry_fee,
+            payout,
+        )
         admitted.append(signal_id)
 
         committed = sum(
             position_entry_cash
-            for position_entry_cash, _ in open_positions.values()
+            for position_entry_cash, *_ in open_positions.values()
         )
         peak_committed = max(peak_committed, committed)
 
-        # Entry itself does not create a loss: all committed cash remains
-        # part of equity until the binary outcome resolves.
         dd = (
             1.0 - equity / peak_equity
             if peak_equity > 0
