@@ -1,18 +1,32 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from .models import ResolvedTrade, Signal
 
 
 def append_jsonl(path: str | Path, row: dict) -> None:
+    """Append exactly one compact JSON line with one O_APPEND system write."""
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    with file_path.open("a", encoding="utf-8") as handle:
-        handle.write(
-            json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n"
-        )
+    payload = (
+        json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode("utf-8")
+    fd = os.open(
+        file_path,
+        os.O_APPEND | os.O_CREAT | os.O_WRONLY,
+        0o644,
+    )
+    try:
+        written = os.write(fd, payload)
+        if written != len(payload):
+            raise OSError(
+                f"short JSONL write: {written}/{len(payload)} bytes"
+            )
+    finally:
+        os.close(fd)
 
 
 def record_signal(
