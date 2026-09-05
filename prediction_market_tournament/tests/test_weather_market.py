@@ -19,6 +19,15 @@ def test_station_code():
     )
 
 
+def test_station_code_from_current_wunderground_rule_url():
+    assert (
+        extract_station_code(
+            "https://www.wunderground.com/history/daily/us/ca/los-angeles/KLAX"
+        )
+        == "KLAX"
+    )
+
+
 def test_range_f():
     bracket = parse_temperature_bracket(
         "Will the highest temperature in Los Angeles be between 70-71°F on September 4?"
