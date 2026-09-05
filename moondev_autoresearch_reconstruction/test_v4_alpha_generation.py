@@ -468,6 +468,47 @@ class V4AlphaGenerationTests(unittest.TestCase):
             all(float(np.max(w)) <= 0.50 + 1e-12 for w in rows)
         )
 
+    def test_portfolio_bootstrap_rng_is_independent_of_search_rng_consumption(self):
+        class BurnSearchRngOptimizer(RobustPortfolioOptimizer):
+            def __init__(self, *args, burn=0, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.burn = int(burn)
+
+            def _candidate_compositions(self, n, rng):
+                if self.burn:
+                    rng.random(self.burn)
+                return [np.full(n, 1.0 / n)]
+
+        rng = np.random.default_rng(2026)
+        ret = pd.DataFrame({
+            "A": rng.normal(0.0005, 0.012, 700),
+            "B": rng.normal(0.0004, 0.010, 700),
+            "C": rng.normal(0.0003, 0.008, 700),
+        })
+        common = dict(
+            dd_cap_pct=35,
+            n_candidates=1,
+            bootstrap_reps=40,
+            block=20,
+            max_weight=1.0,
+            max_gross=1.2,
+            seed=17,
+        )
+        a = BurnSearchRngOptimizer(**common, burn=0).optimize(ret).chosen
+        b = BurnSearchRngOptimizer(**common, burn=5000).optimize(ret).chosen
+        self.assertIsNotNone(a)
+        self.assertIsNotNone(b)
+        self.assertAlmostEqual(
+            a.bootstrap_median_cagr_pct,
+            b.bootstrap_median_cagr_pct,
+            places=12,
+        )
+        self.assertAlmostEqual(
+            a.bootstrap_dd_q95_pct,
+            b.bootstrap_dd_q95_pct,
+            places=12,
+        )
+
     def test_portfolio_optimizer_uses_cash_when_full_investment_breaks_dd_cap(self):
         rng = np.random.default_rng(12)
         r = rng.normal(0.0010, 0.03, 600)
