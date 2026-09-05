@@ -33,6 +33,10 @@ jobs:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
 
+      - name: Record checked-out research source SHA
+        shell: bash
+        run: echo "AUTORESEARCH_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
