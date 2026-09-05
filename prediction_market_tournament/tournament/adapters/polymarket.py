@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 GAMMA = "https://gamma-api.polymarket.com"
@@ -34,8 +34,41 @@ def list_markets(*, active: bool = True, closed: bool = False, limit: int = 100,
     return _get_json(f"{GAMMA}/markets?{q}")
 
 
+def get_market_by_id(market_id: str):
+    if not str(market_id).strip():
+        raise ValueError("market_id cannot be empty")
+    return _get_json(f"{GAMMA}/markets/{quote(str(market_id), safe='')}")
+
+
 def get_book(token_id: str):
     return _get_json(f"{CLOB}/book?{urlencode({'token_id': token_id})}")
+
+
+def get_clob_market_info(condition_id: str):
+    if not str(condition_id).strip():
+        raise ValueError("condition_id cannot be empty")
+    return _get_json(f"{CLOB}/clob-markets/{quote(str(condition_id), safe='')}")
+
+
+def market_fee_curve(condition_id: str) -> tuple[float, float]:
+    """Return the live CLOB fee curve (rate, exponent) for a market.
+
+    Polymarket exposes the authoritative per-market curve in the CLOB market
+    info `fd` object. We deliberately do not infer a fee from category names
+    when scoring a forward signal.
+    """
+    info = get_clob_market_info(condition_id)
+    fd = info.get("fd")
+    if not isinstance(fd, dict):
+        raise LookupError("CLOB market fee details (fd) missing")
+    try:
+        rate = float(fd["r"])
+        exponent = float(fd["e"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LookupError("CLOB market fee curve is incomplete") from exc
+    if rate < 0 or exponent < 0:
+        raise ValueError("CLOB fee rate/exponent must be non-negative")
+    return rate, exponent
 
 
 def get_event_by_slug(slug: str):
