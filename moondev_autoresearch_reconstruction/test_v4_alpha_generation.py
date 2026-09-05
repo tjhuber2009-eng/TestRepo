@@ -10,6 +10,7 @@ import pandas as pd
 from v4.account_profiles import FTMO_1STEP, FTMO_2STEP, PropStageRule
 from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, pareto_frontier
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
+from v4.continuous_bridge import private_portfolio_eligible, select_candidates
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
 from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
@@ -43,6 +44,7 @@ from v4.prop_intraday_bootstrap import (
     _resolve_prop_symbols,
     aggregate_prague_days,
     aggregate_prague_days_scaled,
+    hourly_continuous_daily_signal_strategy,
     hourly_rotation_strategy,
     hourly_tsmom_strategy,
     program_with_analysis_horizon,
@@ -1400,6 +1402,111 @@ class V4AlphaGenerationTests(unittest.TestCase):
         table = {row.exposure_scale: row for row in result.challenge_scale_table}
         self.assertEqual(set(table), {0.5, 1.0})
         self.assertTrue(all(row.paths == 120 for row in table.values()))
+
+    def test_continuous_bridge_private_pbo_gate_fails_closed(self):
+        self.assertFalse(private_portfolio_eligible(True, None))
+        self.assertTrue(private_portfolio_eligible(True, 0.40))
+        self.assertFalse(private_portfolio_eligible(True, 0.60))
+        self.assertFalse(private_portfolio_eligible(False, 0.10))
+
+    def test_continuous_bridge_selects_diversified_guarded_candidates(self):
+        def row(track, target, score, *, profile="private", grade="A", q=0.05):
+            return {
+                "track_id": track,
+                "profile": profile,
+                "family": "sentinel63",
+                "target": target,
+                "market": "crypto" if target in {"btc", "eth"} else "etf",
+                "exactness": "frozen_exact",
+                "evidence_grade": grade,
+                "development_guard_ok": True,
+                "development_cagr_pct": 20.0 + score,
+                "development_max_dd_pct": -10.0,
+                "development_sharpe": 1.2,
+                "development_pf": 2.0,
+                "development_years": 3.5,
+                "development_trades": 20,
+                "selection_score": score,
+                "multiple_test_qvalue": q,
+                "pbo": None,
+                "extreme_stress_return_pct": 30.0,
+            }
+        board = {
+            "protocol": "nested_chronological_v3",
+            "rows": [
+                row("btc1", "btc", 9.0),
+                row("btc2", "btc", 8.0),
+                row("btc3", "btc", 7.0),
+                row("eth1", "eth", 6.0),
+                row("badq", "qqq", 20.0, q=0.5),
+                row("badgrade", "spy", 19.0, grade="C"),
+            ],
+        }
+        chosen = select_candidates(
+            "private",
+            available_symbols={"BTCUSDT", "ETHUSDT", "QQQ", "SPY"},
+            per_target=2,
+            max_total=4,
+            leaderboard=board,
+        )
+        self.assertEqual(
+            [x.track_id for x in chosen],
+            ["btc1", "btc2", "eth1"],
+        )
+
+    def test_continuous_daily_prop_signal_is_causal_and_prague_flat(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=24 * 90,
+            freq="h",
+            tz="UTC",
+        )
+        close = 100.0 * (1.001 ** np.arange(len(idx)))
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+                "Volume": 1.0,
+            },
+            index=idx,
+        )
+        params = {
+            "family": "continuous_daily_signal",
+            "source_family": "sentinel63",
+            "source_target": "BTCUSDT",
+            "signal_window": 10,
+            "entry_z": 0.2,
+            "exit_z": -0.2,
+        }
+        strat = hourly_continuous_daily_signal_strategy(
+            params,
+            ("BTCUSDT", "ETHUSDT"),
+        )
+        data = {"BTCUSDT": frame, "ETHUSDT": frame * 0.8}
+        full = strat(data)
+
+        shorter = {k: v.iloc[: 24 * 70].copy() for k, v in data.items()}
+        prefix = strat(shorter)
+        pd.testing.assert_frame_equal(
+            prefix.iloc[:-1],
+            full.loc[prefix.index].iloc[:-1],
+        )
+
+        local_dates = pd.Series(
+            idx.tz_convert(PRAGUE).date,
+            index=idx,
+        )
+        reset_rows = local_dates.shift(-1).notna() & (
+            local_dates.shift(-1) != local_dates
+        )
+        self.assertTrue(
+            (full.loc[reset_rows].abs().sum(axis=1) == 0.0).all()
+        )
+        self.assertTrue(
+            set(full.columns) == {"BTCUSDT", "ETHUSDT"}
+        )
 
     def test_full_v4_integration_demo(self):
         out=run_integration_demo()
