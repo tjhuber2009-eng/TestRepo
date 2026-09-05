@@ -11,3 +11,8 @@ dependencies = ["websockets==17.1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tournament*"]
+namespaces = false
