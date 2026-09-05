@@ -2,114 +2,284 @@
 
 A forward-only, paper-only tournament for structural prediction-market edges.
 
+**Forward status:** NOT STARTED. The V1 clock begins only when
+`data/forward_start_v1.json` is deliberately created on the persistent host.
+
 ## Objective
 
-Find strategies with high **percentage return, profit factor, and capital efficiency**
-without trusting headline screenshots or tuning on future outcomes.
+Find strategies with high **percentage return, profit factor, and capital
+efficiency** without trusting screenshots, backfilled fills, hidden compounding,
+or parameters chosen after results are known.
 
-The frozen V1 comparison is designed to answer one question:
+The frozen V1 comparison asks:
 
-> If these exact rules had been fixed today, which lane makes the most money over
-> the same forward time window after executable prices and venue fees?
+> If these exact rules are fixed before the first observation, which lane makes
+> the most money over the same 30-day forward window using executable prices,
+> actual displayed depth, minimum order sizes, and venue fees?
 
-## Frozen lanes
+## Frozen paper account
 
-1. **Weather ensemble mispricing — taker baseline**
-   - Model probability from ensemble members rather than one deterministic forecast.
-   - Compare against the executable Polymarket ask.
-   - Charge the current weather taker fee coefficient.
-   - Resolve against the market's stated NOAA/NWS station/rules.
+- Initial paper capital: **$50**
+- Maximum allocation per recorded trade: **10% = $5 all-in cash**
+- Entry fees are part of the $5 cap, not added on top.
+- Maximum concurrent positions: **5**
+- The leaderboard replays each signal at the **exact cash size whose book depth
+  was observed**. It does not secretly compound a $5 quote into a larger
+  hypothetical fill after profits.
+- Unresolved positions continue consuming cash and concurrency and are carried
+  at share cost; no favorable mark-to-market is assumed.
 
-2. **Crypto TWAP dislocation — taker baseline**
-   - BTC/USD only in V1. The market must explicitly resolve from Chainlink's 60-second TWAP.
-   - Capture the strike from the first official `crypto_prices_twap_sixty` tick at/after
-     the 5-minute boundary. If it arrives more than 3 seconds late, skip that market.
-   - Evaluate exactly once at **120 seconds remaining** (maximum 3-second checkpoint lag).
-   - Estimate short-horizon diffusion from the prior 120 seconds of raw Chainlink updates.
-   - Model the distribution of the **final 60-second average**, not a future spot close.
-   - The strategy must beat the executable ask by at least 4 percentage points **after fee**.
+## Active V1 lanes
 
-3. **Late-resolution crypto**
-   - Separate, non-overlapping checkpoint: evaluate exactly once at **30 seconds remaining**.
-   - Half of the final 60-second averaging interval is then already observed; the model uses
-     that known time-weighted segment and only assigns uncertainty to the remaining half.
-   - Require fair probability >=92% and at least 2.5 percentage points of after-fee edge.
+### 1. Weather ensemble mispricing — taker
 
-4. **Favorite/longshot calibration — shadow**
-   - No look-ahead calibration.
-   - It remains shadow-only until a point-in-time resolution database exists.
+Current Polymarket daily-temperature rules are parsed directly from the market,
+including the named Wunderground station-history URL.
 
-5. **Maker/rebate capture — shadow**
-   - Maker orders are fee-free, but paper fills are easy to fake.
-   - This lane does not count a fill until order-book/trade replay proves the limit
-     would have executed.
+Forecast probability is an equal-model blend of:
 
-6. **Complete-set / mutually-exclusive dislocation — shadow**
-   - Only exhaustive, mutually exclusive events.
-   - Every leg must be executable.
-   - A signal exists when the sum of best executable YES asks is below $1 by the
-     frozen minimum edge.
+- ECMWF AIFS 0.25 ensemble
+- ECMWF IFS 0.25 ensemble
+- NCEP GEFS 0.25 ensemble
 
-7. **Trade-Halts — external control**
-   - Kept as a paper-only control because historical performance was extraordinary
-     but post-freeze stress tests were poor.
+Each model first produces its own bracket probability. Those probabilities are
+then averaged equally; models with more ensemble members do not receive extra
+weight merely because they expose more perturbations.
 
-## Rules that cannot be relaxed after forward data arrives
+Execution rules:
 
-- Paper-forward only. Real-money execution is disabled.
-- No parameter change can alter already-recorded signals.
-- Every signal stores the frozen spec SHA-256.
-- Actual bid/ask is required; midpoint-only "fills" do not count.
-- Current category fees are charged.
-- Missed fills remain missed fills.
-- A small sample is **never eliminated**. It stays provisional and gets ranked with
-  explicit uncertainty.
-- Strategy returns are compared on the same 30-day window. Shorter histories are
-  shown as provisional return-to-date, not annualized headline returns.
-- No future resolution may enter a model or calibration used for an earlier signal.
+- Use the exact resolution-station coordinates.
+- Aggregate the station-local calendar day with Open-Meteo
+  `timezone=auto`.
+- Current whole-degree market resolution is modeled with half-degree bin
+  boundaries before bracket scoring.
+- Retrieve YES and NO books together.
+- Integrate the live CLOB fee curve at every consumed price level.
+- Enforce the published minimum order size.
+- Compare both executable sides and choose only the higher exact after-fee
+  edge.
+- Require at least **5 percentage points** of exact after-fee edge.
+- At most one recorded signal per market.
 
-## Ranking
+### 2. BTC 5-minute Chainlink TWAP dislocation — taker
 
-Primary dashboard metrics:
+The market must be the exact timestamp-derived
+`btc-updown-5m-{window_start_epoch_seconds}` event and explicitly resolve from
+Chainlink BTC/USD 60-second TWAP.
 
-- 30-day net return
-- profit factor
-- capital efficiency
-- max drawdown
-- Brier score / probability calibration
-- trade count and calendar age
+Opening strike:
 
-`fixed_window_score` is a convenience ranking, not an optimization target.
-Tournament decisions should still inspect the raw metrics.
+- Subscribe to Polymarket RTDS `crypto_prices_twap_sixty` for `btc/usd`.
+- RTDS filters use the documented compact JSON **string**
+  `{"symbol":"btc/usd"}`.
+- The opening TWAP is accepted only if both its source timestamp **and the
+  collector receive timestamp** are within 3 seconds after the 5-minute
+  boundary.
+- Missing or late strikes are permanently missed; they are never reconstructed
+  from spot data.
 
-## Data sources
+120-second checkpoint:
 
-The V1 code has public adapters for:
+- Evaluate once at **120 seconds remaining**, with at most 3 seconds of
+  post-checkpoint lag.
+- Require fresh causal `crypto_prices_chainlink` raw data.
+- Require at least 30 raw observations from the prior 120 seconds.
+- Require the latest raw observation to be no more than 3 seconds old.
+- Model the final **60-second average**, not a future spot close.
+- Retrieve UP and DOWN books in one batch snapshot.
+- Quote the full all-in $5 cash budget through displayed depth and the live fee
+  curve.
+- Require at least **4 percentage points** of exact after-fee edge.
 
-- Polymarket Gamma API
-- Polymarket CLOB order books
-- Polymarket RTDS raw Chainlink and exact 60-second TWAP (`full_accuracy_value`, E18)
-- Open-Meteo ensemble forecasts
+### 3. BTC late-resolution lane — taker
 
-NOAA/NWS should be treated as the settlement reference when the market rules specify
-a NOAA/NWS station. Current crypto Up/Down markets must be audited against their
-stated Chainlink TWAP resolution source. V1 never substitutes Binance, Coinbase, or a
-last-trade print for a missing official TWAP strike.
+A separate checkpoint on the same exact BTC 5-minute market:
 
-## Run tests
+- Evaluate once at **30 seconds remaining**, with at most 3 seconds of lag.
+- Use the same frozen opening TWAP.
+- The already observed half of the final 60-second TWAP window is integrated as
+  a causal time-weighted known segment.
+- Only the unobserved segment retains forecast uncertainty.
+- Require fair probability >= **92%**.
+- Require at least **2.5 percentage points** of exact after-fee edge.
+- Use the same simultaneous UP/DOWN executable-book and all-in-fee treatment.
+
+## Shadow/control lanes
+
+### Favorite/longshot calibration
+
+Shadow-only until a point-in-time calibration database exists. No current
+outcome may calibrate an earlier signal.
+
+### Maker/rebate capture
+
+Shadow-only. A paper touch is not a fill. Promotion requires order-book/trade
+replay proving the limit order would have executed.
+
+### Complete-set / mutually exclusive dislocation
+
+Shadow-only. Requires exhaustive mutually exclusive events, all legs, negative
+risk where applicable, simultaneous-fill modeling, and per-leg fees before it
+can become a counted strategy.
+
+### Trade-Halts
+
+External paper control. Historical anomaly results were strong, but
+post-freeze behavior was concerning; it is retained as a control rather than
+discarded.
+
+## Execution realism
+
+Counted active-lane signals require:
+
+- exact market identity;
+- exact token/book identity;
+- full displayed depth for the entire cash budget;
+- published minimum order size;
+- live market fee parameters;
+- nonlinear fee integration at each consumed book level;
+- a causal observation timestamp after the execution books/rules were
+  retrieved;
+- no midpoint or spot-price substitution;
+- no rescued missed checkpoint.
+
+BTC UP/DOWN books and weather YES/NO books are retrieved through the CLOB batch
+order-book endpoint to reduce artificial side-to-side timing skew.
+
+## Settlement
+
+A market must be closed and have an unambiguous one-hot terminal outcome.
+
+If Gamma exposes `umaResolutionStatus`, only explicit final states
+(`resolved` or `settled`) are accepted. `requested`, `proposed`, and
+`disputed` remain unresolved.
+
+Capital release prefers the later Gamma `updatedAt` timestamp carrying the
+final state rather than assuming trading `closedTime` equals oracle finality.
+
+Recorded executed shares and entry fees are reused exactly at settlement.
+
+## Forward freeze
+
+Starting V1 is a deliberate one-shot action.
+
+The marker binds:
+
+- frozen spec SHA-256;
+- implementation SHA-256;
+- exact runtime fingerprint;
+- Python implementation/version;
+- OS family and machine architecture;
+- installed `websockets` version.
+
+The implementation hash covers runtime code, executable scripts, deployment
+files, `pyproject.toml`, data-persistence ignore rules, and the PMT CI
+workflow.
+
+After start, a code/spec/runtime mismatch fails closed. Parameter changes
+require a new tournament version and a new clock.
+
+## Audit trail
+
+Source observations are JSONL and remotely persisted.
+
+Persistence rules:
+
+- source JSONL files are **append-only**;
+- an existing source line may not be edited or deleted;
+- `forward_start_v1.json` may only be added once and then is immutable;
+- only derived `leaderboard.json` may be replaced;
+- Git persistence stages only `prediction_market_tournament/data`;
+- runtime lock/temp files are excluded;
+- failed pushes are retried even if no new signal arrives in the next hour.
+
+## Equal-window ranking
+
+Official lane comparison uses the exact frozen $50 account over the same
+30-day forward decision window.
+
+Primary metrics:
+
+- net return on the $50 account;
+- net P&L;
+- profit factor;
+- capital efficiency;
+- peak committed cash;
+- maximum drawdown;
+- Brier score / calibration;
+- resolved/unresolved trade counts;
+- open positions;
+- calendar age.
+
+Partial windows are provisional. They are not annualized.
+
+A small sample is never eliminated merely for being small.
+
+## Persistent collection
+
+GitHub Actions is **CI-only**. It is not used for live forward collection
+because hourly/scheduled CI cannot credibly hit 3-second BTC checkpoints.
+
+The persistent supervisor runs:
+
+- continuous BTC RTDS collection;
+- weather discovery/scan every 15 minutes;
+- settlement every 5 minutes;
+- complete-set shadow scan hourly;
+- leaderboard refresh every 5 minutes;
+- remote data-only Git persistence hourly.
+
+The supervisor is protected by a singleton process lock and refuses to run
+before the deliberate start marker exists.
+
+## Pre-start host checks
+
+`scripts/preflight_forward.py` must pass before V1 starts. It verifies:
+
+- data directory is uncontaminated;
+- Polymarket Gamma is reachable;
+- CLOB server-time round-trip <= 2 seconds;
+- absolute host/CLOB clock offset <= 1.5 seconds;
+- actual fresh BTC raw Chainlink updates arrive;
+- actual fresh BTC 60-second TWAP updates arrive;
+- RTDS source-to-host lag <= 5 seconds;
+- current spec, implementation, and runtime hashes can be computed.
+
+A connection that receives no usable TWAP updates does **not** pass.
+
+## Installation / tests
+
+Requires Python 3.12.
 
 ```bash
-python -m pip install -e .
+python -m pip install pip==26.2.1
+python -m pip install -e . pytest==9.1.1
 pytest -q
 ```
 
-## Freeze verification
+Runtime dependency is pinned to `websockets==17.1`.
 
-```python
-from tournament.core import load_frozen_spec
-spec, sha = load_frozen_spec("config/frozen_v1.json")
-print(sha)
+## Google e2-micro deployment path
+
+A persistent Ubuntu host setup helper is included:
+
+```bash
+deploy/setup_google_e2_micro.sh
 ```
 
-Every forward signal should record that SHA. A new strategy version must use a new
-config file and a new forward clock; never rewrite `frozen_v1.json`.
+It installs the environment, runs the complete unit suite, performs the live
+preflight, verifies GitHub write access for audit persistence, and installs the
+systemd user service.
+
+**It deliberately does not start V1.**
+
+Once the host is fully ready, the two separate launch actions are:
+
+```bash
+.venv/bin/python scripts/start_forward.py
+systemctl --user enable --now pmt-forward.service
+```
+
+Do not run the first command until the final repository review and live
+preflight are complete. Once the marker exists, runtime-changing edits
+intentionally invalidate PMT-FROZEN-V1.
