@@ -29,6 +29,12 @@ export default function About() {
         </s-paragraph>
       </s-section>
 
+      <s-section heading="Missed-webhook reconciliation">
+        <s-paragraph>
+          CatalogMirror periodically asks Shopify for products updated since the last successful reconciliation. Large discovery runs use Shopify Bulk Operations, stream the resulting JSONL file without loading it all into memory, and enqueue low-priority targeted checks so live webhook changes remain first in line.
+        </s-paragraph>
+      </s-section>
+
       <s-section heading="Data use">
         <s-paragraph>
           CatalogMirror requests read-only product and inventory access. It does not modify products, prices, inventory, orders, customers, themes, or storefront code. Customer privacy webhooks are authenticated; no customer records are stored by the app.
