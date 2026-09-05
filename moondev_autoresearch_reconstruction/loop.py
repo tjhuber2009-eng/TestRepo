@@ -9,6 +9,7 @@ import argparse
 import ast
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -263,6 +264,10 @@ def append_experiment_record(
         record["fold_return_pct"] = [
             x.get("return_pct") for x in (result.get("folds") or [])
         ]
+        paired = result.get("paired_vs_baseline") or {}
+        record["comparable_folds"] = paired.get("comparable_folds")
+        record["median_fold_delta_k"] = paired.get("median_fold_delta_k")
+        record["improved_fold_fraction"] = paired.get("improved_fold_fraction")
     with open(EXPERIMENTS, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, sort_keys=True) + "\n")
 
@@ -673,6 +678,45 @@ def run_backtest(iteration):
     return load_json(LAST_RUN), "", time.time() - t0
 
 
+def paired_fold_improvement(base, candidate):
+    base_folds = {
+        x.get("name"): x for x in (base.get("folds") or [])
+        if x.get("name") is not None
+    }
+    candidate_folds = {
+        x.get("name"): x for x in (candidate.get("folds") or [])
+        if x.get("name") is not None
+    }
+    deltas = []
+    for name in sorted(set(base_folds) & set(candidate_folds)):
+        try:
+            a = float(base_folds[name].get("raw_k"))
+            b = float(candidate_folds[name].get("raw_k"))
+        except Exception:
+            continue
+        if math.isfinite(a) and math.isfinite(b):
+            deltas.append(b - a)
+    if not deltas:
+        return {
+            "comparable_folds": 0,
+            "median_fold_delta_k": None,
+            "improved_fold_fraction": None,
+        }
+    ordered = sorted(deltas)
+    n = len(ordered)
+    median = (
+        ordered[n // 2] if n % 2
+        else 0.5 * (ordered[n // 2 - 1] + ordered[n // 2])
+    )
+    return {
+        "comparable_folds": n,
+        "median_fold_delta_k": round(float(median), 6),
+        "improved_fold_fraction": round(
+            sum(x > 0 for x in deltas) / n, 4
+        ),
+    }
+
+
 def append_result(
     ts, iteration, verdict, score, base, ret, sharpe, vol,
     trades, dd, reason, desc, result=None,
@@ -865,6 +909,8 @@ def main():
                         shutil.copy(BEST, STRATEGY)
                     else:
                         score = result["score"]
+                        paired = paired_fold_improvement(base, result)
+                        result["paired_vs_baseline"] = paired
                         ret = result["return_pct"]
                         sharpe = result["sharpe"]
                         vol = result["ann_vol_pct"]
@@ -879,21 +925,40 @@ def main():
                             reason = f"guard: {result['guard_reason']}"
                         else:
                             base_score = float(base["score"])
-                            min_delta = max(
+                            base_delta = max(
                                 0.005,
                                 min(0.02, 0.01 * max(abs(base_score), 0.10)),
                             )
-                            if float(score) > base_score + min_delta:
+                            # Repeated adaptive search creates a multiple-testing
+                            # burden. Raise the required material improvement
+                            # modestly as this track consumes more experiments.
+                            search_penalty = 1.0 + 0.12 * math.log1p(iteration)
+                            min_delta = min(0.04, base_delta * search_penalty)
+                            paired = result.get("paired_vs_baseline") or {}
+                            fold_ok = True
+                            if int(paired.get("comparable_folds") or 0) >= 3:
+                                fold_ok = (
+                                    float(paired.get("improved_fold_fraction") or 0.0) >= 0.50
+                                    and float(paired.get("median_fold_delta_k") or -1e9) >= 0.0
+                                )
+                            if float(score) > base_score + min_delta and fold_ok:
                                 verdict = "KEPT"
                                 reason = (
-                                    f"K {base_score} -> {score} "
+                                    f"K {base_score} -> {score}; paired folds "
+                                    f"{paired.get('improved_fold_fraction')} improved "
                                     f"(required delta {min_delta:.4f})"
+                                )
+                            elif not fold_ok:
+                                verdict = "REJECTED"
+                                reason = (
+                                    "paired chronological folds did not show a "
+                                    "median/majority improvement over baseline"
                                 )
                             else:
                                 verdict = "REJECTED"
                                 reason = (
                                     f"K {score} did not exceed {base_score} "
-                                    f"by required delta {min_delta:.4f}"
+                                    f"by adaptive required delta {min_delta:.4f}"
                                 )
 
                         if verdict == "KEPT":
