@@ -41,6 +41,7 @@ class PropFirmProgram:
     reward_share: float
     first_reward_eligible_days: int
     rule_source: str
+    challenge_fee_refundable_with_first_reward: bool = False
     instrument_policy: str = "venue_symbols_only"
 
     def to_dict(self) -> dict:
@@ -53,6 +54,9 @@ class PropFirmProgram:
             "reward_share": self.reward_share,
             "first_reward_eligible_days": self.first_reward_eligible_days,
             "rule_source": self.rule_source,
+            "challenge_fee_refundable_with_first_reward": (
+                self.challenge_fee_refundable_with_first_reward
+            ),
             "instrument_policy": self.instrument_policy,
         }
 
@@ -90,6 +94,7 @@ FTMO_2STEP = PropFirmProgram(
     reward_share=0.80,
     first_reward_eligible_days=14,
     rule_source="https://ftmo.com/en/trading-objectives/",
+    challenge_fee_refundable_with_first_reward=True,
 )
 
 
@@ -120,6 +125,7 @@ FTMO_1STEP = PropFirmProgram(
     reward_share=0.90,
     first_reward_eligible_days=14,
     rule_source="https://ftmo.com/en/trading-objectives/",
+    challenge_fee_refundable_with_first_reward=False,
 )
 
 
