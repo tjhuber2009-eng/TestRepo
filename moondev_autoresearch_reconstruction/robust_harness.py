@@ -19,10 +19,12 @@ import hashlib
 import json
 import math
 import os
+import platform
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import backtesting
 from backtesting import Backtest
 
 from research_metrics import (
@@ -667,6 +669,13 @@ def common_metadata(summary, stage):
         "data_sha256": sha256_file(DATA_FILE),
         "harness_sha256": sha256_file(HARNESS_FILE),
         "program_sha256": sha256_file(PROGRAM_FILE) if PROGRAM_FILE.exists() else None,
+        "config_sha256": sha256_file(CONFIG_FILE) if CONFIG_FILE.exists() else None,
+        "registry_sha256": sha256_file(REGISTRY_FILE) if REGISTRY_FILE.exists() else None,
+        "seed_factory_sha256": sha256_file(SEED_FACTORY_FILE) if SEED_FACTORY_FILE.exists() else None,
+        "python_version": platform.python_version(),
+        "numpy_version": np.__version__,
+        "pandas_version": pd.__version__,
+        "backtesting_version": getattr(backtesting, "__version__", None),
         "adaptive_development_end": DEV_END,
         "hidden_validation_start": VALIDATION_START,
         "hidden_validation_end": VALIDATION_END,
