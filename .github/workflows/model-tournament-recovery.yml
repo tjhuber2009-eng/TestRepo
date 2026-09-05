@@ -1,0 +1,268 @@
+name: Recover zero-fee model tournament
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Original tournament run containing completed artifacts"
+        required: true
+        default: "33956473825"
+      state_sha:
+        description: "Frozen continuous-state SHA used by the original tournament"
+        required: true
+        default: "00d01b8c28bfc88763c94d6641fca45d52f289f0"
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: zero-fee-model-tournament-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover-existing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        working-directory: moondev_autoresearch_reconstruction
+        run: python -m pip install -r requirements.txt
+
+      - name: Download preserved source-run artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+          pattern: tournament-*
+          path: tournament_results
+          merge-multiple: true
+
+      - name: Aggregate preserved results
+        working-directory: moondev_autoresearch_reconstruction
+        run: >
+          python aggregate_model_tournament.py
+          --folder ../tournament_results
+          --state-sha '${{ inputs.state_sha }}'
+          --json-out ../tournament-summary.json
+          --report-out ../tournament-report.md
+
+      - name: Mark provisional recovery
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          p=Path("tournament-summary.json")
+          x=json.loads(p.read_text())
+          x["provisional"]=True
+          x["source_run_id"]=int("${{ inputs.source_run_id }}")
+          x["note"]="Recovered from completed source-run artifacts while Nemotron Lightning is retried separately."
+          p.write_text(json.dumps(x,indent=2,sort_keys=True)+"\n")
+          r=Path("tournament-report.md")
+          body=r.read_text()
+          marker="\n> **Provisional recovery:** Nemotron Lightning timed out at trial 19/20 in the original run and is being retried separately.\n"
+          r.write_text(body.replace("\nProtocol:", marker+"\nProtocol:",1))
+
+      - name: Publish provisional tournament state
+        shell: bash
+        run: |
+          git fetch origin model-tournament-state:refs/remotes/origin/model-tournament-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C model-tournament-state refs/remotes/origin/model-tournament-state
+          mkdir -p moondev_autoresearch_reconstruction/tournament_state
+          cp tournament-summary.json moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json
+          cp tournament-report.md moondev_autoresearch_reconstruction/tournament_state/tournament-report.md
+          git add -f moondev_autoresearch_reconstruction/tournament_state
+          if ! git diff --cached --quiet; then
+            git commit -m "Recover provisional model tournament results"
+            git push origin HEAD:model-tournament-state
+          fi
+
+  lightning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore sealed development-only market-data cache
+        uses: actions/cache@v4
+        with:
+          path: moondev_autoresearch_reconstruction/data
+          key: autoresearch-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
+
+      - name: Restore exact original frozen state
+        shell: bash
+        working-directory: .
+        env:
+          STATE_SHA: ${{ inputs.state_sha }}
+        run: |
+          git fetch origin "$STATE_SHA"
+          git checkout "$STATE_SHA" -- moondev_autoresearch_reconstruction/continuous_state
+          echo "Using original frozen state $STATE_SHA"
+
+      - name: Integrity and OOS guards
+        shell: bash
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
+          python oos_guard.py
+
+      - name: Retry Nemotron Lightning matched benchmark
+        shell: bash
+        run: >
+          python model_tournament.py
+          --provider nvidia
+          --model nvidia/nemotron-3.5-lightning-30b-a3b
+          --trials 2
+
+      - name: Post-run OOS guard
+        run: python oos_guard.py
+
+      - name: Name result
+        shell: bash
+        run: mv model_tournament_result.json tournament_nemotron-lightning.json
+
+      - name: Upload recovered Lightning result
+        uses: actions/upload-artifact@v4
+        with:
+          name: tournament-nemotron-lightning
+          path: moondev_autoresearch_reconstruction/tournament_nemotron-lightning.json
+          retention-days: 30
+
+  finalize:
+    needs: [recover-existing, lightning]
+    if: always() && needs.recover-existing.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        working-directory: moondev_autoresearch_reconstruction
+        run: python -m pip install -r requirements.txt
+
+      - name: Download preserved source-run artifacts
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+          pattern: tournament-*
+          path: tournament_results
+          merge-multiple: true
+
+      - name: Download recovered Lightning artifact
+        if: needs.lightning.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-nemotron-lightning
+          path: tournament_results
+          merge-multiple: true
+
+      - name: Aggregate recovered tournament
+        working-directory: moondev_autoresearch_reconstruction
+        run: >
+          python aggregate_model_tournament.py
+          --folder ../tournament_results
+          --state-sha '${{ inputs.state_sha }}'
+          --json-out ../tournament-summary.json
+          --report-out ../tournament-report.md
+
+      - name: Annotate recovery status
+        shell: python
+        env:
+          LIGHTNING_RESULT: ${{ needs.lightning.result }}
+        run: |
+          import json, os
+          from pathlib import Path
+          p=Path("tournament-summary.json")
+          x=json.loads(p.read_text())
+          x["recovered_from_run_id"]=int("${{ inputs.source_run_id }}")
+          x["lightning_recovery_result"]=os.environ["LIGHTNING_RESULT"]
+          x["provisional"]=os.environ["LIGHTNING_RESULT"]!="success"
+          p.write_text(json.dumps(x,indent=2,sort_keys=True)+"\n")
+          if os.environ["LIGHTNING_RESULT"]!="success":
+              r=Path("tournament-report.md")
+              body=r.read_text()
+              marker="\n> **Recovery note:** Nemotron Lightning still did not produce a complete artifact; ranking excludes it.\n"
+              r.write_text(body.replace("\nProtocol:", marker+"\nProtocol:",1))
+
+      - name: Persist recovered tournament state
+        shell: bash
+        run: |
+          git fetch origin model-tournament-state:refs/remotes/origin/model-tournament-state
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C model-tournament-state refs/remotes/origin/model-tournament-state
+          mkdir -p moondev_autoresearch_reconstruction/tournament_state
+          cp tournament-summary.json moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json
+          cp tournament-report.md moondev_autoresearch_reconstruction/tournament_state/tournament-report.md
+          git add -f moondev_autoresearch_reconstruction/tournament_state
+          if ! git diff --cached --quiet; then
+            git commit -m "Finalize recovered model tournament"
+            git push origin HEAD:model-tournament-state
+          fi
+
+      - name: Upload recovered aggregate
+        uses: actions/upload-artifact@v4
+        with:
+          name: tournament-recovery-summary
+          path: |
+            tournament-summary.json
+            tournament-report.md
+          retention-days: 30
+
+      - name: Refresh live dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh workflow run autoresearch-dashboard.yml
+          --repo ${{ github.repository }}
+          --ref main
+
+      - name: Comment recovered standings on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh pr comment 13
+          --repo ${{ github.repository }}
+          --body-file tournament-report.md
