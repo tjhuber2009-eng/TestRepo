@@ -236,6 +236,14 @@ jobs:
           fi
           git push --force-with-lease origin continuous-autoresearch-state
 
+      - name: Refresh stable live dashboard
+        shell: bash
+        working-directory: .
+        run: |
+          gh workflow run autoresearch-dashboard.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+
       - name: Upload current research state summary
         uses: actions/upload-artifact@v4
         with:
