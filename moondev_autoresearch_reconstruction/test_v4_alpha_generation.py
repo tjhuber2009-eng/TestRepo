@@ -408,6 +408,11 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertLessEqual(
             result.selected.combined_evaluation_pass_probability, 1.0
         )
+        self.assertIn("max_payout_efficiency", result.views)
+        self.assertIn("max_evaluation_pass", result.views)
+        self.assertIn("safest_funded", result.views)
+        self.assertIn("balanced", result.views)
+        self.assertIn("conservative", result.views)
 
     def test_ftmo_daily_loss_subtracts_fixed_initial_capital_amount(self):
         rule = PropStageRule(
