@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import date
+from functools import lru_cache
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -14,6 +15,7 @@ def _get_json(url: str, timeout: float = 20.0):
         return json.loads(r.read().decode("utf-8"))
 
 
+@lru_cache(maxsize=256)
 def fetch_temperature_ensemble(
     latitude: float,
     longitude: float,
