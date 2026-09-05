@@ -49,6 +49,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: autoresearch-v4-smoke-\${{ github.run_id }}
+          name: autoresearch-v4-smoke-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/v4_state/integration-demo.json
           retention-days: 14
