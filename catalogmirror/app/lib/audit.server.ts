@@ -63,6 +63,7 @@ type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 type ProductConnectionData = { nodes: AdminProduct[]; pageInfo: PageInfo };
 type VariantConnectionData = { nodes: AdminVariant[]; pageInfo: PageInfo };
 type ProductsQueryData = { products: ProductConnectionData };
+type ProductsByIdsData = { nodes: Array<AdminProduct | null> };
 type VariantsQueryData = { product: { variants: VariantConnectionData } | null };
 type ShopContextData = { shop: { currencyCode: string } };
 type StorefrontCurrencyCache = Map<string, Promise<string>>;
@@ -92,6 +93,14 @@ const PRODUCTS_QUERY = `#graphql
     products(first: $first, after: $after, sortKey: UPDATED_AT, reverse: true) {
       nodes { id title handle status onlineStoreUrl }
       pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+const PRODUCTS_BY_IDS_QUERY = `#graphql
+  query CatalogMirrorProductsByIds($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on Product { id title handle status onlineStoreUrl }
     }
   }
 `;
@@ -222,6 +231,25 @@ async function loadProducts(admin: AdminClient, limit: number) {
   }
 
   return { products, hasMore };
+}
+
+async function loadProductsByIds(admin: AdminClient, ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids.filter((id) => /^gid:\/\/shopify\/Product\/\d+$/.test(id))));
+  const products: AdminProduct[] = [];
+
+  for (let offset = 0; offset < uniqueIds.length; offset += 100) {
+    const chunk = uniqueIds.slice(offset, offset + 100);
+    const data: ProductsByIdsData = await adminQuery<ProductsByIdsData>(
+      admin,
+      PRODUCTS_BY_IDS_QUERY,
+      { ids: chunk },
+    );
+    for (const node of data.nodes ?? []) {
+      if (node?.id) products.push(node);
+    }
+  }
+
+  return products;
 }
 
 async function loadVariants(admin: AdminClient, productId: string) {
@@ -752,6 +780,7 @@ export async function runCatalogAudit(args: {
   shop: string;
   limit?: number;
   trigger?: string;
+  productIds?: string[];
 }) {
   const maxProducts = getAuditMaxProducts();
   const requested = args.limit ?? maxProducts;
@@ -776,7 +805,12 @@ export async function runCatalogAudit(args: {
     const shopCurrency = shopContext.shop.currencyCode.toUpperCase();
     const currencyCache: StorefrontCurrencyCache = new Map();
 
-    const { products, hasMore } = await loadProducts(args.admin, limit);
+    const targetedProductIds = args.productIds?.length ? args.productIds : null;
+    const loaded = targetedProductIds
+      ? { products: await loadProductsByIds(args.admin, targetedProductIds), hasMore: false }
+      : await loadProducts(args.admin, limit);
+    const { products, hasMore } = loaded;
+
     const results = await mapWithConcurrency(
       products,
       getAuditConcurrency(),
@@ -861,19 +895,34 @@ export async function runCatalogAudit(args: {
     }
 
     const finishedAt = new Date();
-    if (!hasMore) {
-      await db.shopAuditState.upsert({
-        where: { shop: args.shop },
-        create: { shop: args.shop, pendingChanges: 0, lastAuditAt: finishedAt },
-        update: { pendingChanges: 0, lastAuditAt: finishedAt },
+    let pendingChanges: number | undefined;
+
+    if (!targetedProductIds && !hasMore) {
+      await db.auditTask.deleteMany({
+        where: {
+          shop: args.shop,
+          updatedAt: { lte: new Date(started) },
+          OR: [
+            { lockedUntil: null },
+            { lockedUntil: { lt: finishedAt } },
+          ],
+        },
       });
-    } else {
-      await db.shopAuditState.upsert({
-        where: { shop: args.shop },
-        create: { shop: args.shop, lastAuditAt: finishedAt },
-        update: { lastAuditAt: finishedAt },
-      });
+      pendingChanges = await db.auditTask.count({ where: { shop: args.shop } });
     }
+
+    await db.shopAuditState.upsert({
+      where: { shop: args.shop },
+      create: {
+        shop: args.shop,
+        lastAuditAt: finishedAt,
+        ...(pendingChanges !== undefined ? { pendingChanges } : {}),
+      },
+      update: {
+        lastAuditAt: finishedAt,
+        ...(pendingChanges !== undefined ? { pendingChanges } : {}),
+      },
+    });
 
     return await db.auditRun.update({
       where: { id: run.id },
