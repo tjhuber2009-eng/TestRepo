@@ -14,8 +14,9 @@ from .feature_store import FeatureStoreBuilder
 from .multi_asset_engine import MultiAssetBacktester, PortfolioLimits, leveraged_regime_rotation
 from .parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from .portfolio_optimizer import RobustPortfolioOptimizer
-from .risk_overlays import volatility_target_overlay
-from .strategy_examples import cross_sectional_momentum_rotation
+from .risk_overlays import drawdown_brake_overlay, volatility_target_overlay
+from .selection_diagnostics import optimizer_pbo
+from .strategy_examples import cross_sectional_momentum_rotation, leveraged_defensive_rotation
 
 
 def json_safe(value):
@@ -54,6 +55,9 @@ def load_data(root: Path) -> dict[str, pd.DataFrame]:
         "QQQ": "qqq_1d.csv",
         "TQQQ": "tqqq_1d.csv",
         "SPY": "spy_1d.csv",
+        "IEF": "ief_1d.csv",
+        "GLD": "gld_1d.csv",
+        "SHY": "shy_1d.csv",
         "BTCUSDT": "btc_1d.csv",
         "ETHUSDT": "eth_1d.csv",
     }
@@ -71,7 +75,7 @@ def fold_cagr_scores(returns: pd.Series, periods_per_year: float, dd_cap_pct: fl
     """CAGR-first fold utility with explicit drawdown-over-cap penalty."""
     arr = returns.to_numpy(dtype=float)
     out = []
-    for chunk in np.array_split(arr, 5):
+    for chunk in np.array_split(arr, 8):
         chunk = chunk[np.isfinite(chunk)]
         if len(chunk) < 20:
             continue
