@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==80.9.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "prediction-market-tournament"
 version = "0.1.0"
 description = "Frozen, forward-only prediction-market strategy tournament"
-requires-python = ">=3.11"
-dependencies = ["websockets>=15,<17"]
+requires-python = ">=3.12,<3.13"
+dependencies = ["websockets==17.1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
