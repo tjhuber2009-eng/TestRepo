@@ -1,0 +1,16 @@
+[Unit]
+Description=Prediction Market Tournament forward collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/TestRepo/prediction_market_tournament
+ExecStart=%h/TestRepo/prediction_market_tournament/.venv/bin/python scripts/run_forward_service.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+Nice=5
+
+[Install]
+WantedBy=default.target
