@@ -60,6 +60,14 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(np.isnan(feat.iloc[0]["ctx_risk__vix"]))
         self.assertEqual(feat.iloc[10]["ctx_risk__vix"], 9.0)
 
+    def test_feature_store_accepts_named_date_indexes(self):
+        data = synthetic_daily_market(bars=300)
+        for frame in data.values():
+            frame.index.name = "Date"
+        store = FeatureStoreBuilder().build({"QQQ": data["QQQ"], "SPY": data["SPY"]})
+        self.assertEqual(store.cross_sectional.index.names, ["ts", "symbol"])
+        self.assertIn("xrank_ret_20", store.cross_sectional.columns)
+
     def test_regime_prefix_invariant_to_future_append(self):
         data = synthetic_daily_market(bars=700)["QQQ"]
         engine = RegimeEngine()
