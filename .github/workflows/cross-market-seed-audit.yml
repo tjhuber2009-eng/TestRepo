@@ -1,8 +1,7 @@
 name: Cross-market seed audit
 
 on:
-  issue_comment:
-    types: [created]
+  workflow_dispatch:
 
 permissions:
   contents: read
