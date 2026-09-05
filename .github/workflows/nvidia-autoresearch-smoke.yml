@@ -1,17 +1,6 @@
 name: NVIDIA AUTORESEARCH smoke test
 
 on:
-  push:
-    branches:
-      - moondev-nvidia-autoresearch
-    paths:
-      - "moondev_autoresearch_reconstruction/**"
-      - ".github/workflows/nvidia-autoresearch-smoke.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "moondev_autoresearch_reconstruction/**"
-      - ".github/workflows/nvidia-autoresearch-smoke.yml"
   workflow_dispatch:
 
 permissions:
