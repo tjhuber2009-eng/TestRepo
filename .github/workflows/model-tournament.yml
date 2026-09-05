@@ -115,6 +115,7 @@ jobs:
           python model_tournament.py
           --provider '${{ matrix.provider }}'
           --model '${{ matrix.model }}'
+          --trials 2
 
       - name: Post-run OOS guard
         run: python oos_guard.py
@@ -152,130 +153,13 @@ jobs:
           merge-multiple: true
 
       - name: Aggregate matched tournament
-        shell: python
-        run: |
-          import json
-          import statistics
-          from pathlib import Path
-
-          files=sorted(Path("tournament_results").glob("tournament_*.json"))
-          results=[]
-          for p in files:
-              try:
-                  x=json.loads(p.read_text())
-              except Exception:
-                  continue
-              results.append(x)
-
-          available=[x for x in results if x.get("available")]
-          unavailable=[x for x in results if not x.get("available")]
-
-          # Matched-case wins use only guard-passing backtests.
-          case_ids=sorted({
-              r.get("track_id")
-              for x in available
-              for r in x.get("cases",[])
-              if r.get("track_id")
-          })
-          wins={x["model"]:0 for x in available}
-          for case in case_ids:
-              candidates=[]
-              for x in available:
-                  row=next(
-                      (r for r in x.get("cases",[]) if r.get("track_id")==case),
-                      None
-                  )
-                  if row and row.get("guard_ok") and row.get("delta_k") is not None:
-                      candidates.append((float(row["delta_k"]),x["model"]))
-              if candidates:
-                  best=max(v for v,_ in candidates)
-                  for v,m in candidates:
-                      if abs(v-best) < 1e-12:
-                          wins[m]+=1
-
-          ranking=[]
-          for x in available:
-              s=dict(x.get("summary") or {})
-              s.update({
-                  "provider":x.get("provider"),
-                  "model":x.get("model"),
-                  "matched_case_wins":wins.get(x.get("model"),0),
-              })
-              ranking.append(s)
-
-          def n(v,default=-1e99):
-              try:
-                  return float(v)
-              except Exception:
-                  return default
-
-          ranking.sort(
-              key=lambda r:(
-                  int(r.get("would_keep",0)),
-                  int(r.get("matched_case_wins",0)),
-                  int(r.get("guard_pass",0)),
-                  n(r.get("median_delta_k")),
-                  int(r.get("admitted",0)),
-              ),
-              reverse=True,
-          )
-
-          payload={
-              "state_sha":"${{ needs.freeze.outputs.state_sha }}",
-              "available_models":len(available),
-              "unavailable_models":len(unavailable),
-              "case_count":len(case_ids),
-              "ranking":ranking,
-              "unavailable":[
-                  {
-                      "provider":x.get("provider"),
-                      "model":x.get("model"),
-                      "detail":x.get("availability_detail"),
-                  }
-                  for x in unavailable
-              ],
-              "hidden_validation_opened":False,
-              "final_oos_opened":False,
-          }
-          Path("tournament-summary.json").write_text(
-              json.dumps(payload,indent=2,sort_keys=True)+"\n"
-          )
-
-          out=[
-              "# Zero-fee AI model tournament — Round 1",
-              "",
-              f"Frozen continuous-state SHA: `{payload['state_sha']}`",
-              f"Matched benchmark cases: **{payload['case_count']}**",
-              f"Available models tested: **{payload['available_models']}**",
-              f"Unavailable/missing-key models: **{payload['unavailable_models']}**",
-              "",
-              "| Rank | Model | Provider | Keep-worthy | Case wins | Guard pass | Admitted | Median ΔK | Mean ΔK | Seconds |",
-              "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|",
-          ]
-          for i,r in enumerate(ranking,1):
-              out.append(
-                  f"| {i} | {r.get('model')} | {r.get('provider')} | "
-                  f"{r.get('would_keep',0)} | {r.get('matched_case_wins',0)} | "
-                  f"{r.get('guard_pass',0)} | {r.get('admitted',0)} | "
-                  f"{r.get('median_delta_k')} | {r.get('mean_delta_k')} | "
-                  f"{r.get('total_seconds')} |"
-              )
-
-          if unavailable:
-              out += ["","Unavailable or not configured:"]
-              for x in payload["unavailable"]:
-                  out.append(
-                      f"- `{x['model']}` ({x['provider']}): {x.get('detail')}"
-                  )
-
-          out += [
-              "",
-              "Ranking is matched and development-only: each model received the same frozen strategy champion and prompt for each case.",
-              "A 'keep-worthy' result means the candidate passed the hardened development guard and exceeded the same material ΔK threshold used by continuous AUTORESEARCH.",
-              "No model saw another model's output. Hidden pre-OOS validation and 2023+ final OOS were not opened.",
-          ]
-          Path("tournament-report.md").write_text("\n".join(out)+"\n")
-          print("\n".join(out))
+        working-directory: moondev_autoresearch_reconstruction
+        run: >
+          python aggregate_model_tournament.py
+          --folder ../tournament_results
+          --state-sha '${{ needs.freeze.outputs.state_sha }}'
+          --json-out ../tournament-summary.json
+          --report-out ../tournament-report.md
 
       - name: Prepare persistent tournament state
         shell: bash
