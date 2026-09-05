@@ -22,7 +22,17 @@ from v4.multi_asset_engine import (
 )
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
-from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
+from v4.prop_firm_engine import (
+    FundedSimulation,
+    PropOptimizationCandidate,
+    StageSimulation,
+    _candidate_within_risk_tier,
+    _simulate_one_stage,
+    active_day_proxy,
+    daily_adverse_proxy,
+    optimize_prop_exposure,
+    simulate_stage,
+)
 from v4.prop_intraday_bootstrap import (
     PRAGUE,
     _frontier_structural_mutations,
@@ -520,6 +530,55 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(FTMO_1STEP.challenge.trailing_max_loss)
         self.assertEqual(FTMO_1STEP.challenge.best_day_rule_pct, 50.0)
         self.assertEqual(FTMO_1STEP.funded.best_day_rule_pct, 50.0)
+
+    def test_prop_risk_tier_rejects_large_overall_loss_breach(self):
+        challenge = StageSimulation(
+            stage_id="challenge",
+            exposure_scale=0.5,
+            paths=1000,
+            analysis_horizon_days=180,
+            pass_probability=0.5,
+            fail_probability=0.26,
+            timeout_probability=0.24,
+            daily_loss_breach_probability=0.01,
+            max_loss_breach_probability=0.25,
+            median_days_to_pass=80.0,
+            p75_days_to_pass=120.0,
+        )
+        funded = FundedSimulation(
+            exposure_scale=0.5,
+            paths=1000,
+            reward_window_days=14,
+            survival_probability=0.95,
+            reward_eligible_probability=0.8,
+            positive_reward_probability=0.7,
+            expected_reward_pct=1.0,
+            median_positive_reward_pct=1.2,
+            daily_loss_breach_probability=0.01,
+            max_loss_breach_probability=0.01,
+            best_day_ineligible_probability=0.0,
+        )
+        candidate = PropOptimizationCandidate(
+            challenge_exposure_scale=0.5,
+            verification_exposure_scale=None,
+            funded_exposure_scale=0.5,
+            challenge=challenge,
+            verification=None,
+            funded=funded,
+            combined_evaluation_pass_probability=0.5,
+            expected_evaluation_days_if_passed=80.0,
+            payout_efficiency_score=0.01,
+        )
+        self.assertFalse(
+            _candidate_within_risk_tier(
+                candidate,
+                evaluation_daily_breach_cap=0.15,
+                evaluation_max_loss_breach_cap=0.15,
+                funded_daily_breach_cap=0.10,
+                funded_max_loss_breach_cap=0.05,
+                funded_survival_floor=0.85,
+            )
+        )
 
     def test_prop_stage_rewards_lower_risk_when_daily_limit_is_tight(self):
         rng = np.random.default_rng(77)

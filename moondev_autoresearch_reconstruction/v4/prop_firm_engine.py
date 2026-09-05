@@ -474,23 +474,39 @@ def _candidate_within_risk_tier(
     candidate: PropOptimizationCandidate,
     *,
     evaluation_daily_breach_cap: float,
+    evaluation_max_loss_breach_cap: float,
     funded_daily_breach_cap: float,
+    funded_max_loss_breach_cap: float,
     funded_survival_floor: float,
 ) -> bool:
-    if candidate.challenge.daily_loss_breach_probability > evaluation_daily_breach_cap:
-        return False
+    """Require every modeled hard-loss path to fit the named risk tier."""
+    evaluation_stages = [candidate.challenge]
+    if candidate.verification is not None:
+        evaluation_stages.append(candidate.verification)
+    for stage in evaluation_stages:
+        if (
+            stage.daily_loss_breach_probability
+            > evaluation_daily_breach_cap
+        ):
+            return False
+        if (
+            stage.max_loss_breach_probability
+            > evaluation_max_loss_breach_cap
+        ):
+            return False
     if (
-        candidate.verification is not None
-        and candidate.verification.daily_loss_breach_probability
-        > evaluation_daily_breach_cap
+        candidate.funded.daily_loss_breach_probability
+        > funded_daily_breach_cap
     ):
         return False
-    if candidate.funded.daily_loss_breach_probability > funded_daily_breach_cap:
+    if (
+        candidate.funded.max_loss_breach_probability
+        > funded_max_loss_breach_cap
+    ):
         return False
     if candidate.funded.survival_probability < funded_survival_floor:
         return False
     return True
-
 
 def _candidate_views(
     candidates: Sequence[PropOptimizationCandidate],
@@ -524,6 +540,7 @@ def _candidate_views(
         key=lambda x: (
             x.funded.survival_probability,
             -x.funded.daily_loss_breach_probability,
+            -x.funded.max_loss_breach_probability,
             x.funded.expected_reward_pct,
         ),
     )
@@ -533,7 +550,9 @@ def _candidate_views(
         if _candidate_within_risk_tier(
             x,
             evaluation_daily_breach_cap=0.15,
+            evaluation_max_loss_breach_cap=0.15,
             funded_daily_breach_cap=0.10,
+            funded_max_loss_breach_cap=0.05,
             funded_survival_floor=0.85,
         )
     ]
@@ -542,7 +561,9 @@ def _candidate_views(
         if _candidate_within_risk_tier(
             x,
             evaluation_daily_breach_cap=0.10,
+            evaluation_max_loss_breach_cap=0.10,
             funded_daily_breach_cap=0.05,
+            funded_max_loss_breach_cap=0.025,
             funded_survival_floor=0.90,
         )
     ]
