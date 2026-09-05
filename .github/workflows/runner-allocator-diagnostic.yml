@@ -1,0 +1,33 @@
+name: Runner allocator diagnostic
+
+on:
+  push:
+    branches:
+      - moondev-nvidia-autoresearch
+    paths:
+      - ".github/workflows/runner-allocator-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu_latest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Prove ubuntu-latest runner assignment
+        run: |
+          echo "runner=ubuntu-latest"
+          uname -a
+          python3 --version || true
+
+  ubuntu_slim:
+    runs-on: ubuntu-slim
+    timeout-minutes: 3
+    steps:
+      - name: Prove ubuntu-slim runner assignment
+        run: |
+          echo "runner=ubuntu-slim"
+          uname -a
+          python3 --version || true
