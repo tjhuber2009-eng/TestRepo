@@ -12403,7 +12403,7 @@
         "worst_score": -3.636685761722702
       },
       {
-        "adjusted_score": 9.837967942446195,
+        "adjusted_score": 9.806508163307882,
         "fold_scores": [
           21.54530486501569,
           5.646336571268851,
@@ -12424,7 +12424,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 16.15461703232814,
+        "plateau_score": 16.049751101867095,
         "primary_score": 14.799434469041728,
         "score_std": 15.1483133876243,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -12683,7 +12683,7 @@
         "worst_score": -2.685224606061154
       },
       {
-        "adjusted_score": 8.622433618566433,
+        "adjusted_score": 8.526787877264377,
         "fold_scores": [
           13.230842854895819,
           7.143423026575024,
@@ -12704,7 +12704,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 14.369981131323804,
+        "plateau_score": 14.05116199365029,
         "primary_score": 14.277582400344047,
         "score_std": 14.863326870309434,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -21030,11 +21030,11 @@
     "chosen": {
       "bootstrap_dd_q95_pct": 31.854906079848654,
       "bootstrap_median_cagr_pct": 13.36290436622869,
-      "cagr_pct": 13.257882798767827,
+      "cagr_pct": 13.257882798767806,
       "cash_weight": 0.523239378524909,
       "effective_n": 2.5648570457897524,
       "gross_exposure": 0.476760621475091,
-      "max_dd_pct": -13.149440886938258,
+      "max_dd_pct": -13.14944088693819,
       "score": 13.40870309934776,
       "sharpe": 1.0075081330585123,
       "weights": {
@@ -21121,6 +21121,414 @@
   },
   "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
+  "reversal_parameter_optimizer": {
+    "chosen": null,
+    "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+    "search_hash": "a829b515e659d13927aa608bb876a25be4668a393e5f098e31e05b2077dfc2b6",
+    "selection_policy": "hard-gate first; maximize evaluator primary_score; then prefer broad local plateaus and strong worst-fold performance while penalizing fold dispersion and search multiplicity",
+    "trials": [
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          3.029066566457428,
+          -10.74527746023406,
+          6.686560889061388,
+          12.733497264096671,
+          -40.63861617818247,
+          -7.340831763430855,
+          -9.112862177421954,
+          -5.710041023212931
+        ],
+        "gate_ok": false,
+        "median_score": -6.525436393321893,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.12,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -5.780352319601456,
+        "score_std": 16.151691220974794,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -40.63861617818247
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          5.964941426284476,
+          -15.163395917441857,
+          5.920400720981167,
+          27.421723712881985,
+          -18.228881897529597,
+          -1.0827173295793635,
+          -9.049537933521446,
+          -7.504637612467702
+        ],
+        "gate_ok": false,
+        "median_score": -4.293677471023533,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.12,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -2.7494151147731793,
+        "score_std": 14.672682805123896,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -18.228881897529597
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          4.559312855325537,
+          -12.684181516051973,
+          6.571023227963413,
+          14.077108045897347,
+          -60.253471073645535,
+          -7.640730314800692,
+          -7.746211283005511,
+          -7.696059128632227
+        ],
+        "gate_ok": false,
+        "median_score": -7.668394721716459,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.16,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -6.809143893473301,
+        "score_std": 22.691407872781074,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -60.253471073645535
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          5.652691167591906,
+          -16.108412311061603,
+          6.009477575623756,
+          30.72966622722364,
+          -42.27464940902548,
+          -2.648779956128511,
+          -9.074040688297169,
+          -10.306684217607087
+        ],
+        "gate_ok": false,
+        "median_score": -5.86141032221284,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.16,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -4.383308220490911,
+        "score_std": 20.955364262567524,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -42.27464940902548
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          4.905284929342946,
+          -13.401702373864776,
+          6.839616392489822,
+          15.420557731651495,
+          -56.68647018772836,
+          -7.985921710357225,
+          -7.3209857544225265,
+          -9.317207554045092
+        ],
+        "gate_ok": false,
+        "median_score": -7.653453732389876,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.2,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -6.630579641926893,
+        "score_std": 21.82874147714173,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -56.68647018772836
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          4.644124221792656,
+          -16.901811863244966,
+          6.009477575623756,
+          33.89561366446634,
+          -45.08315009516731,
+          -4.399248863433691,
+          -8.43830796232531,
+          -13.25180067175985
+        ],
+        "gate_ok": false,
+        "median_score": -6.4187784128795,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.2,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -4.925011559485959,
+        "score_std": 22.532897604347184,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -45.08315009516731
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          5.247422190505335,
+          -13.149993387772497,
+          7.31262833073143,
+          16.481381072764844,
+          -53.91542871828379,
+          -8.34837307840287,
+          -7.460718943515843,
+          -10.588147707419605
+        ],
+        "gate_ok": false,
+        "median_score": -7.904546010959357,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.24,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -6.500472122555578,
+        "score_std": 21.21706302432404,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -53.91542871828379
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          4.218465699780771,
+          -16.71158046256557,
+          6.009477575623756,
+          36.77899329746133,
+          -45.74175923963928,
+          -6.1444312124903195,
+          -6.914382451892676,
+          -18.525937335697904
+        ],
+        "gate_ok": false,
+        "median_score": -6.529406832191498,
+        "params": {
+          "entry_rsi": 5.0,
+          "target_vol": 0.24,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -4.929163621824506,
+        "score_std": 23.695903723458503,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -45.74175923963928
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          8.36746507977486,
+          13.572882996694634,
+          6.235717877283786,
+          16.169275594940792,
+          -64.42714531938674,
+          5.88293396782078,
+          -12.863085328345413,
+          -16.832381604031788
+        ],
+        "gate_ok": false,
+        "median_score": 6.059325922552283,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.12,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -4.220363946896466,
+        "score_std": 26.586737231823385,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -64.42714531938674
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          2.058252588729559,
+          1.6328829979899373,
+          9.374417494319998,
+          19.540603516267495,
+          -13.458933372619065,
+          5.565658145517971,
+          -14.053540787929153,
+          -6.133895508360165
+        ],
+        "gate_ok": false,
+        "median_score": 1.845567793359748,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.12,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -0.793896360085744,
+        "score_std": 11.472350388210558,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -14.053540787929153
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          8.025019179371196,
+          14.389742301816622,
+          5.712482215344261,
+          20.468030519809723,
+          -83.67846703275359,
+          7.525207234538089,
+          -17.007521031595658,
+          -19.722071437792653
+        ],
+        "gate_ok": false,
+        "median_score": 6.618844724941175,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.16,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -5.484944200801378,
+        "score_std": 33.686277873113376,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -83.67846703275359
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          2.7749347214686804,
+          0.9591458561072352,
+          12.23819123018448,
+          24.801123928841974,
+          -17.932965009993396,
+          5.420412015898046,
+          -19.60766060566152,
+          -9.976040490857507
+        ],
+        "gate_ok": false,
+        "median_score": 1.8670402887879578,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.16,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -1.8961029199454082,
+        "score_std": 15.157385708896049,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -19.60766060566152
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          6.557848325616877,
+          14.10824249954592,
+          6.845064506985787,
+          25.398971752411637,
+          -94.41788445626995,
+          9.642316182394417,
+          -26.166940347624614,
+          -25.11414547187042
+        ],
+        "gate_ok": false,
+        "median_score": 6.701456416301332,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.2,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -6.2302195543655685,
+        "score_std": 38.531958299139276,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -94.41788445626995
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          2.1153697140567918,
+          -1.4241610046298536,
+          13.698441502237158,
+          30.856797659298696,
+          -29.687639084869915,
+          4.669889515751846,
+          -31.64038799850212,
+          -20.191609430433964
+        ],
+        "gate_ok": false,
+        "median_score": 0.34560435471346906,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.2,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -3.1674868454337535,
+        "score_std": 21.822089880003283,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -31.64038799850212
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          5.341526250242579,
+          12.52664384561406,
+          8.046344269531481,
+          28.6824519176462,
+          -94.49610744826961,
+          10.717191692401883,
+          -32.51902278357848,
+          -34.48080195476876
+        ],
+        "gate_ok": false,
+        "median_score": 6.69393525988703,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.24,
+          "vol_lookback": 20
+        },
+        "plateau_score": null,
+        "primary_score": -6.588523844614603,
+        "score_std": 40.0130224666509,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -94.49610744826961
+      },
+      {
+        "adjusted_score": null,
+        "fold_scores": [
+          2.3119073787047917,
+          -4.30859005097447,
+          14.483937493688082,
+          38.7808609439156,
+          -41.927130374037645,
+          6.339781750059781,
+          -36.87969499220288,
+          -28.86254090133908
+        ],
+        "gate_ok": false,
+        "median_score": -0.998341336134839,
+        "params": {
+          "entry_rsi": 10.0,
+          "target_vol": 0.24,
+          "vol_lookback": 60
+        },
+        "plateau_score": null,
+        "primary_score": -3.5140372885417936,
+        "score_std": 27.814731238689006,
+        "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        "worst_score": -41.927130374037645
+      }
+    ]
+  },
   "risk_profile": {
     "cost_stress_multiplier": 3.0,
     "max_dd_pct": 32,
@@ -24330,6 +24738,8 @@
       "partition": "fixed_even_development_slices",
       "pbo": 0.35714285714285715
     },
+    "reversal_family_ok": true,
+    "reversal_pbo": null,
     "rotation_family_ok": true,
     "rotation_pbo": {
       "candidate_count": 88,
