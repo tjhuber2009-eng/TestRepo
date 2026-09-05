@@ -227,6 +227,8 @@ function renderTracks(){
     <td><b>${esc(r.track_id)}</b></td>
     <td><span class="status-chip">${esc(r.status||"")}</span></td>
     <td class="num">${fmt(r.development_score,5)}</td>
+    <td class="num">${pct(r.development_cagr_pct,1)}</td>
+    <td class="num">${fmt(r.development_years,1)}</td>
     <td class="num">${num(r.attempts)}</td>
     <td class="num">${num(r.valid_attempts)}</td>
     <td>${r.depth_selected?"YES":"—"}</td>
