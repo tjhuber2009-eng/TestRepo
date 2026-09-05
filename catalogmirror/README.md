@@ -98,7 +98,7 @@ GitHub Actions used by the security/build workflows are pinned to commit SHAs ra
 1. Provision PostgreSQL in Railway and set `DATABASE_URL`.
 2. Set `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_APP_URL`, and `SCOPES=read_products,read_inventory`.
 3. From this folder run `shopify app config link` and select the existing **CatalogMirror** app.
-4. Replace every `CHANGE-ME.example` in `shopify.app.toml` with the production HTTPS domain.
+4. Production URL is `https://web-production-0f33a.up.railway.app`; keep Shopify app configuration aligned to it.
 5. Run `shopify app deploy` to release app configuration and webhook subscriptions.
 6. Deploy the web service to Railway. Startup applies pending Prisma migrations before serving.
 7. Configure Shopify App Pricing in Partner Dashboard. Set `SHOPIFY_PARTNER_ORG_ID`, `SHOPIFY_PARTNER_API_ACCESS_TOKEN`, `SHOPIFY_APP_GID`, `SHOPIFY_APP_HANDLE`, then set `BILLING_ENFORCED=true`.
@@ -123,7 +123,7 @@ GitHub Actions used by the security/build workflows are pinned to commit SHAs ra
 
 ## App Store / Built for Shopify readiness checklist
 
-- [ ] Production domain and callback URLs replace placeholders in `shopify.app.toml`.
+- [x] Production domain and callback URLs replace placeholders in `shopify.app.toml`.
 - [ ] `shopify app config link` points to the existing CatalogMirror app.
 - [ ] `shopify app deploy` has released the 2026-07 webhook configuration.
 - [ ] Bad-HMAC webhook requests are rejected in a production integration test.
