@@ -58,9 +58,10 @@ def crypto_twap_decision(
     ask: float,
     *,
     fee_rate: float = 0.07,
+    fee_exponent: float = 1.0,
     min_edge: float = 0.04,
 ) -> LaneDecision:
-    edge = expected_value_per_share(fair_probability, ask, fee_rate)
+    edge = expected_value_per_share(fair_probability, ask, fee_rate, fee_exponent)
     return LaneDecision(
         trade=edge >= min_edge,
         edge=edge,
@@ -75,11 +76,12 @@ def late_resolution_decision(
     *,
     seconds_remaining: float,
     fee_rate: float = 0.07,
+    fee_exponent: float = 1.0,
     min_fair_probability: float = 0.92,
     min_edge: float = 0.025,
     max_seconds_remaining: float = 60.0,
 ) -> LaneDecision:
-    edge = expected_value_per_share(fair_probability, ask, fee_rate)
+    edge = expected_value_per_share(fair_probability, ask, fee_rate, fee_exponent)
     ok = (
         seconds_remaining <= max_seconds_remaining
         and fair_probability >= min_fair_probability
