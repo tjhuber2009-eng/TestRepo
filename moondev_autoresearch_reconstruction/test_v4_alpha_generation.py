@@ -12,7 +12,7 @@ from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, paret
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
-from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, read_market_csv, select_portfolio_history_cohort
+from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import (
@@ -61,6 +61,11 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(cfg["boundaries"]["final_oos_sealed"])
         self.assertEqual(cfg["boundaries"]["final_oos_start"], "2023-01-01")
         self.assertEqual(cfg["objective"]["primary"], "maximize_sustainable_cagr_subject_to_hard_risk_and_evidence_gates")
+
+    def test_family_pbo_gate_rejects_missing_diagnostic(self):
+        self.assertFalse(pbo_gate(None, 0.25))
+        self.assertTrue(pbo_gate({"pbo": 0.20}, 0.25))
+        self.assertFalse(pbo_gate({"pbo": 0.30}, 0.25))
 
     def test_v4_data_boundary_rejects_hidden_and_final_rows_during_search(self):
         data = synthetic_daily_market(bars=200)
