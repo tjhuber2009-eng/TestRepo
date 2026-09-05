@@ -164,7 +164,8 @@ def aggregate_prague_days(
     )
 
 
-def evaluate_family(data, params, program, *, paths, seed):
+def evaluate_strategy(data, params):
+    """Build one causal hourly strategy path, reusable across prop programs."""
     symbols = tuple(sorted(data))
     costs = {
         s: AssetCost(commission_bps=3.25, slippage_bps=2.0)
@@ -190,10 +191,7 @@ def evaluate_family(data, params, program, *, paths, seed):
         max_gross=1.0,
         max_scale=1.0,
     )
-    result = engine.run(
-        strategy,
-        cost_multiplier=3.0,
-    )
+    result = engine.run(strategy, cost_multiplier=3.0)
     bar_adverse = intraday_bar_adverse(
         data,
         result.execution_weights,
@@ -204,6 +202,11 @@ def evaluate_family(data, params, program, *, paths, seed):
         bar_adverse,
         result.execution_weights.reindex(result.returns.index),
     )
+    return result, daily_ret, daily_adv, opened
+
+
+def evaluate_family(data, params, program, *, paths, seed):
+    result, daily_ret, daily_adv, opened = evaluate_strategy(data, params)
     prop = optimize_prop_exposure(
         daily_ret.to_numpy(dtype=float),
         daily_adv.to_numpy(dtype=float),
@@ -219,6 +222,35 @@ def evaluate_family(data, params, program, *, paths, seed):
         ),
     )
     return result, daily_ret, daily_adv, prop
+
+
+def _frontier_rank(view_name, candidate):
+    if candidate is None:
+        return (-1e99,)
+    if view_name == "max_evaluation_pass":
+        days = (
+            1e99
+            if candidate.expected_evaluation_days_if_passed is None
+            else float(candidate.expected_evaluation_days_if_passed)
+        )
+        return (
+            float(candidate.combined_evaluation_pass_probability),
+            -days,
+            float(candidate.payout_efficiency_score),
+            float(candidate.funded.survival_probability),
+        )
+    if view_name == "safest_funded":
+        return (
+            float(candidate.funded.survival_probability),
+            -float(candidate.funded.daily_loss_breach_probability),
+            -float(candidate.funded.max_loss_breach_probability),
+            float(candidate.funded.expected_reward_pct),
+        )
+    return (
+        float(candidate.payout_efficiency_score),
+        float(candidate.combined_evaluation_pass_probability),
+        float(candidate.funded.survival_probability),
+    )
 
 
 def run(data_dir: str | Path, output: str | Path) -> dict:
@@ -240,19 +272,44 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     ]
 
     programs = [FTMO_2STEP, FTMO_1STEP]
-    program_results = {}
-    for pidx, program in enumerate(programs):
-        rows = []
-        for i, params in enumerate(params_grid):
-            base, dret, dadv, prop = evaluate_family(
-                data,
-                params,
+    view_names = (
+        "max_payout_efficiency",
+        "max_evaluation_pass",
+        "safest_funded",
+        "balanced",
+        "conservative",
+    )
+    rows_by_program = {program.id: [] for program in programs}
+    leaders = {
+        program.id: {name: None for name in view_names}
+        for program in programs
+    }
+
+    # Strategy construction is independent of prop-program rules. Build it
+    # once per parameter set, then evaluate 1-Step and 2-Step on the same
+    # daily return/adverse path. The same bootstrap seed is also reused across
+    # parameter sets within a program to reduce Monte Carlo ranking noise.
+    for i, params in enumerate(params_grid):
+        base, dret, dadv, opened = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
                 program,
+                exposure_scales=tuple(
+                    np.round(np.arange(0.05, 1.01, 0.05), 2)
+                ),
                 paths=400,
-                seed=20261000 + pidx * 100000 + i * 2000,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                    "prague_midnight_reset_daily_flat_policy"
+                ),
             )
             sel = prop.selected
-            rows.append({
+            rows_by_program[program.id].append({
                 "params": params,
                 "hourly_base_cagr_pct": base.metrics.cagr_pct,
                 "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
@@ -260,35 +317,116 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "selected": None if sel is None else sel.to_dict(),
             })
 
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
+
+    program_results = {}
+    for pidx, program in enumerate(programs):
+        rows = rows_by_program[program.id]
         rows.sort(
             key=lambda x: (
-                -1e99 if x["selected"] is None else x["selected"]["payout_efficiency_score"],
-                -1e99 if x["selected"] is None else x["selected"]["combined_evaluation_pass_probability"],
+                -1e99
+                if x["selected"] is None
+                else x["selected"]["payout_efficiency_score"],
+                -1e99
+                if x["selected"] is None
+                else x["selected"]["combined_evaluation_pass_probability"],
             ),
             reverse=True,
         )
-        best = rows[0] if rows else None
-        refined = None
-        if best is not None:
-            _, d_ret, d_adv, final_prop = evaluate_family(
-                data,
-                best["params"],
-                program,
-                paths=4000,
-                seed=20269900 + pidx * 100000,
-            )
-            refined = {
-                "params": best["params"],
-                "days": int(len(d_ret)),
-                "worst_prague_day_adverse_pct": float(d_adv.min() * 100.0),
-                "optimization": final_prop.to_dict(),
+
+        refined_cache = {}
+        refined_frontiers = {}
+        for view_name in view_names:
+            leader = leaders[program.id][view_name]
+            if leader is None:
+                refined_frontiers[view_name] = None
+                continue
+            params = leader["params"]
+            key = tuple(sorted(params.items()))
+            if key not in refined_cache:
+                base, d_ret, d_adv, opened = evaluate_strategy(data, params)
+                final_prop = optimize_prop_exposure(
+                    d_ret.to_numpy(dtype=float),
+                    d_adv.to_numpy(dtype=float),
+                    opened.to_numpy(dtype=bool),
+                    program,
+                    exposure_scales=tuple(
+                        np.round(np.arange(0.05, 1.01, 0.05), 2)
+                    ),
+                    paths=4000,
+                    block=10,
+                    seed=20269900 + pidx * 100000,
+                    input_precision=(
+                        "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                        "prague_midnight_reset_daily_flat_policy"
+                    ),
+                )
+                refined_cache[key] = {
+                    "base": base,
+                    "daily_ret": d_ret,
+                    "daily_adv": d_adv,
+                    "optimization": final_prop,
+                }
+
+            ref = refined_cache[key]
+            candidate = ref["optimization"].views.get(view_name)
+            refined_frontiers[view_name] = {
+                "params": params,
+                "days": int(len(ref["daily_ret"])),
+                "worst_prague_day_adverse_pct": float(
+                    ref["daily_adv"].min() * 100.0
+                ),
+                "view": (
+                    None if candidate is None else candidate.to_dict()
+                ),
+            }
+
+        max_payout = refined_frontiers["max_payout_efficiency"]
+        refined_winner = None
+        if max_payout is not None:
+            key = tuple(sorted(max_payout["params"].items()))
+            ref = refined_cache[key]
+            refined_winner = {
+                "params": max_payout["params"],
+                "days": max_payout["days"],
+                "worst_prague_day_adverse_pct": (
+                    max_payout["worst_prague_day_adverse_pct"]
+                ),
+                "optimization": ref["optimization"].to_dict(),
             }
 
         program_results[program.id] = {
             "program": program.to_dict(),
             "parameter_candidates": len(rows),
             "development_leaderboard": rows,
-            "refined_winner": refined,
+            "coarse_frontier_leaders": {
+                name: (
+                    None
+                    if leaders[program.id][name] is None
+                    else {
+                        "params": leaders[program.id][name]["params"],
+                        "view": leaders[program.id][name][
+                            "candidate"
+                        ].to_dict(),
+                    }
+                )
+                for name in view_names
+            },
+            "refined_frontiers": refined_frontiers,
+            "refined_winner": refined_winner,
         }
 
     payload = {
@@ -305,7 +443,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "policy": "force flat for execution at each Prague midnight reset",
         "market_mapping": {
             symbol: {
-                "research_source": "Binance spot 1h, monthly archive checksums verified",
+                "research_source": (
+                    "Binance spot 1h, monthly archive checksums verified"
+                ),
                 "intended_prop_symbol": {
                     "BTCUSDT": "BTCUSD",
                     "ETHUSDT": "ETHUSD",
