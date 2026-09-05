@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T17:32:49Z	1	REJECTED	-0.098454	-0.116452	-3.63	-0.336	-0.1065	2.796	42	-8.578	0.361777	0.642715	B	-3.863	guard: development robustness gate failed	Remove SMA50 condition from exit rule, exiting only on Donchian lower break
+2026-09-05T17:33:57Z	2	REJECTED	-0.085	-0.116452	0.0	0.0	0.0	0.0	0	0.0	0.0	1.0	D	0.0	guard: development robustness gate failed	Add volatility filter to entry: only enter when realized volatility is below vol_target

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T20:14:00Z	1	REJECTED	0.008927	0.014347	22.336	6.159	0.9893	6.235	11	-7.256	0.960779	0.053892	C	22.181	guard: development robustness gate failed	Add a low-volatility filter: only enter when current realized volatility is below its 50-period SMA.
+2026-09-05T20:14:32Z	2	REJECTED	-0.015685	0.014347	2.845	0.835	0.5716	1.473	48	-1.649	0.865985	0.155689	B	2.326	paired chronological folds did not show a median/majority improvement over baseline	Change exit condition from price below SMA50 to price below the 20-bar rolling high (breakdown exit)

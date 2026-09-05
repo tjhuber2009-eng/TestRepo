@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T20:48:28Z	1	REJECTED	-0.103544	-0.106089	-4.762	-0.443	-0.1463	2.775	41	-7.981	0.313192	0.680639	B	-5.09	guard: development robustness gate failed	Only enter long on price pullbacks to or below the EMA20 within 0.4*ATR, ensuring purchases occur on downside retracements in an uptrend.
+2026-09-05T20:49:00Z	2	REJECTED	-0.104044	-0.106089	-4.762	-0.443	-0.1463	2.775	41	-7.981	0.313192	0.682635	B	-5.09	guard: development robustness gate failed	Only enter long on price pullbacks to or below the EMA20 within 0.4*ATR (downside retracements only)

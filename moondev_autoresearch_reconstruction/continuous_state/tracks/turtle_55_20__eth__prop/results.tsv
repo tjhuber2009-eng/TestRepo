@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T21:12:02Z	1	REJECTED	-0.001346	-0.023649	5.043	1.469	0.7223	2.047	15	-1.906	0.908187	0.143713	C	4.903	paired chronological folds did not show a median/majority improvement over baseline	Replace fixed ATR stop-loss multiplier with adaptive multiplier based on recent volatility regime
+2026-09-05T21:13:53Z	2	REJECTED	-0.022815	-0.023649	10.594	3.03	0.6189	5.025	9	-8.739	0.8665	0.117764	D	10.495	guard: development robustness gate failed	Add volume confirmation to breakout entry: require current volume above its 20-period moving average

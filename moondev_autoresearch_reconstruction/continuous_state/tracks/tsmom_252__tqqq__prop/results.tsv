@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T16:25:45Z	1	REJECTED	-0.030985	-0.028993	9.763	0.859	0.2836	3.201	27	-8.795	0.822086	0.199601	C	9.729	paired chronological folds did not show a median/majority improvement over baseline	Add ADX trend strength filter: only enter long when ROC>0 and ADX>20
+2026-09-05T16:28:38Z	2	REJECTED	-0.032116	-0.028993	14.491	1.251	0.3926	3.309	27	-7.052	0.8986	0.117764	C	14.452	paired chronological folds did not show a median/majority improvement over baseline	Add 50-day simple moving average filter: only enter long when ROC252>0 and price above its 50-day SMA

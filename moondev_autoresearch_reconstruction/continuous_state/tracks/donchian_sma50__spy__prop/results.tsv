@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T17:46:17Z	1	REJECTED	0.000356	-0.002828	13.386	1.15	0.4358	2.709	33	-4.48	0.922085	0.031936	A	12.694	paired chronological folds did not show a median/majority improvement over baseline	Add ADX trend strength filter to only enter long positions when ADX > 20, ensuring trades occur in trending markets.
+2026-09-05T17:46:35Z	2	REJECTED	-0.013904	-0.002828	16.251	1.38	0.4721	2.999	38	-7.245	0.938053	0.05988	A	15.431	paired chronological folds did not show a median/majority improvement over baseline	Add a volume confirmation filter requiring current volume to exceed its 20-bar average before entering a long breakout.

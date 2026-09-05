@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T13:18:35Z	1	RISK_CONTROL_CHANGE	nan	0.01665	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop loss to entry orders
+2026-09-05T13:19:24Z	2	REJECTED	-0.025473	0.01665	124.538	7.638	0.6569	12.381	142	-18.289	0.984097	0.001996	A	100.331	paired chronological folds did not show a median/majority improvement over baseline	Change exit condition from breaking above prior bar's high to closing with IBS above 0.70

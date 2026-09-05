@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T21:21:41Z	1	REJECTED	-0.128734	-0.110034	-6.394	-0.599	-0.2604	2.217	24	-8.997	0.193003	0.814371	C	-6.53	guard: development robustness gate failed	Add a low-volatility filter: only enter breakout longs when current realized volatility is below its 50-period moving average.
+2026-09-05T21:22:54Z	2	REJECTED	-0.131376	-0.110034	-6.482	-0.608	-0.254	2.3	24	-9.402	0.197341	0.816367	C	-6.625	guard: development robustness gate failed	Add a 200-day simple moving average trend filter: only enter breakout longs when price is above its 200-day SMA.

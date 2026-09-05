@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T19:22:06Z	1	REJECTED	0.006949	-0.016191	5.758	1.674	1.2203	1.367	8	-1.095	0.993661	0.037924	B	5.644	paired chronological folds did not show a median/majority improvement over baseline	Add a volatility regime filter: only enter long when current realized volatility is below its 100-period simple moving average.
+2026-09-05T19:22:44Z	2	REJECTED	-0.016211	-0.016191	18.975	5.286	0.9308	5.705	6	-8.956	0.952178	0.025948	B	18.913	paired chronological folds did not show a median/majority improvement over baseline	Add a minimum ROC threshold to entry condition to require stronger momentum signals.

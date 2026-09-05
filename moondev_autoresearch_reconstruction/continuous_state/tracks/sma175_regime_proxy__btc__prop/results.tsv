@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T18:46:34Z	1	REJECTED	-0.001075	-0.014154	8.242	2.376	0.8051	2.969	6	-5.055	0.92668	0.03992	B	8.196	paired chronological folds did not show a median/majority improvement over baseline	Add SMA slope confirmation to entry condition: only buy when price > SMA and SMA is rising.
+2026-09-05T18:46:55Z	2	PARAMETER_ONLY	nan	-0.014154	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten ATR-based stop loss from 5.0 to 3.0 to reduce tail risk and improve risk-adjusted returns

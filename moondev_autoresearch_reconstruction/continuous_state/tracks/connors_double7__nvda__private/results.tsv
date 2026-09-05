@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T11:30:47Z	1	PARAMETER_ONLY	nan	-0.077791	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten the initial stop-loss multiplier from 3.0 to 2.5 to reduce risk per trade
+2026-09-05T11:32:54Z	2	REJECTED	-0.077791	-0.077791	106.184	6.806	0.5125	15.041	100	-27.76	0.959139	0.027944	A	100.393	paired chronological folds did not show a median/majority improvement over baseline	Add a regime filter requiring the 7-day low to be above the 200-day SMA to ensure trades occur only within stronger uptrends.

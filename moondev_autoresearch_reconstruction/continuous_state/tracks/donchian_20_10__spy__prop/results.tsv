@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T17:07:35Z	1	REJECTED	0.00398	0.012576	34.871	2.759	0.7988	3.486	45	-3.41	0.995349	0.001996	A	33.763	paired chronological folds did not show a median/majority improvement over baseline	Add a 50-day simple moving average trend filter: only enter long breakouts when price is above its 50-day SMA.
+2026-09-05T17:08:22Z	2	REJECTED	0.011541	0.012576	28.16	2.283	0.8112	2.834	30	-3.002	0.995721	0.005988	B	27.451	paired chronological folds did not show a median/majority improvement over baseline	Add an ADX trend filter: only enter long breakouts when the 14-day ADX of the previous bar exceeds 20.

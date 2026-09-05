@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T19:02:01Z	1	REJECTED	-0.085	-0.132198	0.0	0.0	0.0	0.0	0	0.0	0.0	1.0	D	0.0	guard: development robustness gate failed	Add volatility regime filter: only enter long when realized volatility is below vol_target.
+2026-09-05T19:04:30Z	2	REJECTED	-0.14021	-0.132198	-11.016	-1.056	-0.1341	6.399	35	-27.316	0.328038	0.634731	B	-11.392	guard: development robustness gate failed	Enter long only when price above SMA and SMA is rising (current SMA > previous SMA)

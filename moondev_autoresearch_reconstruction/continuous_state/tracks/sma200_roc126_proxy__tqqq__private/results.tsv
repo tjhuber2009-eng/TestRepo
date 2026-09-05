@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T19:54:12Z	1	REJECTED	-0.138139	-0.048031	26.042	2.149	0.209	18.439	4	-40.261	0.752092	0.251497	D	25.827	guard: development robustness gate failed	Add a volatility filter: only enter long positions when realized volatility is at or below the target volatility.
+2026-09-05T19:54:45Z	2	RISK_CONTROL_CHANGE	nan	-0.048031	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add volume confirmation: only enter long when current volume exceeds its 20-bar moving average.

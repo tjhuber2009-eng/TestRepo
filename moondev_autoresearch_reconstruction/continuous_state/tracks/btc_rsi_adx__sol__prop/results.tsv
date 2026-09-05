@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T16:40:34Z	1	RISK_CONTROL_CHANGE	nan	0.10519	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop loss to entry orders
+2026-09-05T16:41:17Z	2	KEPT	0.35943	0.10519	31.382	21.729	2.4482	8.164	30	-3.749	0.998749	0.007984	C	30.936	K 0.10519 -> 0.35943; paired folds 0.6667 improved; prefix lookahead audit PASS (required delta 0.0057)	Exit position when price falls below short-term EMA (7) instead of when RSI falls below ADX

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T16:52:52Z	1	REJECTED	-0.018699	-0.034712	13.224	1.137	0.3576	3.315	35	-6.169	0.888956	0.141717	B	13.017	paired chronological folds did not show a median/majority improvement over baseline	>
+2026-09-05T16:53:28Z	2	RISK_CONTROL_CHANGE	nan	-0.034712	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ADX trend filter to entry condition: only enter long breakouts when ADX exceeds a threshold, ensuring trades occur in trending markets.

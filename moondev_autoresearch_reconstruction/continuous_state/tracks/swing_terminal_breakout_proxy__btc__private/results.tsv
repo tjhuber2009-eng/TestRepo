@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T20:09:50Z	1	REJECTED	0.461055	0.423816	284.649	49.091	1.7573	24.369	17	-16.334	0.999875	0.001996	B	279.915	paired chronological folds did not show a median/majority improvement over baseline	Exit position when price falls below the 20-period simple moving average instead of the 50-period SMA for quicker reversals.
+2026-09-05T20:10:21Z	2	REJECTED	0.352876	0.423816	321.605	53.201	1.7654	26.033	15	-20.723	0.999854	0.007984	B	317.058	paired chronological folds did not show a median/majority improvement over baseline	Shorten the trend filter from 50-period SMA to 30-period SMA for more responsive breakout entries and exits.

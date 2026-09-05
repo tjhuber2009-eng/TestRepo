@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T12:33:30Z	1	REJECTED	0.000851	0.007942	18.44	1.567	0.6376	2.489	21	-3.679	0.986823	0.013972	B	18.192	paired chronological folds did not show a median/majority improvement over baseline	Add a volatility regime filter: only enter trades when realized volatility is below its 60‑day moving average.
+2026-09-05T12:34:20Z	2	RISK_CONTROL_CHANGE	nan	0.007942	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop loss on entry orders

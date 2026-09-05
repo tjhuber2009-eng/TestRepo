@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T20:22:22Z	1	REJECTED	-0.11161	-0.149256	-14.546	-1.42	-0.2004	6.186	24	-22.318	0.251229	0.734531	C	-14.929	guard: development robustness gate failed	Add a longer-term trend filter: require 50-day SMA above 200-day SMA for entry.
+2026-09-05T20:22:56Z	2	REJECTED	-0.115188	-0.149256	-15.332	-1.503	-0.1665	7.439	38	-22.78	0.289566	0.694611	B	-15.877	guard: development robustness gate failed	Add a rising 50-day SMA filter: require that the 50-day SMA is increasing relative to the previous bar.

@@ -1,0 +1,6 @@
+{
+  "protocol": "nested_chronological_v3",
+  "reason": "could not normalize seed below development/stress DD cap",
+  "status": "seed_blocked",
+  "updated_at": "2026-09-05T16:08:31Z"
+}

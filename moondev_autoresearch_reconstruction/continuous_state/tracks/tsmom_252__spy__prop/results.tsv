@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T16:21:07Z	1	REJECTED	-0.042826	-0.037818	16.958	1.436	0.3468	4.391	17	-9.364	0.870972	0.123752	C	16.721	paired chronological folds did not show a median/majority improvement over baseline	Add a low-volatility regime filter: only enter long when 252-day ROC is positive and current realized volatility is below its 60-day simple moving average.
+2026-09-05T16:22:10Z	2	RISK_CONTROL_CHANGE	nan	-0.037818	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop loss on entry to limit downside risk.

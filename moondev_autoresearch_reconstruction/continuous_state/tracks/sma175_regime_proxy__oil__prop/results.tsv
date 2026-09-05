@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T18:59:19Z	1	RISK_CONTROL_CHANGE	nan	-0.107647	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add a low-volatility regime filter: only enter longs when current realized volatility is below its 60-period moving average.
+2026-09-05T18:59:55Z	2	REJECTED	-0.119049	-0.107647	-3.291	-0.304	-0.1384	2.051	36	-9.781	0.322959	0.61477	B	-3.417	guard: development robustness gate failed	Add a trend strength filter: only enter longs when the 14-period ADX is above 20, indicating a strong trend.

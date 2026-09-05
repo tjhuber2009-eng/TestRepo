@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T16:42:23Z	1	REJECTED	0.377274	0.377274	60.536	40.635	1.7044	21.331	52	-14.076	0.979365	0.065868	C	56.984	paired chronological folds did not show a median/majority improvement over baseline	Add ADX trend strength filter: require ADX2 > 20 for entry.
+2026-09-05T16:42:46Z	2	REJECTED	-0.01152	0.377274	32.447	22.439	1.2156	17.973	40	-14.076	0.923763	0.143713	D	30.034	K -0.01152 did not exceed 0.377274 by adaptive required delta 0.0057	Add long-term trend filter: require price above 200-bar SMA for entry.

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T12:32:25Z	1	PARAMETER_ONLY	nan	-0.079895	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Relax the entry RSI2 threshold from <5 to <10 to increase trade frequency while maintaining the short-term mean-reversion hypothesis.
+2026-09-05T12:32:50Z	2	REJECTED	-0.003323	-0.079895	16.452	1.396	0.2885	5.292	12	-10.821	0.826842	0.135729	D	14.213	paired chronological folds did not show a median/majority improvement over baseline	Add a volatility regime filter: only enter when realized volatility is below its 60‑day moving average.

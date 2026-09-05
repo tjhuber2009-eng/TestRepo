@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T13:52:24Z	1	REJECTED	-0.230595	-0.111919	-11.649	-1.121	-0.4784	2.303	33	-15.991	0.053864	0.94012	B	-11.783	guard: development robustness gate failed	Add ADX trend filter: only enter long when ADX > 20.
+2026-09-05T13:53:37Z	2	REJECTED	-0.111714	-0.111919	-4.717	-0.439	-0.1576	2.582	42	-9.316	0.300171	0.736527	B	-4.883	guard: development robustness gate failed	Add upward EMA slope filter: only enter long when price is above EMA by half a standard deviation and the EMA is rising.

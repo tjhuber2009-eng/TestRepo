@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T15:35:55Z	1	TOO_BROAD	nan	0.00361	nan	nan	nan	nan	0	nan	nan	nan		nan	localized-change guard: too many MoonStrategy units changed (4): ['MoonStrategy.assign:atr_lookback', 'MoonStrategy.assign:atr_mult', 'MoonStrategy.init', 'MoonStrategy.next']	Replace SMA200-based exit with an ATR-based trailing stop loss while keeping SMA200 as entry signal
+2026-09-05T15:36:46Z	2	REJECTED	-0.000529	0.00361	18.163	12.776	1.1957	10.512	1	-9.283	0.922427	0.105788	D	18.16	guard: development robustness gate failed	Add a volatility regime filter: only enter when current realized volatility is below its own moving average (low volatility regime)
