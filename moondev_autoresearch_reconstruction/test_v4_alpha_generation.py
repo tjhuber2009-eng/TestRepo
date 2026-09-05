@@ -23,6 +23,7 @@ from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
 from v4.prop_intraday_bootstrap import (
+    PRAGUE,
     _frontier_structural_mutations,
     aggregate_prague_days,
     aggregate_prague_days_scaled,
