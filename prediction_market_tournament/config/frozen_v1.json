@@ -2,7 +2,7 @@
   "project": "prediction-market-tournament",
   "version": "PMT-FROZEN-V1",
   "frozen_at": "2026-09-05T01:40:00-07:00",
-  "pre_forward_refreeze_reason": "Final execution-realism review completed before any forward data/start marker: exact book-level fees and identity, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
+  "pre_forward_refreeze_reason": "Final execution-realism review completed before any forward data/start marker: exact book-level fees and identity, fee-inclusive all-in risk sizing, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
   "principles": {
     "paper_only": true,
     "real_money_execution_enabled": false,
@@ -17,13 +17,15 @@
     "same_time_window_comparison": true,
     "implementation_hash_required": true,
     "explicit_forward_start_marker_required": true,
-    "new_parameters_require_new_version_after_forward_start": true
+    "new_parameters_require_new_version_after_forward_start": true,
+    "risk_fraction_includes_entry_fees": true
   },
   "risk": {
     "paper_account_usd": 50,
     "risk_fraction_per_trade": 0.1,
     "max_concurrent_positions": 5,
-    "max_lane_drawdown": 0.2
+    "max_lane_drawdown": 0.2,
+    "allocation_semantics": "risk_fraction_per_trade is a hard all-in cash ceiling including entry fees"
   },
   "ranking": {
     "primary_window_days": 30,
@@ -48,7 +50,8 @@
       "fee_source": "live CLOB market-info fd",
       "execution_price": "full-stake book-level fill with integrated per-level fee curve",
       "min_edge": 0.05,
-      "max_signals_per_market": 1
+      "max_signals_per_market": 1,
+      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget"
     },
     "crypto_twap_taker": {
       "mode": "taker",
@@ -72,7 +75,8 @@
       "volatility_lookback_seconds": 120,
       "minimum_raw_price_points": 30,
       "raw_spot_max_age_seconds": 3,
-      "max_signals_per_market": 1
+      "max_signals_per_market": 1,
+      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget"
     },
     "crypto_late_resolution": {
       "mode": "taker",
@@ -96,7 +100,8 @@
       "minimum_raw_price_points": 30,
       "raw_spot_max_age_seconds": 3,
       "known_final_window_segment_required": true,
-      "max_signals_per_market": 1
+      "max_signals_per_market": 1,
+      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget"
     },
     "favorite_longshot_shadow": {
       "mode": "shadow",
