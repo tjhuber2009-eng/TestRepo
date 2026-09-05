@@ -39,7 +39,8 @@ def settle_binary_signal(
         )
 
     payout = shares if won else 0.0
-    pnl = payout - signal.size_usd - fee
+    entry_cash = signal.size_usd + fee
+    pnl = payout - entry_cash
     return ResolvedTrade(
         signal=signal,
         won=won,
@@ -47,7 +48,7 @@ def settle_binary_signal(
         fee_usd=fee,
         payout_usd=payout,
         pnl_usd=pnl,
-        return_on_stake=pnl / signal.size_usd,
+        return_on_stake=pnl / entry_cash,
         resolved_at=resolved_at,
     )
 
@@ -144,7 +145,10 @@ def summarize(
         if gross_loss == 0 and gross_profit > 0
         else (gross_profit / gross_loss if gross_loss else 0.0)
     )
-    total_staked = sum(trade.signal.size_usd for trade in rows)
+    total_staked = sum(
+        trade.signal.size_usd + trade.fee_usd
+        for trade in rows
+    )
     net = sum(pnls)
     brier = (
         sum(
