@@ -3,10 +3,11 @@
 Crypto uses Binance Data Vision checksum-verified monthly archives.
 ETFs, FX and continuous futures use Yahoo's public chart endpoint.
 
-The default Yahoo convention is deliberately point-in-time stable:
-- OHLC are adjusted for stock splits occurring no later than the requested end;
-- dividends are emitted as explicit cash flows;
-- Yahoo's mutable all-history adjusted-close series is not used.
+Yahoo is retained only as a shadow validator for the evidence pipeline.
+Its chart OHLC are already split-adjusted by the provider, so they must never
+be manually split-adjusted again. Dividends are emitted as explicit events,
+but cross-source parity uses price returns because Yahoo dividend amounts can
+be on a different split basis from its OHLC history.
 
 A legacy adjusted-close mode remains available only for historical comparison.
 """
@@ -114,13 +115,18 @@ def _event_ratio(event):
     raise ValueError(f"cannot parse Yahoo split event: {event}")
 
 
-def yahoo_rows_from_chart(result, adjustment="split_dividend_v2"):
-    """Convert one Yahoo chart result to reproducible daily rows.
+def yahoo_rows_from_chart(result, adjustment="provider_split_adjusted_v3"):
+    """Convert one Yahoo chart result to daily shadow-validation rows.
 
-    split_dividend_v2 uses only split/dividend events inside the requested
-    response window. Prices before each split are restated onto the share basis
-    at the requested period end. Dividends remain explicit cash flows instead
-    of being retroactively embedded through Yahoo Adjusted Close.
+    Yahoo's chart OHLC are already split-adjusted. Applying the split events
+    again creates artificial pre-split gains (especially catastrophic for
+    leveraged ETFs such as TQQQ). The evidence pipeline therefore keeps Yahoo
+    OHLC exactly as returned and uses this feed only as a price-return shadow
+    validator. Dividend events remain explicit but are not used for cross-source
+    parity because Yahoo dividend amounts are not guaranteed to share the same
+    split basis as its OHLC history.
+
+    legacy_adjusted_close remains available only for historical comparison.
     """
     x = result
     stamps = x["timestamp"]
@@ -149,16 +155,8 @@ def yahoo_rows_from_chart(result, adjustment="split_dividend_v2"):
             ])
         return rows
 
-    if adjustment != "split_dividend_v2":
+    if adjustment != "provider_split_adjusted_v3":
         raise ValueError(f"unsupported Yahoo adjustment: {adjustment}")
-
-    splits = []
-    for event in (events.get("splits") or {}).values():
-        event_ts = int(event.get("date", 0))
-        ratio = _event_ratio(event)
-        if event_ts > 0 and ratio > 0:
-            splits.append((event_ts, ratio))
-    splits.sort()
 
     dividends_by_date = {}
     for event in (events.get("dividends") or {}).values():
@@ -167,13 +165,8 @@ def yahoo_rows_from_chart(result, adjustment="split_dividend_v2"):
         if event_ts <= 0 or amount == 0.0:
             continue
         event_date = datetime.fromtimestamp(event_ts, tz=timezone.utc).date()
-        future_split_factor = 1.0
-        for split_ts, ratio in splits:
-            if split_ts > event_ts:
-                future_split_factor /= ratio
         dividends_by_date[event_date] = (
-            dividends_by_date.get(event_date, 0.0)
-            + amount * future_split_factor
+            dividends_by_date.get(event_date, 0.0) + amount
         )
 
     rows = []
@@ -181,22 +174,15 @@ def yahoo_rows_from_chart(result, adjustment="split_dividend_v2"):
         vals = [q[k][i] for k in ["open", "high", "low", "close"]]
         if any(v is None for v in vals):
             continue
-        price_factor = 1.0
-        for split_ts, ratio in splits:
-            if split_ts > int(ts):
-                price_factor /= ratio
-        o, h, l, c = [float(v) * price_factor for v in vals]
+        o, h, l, c = [float(v) for v in vals]
         raw_vol = q.get("volume", [None] * len(stamps))[i]
         volume = 0.0 if raw_vol is None else float(raw_vol)
-        if price_factor > 0:
-            volume /= price_factor
         stamp = datetime.fromtimestamp(ts, tz=timezone.utc)
         dividend = dividends_by_date.get(stamp.date(), 0.0)
         rows.append([
             stamp.isoformat(), o, h, l, c, volume, dividend,
         ])
     return rows
-
 
 def prepare_yahoo(symbol, start, end, out, *, adjustment="split_dividend_v2"):
     p1 = int(start.timestamp())
@@ -245,7 +231,7 @@ def write_manifest(
     if not rows:
         raise RuntimeError(f"cannot manifest empty file: {out}")
     manifest = {
-        "version": 2 if source == "yahoo" else 1,
+        "version": 3 if source == "yahoo" else 1,
         "source": source,
         "symbol": symbol,
         "id": ident,
@@ -264,7 +250,7 @@ def write_manifest(
     }
     if source == "yahoo":
         manifest["adjustment_method"] = yahoo_adjustment
-        manifest["dividends_explicit"] = yahoo_adjustment == "split_dividend_v2"
+        manifest["dividends_explicit"] = yahoo_adjustment == "provider_split_adjusted_v3"\n        manifest["shadow_validation_only"] = yahoo_adjustment == "provider_split_adjusted_v3"
     path = out.with_suffix(".manifest.json")
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"manifest -> {path} sha256={manifest['csv_sha256']}")
@@ -283,7 +269,7 @@ def main():
         choices=["split_dividend_v2", "legacy_adjusted_close"],
         default="split_dividend_v2",
         help=(
-            "Yahoo price convention. split_dividend_v2 is stable and default; "
+            "Yahoo price convention. provider_split_adjusted_v3 keeps provider split-adjusted OHLC; "
             "legacy_adjusted_close exists only for historical comparisons."
         ),
     )
