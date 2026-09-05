@@ -9,6 +9,7 @@ from .adapters.polymarket import (
     market_buy_quote,
     market_execution_rules,
     parse_jsonish_list,
+    validate_book_identity,
 )
 from .fees import exact_execution_edge_per_share
 from .models import Signal
@@ -156,6 +157,12 @@ def crypto_signal_from_market(
         side: get_book(tokens[side])
         for side in ("UP", "DOWN")
     }
+    for side in ("UP", "DOWN"):
+        validate_book_identity(
+            books[side],
+            token_id=tokens[side],
+            condition_id=condition_id,
+        )
 
     observed_at = observed_at or datetime.now(timezone.utc)
     if observed_at.tzinfo is None:
@@ -299,5 +306,11 @@ def crypto_signal_from_market(
             "ask_source": "full-size-book-level-fill",
             "all_in_cost_per_share": quote.all_in_cost_per_share,
             "exact_edge_per_share": edge,
+            "chosen_book_timestamp": str(
+                books[side].get("timestamp") or ""
+            ),
+            "opposing_book_timestamp": str(
+                books["DOWN" if side == "UP" else "UP"].get("timestamp") or ""
+            ),
         },
     )
