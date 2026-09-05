@@ -17,7 +17,7 @@ from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.regime_engine import RegimeEngine
-from v4.risk_overlays import volatility_target_overlay
+from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
 from v4.research_allocator import ResearchAllocator, ResearchCell, ResearchObservation
 from v4.strategy_examples import leveraged_defensive_rotation, pead_event_weights
@@ -86,6 +86,29 @@ class V4AlphaGenerationTests(unittest.TestCase):
             base, target_vol=0.15, periods_per_year=252, lookback=20, max_gross=1.0
         )
         a = overlay({"QQQ": data["QQQ"].iloc[:350]})
+        b = overlay({"QQQ": data["QQQ"]})
+        pd.testing.assert_frame_equal(a, b.loc[a.index])
+
+    def test_vix_stress_overlay_is_prefix_invariant(self):
+        data = synthetic_daily_market(bars=600)
+        idx = data["QQQ"].index
+        vix = pd.Series(
+            20.0 + 8.0 * np.sin(np.arange(len(idx)) / 17.0),
+            index=idx,
+        )
+        def base(d, features=None):
+            ii = next(iter(d.values())).index
+            return pd.DataFrame({"QQQ": 1.0}, index=ii)
+        overlay = vix_stress_overlay(
+            base,
+            vix,
+            stress_quantile=0.80,
+            severe_quantile=0.95,
+            stress_scale=0.5,
+            severe_scale=0.0,
+            min_history=100,
+        )
+        a = overlay({"QQQ": data["QQQ"].iloc[:450]})
         b = overlay({"QQQ": data["QQQ"]})
         pd.testing.assert_frame_equal(a, b.loc[a.index])
 
