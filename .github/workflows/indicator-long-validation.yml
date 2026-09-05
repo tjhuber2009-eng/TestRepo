@@ -1,4 +1,4 @@
-name: Indicator Union Calendar Audit
+name: Indicator Union Walkforward
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run union-calendar audit
-        run: python indicator_validation/run_union_calendar_audit.py
+      - name: Run corrected union-calendar walkforward
+        run: python indicator_validation/run_union_walkforward.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_union_calendar_audit.py indicator_validation/output_union_calendar_audit/* > indicator_validation/SHA256SUMS_UNION_CALENDAR.txt
+        run: sha256sum indicator_validation/run_union_walkforward.py indicator_validation/output_union_walkforward/* > indicator_validation/SHA256SUMS_UNION_WALKFORWARD.txt
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-union-calendar-audit
+          name: indicator-union-walkforward
           path: |
-            indicator_validation/output_union_calendar_audit/
-            indicator_validation/SHA256SUMS_UNION_CALENDAR.txt
+            indicator_validation/output_union_walkforward/
+            indicator_validation/SHA256SUMS_UNION_WALKFORWARD.txt
           if-no-files-found: error
           retention-days: 7
