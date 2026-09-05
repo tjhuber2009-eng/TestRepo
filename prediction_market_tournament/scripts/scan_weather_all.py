@@ -95,6 +95,7 @@ def main() -> int:
                     event=event,
                     target_date=target,
                     observed_at=now,
+                    models=tuple(lane_cfg["weather_models"]),
                     min_edge=float(lane_cfg["min_edge"]),
                     cash_budget_usd=paper_cash_budget_usd,
                 )
