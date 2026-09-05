@@ -451,7 +451,11 @@ def build_rsi2_pullback_strategy(params):
     )
 
 def pbo_gate(diagnostic, max_pbo):
-    return diagnostic is None or float(diagnostic["pbo"]) <= float(max_pbo)
+    """Require an actual PBO diagnostic before a family can pass evidence gating."""
+    return (
+        diagnostic is not None
+        and float(diagnostic["pbo"]) <= float(max_pbo)
+    )
 
 
 def run(data_dir: str | Path, output: str | Path) -> dict:
