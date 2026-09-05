@@ -2,10 +2,11 @@ let DATA=null;
 
 const $=(s)=>document.querySelector(s);
 const fmt=(v,d=2)=>v===null||v===undefined||Number.isNaN(Number(v))?"—":Number(v).toFixed(d);
-const pct=(v,d=1)=>v===null||v===undefined?"—":`${Number(v).toFixed(d)}%`;
+const pct=(v,d=1)=>v===null||v===undefined||Number.isNaN(Number(v))?"—":`${Number(v).toFixed(d)}%`;
 const num=(v)=>new Intl.NumberFormat().format(Number(v||0));
 const esc=(s)=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 const when=(s)=>s?new Date(s).toLocaleString():"—";
+const finite=(v)=>{const n=Number(v);return Number.isFinite(n)?n:null;};
 const stateClass=(status,conclusion)=>{
   const x=(conclusion||status||"").toLowerCase();
   if(["success","completed","validation_pass"].includes(x)) return "good";
@@ -35,27 +36,46 @@ async function load(){
 function render(){
   const p=DATA.progress||{};
   const d=DATA.progress_derived||{};
-  $("#subtitle").textContent=`${DATA.protocol||"—"} · phase ${DATA.phase||"—"} · updated ${when(p.updated_at)}`;
+  const protocol=DATA.protocol||"—";
+  const phase=DATA.phase||"unknown";
+  const hiddenOpen=!!DATA.safeguards?.hidden_validation_opened;
+
+  $("#subtitle").textContent=`${protocol} · phase ${phase} · updated ${when(p.updated_at)}`;
   $("#generatedAt").textContent=when(DATA.generated_at);
   $("#freshness").textContent=`snapshot ${when(DATA.generated_at)}`;
-  $("#phaseTitle").textContent=(DATA.phase||"unknown").toUpperCase();
+  $("#phaseTitle").textContent=String(phase).toUpperCase();
+  $("#protocolTop").textContent=protocol;
+  $("#phaseTop").textContent=String(phase).toUpperCase();
+  $("#hiddenTop").textContent=hiddenOpen?"OPENED":"SEALED";
+  $("#hiddenTop").className=hiddenOpen?"text-warn":"text-good";
+
   $("#validCandidates").textContent=num(p.total_valid_candidates);
   $("#breadthGoal").textContent=`of ${num(d.breadth_total_candidates)} breadth candidates`;
   $("#touchedTracks").textContent=num(d.touched_tracks);
   $("#runnableTracks").textContent=num(p.runnable_track_count);
   $("#validTracks").textContent=num(d.tracks_valid_ge_1);
   $("#terminalTracks").textContent=num(p.terminal_track_count);
+  $("#keepersKpi").textContent=num(p.total_kept_candidates);
+
+  const runnable=Math.max(0,Number(p.runnable_track_count||0));
+  const touched=Math.max(0,Number(d.touched_tracks||0));
+  const validTracks=Math.max(0,Number(d.tracks_valid_ge_1||0));
+  $("#touchedShare").textContent=runnable?`${fmt(100*touched/runnable,1)}% of universe`:"0% of universe";
+  $("#validShare").textContent=runnable?`${fmt(100*validTracks/runnable,1)}% candidate coverage`:"candidate coverage";
+
+  const valid=Math.max(0,Number(p.total_valid_candidates||0));
+  const passed=Math.max(0,Number(p.total_guard_passed_candidates||0));
+  $("#guardRateKpi").textContent=valid?`${fmt(100*passed/valid,1)}%`:"—";
 
   const prog=Math.max(0,Math.min(100,Number(d.breadth_pct||0)));
   $("#progressPct").textContent=`${fmt(prog,2)}%`;
-  $("#progressFill").style.width=`${prog}%`;
-  $("#progressRing").style.background=`conic-gradient(var(--accent) ${prog*3.6}deg,#203142 0)`;
+  $("#progressRing").style.background=`conic-gradient(var(--cyan) ${prog*3.6}deg,#203142 0)`;
 
-  $("#protocolValue").textContent=DATA.protocol||"—";
-  const hiddenOpen=!!DATA.safeguards?.hidden_validation_opened;
+  $("#protocolValue").textContent=protocol;
   $("#hiddenState").textContent=hiddenOpen?"OPENED":"SEALED";
   $("#hiddenDot").className=`dot ${hiddenOpen?"warn":"safe"}`;
 
+  renderPhaseRail(phase,hiddenOpen);
   renderWorkflows();
   setupFilters();
   renderChampions();
@@ -66,6 +86,41 @@ function render(){
   renderModelPerformance();
   renderDataQuality();
   renderTracks();
+
+  if(DATA.stale_state){
+    const alert=$("#alertBar");
+    alert.textContent=`Historical ${DATA.stale_state.progress_protocol||"prior-protocol"} state detected and intentionally hidden from the active v3 leaderboard.`;
+    alert.classList.remove("hidden");
+  }
+}
+
+function renderPhaseRail(phase,hiddenOpen){
+  const order=["breadth","depth","elite","validation","oos"];
+  const normalized=String(phase||"breadth").toLowerCase();
+  let current=order.indexOf(normalized);
+  if(current<0){
+    if(normalized.includes("valid")) current=3;
+    else if(normalized.includes("elite")) current=2;
+    else if(normalized.includes("depth")) current=1;
+    else current=0;
+  }
+  document.querySelectorAll(".phase-step").forEach((el)=>{
+    const p=el.dataset.phase;
+    const idx=order.indexOf(p);
+    el.classList.remove("active","done");
+    if(idx<current) el.classList.add("done");
+    if(idx===current) el.classList.add("active");
+    if(p==="validation"&&!hiddenOpen&&idx>=current) el.classList.add("sealed");
+    if(p==="oos") el.classList.add("sealed");
+  });
+  const descriptions={
+    breadth:"Wide search across every runnable family, target, and risk profile.",
+    depth:"Top breadth survivors receive a larger adaptive research budget.",
+    elite:"Only the strongest depth survivors receive the final adaptive budget.",
+    validation:"Adaptive search is frozen. Elite champions receive one hidden pre-OOS check.",
+    oos:"Final one-look 2023+ out-of-sample evaluation."
+  };
+  $("#phaseDescription").textContent=descriptions[order[current]]||descriptions.breadth;
 }
 
 function renderWorkflows(){
@@ -80,8 +135,9 @@ function renderWorkflows(){
     if(!r) return `<div class="workflow-row"><div><b>${label}</b><small>No run metadata</small></div><span class="pill neutral">—</span></div>`;
     const cls=stateClass(r.status,r.conclusion);
     const text=r.status==="completed"?(r.conclusion||"completed"):r.status;
+    const linked=r.html_url?`<a href="${esc(r.html_url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(label)}</a>`:esc(label);
     return `<div class="workflow-row">
-      <div><b>${label}</b><small>#${esc(r.run_number||r.id)} · ${when(r.updated_at||r.created_at)}</small></div>
+      <div><b>${linked}</b><small>#${esc(r.run_number||r.id)} · ${when(r.updated_at||r.created_at)}</small></div>
       <span class="pill ${cls}">${esc(text)}</span>
     </div>`;
   }).join("");
@@ -97,11 +153,13 @@ function setupFilters(){
     o.value=m;o.textContent=m;
     mf.appendChild(o);
   });
-  ["profileFilter","marketFilter","eligibilityFilter","evidenceFilter","rankMetric","championSearch"].forEach(id=>$("#"+id).oninput=renderChampions);
+  ["profileFilter","marketFilter","eligibilityFilter","evidenceFilter","rankMetric","championSearch"].forEach(id=>{
+    $("#"+id).oninput=renderChampions;
+  });
   ["trackProfileFilter","trackSearch"].forEach(id=>$("#"+id).oninput=renderTracks);
 }
 
-function renderChampions(){
+function filteredChampions(){
   const profile=$("#profileFilter").value;
   const market=$("#marketFilter").value;
   const eligibility=$("#eligibilityFilter").value;
@@ -118,18 +176,25 @@ function renderChampions(){
     (!q||`${r.family} ${r.target} ${r.track_id}`.toLowerCase().includes(q))
   );
   rows.sort((a,b)=>{
-    const av=Number(a[metric]),bv=Number(b[metric]);
-    const aa=Number.isFinite(av)?av:-1e99;
-    const bb=Number.isFinite(bv)?bv:-1e99;
-    return bb-aa;
+    const av=finite(a[metric]),bv=finite(b[metric]);
+    return (bv??-1e99)-(av??-1e99);
   });
+  return rows;
+}
+
+function renderChampions(){
+  const rows=filteredChampions();
+  renderPodium(rows);
+  renderScatter(rows);
+
   const body=$("#championsTable tbody");
   body.innerHTML=rows.slice(0,100).map((r,i)=>{
-    const score=Number(r.development_score);
-    const scoreClass=Number.isFinite(score)&&score>=0?"score-pos":"score-neg";
+    const score=finite(r.development_score);
+    const scoreClass=score!==null&&score>=0?"score-pos":"score-neg";
     const psr=r.development_psr_zero==null?"—":`${(100*Number(r.development_psr_zero)).toFixed(1)}%`;
     const qv=r.multiple_test_qvalue==null?"—":`${(100*Number(r.multiple_test_qvalue)).toFixed(1)}%`;
     const pbo=r.pbo==null?"—":`${(100*Number(r.pbo)).toFixed(1)}%`;
+    const eg=String(r.evidence_grade||"—").toLowerCase();
     return `<tr>
       <td>${i+1}</td>
       <td><b>${esc(r.family)}</b><div class="muted">${esc(r.exactness||"")}</div></td>
@@ -146,13 +211,87 @@ function renderChampions(){
       <td class="num">${psr}</td>
       <td class="num">${qv}</td>
       <td class="num">${pbo}</td>
-      <td><span class="status-chip">${esc(r.evidence_grade||"—")}</span></td>
+      <td><span class="status-chip grade-${eg}">${esc(r.evidence_grade||"—")}</span></td>
       <td><span class="status-chip">${esc(r.data_quality_grade||"—")}</span></td>
       <td class="num">${fmt(r.development_trades_per_year,1)}</td>
       <td class="num">${pct(r.extreme_stress_return_pct,1)}</td>
       <td class="num">${num(r.valid_attempts)}</td>
     </tr>`;
   }).join("");
+}
+
+function renderPodium(rows){
+  const top=rows.slice(0,3);
+  const wrap=$("#podium");
+  if(!top.length){
+    wrap.innerHTML='<div class="empty" style="grid-column:1/-1">No protocol-v3 champions yet.</div>';
+    return;
+  }
+  wrap.innerHTML=top.map((r,i)=>`<article class="podium-card">
+    <div class="podium-rank">#${i+1} DEVELOPMENT CHAMPION</div>
+    <div class="podium-name">${esc(r.family||r.track_id||"—")}</div>
+    <div class="podium-meta">${esc(String(r.target||"").toUpperCase())} · ${esc(r.profile||"—")} · evidence ${esc(r.evidence_grade||"—")}</div>
+    <div class="podium-metrics">
+      <div><span>Robust K</span><strong>${fmt(r.development_score,5)}</strong></div>
+      <div><span>CAGR</span><strong class="metric-good">${pct(r.development_cagr_pct,1)}</strong></div>
+      <div><span>Max DD</span><strong>${pct(r.development_max_dd_pct,1)}</strong></div>
+      <div><span>Sharpe</span><strong>${fmt(r.development_sharpe,2)}</strong></div>
+    </div>
+  </article>`).join("");
+}
+
+function renderScatter(rows){
+  const wrap=$("#scatterPlot");
+  const pts=rows.slice(0,35).map((r,i)=>({
+    r,
+    x:Math.abs(finite(r.development_max_dd_pct)??0),
+    y:finite(r.development_cagr_pct),
+    k:Math.abs(finite(r.development_score)??0),
+    idx:i
+  })).filter(p=>p.y!==null&&Number.isFinite(p.x));
+
+  if(!pts.length){
+    wrap.innerHTML='<div class="empty">Risk/return map will appear when v3 champions are available.</div>';
+    return;
+  }
+
+  const W=760,H=260,ml=46,mr=18,mt=14,mb=32;
+  const xmax=Math.max(5,...pts.map(p=>p.x))*1.08;
+  let ymin=Math.min(0,...pts.map(p=>p.y));
+  let ymax=Math.max(1,...pts.map(p=>p.y));
+  if(ymax===ymin) ymax=ymin+1;
+  const pad=(ymax-ymin)*.08;
+  ymin-=pad;ymax+=pad;
+  const sx=x=>ml+(W-ml-mr)*(x/xmax);
+  const sy=y=>mt+(H-mt-mb)*(1-(y-ymin)/(ymax-ymin));
+  const maxK=Math.max(.000001,...pts.map(p=>p.k));
+
+  const xTicks=[0,.25,.5,.75,1].map(t=>{
+    const v=xmax*t;
+    const x=sx(v);
+    return `<line class="grid-line" x1="${x}" y1="${mt}" x2="${x}" y2="${H-mb}"/><text class="axis-label" x="${x}" y="${H-10}" text-anchor="middle">${v.toFixed(1)}%</text>`;
+  }).join("");
+  const yTicks=[0,.25,.5,.75,1].map(t=>{
+    const v=ymin+(ymax-ymin)*t;
+    const y=sy(v);
+    return `<line class="grid-line" x1="${ml}" y1="${y}" x2="${W-mr}" y2="${y}"/><text class="axis-label" x="${ml-7}" y="${y+3}" text-anchor="end">${v.toFixed(0)}%</text>`;
+  }).join("");
+  const dots=pts.map((p,i)=>{
+    const rad=4+7*Math.sqrt(p.k/maxK);
+    const name=esc(p.r.family||p.r.track_id||"");
+    const cls=p.r.profile==="private"?"scatter-dot private":"scatter-dot";
+    const label=i<6?`<text class="scatter-label" x="${sx(p.x)+rad+4}" y="${sy(p.y)+3}">${name.slice(0,18)}</text>`:"";
+    return `<g><circle class="${cls}" cx="${sx(p.x)}" cy="${sy(p.y)}" r="${rad}"><title>${name} · CAGR ${pct(p.y,1)} · DD ${pct(-p.x,1)} · K ${fmt(p.r.development_score,5)}</title></circle>${label}</g>`;
+  }).join("");
+
+  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Champion CAGR versus drawdown scatter plot">
+    ${xTicks}${yTicks}
+    <line class="axis-line" x1="${ml}" y1="${H-mb}" x2="${W-mr}" y2="${H-mb}"/>
+    <line class="axis-line" x1="${ml}" y1="${mt}" x2="${ml}" y2="${H-mb}"/>
+    ${dots}
+    <text class="axis-label" x="${(ml+W-mr)/2}" y="${H-1}" text-anchor="middle">Absolute max drawdown</text>
+    <text class="axis-label" transform="translate(10,${H/2}) rotate(-90)" text-anchor="middle">Development CAGR</text>
+  </svg>`;
 }
 
 function renderTournament(){
@@ -169,8 +308,11 @@ function renderTournament(){
       <thead><tr><th>#</th><th>Model</th><th class="num">Keep rate</th><th class="num">Wins</th><th class="num">Guard</th><th class="num">Paired ΔK</th><th class="num">Ideas</th></tr></thead>
       <tbody>${summary.ranking.map((r,i)=>`<tr>
         <td>${i+1}</td><td><b>${esc(r.model)}</b><div class="muted">${esc(r.provider||"")}</div></td>
-        <td class="num">${r.keep_rate==null?"—":(100*Number(r.keep_rate)).toFixed(1)+"%"}</td><td class="num">${fmt(r.matched_case_wins,1)}</td>
-        <td class="num">${num(r.guard_pass)}/${num(r.attempts)}</td><td class="num">${fmt(r.paired_guard_median_delta_k??r.median_delta_k,6)}</td><td class="num">${num(r.unique_proposals)}</td>
+        <td class="num">${r.keep_rate==null?"—":(100*Number(r.keep_rate)).toFixed(1)+"%"}</td>
+        <td class="num">${fmt(r.matched_case_wins,1)}</td>
+        <td class="num">${num(r.guard_pass)}/${num(r.attempts)}</td>
+        <td class="num">${fmt(r.paired_guard_median_delta_k??r.median_delta_k,6)}</td>
+        <td class="num">${num(r.unique_proposals)}</td>
       </tr>`).join("")}</tbody></table></div>`;
     return;
   }
@@ -181,7 +323,7 @@ function renderTournament(){
     state.className=`pill ${cls}`;
   }
   if(!jobs.length){
-    panel.innerHTML='<div class="empty">Tournament summary not available yet. Workflow status will appear here while Round 1 runs.</div>';
+    panel.innerHTML='<div class="empty">Tournament summary not available yet. Live contestant status will appear here while the round runs.</div>';
     return;
   }
   panel.innerHTML=`<div class="tournament-jobs">${jobs.map(j=>{
@@ -195,14 +337,14 @@ function renderTournament(){
 function renderOutcomes(){
   const p=DATA.progress||{};
   const rows=[
-    ["Backtested candidates",p.total_valid_candidates],
+    ["Backtested",p.total_valid_candidates],
     ["Guard-passing",p.total_guard_passed_candidates],
     ["Keepers",p.total_kept_candidates],
     ["Model crashes",p.total_crashes],
     ["Parameter-only",p.total_parameter_only],
     ["Too broad",p.total_too_broad],
-    ["Risk-control change",p.total_risk_control_changes],
-    ["Semantic duplicate",p.total_duplicates],
+    ["Risk-control",p.total_risk_control_changes],
+    ["Duplicates",p.total_duplicates],
   ];
   const max=Math.max(1,...rows.map(r=>Number(r[1]||0)));
   $("#outcomeBars").innerHTML=rows.map(([label,v])=>`<div class="outcome-row">
@@ -222,8 +364,8 @@ function renderCoverage(){
     ["Breadth complete",d.tracks_valid_ge_10,"tracks"],
   ];
   $("#coveragePanel").innerHTML=`<div class="coverage-grid">${cells.map(([label,v,s])=>`<div class="coverage-cell"><span>${label}</span><strong>${num(v)}</strong><small>${s}</small></div>`).join("")}</div>
-  <div class="progress-track" style="margin-top:16px"><div style="width:${Math.min(100,Number(d.breadth_pct||0))}%"></div></div>
-  <p>${fmt(d.breadth_pct,2)}% of breadth candidate budget completed · targets ${d.breadth_target}/${d.depth_target}/${d.elite_target} valid candidates.</p>`;
+  <div class="progress-track"><div style="width:${Math.min(100,Number(d.breadth_pct||0))}%"></div></div>
+  <p>${fmt(d.breadth_pct,2)}% of breadth budget completed · successive-halving targets ${d.breadth_target}/${d.depth_target}/${d.elite_target} valid candidates.</p>`;
 }
 
 function renderActivity(){
@@ -266,13 +408,19 @@ function renderDataQuality(){
     by[key]=(by[key]||0)+1;
   });
   const entries=Object.entries(by).sort();
-  $("#dataQualityPanel").innerHTML=entries.length
-    ? `<div class="coverage-grid">${entries.map(([key,count])=>{
-        const [grade,fidelity]=key.split("|");
-        return `<div class="coverage-cell"><span>Grade ${esc(grade)}</span><strong>${num(count)}</strong><small>${esc(fidelity)}</small></div>`;
-      }).join("")}</div>
-      <p>A = checksum-verified archive; B = adjusted daily provider snapshot; C = non-contract-exact futures proxy.</p>`
-    : '<div class="empty">Data-quality metadata unavailable.</div>';
+  if(!entries.length){
+    $("#dataQualityPanel").innerHTML='<div class="empty">Data-quality metadata unavailable.</div>';
+    return;
+  }
+  $("#dataQualityPanel").innerHTML=`<div class="data-quality-cards">${entries.map(([key,count])=>{
+    const [grade,fidelity]=key.split("|");
+    return `<article class="data-quality-card">
+      <div class="grade">Grade ${esc(grade)}</div>
+      <div class="count">${num(count)} tracks</div>
+      <div class="fidelity">${esc(fidelity)}</div>
+    </article>`;
+  }).join("")}</div>
+  <p style="margin-top:10px">A = checksum-verified archive · B = adjusted daily provider snapshot · C = non-contract-exact futures proxy.</p>`;
 }
 
 function renderTracks(){
@@ -288,7 +436,7 @@ function renderTracks(){
     if(bv!==av)return bv-av;
     return Number(b.development_score??-1e99)-Number(a.development_score??-1e99);
   });
-  $("#tracksTable tbody").innerHTML=rows.slice(0,514).map(r=>`<tr>
+  $("#tracksTable tbody").innerHTML=rows.slice(0,600).map(r=>`<tr>
     <td><b>${esc(r.track_id)}</b></td>
     <td><span class="status-chip">${esc(r.status||"")}</span></td>
     <td class="num">${fmt(r.development_score,5)}</td>
