@@ -4,6 +4,7 @@ import {
   autoAuditBackoffMs,
   autoAuditDebounceMs,
   autoAuditPollMs,
+  autoAuditTaskPriority,
   inventoryItemGidFromPayload,
   isAutoAuditEnabled,
   productGidFromPayload,
@@ -43,6 +44,14 @@ test("automatic audit timing controls are bounded", () => {
   assert.equal(autoAuditPollMs("999999"), 60000);
   assert.equal(autoAuditBackoffMs(0), 15000);
   assert.equal(autoAuditBackoffMs(20), 900000);
+});
+
+test("queue priority keeps live webhooks ahead of reconciliation", () => {
+  assert.equal(autoAuditTaskPriority("PRODUCT"), 100);
+  assert.equal(autoAuditTaskPriority("INVENTORY_ITEM"), 100);
+  assert.equal(autoAuditTaskPriority("SHOP"), 80);
+  assert.equal(autoAuditTaskPriority("RECONCILE_PRODUCT"), 10);
+  assert.equal(autoAuditTaskPriority("RECONCILE"), 5);
 });
 
 test("automatic audits default on only in production", () => {

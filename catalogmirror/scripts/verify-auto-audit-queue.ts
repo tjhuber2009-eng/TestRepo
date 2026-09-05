@@ -21,6 +21,7 @@ async function main() {
   assert.equal(tasks.length, 1);
   assert.equal(tasks[0].generation, 1);
   assert.equal(tasks[0].attempts, 0);
+  assert.equal(tasks[0].priority, 100);
 
   await enqueueAutoAuditTask({
     shop,
@@ -40,9 +41,27 @@ async function main() {
     resourceId: "gid://shopify/InventoryItem/456",
   });
 
-  assert.equal(await db.auditTask.count({ where: { shop } }), 2);
+  await enqueueAutoAuditTask({
+    shop,
+    topic: "PERIODIC_RECONCILIATION",
+    resourceType: "RECONCILE",
+    resourceId: shop,
+    recordWebhook: false,
+  });
+
+  assert.equal(await db.auditTask.count({ where: { shop } }), 3);
+  const reconcile = await db.auditTask.findUnique({
+    where: {
+      shop_resourceType_resourceId: {
+        shop,
+        resourceType: "RECONCILE",
+        resourceId: shop,
+      },
+    },
+  });
+  assert.equal(reconcile?.priority, 5);
   const state = await db.shopAuditState.findUnique({ where: { shop } });
-  assert.equal(state?.pendingChanges, 2);
+  assert.equal(state?.pendingChanges, 3);
   assert.equal(state?.lastWebhookTopic, "INVENTORY_LEVELS_UPDATE");
 
   await db.auditTask.deleteMany({ where: { shop } });

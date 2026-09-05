@@ -47,9 +47,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     recentRuns,
     lastAutoAuditAt: state?.lastAutoAuditAt ?? null,
     lastAutoAuditError: state?.lastAutoAuditError ?? null,
+    lastReconciliationAt: state?.lastReconciliationAt ?? null,
+    lastReconciliationError: state?.lastReconciliationError ?? null,
+    reconciliationDiscovered: state?.reconciliationDiscovered ?? 0,
+    reconciliationRunning: Boolean(state?.reconciliationBulkOperationId),
     autoAuditEnabled:
       process.env.AUTO_AUDIT_ENABLED === "true" ||
       (process.env.AUTO_AUDIT_ENABLED !== "false" && process.env.NODE_ENV === "production"),
+    reconciliationEnabled:
+      process.env.RECONCILIATION_ENABLED === "true" ||
+      (process.env.RECONCILIATION_ENABLED !== "false" && process.env.NODE_ENV === "production"),
   };
 }
 
@@ -102,6 +109,11 @@ export default function Dashboard() {
           Automatic verification encountered an error and will retry: {data.lastAutoAuditError}
         </s-banner>
       ) : null}
+      {data.lastReconciliationError ? (
+        <s-banner tone="warning">
+          Periodic reconciliation encountered an error and will retry: {data.lastReconciliationError}
+        </s-banner>
+      ) : null}
 
       <s-section heading="Catalog integrity">
         <s-paragraph>
@@ -139,6 +151,10 @@ export default function Dashboard() {
             <s-text>{data.autoAuditEnabled ? "On" : "Off"}</s-text>
           </s-box>
           <s-box padding="base" border="base" borderRadius="base">
+            <s-heading>Reconciliation</s-heading>
+            <s-text>{data.reconciliationEnabled ? (data.reconciliationRunning ? "Running" : "On") : "Off"}</s-text>
+          </s-box>
+          <s-box padding="base" border="base" borderRadius="base">
             <s-heading>Last audit</s-heading>
             <s-text>{data.lastRun?.finishedAt ? new Date(data.lastRun.finishedAt).toLocaleString() : "Not run yet"}</s-text>
           </s-box>
@@ -146,7 +162,16 @@ export default function Dashboard() {
             <s-heading>Last automatic check</s-heading>
             <s-text>{data.lastAutoAuditAt ? new Date(data.lastAutoAuditAt).toLocaleString() : "Not run yet"}</s-text>
           </s-box>
+          <s-box padding="base" border="base" borderRadius="base">
+            <s-heading>Last reconciliation</s-heading>
+            <s-text>{data.lastReconciliationAt ? new Date(data.lastReconciliationAt).toLocaleString() : "Not run yet"}</s-text>
+          </s-box>
         </s-stack>
+        {data.lastReconciliationAt ? (
+          <s-paragraph>
+            Last reconciliation discovered {String(data.reconciliationDiscovered)} product{data.reconciliationDiscovered === 1 ? "" : "s"} for targeted verification.
+          </s-paragraph>
+        ) : null}
         {data.lastRun ? (
           <s-paragraph>
             Last run: {data.lastRun.status}; {String(data.lastRun.productsSeen)} products loaded; {String(data.lastRun.productsAudited)} audited; {String(data.lastRun.critical)} critical; {String(data.lastRun.warnings)} warnings; {durationLabel(data.lastRun.durationMs)}.

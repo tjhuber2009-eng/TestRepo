@@ -1,4 +1,4 @@
-export type AutoAuditResourceType = "PRODUCT" | "INVENTORY_ITEM" | "SHOP";
+export type AutoAuditResourceType = "PRODUCT" | "INVENTORY_ITEM" | "SHOP" | "RECONCILE" | "RECONCILE_PRODUCT";
 
 export function autoAuditDebounceMs(raw = process.env.AUTO_AUDIT_DEBOUNCE_SECONDS) {
   const seconds = Number(raw ?? 20);
@@ -55,4 +55,11 @@ export function isAutoAuditEnabled(env = process.env) {
   if (env.AUTO_AUDIT_ENABLED === "false") return false;
   if (env.AUTO_AUDIT_ENABLED === "true") return true;
   return env.NODE_ENV === "production";
+}
+
+export function autoAuditTaskPriority(type: AutoAuditResourceType) {
+  if (type === "PRODUCT" || type === "INVENTORY_ITEM") return 100;
+  if (type === "SHOP") return 80;
+  if (type === "RECONCILE_PRODUCT") return 10;
+  return 5;
 }
