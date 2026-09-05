@@ -21,6 +21,7 @@ from .live_bootstrap import json_safe
 from .multi_asset_engine import AssetCost, MultiAssetBacktester, PortfolioLimits
 from .prop_firm_engine import active_day_proxy, optimize_prop_exposure
 from .risk_overlays import volatility_target_overlay
+from .continuous_bridge import prop_transfer_candidates
 
 
 PRAGUE = "Europe/Prague"
@@ -228,6 +229,156 @@ def hourly_tsmom_strategy(params, symbols):
         return out
 
     return strategy
+
+
+def _utc_daily_ohlc(frame: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate completed UTC crypto days for exact daily-signal transfer."""
+    daily = frame.resample("1D").agg(
+        {
+            "Open": "first",
+            "High": "max",
+            "Low": "min",
+            "Close": "last",
+            "Volume": "sum",
+        }
+    )
+    return daily.dropna(subset=["Open", "High", "Low", "Close"])
+
+
+def _rsi_now_daily(close: pd.Series, n: int) -> pd.Series:
+    d = close.astype(float).diff()
+    up = d.clip(lower=0.0).ewm(alpha=1.0 / float(n), adjust=False).mean()
+    dn = (-d.clip(upper=0.0)).ewm(alpha=1.0 / float(n), adjust=False).mean()
+    rs = up / dn.replace(0.0, np.nan)
+    return 100.0 - 100.0 / (1.0 + rs)
+
+
+def _adx_now_daily(frame: pd.DataFrame, n: int) -> pd.Series:
+    h = frame["High"].astype(float)
+    l = frame["Low"].astype(float)
+    c = frame["Close"].astype(float)
+    up = h.diff()
+    dn = -l.diff()
+    plus_dm = pd.Series(
+        np.where((up > dn) & (up > 0.0), up, 0.0),
+        index=frame.index,
+    )
+    minus_dm = pd.Series(
+        np.where((dn > up) & (dn > 0.0), dn, 0.0),
+        index=frame.index,
+    )
+    pc = c.shift(1)
+    tr = pd.concat(
+        [(h - l).abs(), (h - pc).abs(), (l - pc).abs()],
+        axis=1,
+    ).max(axis=1)
+    atr = tr.ewm(alpha=1.0 / float(n), adjust=False).mean()
+    plus = (
+        100.0
+        * plus_dm.ewm(alpha=1.0 / float(n), adjust=False).mean()
+        / atr.replace(0.0, np.nan)
+    )
+    minus = (
+        100.0
+        * minus_dm.ewm(alpha=1.0 / float(n), adjust=False).mean()
+        / atr.replace(0.0, np.nan)
+    )
+    dx = 100.0 * (plus - minus).abs() / (plus + minus).replace(0.0, np.nan)
+    return dx.ewm(alpha=1.0 / float(n), adjust=False).mean()
+
+
+def _continuous_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
+    """Replay a supported continuous daily entry/exit state without sizing."""
+    family = str(params["source_family"])
+    daily = _utc_daily_ohlc(frame)
+    close = daily["Close"].astype(float)
+
+    if family == "btc_rsi_adx":
+        sma = close.rolling(int(params.get("sma_window", 50))).mean()
+        ema = close.ewm(
+            span=int(params.get("ema_window", 7)),
+            adjust=False,
+        ).mean()
+        rsi = _rsi_now_daily(close, int(params.get("rsi_window", 2)))
+        adx = _adx_now_daily(daily, int(params.get("adx_window", 2)))
+        entry = (close > sma) & (close > ema) & (rsi > adx)
+        exit_ = rsi < adx
+    elif family in {"sentinel63", "sentinel65"}:
+        window = int(
+            params.get(
+                "signal_window",
+                63 if family == "sentinel63" else 65,
+            )
+        )
+        ema = close.ewm(span=window, adjust=False).mean()
+        sd = close.rolling(window).std(ddof=0)
+        z = (close - ema) / sd.replace(0.0, np.nan)
+        entry = z > float(params.get("entry_z", 0.5))
+        exit_ = z < float(params.get("exit_z", -0.5))
+    else:
+        raise ValueError(
+            f"unsupported continuous daily signal family: {family}"
+        )
+
+    state = []
+    long = False
+    for ent, ex in zip(entry.fillna(False), exit_.fillna(False)):
+        if not long and bool(ent):
+            long = True
+        elif long and bool(ex):
+            long = False
+        state.append(1.0 if long else 0.0)
+    return pd.Series(state, index=daily.index, dtype=float)
+
+
+def hourly_continuous_daily_signal_strategy(params, all_symbols):
+    """Transfer a daily continuous signal into the hourly prop execution model.
+
+    Signal calculations use completed UTC daily bars, matching Binance daily
+    research convention. A target update is emitted only after the UTC day's
+    final hourly bar, so MultiAssetBacktester executes it no earlier than the
+    following bar open. Prague-midnight resets override the target to zero and
+    it remains flat until the next completed UTC-day signal update.
+
+    Source position sizing is intentionally not copied: V4's volatility target
+    and prop exposure optimizer own sizing, daily-loss rails, and payout risk.
+    """
+    target = str(params["source_target"])
+    if target not in all_symbols:
+        raise ValueError(f"continuous prop target unavailable: {target}")
+
+    def strategy(data, features=None):
+        index = next(iter(data.values())).index
+        columns = sorted(data)
+        daily_state = _continuous_daily_state(data[target], params)
+
+        utc_dates = pd.Series(index.floor("1D"), index=index)
+        next_utc_dates = utc_dates.shift(-1)
+        utc_day_complete = (
+            next_utc_dates.notna()
+            & (next_utc_dates != utc_dates)
+        )
+        state_map = daily_state.to_dict()
+        desired_at_close = utc_dates.map(state_map).fillna(0.0)
+
+        local_dates = pd.Series(index.tz_convert(PRAGUE).date, index=index)
+        next_local_dates = local_dates.shift(-1)
+        reset = next_local_dates.notna() & (next_local_dates != local_dates)
+
+        out = pd.DataFrame(np.nan, index=index, columns=columns)
+        # Reset first. If a UTC day also completes at the same bar, reset wins;
+        # the candidate waits until the next completed daily signal update.
+        out.loc[reset] = 0.0
+        update = utc_day_complete & ~reset
+        out.loc[update] = 0.0
+        out.loc[update, target] = desired_at_close.loc[update].astype(float)
+        out = out.ffill().fillna(0.0)
+        if len(out):
+            out.iloc[-1] = 0.0
+        return out
+
+    return strategy
+
 
 def intraday_bar_adverse(
     data: dict[str, pd.DataFrame],
@@ -497,10 +648,18 @@ def _resolve_prop_symbols(data, universe: str) -> tuple[str, ...]:
 def evaluate_strategy(data, params):
     """Build one causal hourly strategy path, reusable across prop programs."""
     all_symbols = tuple(sorted(data))
-    symbols = _resolve_prop_symbols(
-        data,
-        str(params.get("universe", "all_available")),
-    )
+    family = str(params.get("family", "cross_sectional_long"))
+    if family == "continuous_daily_signal":
+        symbols = (str(params["source_target"]),)
+        if symbols[0] not in data:
+            raise RuntimeError(
+                f"continuous transfer target unavailable: {symbols[0]}"
+            )
+    else:
+        symbols = _resolve_prop_symbols(
+            data,
+            str(params.get("universe", "all_available")),
+        )
     costs = {
         s: AssetCost(
             commission_bps=FTMO_CRYPTO_COMMISSION_BPS,
@@ -508,13 +667,18 @@ def evaluate_strategy(data, params):
         )
         for s in all_symbols
     }
-    family = str(params.get("family", "cross_sectional_long"))
     if family == "cross_sectional_long":
         net_min, net_max = 0.0, 1.0
         base_strategy = hourly_rotation_strategy(params, symbols)
     elif family == "tsmom_long_short":
         net_min, net_max = -1.0, 1.0
         base_strategy = hourly_tsmom_strategy(params, symbols)
+    elif family == "continuous_daily_signal":
+        net_min, net_max = 0.0, 1.0
+        base_strategy = hourly_continuous_daily_signal_strategy(
+            params,
+            all_symbols,
+        )
     else:
         raise ValueError(f"unknown intraday prop family: {family}")
 
@@ -1091,6 +1255,76 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         "candidate": candidate,
                     }
 
+    # Automatically transfer compatible champions from continuous breadth/depth
+    # research into the stricter FTMO simulator. The source signal is preserved;
+    # V4 re-searches only prop-specific risk sizing.
+    transfer_seeds, continuous_prop_transfer = prop_transfer_candidates(
+        data.keys()
+    )
+    transfer_params = []
+    transfer_seen = set()
+    for source in transfer_seeds:
+        for vt in (0.20, 0.40, 0.60):
+            for vl in (72, 168):
+                params = dict(source)
+                params["vol_target"] = float(vt)
+                params["vol_lookback"] = int(vl)
+                key = tuple(sorted(params.items()))
+                if key in transfer_seen:
+                    continue
+                transfer_seen.add(key)
+                transfer_params.append(params)
+
+    for params in transfer_params:
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
+                program,
+                exposure_scales=PROP_SCALES,
+                paths=400,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "continuous_daily_signal_to_hourly_ftmo_proxy_"
+                    "prague_midnight_reset_v4_risk_sizing"
+                ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
+            )
+            sel = prop.selected
+            rows_by_program[program.id].append({
+                "params": params,
+                "search_phase": "continuous_prop_transfer",
+                "hourly_base_cagr_pct": base.metrics.cagr_pct,
+                "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
+                "daily_worst_adverse_pct": float(dadv.min() * 100.0),
+                "selected": None if sel is None else sel.to_dict(),
+            })
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
+
     program_results = {}
     for pidx, program in enumerate(programs):
         rows = rows_by_program[program.id]
@@ -1298,6 +1532,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "withdrawal-path simulation"
             ),
         },
+        "continuous_prop_transfer": continuous_prop_transfer,
         "search_policy": {
             "broad_base_candidates": len(params_grid),
             "frontier_seed_parameter_sets": len(seed_params),
@@ -1305,9 +1540,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "frontier_universe_mutations": len(universe_params),
             "frontier_prague_day_brake_mutations": len(brake_params),
             "independent_tsmom_candidates": len(tsmom_params),
+            "continuous_transfer_source_candidates": len(transfer_seeds),
+            "continuous_transfer_risk_candidates": len(transfer_params),
             "candidate_families": [
                 "cross_sectional_long",
                 "tsmom_long_short",
+                "continuous_daily_signal",
             ],
             "structural_dimensions": {
                 "execution_session": [
