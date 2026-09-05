@@ -394,6 +394,62 @@ def build_defensive_brake_strategy(params, base_params):
     )
 
 
+
+def build_rsi2_pullback_strategy(params):
+    """QQQ short-term reversal signal traded through TQQQ.
+
+    Structure is deliberately compact and literature-led: only buy short-term
+    oversold QQQ pullbacks while QQQ is above its 200-day trend, then exit
+    after QQQ mean-reverts above its 5-day average. Signals are formed at
+    close[t] and the engine executes no earlier than open[t+1].
+    """
+    entry_rsi = float(params["entry_rsi"])
+
+    def base(data, features=None):
+        if features is None or "QQQ" not in features:
+            raise ValueError("QQQ causal features required for RSI2 pullback")
+        if "QQQ" not in data or "TQQQ" not in data:
+            raise KeyError("QQQ/TQQQ required for RSI2 pullback")
+        index = data["QQQ"].index
+        close = pd.to_numeric(data["QQQ"]["Close"], errors="coerce")
+        feat = features["QQQ"].reindex(index)
+        rsi2 = pd.to_numeric(feat["rsi_2"], errors="coerce")
+        sma200 = close.rolling(200, min_periods=200).mean()
+        sma5 = close.rolling(5, min_periods=5).mean()
+        out = pd.DataFrame(0.0, index=index, columns=sorted(data))
+        active = False
+        for i, ts in enumerate(index):
+            cc = float(close.iloc[i]) if pd.notna(close.iloc[i]) else float("nan")
+            rr = float(rsi2.iloc[i]) if pd.notna(rsi2.iloc[i]) else float("nan")
+            long_trend = (
+                np.isfinite(cc)
+                and pd.notna(sma200.iloc[i])
+                and cc > float(sma200.iloc[i])
+            )
+            if active:
+                if (
+                    not long_trend
+                    or (
+                        pd.notna(sma5.iloc[i])
+                        and cc > float(sma5.iloc[i])
+                    )
+                ):
+                    active = False
+            elif long_trend and np.isfinite(rr) and rr < entry_rsi:
+                active = True
+            if active:
+                out.loc[ts, "TQQQ"] = 1.0
+        return out
+
+    return volatility_target_overlay(
+        base,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
 def pbo_gate(diagnostic, max_pbo):
     return diagnostic is None or float(diagnostic["pbo"]) <= float(max_pbo)
 
@@ -598,6 +654,64 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 None
                 if hysteresis_pbo is None
                 else hysteresis_pbo["pbo"]
+            ),
+            cost_stress_multiplier=cost_stress,
+        )
+
+    # ------------------------------------------------------------------
+    # Family A1d: literature-led short-term reversal inside QQQ uptrend
+    # ------------------------------------------------------------------
+    reversal_specs = [
+        ParameterSpec("entry_rsi", (5.0, 10.0)),
+        ParameterSpec("target_vol", (0.12, 0.16, 0.20, 0.24)),
+        ParameterSpec("vol_lookback", (20, 60)),
+    ]
+    reversal_trial_count = int(
+        np.prod([len(s.values) for s in reversal_specs])
+    )
+
+    def evaluate_reversal(params):
+        res = eng.run(
+            build_rsi2_pullback_strategy(params),
+            features=store.by_asset,
+            risk_policy=private,
+            num_trials=reversal_trial_count,
+            cost_stress_multiplier=cost_stress,
+        )
+        return {
+            "fold_scores": fold_cagr_scores(
+                res.returns, 252.0, private.max_dd_pct
+            ),
+            "primary_score": float(res.metrics.cost_stress_cagr_pct),
+            "gate_ok": bool(res.gate_ok),
+            "structural_fingerprint": "qqq_rsi2_pullback_tqqq_voltarget_v1",
+        }
+
+    reversal_param = StableParameterOptimizer(
+        reversal_specs,
+        max_trials=20,
+        plateau_neighbors=3,
+        dispersion_penalty=0.20,
+        multiple_test_penalty=0.16,
+    ).optimize(
+        evaluate_reversal,
+        frozen_structure="qqq_rsi2_pullback_tqqq_voltarget_v1",
+    )
+    reversal_pbo = optimizer_pbo(reversal_param)
+    reversal_family_ok = pbo_gate(reversal_pbo, private.max_pbo)
+    reversal_optimized = None
+    if reversal_param.chosen is not None:
+        reversal_optimized = eng.run(
+            build_rsi2_pullback_strategy(
+                reversal_param.chosen.params
+            ),
+            features=store.by_asset,
+            risk_policy=private,
+            num_trials=reversal_trial_count,
+            pbo=(
+                None
+                if reversal_pbo is None
+                else reversal_pbo["pbo"]
             ),
             cost_stress_multiplier=cost_stress,
         )
@@ -979,6 +1093,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             hysteresis_optimized.returns
         )
     if (
+        reversal_optimized is not None
+        and reversal_optimized.gate_ok
+        and reversal_family_ok
+    ):
+        eligible_returns["qqq_rsi2_pullback"] = reversal_optimized.returns
+    if (
         cash_optimized is not None
         and cash_optimized.gate_ok
         and cash_family_ok
@@ -1061,6 +1181,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         strategies["rotation_walkforward_meta_filter"] = meta_optimized.summary()
     if hysteresis_optimized is not None:
         strategies["rotation_sma_hysteresis"] = hysteresis_optimized.summary()
+    if reversal_optimized is not None:
+        strategies["qqq_rsi2_pullback"] = reversal_optimized.summary()
     if cash_optimized is not None:
         strategies["cash_rotation_risk_budgeted"] = cash_optimized.summary()
     if vix_optimized is not None:
@@ -1106,6 +1228,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "meta_family_ok": meta_family_ok,
             "hysteresis_pbo": hysteresis_pbo,
             "hysteresis_family_ok": hysteresis_family_ok,
+            "reversal_pbo": reversal_pbo,
+            "reversal_family_ok": reversal_family_ok,
             "cash_pbo": cash_pbo,
             "cash_family_ok": cash_family_ok,
             "vix_pbo": vix_pbo,
@@ -1122,6 +1246,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             None if meta_param is None else meta_param.to_dict()
         ),
         "hysteresis_parameter_optimizer": hysteresis_param.to_dict(),
+        "reversal_parameter_optimizer": reversal_param.to_dict(),
         "cash_parameter_optimizer": cash_param.to_dict(),
         "vix_parameter_optimizer": (
             None if vix_param is None else vix_param.to_dict()
