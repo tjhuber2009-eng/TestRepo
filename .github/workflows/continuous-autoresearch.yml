@@ -45,6 +45,13 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Restore immutable pre-OOS market-data cache
+        uses: actions/cache@v4
+        with:
+          path: moondev_autoresearch_reconstruction/data
+          key: autoresearch-preoos-v3-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
+
+
       - name: Integrity checks
         shell: bash
         run: |
@@ -109,14 +116,14 @@ jobs:
         run: >
           python continuous_runner.py
           --iters-per-visit 2
-          --max-visits 12
-          --max-seconds 2400
+          --max-visits 16
+          --max-seconds 2550
           --breadth-target 10
           --depth-target 30
           --elite-target 60
           --depth-fraction 0.25
           --elite-fraction 0.20
-          --model nvidia/nemotron-3-super-120b-a12b
+          --model auto
 
       - name: Post-run OOS contamination guard
         run: python oos_guard.py
@@ -124,7 +131,7 @@ jobs:
       - name: Build cycle report
         shell: python
         run: |
-          import json
+          import json, math
           from pathlib import Path
 
           p=Path("continuous_state/progress.json")
@@ -136,37 +143,52 @@ jobs:
           board=json.loads(q.read_text())
           rows=board.get("rows",[])[:12]
 
+          def f(v,d=3):
+              try:
+                  x=float(v)
+                  return f"{x:.{d}f}" if math.isfinite(x) else "—"
+              except Exception:
+                  return "—"
+          def pct(v,d=1):
+              try:
+                  x=float(v)
+                  return f"{x:.{d}f}%"
+              except Exception:
+                  return "—"
+
           out=[
               "# Continuous AUTORESEARCH cycle",
               "",
               f"Protocol: **{progress.get('protocol')}**",
               f"Phase: **{progress.get('phase')}**",
               f"Runnable tracks: **{progress.get('runnable_track_count',0)}**",
-              f"Valid NVIDIA candidates accumulated: **{progress.get('total_valid_candidates',0)}**",
+              f"Valid model candidates accumulated: **{progress.get('total_valid_candidates',0)}**",
               f"Terminal tracks: **{progress.get('terminal_track_count',0)}**",
               f"Hidden validation pass/fail: **{progress.get('validation_pass_count',0)}/{progress.get('validation_fail_count',0)}**",
-              f"Insufficient-data tracks: **{progress.get('data_insufficient_count',0)}**",
-              f"Seed-blocked tracks: **{progress.get('seed_blocked_count',0)}**",
-              f"Model crashes: **{progress.get('total_crashes',0)}**; semantic duplicates: **{progress.get('total_duplicates',0)}**; parameter-only rejected: **{progress.get('total_parameter_only',0)}**; too-broad rewrites rejected: **{progress.get('total_too_broad',0)}**; sizing-control changes rejected: **{progress.get('total_risk_control_changes',0)}**",
+              f"Model crashes: **{progress.get('total_crashes',0)}**; duplicates: **{progress.get('total_duplicates',0)}**; parameter-only: **{progress.get('total_parameter_only',0)}**; too-broad: **{progress.get('total_too_broad',0)}**; sizing changes: **{progress.get('total_risk_control_changes',0)}**",
               f"Search budgets: breadth **{progress.get('breadth_target')}**, depth **{progress.get('depth_target')}**, elite **{progress.get('elite_target')}** valid candidates.",
-              f"Special-engine families still blocked: **{progress.get('blocked_family_count',0)}**; previously falsified/overfit families preserved as terminal evidence: **{progress.get('prior_terminal_family_count',0)}**",
               "",
-              "| Rank | Family | Target | Profile | Dev K | Dev Ret | Dev Sharpe | Dev DD | Hidden pass | Hidden Ret | Hidden DD |",
-              "|---:|---|---|---|---:|---:|---:|---:|---|---:|---:|",
+              "| # | Family | Target | Profile | Robust K | CAGR | Excess vs B&H | Sharpe | DD | PSR | FDR q | PBO | Evidence | 3x cost ret |",
+              "|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|",
           ]
           for i,r in enumerate(rows,1):
-              hp=r.get("hidden_validation_pass")
-              hptext="—" if hp is None else ("PASS" if hp else "FAIL")
+              psr=r.get("development_psr_zero")
+              qv=r.get("multiple_test_qvalue")
+              pbo=r.get("pbo")
               out.append(
                   f"| {i} | {r.get('family')} | {r.get('target')} | {r.get('profile')} | "
-                  f"{r.get('development_score')} | {r.get('development_return_pct')}% | "
-                  f"{r.get('development_sharpe')} | {r.get('development_max_dd_pct')}% | "
-                  f"{hptext} | {r.get('hidden_return_pct')} | {r.get('hidden_max_dd_pct')} |"
+                  f"{f(r.get('development_score'),6)} | {pct(r.get('development_cagr_pct'))} | "
+                  f"{pct(r.get('excess_cagr_vs_buyhold_pct'))} | {f(r.get('development_sharpe'))} | "
+                  f"{pct(r.get('development_max_dd_pct'),2)} | "
+                  f"{pct(None if psr is None else 100*float(psr))} | "
+                  f"{pct(None if qv is None else 100*float(qv))} | "
+                  f"{pct(None if pbo is None else 100*float(pbo))} | "
+                  f"{r.get('evidence_grade') or '—'} | {pct(r.get('extreme_stress_return_pct'))} |"
               )
           out += [
               "",
-              "Adaptive NVIDIA search sees development data only. Hidden 2021–2022 (or target-specific pre-2023) validation is not opened until all adaptive search is frozen.",
-              "Every candidate is cost-stressed and evaluated on continuous equity-path chronological folds; fold boundaries do not reset strategy state.",
+              "Selection uses duration-normalized robust K, 2x/3x transaction-cost stress, statistical diagnostics, and CSCV PBO when enough candidate history exists.",
+              "Adaptive model search sees development data only. Hidden pre-OOS validation remains sealed until all adaptive search is frozen.",
               "2023+ final OOS remains absent from the research dataset.",
           ]
           Path("cycle-report.md").write_text("\n".join(out)+"\n")
