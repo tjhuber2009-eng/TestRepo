@@ -96,9 +96,11 @@ model ShopAuditState {
   shopGid          String?
   pendingChanges   Int      @default(0)
   lastWebhookTopic String?
-  lastWebhookAt    DateTime?
-  lastAuditAt      DateTime?
-  updatedAt        DateTime @updatedAt
+  lastWebhookAt     DateTime?
+  lastAuditAt       DateTime?
+  lastAutoAuditAt   DateTime?
+  lastAutoAuditError String?
+  updatedAt         DateTime @updatedAt
 }
 
 model AuditLease {
@@ -106,4 +108,24 @@ model AuditLease {
   owner     String
   expiresAt DateTime
   updatedAt DateTime @updatedAt
+}
+
+model AuditTask {
+  id           String   @id @default(cuid())
+  shop         String
+  resourceType String
+  resourceId   String
+  reason       String
+  generation   Int      @default(1)
+  attempts     Int      @default(0)
+  availableAt  DateTime
+  lockedBy     String?
+  lockedUntil  DateTime?
+  lastError    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([shop, resourceType, resourceId])
+  @@index([availableAt, lockedUntil])
+  @@index([shop, availableAt])
 }

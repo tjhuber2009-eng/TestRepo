@@ -63,6 +63,7 @@ type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 type ProductConnectionData = { nodes: AdminProduct[]; pageInfo: PageInfo };
 type VariantConnectionData = { nodes: AdminVariant[]; pageInfo: PageInfo };
 type ProductsQueryData = { products: ProductConnectionData };
+type ProductsByIdsData = { nodes: Array<AdminProduct | null> };
 type VariantsQueryData = { product: { variants: VariantConnectionData } | null };
 type ShopContextData = { shop: { currencyCode: string } };
 type StorefrontCurrencyCache = Map<string, Promise<string>>;
@@ -96,6 +97,14 @@ const PRODUCTS_QUERY = `#graphql
   }
 `;
 
+const PRODUCTS_BY_IDS_QUERY = `#graphql
+  query CatalogMirrorProductsByIds($ids: [ID!]!) {
+    nodes(ids: $ids) {
+      ... on Product { id title handle status onlineStoreUrl }
+    }
+  }
+`;
+
 const VARIANTS_QUERY = `#graphql
   query CatalogMirrorVariants($id: ID!, $first: Int!, $after: String) {
     product(id: $id) {
@@ -118,6 +127,8 @@ const VARIANTS_QUERY = `#graphql
 
 const RETRYABLE_HTTP = new Set([429, 500, 502, 503, 504]);
 const STOREFRONT_MAX_BYTES = 5 * 1024 * 1024;
+const AUDIT_LEASE_MS = 10 * 60_000;
+const AUDIT_LEASE_HEARTBEAT_MS = 2 * 60_000;
 
 export class AuditInProgressError extends Error {
   constructor() {
@@ -222,6 +233,25 @@ async function loadProducts(admin: AdminClient, limit: number) {
   }
 
   return { products, hasMore };
+}
+
+async function loadProductsByIds(admin: AdminClient, ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids.filter((id) => /^gid:\/\/shopify\/Product\/\d+$/.test(id))));
+  const products: AdminProduct[] = [];
+
+  for (let offset = 0; offset < uniqueIds.length; offset += 100) {
+    const chunk = uniqueIds.slice(offset, offset + 100);
+    const data: ProductsByIdsData = await adminQuery<ProductsByIdsData>(
+      admin,
+      PRODUCTS_BY_IDS_QUERY,
+      { ids: chunk },
+    );
+    for (const node of data.nodes ?? []) {
+      if (node?.id) products.push(node);
+    }
+  }
+
+  return products;
 }
 
 async function loadVariants(admin: AdminClient, productId: string) {
@@ -728,7 +758,7 @@ async function mapWithConcurrency<T, R>(
 
 async function acquireAuditLease(shop: string, owner: string) {
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 60 * 60_000);
+  const expiresAt = new Date(now.getTime() + AUDIT_LEASE_MS);
   const rows = await db.$queryRaw<Array<{ owner: string }>>`
     INSERT INTO "AuditLease" ("shop", "owner", "expiresAt", "updatedAt")
     VALUES (${shop}, ${owner}, ${expiresAt}, CURRENT_TIMESTAMP)
@@ -743,6 +773,22 @@ async function acquireAuditLease(shop: string, owner: string) {
   if (rows.length !== 1 || rows[0].owner !== owner) throw new AuditInProgressError();
 }
 
+function startAuditLeaseHeartbeat(shop: string, owner: string) {
+  const timer = setInterval(() => {
+    void db.auditLease.updateMany({
+      where: { shop, owner },
+      data: { expiresAt: new Date(Date.now() + AUDIT_LEASE_MS) },
+    }).catch((error) => {
+      console.error("CatalogMirror could not renew audit lease", {
+        shop,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, AUDIT_LEASE_HEARTBEAT_MS);
+  timer.unref();
+  return timer;
+}
+
 async function releaseAuditLease(shop: string, owner: string) {
   await db.auditLease.deleteMany({ where: { shop, owner } });
 }
@@ -752,6 +798,7 @@ export async function runCatalogAudit(args: {
   shop: string;
   limit?: number;
   trigger?: string;
+  productIds?: string[];
 }) {
   const maxProducts = getAuditMaxProducts();
   const requested = args.limit ?? maxProducts;
@@ -760,6 +807,7 @@ export async function runCatalogAudit(args: {
   const started = Date.now();
 
   await acquireAuditLease(args.shop, owner);
+  const leaseHeartbeat = startAuditLeaseHeartbeat(args.shop, owner);
 
   let run: { id: string } | null = null;
 
@@ -776,7 +824,12 @@ export async function runCatalogAudit(args: {
     const shopCurrency = shopContext.shop.currencyCode.toUpperCase();
     const currencyCache: StorefrontCurrencyCache = new Map();
 
-    const { products, hasMore } = await loadProducts(args.admin, limit);
+    const targetedProductIds = args.productIds?.length ? args.productIds : null;
+    const loaded = targetedProductIds
+      ? { products: await loadProductsByIds(args.admin, targetedProductIds), hasMore: false }
+      : await loadProducts(args.admin, limit);
+    const { products, hasMore } = loaded;
+
     const results = await mapWithConcurrency(
       products,
       getAuditConcurrency(),
@@ -861,19 +914,34 @@ export async function runCatalogAudit(args: {
     }
 
     const finishedAt = new Date();
-    if (!hasMore) {
-      await db.shopAuditState.upsert({
-        where: { shop: args.shop },
-        create: { shop: args.shop, pendingChanges: 0, lastAuditAt: finishedAt },
-        update: { pendingChanges: 0, lastAuditAt: finishedAt },
+    let pendingChanges: number | undefined;
+
+    if (!targetedProductIds && !hasMore) {
+      await db.auditTask.deleteMany({
+        where: {
+          shop: args.shop,
+          updatedAt: { lte: new Date(started) },
+          OR: [
+            { lockedUntil: null },
+            { lockedUntil: { lt: finishedAt } },
+          ],
+        },
       });
-    } else {
-      await db.shopAuditState.upsert({
-        where: { shop: args.shop },
-        create: { shop: args.shop, lastAuditAt: finishedAt },
-        update: { lastAuditAt: finishedAt },
-      });
+      pendingChanges = await db.auditTask.count({ where: { shop: args.shop } });
     }
+
+    await db.shopAuditState.upsert({
+      where: { shop: args.shop },
+      create: {
+        shop: args.shop,
+        lastAuditAt: finishedAt,
+        ...(pendingChanges !== undefined ? { pendingChanges } : {}),
+      },
+      update: {
+        lastAuditAt: finishedAt,
+        ...(pendingChanges !== undefined ? { pendingChanges } : {}),
+      },
+    });
 
     return await db.auditRun.update({
       where: { id: run.id },
@@ -912,6 +980,7 @@ export async function runCatalogAudit(args: {
     }
     throw error;
   } finally {
+    clearInterval(leaseHeartbeat);
     try {
       await releaseAuditLease(args.shop, owner);
     } catch (releaseError) {

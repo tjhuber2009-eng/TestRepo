@@ -1,4 +1,8 @@
 import db from "../db.server";
+import {
+  inventoryItemGidFromPayload,
+  productGidFromPayload,
+} from "./auto-audit-core";
 
 type WebhookContext = {
   webhookId: string;
@@ -71,31 +75,12 @@ export async function processWebhookDelivery(
   }
 }
 
-export async function markShopChanged(shop: string, topic: string) {
-  const now = new Date();
-  await db.shopAuditState.upsert({
-    where: { shop },
-    create: {
-      shop,
-      pendingChanges: 1,
-      lastWebhookTopic: topic,
-      lastWebhookAt: now,
-    },
-    update: {
-      pendingChanges: { increment: 1 },
-      lastWebhookTopic: topic,
-      lastWebhookAt: now,
-    },
-  });
-}
+export {
+  cancelAutoAuditTask,
+  enqueueAutoAuditTask,
+  markShopChanged,
+  syncPendingAuditCount,
+} from "./auto-audit-queue.server";
 
-export function productGidFromPayload(payload: Record<string, unknown>) {
-  const adminGid = payload.admin_graphql_api_id;
-  if (typeof adminGid === "string" && adminGid.startsWith("gid://shopify/Product/")) return adminGid;
 
-  const id = payload.id;
-  if (typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id))) {
-    return `gid://shopify/Product/${id}`;
-  }
-  return null;
-}
+export { inventoryItemGidFromPayload, productGidFromPayload };

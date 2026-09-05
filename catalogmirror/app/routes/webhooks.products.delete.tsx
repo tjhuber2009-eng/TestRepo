@@ -2,9 +2,9 @@ import type { ActionFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import {
-  markShopChanged,
   processWebhookDelivery,
   productGidFromPayload,
+  syncPendingAuditCount,
 } from "../lib/webhook.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -12,12 +12,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   await processWebhookDelivery({ shop, topic, webhookId }, async () => {
     const productId = productGidFromPayload(payload);
     if (productId) {
-      await db.incident.updateMany({
-        where: { shop, productId, status: "OPEN" },
-        data: { status: "RESOLVED", resolvedAt: new Date() },
-      });
+      await db.$transaction([
+        db.incident.updateMany({
+          where: { shop, productId, status: "OPEN" },
+          data: { status: "RESOLVED", resolvedAt: new Date() },
+        }),
+        db.auditTask.deleteMany({
+          where: { shop, resourceType: "PRODUCT", resourceId: productId },
+        }),
+      ]);
     }
-    await markShopChanged(shop, topic);
+    await syncPendingAuditCount(shop, { topic, webhookAt: new Date() });
   });
   return new Response(null, { status: 200 });
 };
