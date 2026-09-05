@@ -676,6 +676,7 @@ def common_metadata(summary, stage):
         "numpy_version": np.__version__,
         "pandas_version": pd.__version__,
         "backtesting_version": getattr(backtesting, "__version__", None),
+        "research_source_sha": os.environ.get("AUTORESEARCH_SOURCE_SHA"),
         "adaptive_development_end": DEV_END,
         "hidden_validation_start": VALIDATION_START,
         "hidden_validation_end": VALIDATION_END,
