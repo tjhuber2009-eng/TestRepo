@@ -141,8 +141,8 @@ class FeatureStoreBuilder:
         if lag_rows:
             ctx = ctx.shift(int(lag_rows))
         ctx = ctx.add_prefix(prefix)
-        left = features.sort_index().reset_index().rename(columns={features.index.name or "index": "ts"})
-        right = ctx.reset_index().rename(columns={ctx.index.name or "index": "ts"})
+        left = features.sort_index().rename_axis("ts").reset_index()
+        right = ctx.rename_axis("ts").reset_index()
         merged = pd.merge_asof(left, right, on="ts", direction="backward")
         return merged.set_index("ts")
 
@@ -175,7 +175,7 @@ class FeatureStoreBuilder:
             part["symbol"] = symbol
             long_parts.append(part)
         if long_parts:
-            long = pd.concat(long_parts).reset_index().rename(columns={"index": "ts"})
+            long = pd.concat(long_parts).rename_axis("ts").reset_index()
             rank_cols = [c for c in ("ret_20", "ret_126", "rv_20", "dist_sma_200") if c in long]
             for col in rank_cols:
                 long[f"xrank_{col}"] = long.groupby("ts")[col].rank(pct=True, method="average")
