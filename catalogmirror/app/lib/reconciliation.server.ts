@@ -4,6 +4,7 @@ import { isPrivateAddress } from "./audit-core";
 import {
   enqueueAutoAuditTask,
   enqueueReconciliationProducts,
+  syncPendingAuditCount,
 } from "./auto-audit-queue.server";
 import {
   isReconciliationEnabled,
@@ -61,6 +62,13 @@ function maxReconciliationBytes() {
   return bounded * 1024 * 1024;
 }
 
+function reconciliationDownloadTimeoutMs() {
+  const ms = Number(process.env.RECONCILIATION_DOWNLOAD_TIMEOUT_MS || 900_000);
+  return Number.isFinite(ms)
+    ? Math.max(60_000, Math.min(Math.trunc(ms), 30 * 60_000))
+    : 900_000;
+}
+
 function maxReconciliationProducts() {
   const count = Number(process.env.RECONCILIATION_MAX_PRODUCTS || 500000);
   return Number.isFinite(count)
@@ -104,7 +112,7 @@ async function startBulkReconciliation(
   const mutation = [
     "#graphql",
     "mutation CatalogMirrorStartReconciliation($query: String!) {",
-    "  bulkOperationRunQuery(query: $query) {",
+    "  bulkOperationRunQuery(query: $query, groupObjects: false) {",
     "    bulkOperation { id status }",
     "    userErrors { field message }",
     "  }",
@@ -184,7 +192,7 @@ async function fetchBulkResult(urlValue: string) {
       },
       redirect: "manual",
       cache: "no-store",
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(reconciliationDownloadTimeoutMs()),
     });
 
     if (response.status >= 300 && response.status < 400) {
@@ -221,7 +229,7 @@ async function ingestBulkProductIds(shop: string, resultUrl: string) {
 
   async function flushBatch() {
     if (!batch.length) return;
-    await enqueueReconciliationProducts(shop, batch);
+    await enqueueReconciliationProducts(shop, batch, false);
     batch = [];
   }
 
@@ -271,6 +279,7 @@ async function ingestBulkProductIds(shop: string, resultUrl: string) {
   buffer += decoder.decode();
   if (buffer.trim()) await handleLine(buffer);
   await flushBatch();
+  await syncPendingAuditCount(shop);
   return discovered;
 }
 
@@ -329,6 +338,16 @@ export async function processReconciliationTask(
   }
 
   const discovered = operation.url ? await ingestBulkProductIds(shop, operation.url) : 0;
+  const expectedRootCount = Number(operation.rootObjectCount ?? 0);
+  if (Number.isFinite(expectedRootCount) && expectedRootCount !== discovered) {
+    throw new Error(
+      "Bulk reconciliation row-count mismatch: Shopify reported " +
+      expectedRootCount +
+      " products but CatalogMirror ingested " +
+      discovered,
+    );
+  }
+
   await db.shopAuditState.update({
     where: { shop },
     data: {
