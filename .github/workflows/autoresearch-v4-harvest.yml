@@ -1,0 +1,44 @@
+name: AUTORESEARCH v4 external strategy harvest
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: autoresearch-v4-alpha-generation
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Harvest public source candidates
+        run: python -m v4.external_harvester --output v4_state/external-source-candidates.json
+
+      - name: Mark harvest as discovery-only
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          p=Path("v4_state/external-source-candidates.json")
+          x=json.loads(p.read_text())
+          assert x["protocol"]=="alpha_generation_v4"
+          assert x["policy"]=="discovery only; not trading evidence"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-v4-harvest-${{ github.run_id }}
+          path: moondev_autoresearch_reconstruction/v4_state/external-source-candidates.json
+          retention-days: 14
