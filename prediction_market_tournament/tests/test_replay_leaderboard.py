@@ -8,6 +8,9 @@ from tournament.leaderboard import (
     build_equal_window_leaderboard,
 )
 from tournament.models import Signal
+from tournament.replay import (
+    replay_resolved_trades,
+)
 from tournament.scoring import (
     settle_binary_signal,
 )
@@ -107,4 +110,46 @@ def test_concurrency_cap_skips_sixth_simultaneous_trade():
     assert (
         rows[0].skipped_concurrency
         == 1
+    )
+
+
+def test_replay_reserves_taker_fee_as_cash():
+    start = datetime(
+        2026,
+        9,
+        1,
+        tzinfo=timezone.utc,
+    )
+    signal = Signal(
+        "fee",
+        "x",
+        "m",
+        start,
+        "YES",
+        0.5,
+        0.6,
+        "taker",
+        1.0,
+        0.07,
+    )
+    trade = settle_binary_signal(
+        signal,
+        True,
+        resolved_at=(
+            start
+            + timedelta(minutes=1)
+        ),
+    )
+    replay = replay_resolved_trades(
+        [trade],
+        risk_fraction=1.0,
+        initial_equity=1.0,
+    )
+    # A 100% stake leaves no room for a positive taker fee.
+    assert (
+        replay.admitted_signal_ids == ()
+    )
+    assert (
+        replay.skipped_concurrency_signal_ids
+        == ("fee",)
     )
