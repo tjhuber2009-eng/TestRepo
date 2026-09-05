@@ -35,6 +35,7 @@ from v4.prop_firm_engine import (
 )
 from v4.prop_intraday_bootstrap import (
     PRAGUE,
+    _frontier_day_brake_mutations,
     _frontier_structural_mutations,
     _frontier_universe_mutations,
     _resolve_prop_symbols,
@@ -1092,6 +1093,55 @@ class V4AlphaGenerationTests(unittest.TestCase):
             if changes.iloc[i] > 1e-12:
                 next_hour = idx[i + 1].hour
                 self.assertEqual(next_hour % 4, 0)
+
+    def test_prop_day_brake_stops_future_hours_but_keeps_trigger_bar(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=5,
+            freq="h",
+            tz="UTC",
+        )
+        returns = pd.Series([0.01, 0.01, 0.01, 0.01, 0.0], index=idx)
+        adverse = pd.Series([-0.002] * 5, index=idx)
+        weights = pd.DataFrame({"A": [1.0, 1.0, 1.0, 1.0, 0.0]}, index=idx)
+        plain, _, _ = aggregate_prague_days_scaled(
+            returns, adverse, weights, scales=(1.0,)
+        )
+        braked, _, _ = aggregate_prague_days_scaled(
+            returns,
+            adverse,
+            weights,
+            scales=(1.0,),
+            day_profit_cap=0.015,
+            day_loss_cap=0.015,
+        )
+        self.assertGreater(float(braked[1.0].iloc[0]), 0.015)
+        self.assertLess(float(braked[1.0].iloc[0]), float(plain[1.0].iloc[0]))
+
+    def test_prop_day_brake_mutations_are_compact(self):
+        leader = {
+            "params": {
+                "family": "cross_sectional_long",
+                "lookback": 168,
+                "trend": 168,
+                "top_k": 1,
+                "vol_target": 0.30,
+                "vol_lookback": 72,
+            },
+            "candidate": object(),
+        }
+        rows = _frontier_day_brake_mutations(
+            {"p": {"balanced": leader, "conservative": leader}}
+        )
+        self.assertEqual(len(rows), 4)
+        self.assertEqual(
+            {x["day_profit_cap"] for x in rows},
+            {0.010, 0.015},
+        )
+        self.assertEqual(
+            {x["day_loss_cap"] for x in rows},
+            {0.010, 0.015},
+        )
 
     def test_prop_intraday_scale_compounds_before_daily_aggregation(self):
         idx = pd.date_range(
