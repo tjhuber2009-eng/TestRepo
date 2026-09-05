@@ -281,6 +281,69 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     # ------------------------------------------------------------------
+    # Family A2: QQQ signal -> TQQQ, otherwise cash
+    # ------------------------------------------------------------------
+    cash_raw_strategy = leveraged_regime_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbol=None,
+        sma_window=175,
+        momentum_window=126,
+    )
+    cash_raw = eng.run(
+        cash_raw_strategy,
+        risk_policy=private,
+        num_trials=1,
+        cost_stress_multiplier=cost_stress,
+    )
+    cash_specs = [
+        ParameterSpec("sma", (150, 175, 200, 225)),
+        ParameterSpec("mom", (60, 126, 200)),
+        ParameterSpec("target_vol", (0.16, 0.20, 0.24, 0.28, 0.32, 0.36)),
+        ParameterSpec("vol_lookback", (20, 60)),
+    ]
+    cash_trial_count = int(np.prod([len(s.values) for s in cash_specs]))
+
+    def evaluate_cash(params):
+        res = eng.run(
+            build_cash_rotation_strategy(params),
+            risk_policy=private,
+            num_trials=cash_trial_count,
+            cost_stress_multiplier=cost_stress,
+        )
+        return {
+            "fold_scores": fold_cagr_scores(
+                res.returns, 252.0, private.max_dd_pct
+            ),
+            "primary_score": float(res.metrics.cost_stress_cagr_pct),
+            "gate_ok": bool(res.gate_ok),
+            "structural_fingerprint": "leveraged_cash_rotation_voltarget_v1",
+        }
+
+    cash_param = StableParameterOptimizer(
+        cash_specs,
+        max_trials=160,
+        plateau_neighbors=6,
+        dispersion_penalty=0.20,
+        multiple_test_penalty=0.15,
+    ).optimize(
+        evaluate_cash,
+        frozen_structure="leveraged_cash_rotation_voltarget_v1",
+    )
+    cash_pbo = optimizer_pbo(cash_param)
+    cash_family_ok = pbo_gate(cash_pbo, private.max_pbo)
+
+    cash_optimized = None
+    if cash_param.chosen is not None:
+        cash_optimized = eng.run(
+            build_cash_rotation_strategy(cash_param.chosen.params),
+            risk_policy=private,
+            num_trials=cash_trial_count,
+            pbo=None if cash_pbo is None else cash_pbo["pbo"],
+            cost_stress_multiplier=cost_stress,
+        )
+
+    # ------------------------------------------------------------------
     # Family B: QQQ -> TQQQ, else rotate IEF/GLD/SHY or cash
     # ------------------------------------------------------------------
     defensive_required = {"QQQ", "TQQQ", "IEF", "GLD", "SHY"}
@@ -516,6 +579,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     ):
         eligible_returns["rotation_risk_budgeted"] = rotation_optimized.returns
     if (
+        cash_optimized is not None
+        and cash_optimized.gate_ok
+        and cash_family_ok
+    ):
+        eligible_returns["cash_rotation_risk_budgeted"] = cash_optimized.returns
+    if (
         defensive_optimized is not None
         and defensive_optimized.gate_ok
         and defensive_family_ok
@@ -557,10 +626,13 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
 
     strategies = {
         "rotation_raw_diagnostic": rotation_raw.summary(),
+        "cash_rotation_raw_diagnostic": cash_raw.summary(),
         "cross_asset_momentum_raw_diagnostic": momentum_raw.summary(),
     }
     if rotation_optimized is not None:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
+    if cash_optimized is not None:
+        strategies["cash_rotation_risk_budgeted"] = cash_optimized.summary()
     if defensive_raw is not None:
         strategies["defensive_rotation_raw_diagnostic"] = defensive_raw.summary()
     if defensive_optimized is not None:
@@ -598,6 +670,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "selection_diagnostics": {
             "rotation_pbo": rotation_pbo,
             "rotation_family_ok": rotation_family_ok,
+            "cash_pbo": cash_pbo,
+            "cash_family_ok": cash_family_ok,
             "defensive_pbo": defensive_pbo,
             "defensive_family_ok": defensive_family_ok,
             "brake_pbo": brake_pbo,
@@ -606,6 +680,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "momentum_family_ok": momentum_family_ok,
         },
         "rotation_parameter_optimizer": rotation_param.to_dict(),
+        "cash_parameter_optimizer": cash_param.to_dict(),
         "defensive_parameter_optimizer": (
             None if defensive_param is None else defensive_param.to_dict()
         ),
