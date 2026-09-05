@@ -24,7 +24,10 @@
       "margin": 0.25,
       "start": "2017-08-17",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "A",
+      "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
+      "instrument_fidelity": "spot_exact"
     },
     {
       "id": "eth",
@@ -37,7 +40,10 @@
       "margin": 0.25,
       "start": "2017-08-17",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "A",
+      "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
+      "instrument_fidelity": "spot_exact"
     },
     {
       "id": "sol",
@@ -50,7 +56,10 @@
       "margin": 0.25,
       "start": "2020-08-11",
       "validation_start": "2022-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "A",
+      "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
+      "instrument_fidelity": "spot_exact"
     },
     {
       "id": "spy",
@@ -63,7 +72,10 @@
       "margin": 0.5,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "B",
+      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
+      "instrument_fidelity": "adjusted_daily"
     },
     {
       "id": "qqq",
@@ -76,7 +88,10 @@
       "margin": 0.5,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "B",
+      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
+      "instrument_fidelity": "adjusted_daily"
     },
     {
       "id": "tqqq",
@@ -89,7 +104,10 @@
       "margin": 0.5,
       "start": "2010-02-11",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "B",
+      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
+      "instrument_fidelity": "adjusted_daily"
     },
     {
       "id": "aapl",
@@ -102,7 +120,10 @@
       "margin": 0.5,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "B",
+      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
+      "instrument_fidelity": "adjusted_daily"
     },
     {
       "id": "nvda",
@@ -115,7 +136,10 @@
       "margin": 0.5,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "B",
+      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
+      "instrument_fidelity": "adjusted_daily"
     },
     {
       "id": "es",
@@ -128,7 +152,10 @@
       "margin": 0.1,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "C",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "instrument_fidelity": "proxy"
     },
     {
       "id": "nq",
@@ -141,7 +168,10 @@
       "margin": 0.1,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "C",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "instrument_fidelity": "proxy"
     },
     {
       "id": "gold",
@@ -154,7 +184,10 @@
       "margin": 0.1,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "C",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "instrument_fidelity": "proxy"
     },
     {
       "id": "oil",
@@ -167,7 +200,10 @@
       "margin": 0.1,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "C",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "instrument_fidelity": "proxy"
     },
     {
       "id": "eurusd",
@@ -181,7 +217,10 @@
       "margin": 0.05,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "D",
+      "data_quality_note": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
+      "instrument_fidelity": "disabled"
     },
     {
       "id": "gbpusd",
@@ -195,7 +234,10 @@
       "margin": 0.05,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "D",
+      "data_quality_note": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
+      "instrument_fidelity": "disabled"
     },
     {
       "id": "usdjpy",
@@ -209,7 +251,10 @@
       "margin": 0.05,
       "start": "2010-01-01",
       "validation_start": "2021-01-01",
-      "validation_end": "2022-12-31"
+      "validation_end": "2022-12-31",
+      "data_quality_grade": "D",
+      "data_quality_note": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
+      "instrument_fidelity": "disabled"
     }
   ],
   "protocol": {
