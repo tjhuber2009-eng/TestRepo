@@ -14,7 +14,7 @@ from .feature_store import FeatureStoreBuilder
 from .multi_asset_engine import MultiAssetBacktester, PortfolioLimits, leveraged_regime_rotation
 from .parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from .portfolio_optimizer import RobustPortfolioOptimizer
-from .risk_overlays import drawdown_brake_overlay, volatility_target_overlay
+from .risk_overlays import drawdown_brake_overlay, vix_stress_overlay, volatility_target_overlay
 from .selection_diagnostics import optimizer_pbo
 from .strategy_examples import cross_sectional_momentum_rotation, leveraged_defensive_rotation
 
@@ -58,6 +58,7 @@ def load_data(root: Path) -> dict[str, pd.DataFrame]:
         "IEF": "ief_1d.csv",
         "GLD": "gld_1d.csv",
         "SHY": "shy_1d.csv",
+        "VIX": "vix_1d.csv",
         "BTCUSDT": "btc_1d.csv",
         "ETHUSDT": "eth_1d.csv",
     }
@@ -107,6 +108,33 @@ def build_cash_rotation_strategy(params):
         target_vol=float(params["target_vol"]),
         periods_per_year=252.0,
         lookback=int(params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
+
+def build_vix_cash_strategy(params, base_params, vix_close):
+    base = leveraged_regime_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbol=None,
+        sma_window=int(base_params["sma"]),
+        momentum_window=int(base_params["mom"]),
+    )
+    stressed = vix_stress_overlay(
+        base,
+        vix_close,
+        stress_quantile=float(params["stress_q"]),
+        severe_quantile=float(params["severe_q"]),
+        stress_scale=float(params["stress_scale"]),
+        severe_scale=float(params["severe_scale"]),
+        min_history=252,
+    )
+    return volatility_target_overlay(
+        stressed,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(base_params["vol_lookback"]),
         max_gross=1.5,
         max_scale=1.5,
     )
