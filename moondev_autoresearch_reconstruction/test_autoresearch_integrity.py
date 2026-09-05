@@ -354,6 +354,148 @@ class MoonStrategy:
 
 
 
+    def test_adaptive_data_is_physically_cut_before_hidden_validation(self):
+        track = {
+            "target": {
+                "id": "x",
+                "symbol": "X",
+                "source": "yahoo",
+                "start": "2018-01-01",
+                "validation_start": "2021-01-01",
+                "validation_end": "2022-12-31",
+            }
+        }
+        old_here = continuous_runner.HERE
+        with tempfile.TemporaryDirectory() as td:
+            continuous_runner.HERE = Path(td)
+            (continuous_runner.HERE / "data").mkdir()
+            calls = []
+            try:
+                with mock.patch.object(
+                    continuous_runner,
+                    "run",
+                    side_effect=lambda cmd, **kwargs: calls.append(list(cmd)),
+                ):
+                    continuous_runner.prepare_data(track)
+                    continuous_runner.prepare_data(track, include_validation=True)
+            finally:
+                continuous_runner.HERE = old_here
+        self.assertEqual(calls[0][calls[0].index("--end") + 1], "2020-12-31")
+        self.assertEqual(calls[1][calls[1].index("--end") + 1], "2022-12-31")
+
+    def test_validation_track_is_only_path_requesting_hidden_rows(self):
+        track = continuous_runner.build_tracks()[0]
+        with mock.patch.object(continuous_runner, "is_terminal_block", return_value=False), \
+             mock.patch.object(continuous_runner, "validation_state", return_value=None), \
+             mock.patch.object(continuous_runner, "clean_runtime"), \
+             mock.patch.object(continuous_runner, "prepare_data") as prep, \
+             mock.patch.object(continuous_runner, "restore_state", return_value=False):
+            with self.assertRaises(RuntimeError):
+                continuous_runner.validate_track(track)
+        prep.assert_called_once_with(track, include_validation=True)
+
+    def test_strategy_safety_rejects_dunder_builtin_io_bypass(self):
+        tree = __import__("ast").parse(
+            'class MoonStrategy:\n'
+            '    def next(self):\n'
+            '        __builtins__["open"]("hidden.csv")\n'
+        )
+        with self.assertRaises(ValueError):
+            loop.validate_source_safety(tree)
+
+    def test_strategy_safety_rejects_unlisted_pandas_reader_family(self):
+        tree = __import__("ast").parse(
+            'import pandas as pd\n'
+            'class MoonStrategy:\n'
+            '    def next(self):\n'
+            '        pd.read_fwf("hidden.txt")\n'
+        )
+        with self.assertRaises(ValueError):
+            loop.validate_source_safety(tree)
+
+    def test_harness_stage_boundary_rejects_hidden_rows_during_search(self):
+        env = {
+            "AUTORESEARCH_SYMBOL": "X",
+            "AUTORESEARCH_MARKET": "stock",
+            "AUTORESEARCH_DATA_FILE": "data/x_1d.csv",
+            "AUTORESEARCH_COMMISSION": "0.001",
+            "AUTORESEARCH_MARGIN": "0.5",
+            "AUTORESEARCH_BARS_PER_YEAR": "252",
+            "AUTORESEARCH_PROFILE": "prop",
+            "AUTORESEARCH_MAX_DD_PCT": "10",
+            "AUTORESEARCH_VALIDATION_START": "2021-01-01",
+            "AUTORESEARCH_VALIDATION_END": "2022-12-31",
+        }
+        old = {k: os.environ.get(k) for k in env}
+        try:
+            os.environ.update(env)
+            import importlib
+            import robust_harness
+            robust_harness = importlib.reload(robust_harness)
+            df = pd.DataFrame(
+                {"Open": [1, 1], "High": [1, 1], "Low": [1, 1], "Close": [1, 1]},
+                index=pd.to_datetime(["2020-12-31", "2021-01-02"], utc=True),
+            )
+            with self.assertRaises(RuntimeError):
+                robust_harness.assert_stage_data_boundary(df, "search")
+            robust_harness.assert_stage_data_boundary(df, "validation")
+        finally:
+            for k, v in old.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    def test_intrabar_proxy_includes_position_still_open_at_backtest_end(self):
+        env = {
+            "AUTORESEARCH_SYMBOL": "X",
+            "AUTORESEARCH_MARKET": "stock",
+            "AUTORESEARCH_DATA_FILE": "data/x_1d.csv",
+            "AUTORESEARCH_COMMISSION": "0.001",
+            "AUTORESEARCH_MARGIN": "0.5",
+            "AUTORESEARCH_BARS_PER_YEAR": "252",
+            "AUTORESEARCH_PROFILE": "prop",
+            "AUTORESEARCH_MAX_DD_PCT": "10",
+            "AUTORESEARCH_VALIDATION_START": "2021-01-01",
+            "AUTORESEARCH_VALIDATION_END": "2022-12-31",
+        }
+        old = {k: os.environ.get(k) for k in env}
+        try:
+            os.environ.update(env)
+            import importlib
+            import robust_harness
+            robust_harness = importlib.reload(robust_harness)
+
+            idx = pd.date_range("2020-01-01", periods=3, freq="D", tz="UTC")
+            equity = pd.DataFrame({"Equity": [100.0, 100.0, 100.0]}, index=idx)
+            prices = pd.DataFrame(
+                {
+                    "Open": [100.0, 100.0, 100.0],
+                    "High": [100.0, 100.0, 100.0],
+                    "Low": [100.0, 100.0, 80.0],
+                    "Close": [100.0, 100.0, 100.0],
+                },
+                index=idx,
+            )
+            fake_trade = type("T", (), {"entry_bar": 1, "size": 1.0})()
+            fake_strategy = type("S", (), {"trades": (fake_trade,)})()
+            stats = {
+                "_equity_curve": equity,
+                "_trades": pd.DataFrame(),
+                "_strategy": fake_strategy,
+            }
+            dd = robust_harness.intrabar_drawdown_proxy(
+                stats, prices, "2020-01-01", "2020-01-03"
+            )
+            self.assertAlmostEqual(dd, -20.0, places=3)
+        finally:
+            for k, v in old.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+
     def test_paired_fold_improvement_requires_matching_chronology(self):
         base = {"folds": [
             {"name":"Y1","raw_k":0.1},
