@@ -34,11 +34,11 @@ jobs:
       - run: python -m compileall -q .
       - run: python -m unittest -v test_autoresearch_integrity.py
 
-      - name: Prepare AAPL pre-OOS data
+      - name: Prepare AAPL development-only data
         run: >
           python prepare_market_data.py
           --source yahoo --symbol AAPL --id aapl
-          --start 2010-01-01 --end 2022-12-31
+          --start 2010-01-01 --end 2020-12-31
 
       - name: Run two NVIDIA admission attempts
         shell: bash
