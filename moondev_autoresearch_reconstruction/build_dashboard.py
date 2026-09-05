@@ -48,6 +48,36 @@ def finite(v):
     return x if math.isfinite(x) else None
 
 
+def development_period_metrics(state_dir, track_id, total_return_pct):
+    meta = load_json(Path(state_dir) / "tracks" / str(track_id) / "state_meta.json", {}) or {}
+    baseline = meta.get("baseline") or {}
+    start = baseline.get("start")
+    end = baseline.get("end") or baseline.get("adaptive_development_end")
+    try:
+        start_dt = datetime.fromisoformat(str(start).replace("Z", "+00:00"))
+        end_dt = datetime.fromisoformat(str(end).replace("Z", "+00:00"))
+        years = (end_dt - start_dt).total_seconds() / (365.2425 * 86400.0)
+    except Exception:
+        return {
+            "development_start": start,
+            "development_end": end,
+            "development_years": None,
+            "development_cagr_pct": None,
+        }
+    total = finite(total_return_pct)
+    cagr = None
+    if years > 0 and total is not None:
+        multiple = 1.0 + total / 100.0
+        if multiple > 0:
+            cagr = (multiple ** (1.0 / years) - 1.0) * 100.0
+    return {
+        "development_start": start,
+        "development_end": end,
+        "development_years": round(years, 4),
+        "development_cagr_pct": round(cagr, 6) if cagr is not None else None,
+    }
+
+
 def sanitize_json(value):
     if isinstance(value, float):
         return value if math.isfinite(value) else None
@@ -131,12 +161,18 @@ def summarize_progress(progress):
     }
 
 
-def normalize_leaderboard(board):
+def normalize_leaderboard(board, state_dir):
     rows = board.get("rows", []) if isinstance(board, dict) else []
     out = []
     for r in rows:
+        period = development_period_metrics(
+            state_dir,
+            r.get("track_id"),
+            r.get("development_return_pct"),
+        )
         out.append({
             **r,
+            **period,
             "development_score": finite(r.get("development_score")),
             "development_return_pct": finite(r.get("development_return_pct")),
             "development_sharpe": finite(r.get("development_sharpe")),
@@ -186,6 +222,13 @@ def main():
     for r in progress.get("rows", []):
         x = dict(r)
         x["development_score"] = finite(x.get("development_score"))
+        x.update(
+            development_period_metrics(
+                state,
+                x.get("track_id"),
+                x.get("development_return_pct"),
+            )
+        )
         tracks.append(x)
 
     payload = {
@@ -195,7 +238,7 @@ def main():
         "phase": progress.get("phase"),
         "progress": progress,
         "progress_derived": summarize_progress(progress),
-        "leaderboard": normalize_leaderboard(board),
+        "leaderboard": normalize_leaderboard(board, state),
         "tracks": tracks,
         "selections": selections,
         "recent_cycles": cycles,
