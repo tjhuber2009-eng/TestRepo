@@ -253,7 +253,10 @@ def benchmark_metrics(price_df, start, end):
     years = max(len(r) / float(BARS_PER_YEAR), 1.0 / float(BARS_PER_YEAR))
     cagr = geometric_cagr(total, years)
     vol = float(r.std(ddof=0) * math.sqrt(BARS_PER_YEAR)) if len(r) else 0.0
-    sharpe = float(cagr / vol) if vol > 0 and np.isfinite(cagr) else 0.0
+    sharpe = (
+        float(r.mean() / r.std(ddof=0) * math.sqrt(BARS_PER_YEAR))
+        if len(r) and float(r.std(ddof=0)) > 0 else 0.0
+    )
     dd = close / close.cummax() - 1.0
     return {
         "benchmark_cagr_pct": round(float(cagr * 100.0), 3),
@@ -279,7 +282,10 @@ def metrics_from_stats(stats, start, end, price_df=None):
     years = max(len(rets) / float(BARS_PER_YEAR), 1.0 / float(BARS_PER_YEAR))
     cagr = geometric_cagr(total, years)
     vol = float(rets.std(ddof=0) * math.sqrt(BARS_PER_YEAR)) if len(rets) else 0.0
-    sharpe = float(cagr / vol) if vol > 0 and np.isfinite(vol) else 0.0
+    sharpe = (
+        float(rets.mean() / rets.std(ddof=0) * math.sqrt(BARS_PER_YEAR))
+        if len(rets) and float(rets.std(ddof=0)) > 0 else 0.0
+    )
     peak = eq.cummax()
     dd = eq / peak - 1.0
     max_dd = float(dd.min() * 100.0)
@@ -324,6 +330,13 @@ def metrics_from_stats(stats, start, end, price_df=None):
         "intrabar_dd_proxy_pct": intrabar_proxy,
         "intrabar_dd_proxy_method": "ohlc_active_positions_v2",
         "trades": int(len(pnl)),
+        "trades_per_year": round(float(len(pnl) / years), 3) if years > 0 else 0.0,
+        "avg_trade_pnl": round(float(pnl.mean()), 6) if len(pnl) else 0.0,
+        "median_trade_pnl": round(float(pnl.median()), 6) if len(pnl) else 0.0,
+        "win_loss_payoff": round(
+            float(pnl[pnl > 0].mean() / abs(pnl[pnl < 0].mean())),
+            4,
+        ) if len(pnl[pnl > 0]) and len(pnl[pnl < 0]) and pnl[pnl < 0].mean() != 0 else 0.0,
         "win_pct": round(win_pct, 2),
         "pf": round(float(min(pf, 99.0)), 3),
         "top1_profit_concentration": round(top1_concentration, 4),
@@ -471,9 +484,17 @@ def evaluate_search(df):
     score -= dd_headroom_penalty
 
     evidence_grade = "A"
-    if full["development_years"] < 3.0 or full["trades"] < max(MIN_TRADES, 20):
+    if (
+        full["development_years"] < 3.0
+        or full["trades"] < max(MIN_TRADES, 20)
+        or full.get("trades_per_year", 0.0) < 3.0
+    ):
         evidence_grade = "B"
-    if full["development_years"] < 2.0 or full["trades"] < MIN_TRADES:
+    if (
+        full["development_years"] < 2.0
+        or full["trades"] < MIN_TRADES
+        or full.get("trades_per_year", 0.0) < 1.5
+    ):
         evidence_grade = "C"
     if full["psr_zero"] < 0.80 or bootstrap["mean_positive_pvalue"] > 0.10:
         evidence_grade = chr(min(ord("D"), ord(evidence_grade) + 1))
