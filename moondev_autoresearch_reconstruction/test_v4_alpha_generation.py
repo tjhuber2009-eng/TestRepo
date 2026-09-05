@@ -31,6 +31,7 @@ from v4.prop_firm_engine import (
     active_day_proxy,
     daily_adverse_proxy,
     optimize_prop_exposure,
+    repeat_payout_projection,
     simulate_stage,
 )
 from v4.prop_intraday_bootstrap import (
@@ -731,6 +732,27 @@ class V4AlphaGenerationTests(unittest.TestCase):
             252,
         )
 
+    def test_repeat_payout_projection_discounts_future_cycles_by_survival(self):
+        expected, score = repeat_payout_projection(
+            expected_reward_pct=1.0,
+            survival_probability=0.5,
+            evaluation_pass_probability=0.25,
+            evaluation_days=20.0,
+            reward_cycle_days=14,
+            cycles=3,
+        )
+        self.assertAlmostEqual(expected, 1.75)
+        self.assertAlmostEqual(score, 0.25 * 1.75 / 62.0)
+        full_survival, _ = repeat_payout_projection(
+            expected_reward_pct=1.0,
+            survival_probability=1.0,
+            evaluation_pass_probability=1.0,
+            evaluation_days=0.0,
+            reward_cycle_days=14,
+            cycles=3,
+        )
+        self.assertAlmostEqual(full_survival, 3.0)
+
     def test_prop_stage_rewards_lower_risk_when_daily_limit_is_tight(self):
         rng = np.random.default_rng(77)
         r = rng.normal(0.0012, 0.015, 1000)
@@ -758,6 +780,7 @@ class V4AlphaGenerationTests(unittest.TestCase):
             result.selected.combined_evaluation_pass_probability, 1.0
         )
         self.assertIn("max_payout_efficiency", result.views)
+        self.assertIn("max_repeat_payout_efficiency", result.views)
         self.assertIn("max_evaluation_pass", result.views)
         self.assertIn("safest_funded", result.views)
         self.assertIn("balanced", result.views)
