@@ -25,7 +25,9 @@ def load_experiment_fold_matrix(path):
                 x=json.loads(line)
             except Exception:
                 continue
-            vals=x.get("fold_raw_k")
+            if x.get("selection_eligible") is not True:
+                continue
+            vals=x.get("cscv_slice_k")
             if not isinstance(vals,list) or len(vals)<4:
                 continue
             try:
@@ -61,6 +63,8 @@ def cscv_pbo(matrix, max_splits=252):
         return None
     n_strat,n_folds=x.shape
     if n_strat<5 or n_folds<4:
+        return None
+    if n_folds % 2:
         return None
     half=n_folds//2
     if half<2:
@@ -101,6 +105,8 @@ def cscv_pbo(matrix, max_splits=252):
         "median_oos_logit":round(float(np.median(arr)),6),
         "candidate_count":int(n_strat),
         "fold_count":int(n_folds),
+        "candidate_pool":"selection_eligible_backtests",
+        "partition":"fixed_even_development_slices",
     }
 
 
