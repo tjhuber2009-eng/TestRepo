@@ -77,3 +77,26 @@ def test_quote_enforces_book_and_market_minimum_order_size():
         )
         is None
     )
+
+
+def test_book_identity_must_match_condition_and_token():
+    book = {
+        "market": "0xabc",
+        "asset_id": "token-1",
+        "asks": [],
+    }
+    pm.validate_book_identity(
+        book,
+        token_id="token-1",
+        condition_id="0xabc",
+    )
+    try:
+        pm.validate_book_identity(
+            book,
+            token_id="wrong",
+            condition_id="0xabc",
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("mismatched asset id must fail closed")
