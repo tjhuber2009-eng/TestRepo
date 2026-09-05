@@ -12,7 +12,12 @@ import pandas as pd
 from .campaign import assert_v4_data_boundary, risk_policy
 from .feature_store import FeatureStoreBuilder
 from .meta_filter import walk_forward_probabilities
-from .multi_asset_engine import MultiAssetBacktester, PortfolioLimits, leveraged_regime_rotation
+from .multi_asset_engine import (
+    MultiAssetBacktester,
+    PortfolioLimits,
+    leveraged_hysteresis_rotation,
+    leveraged_regime_rotation,
+)
 from .parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from .portfolio_optimizer import RobustPortfolioOptimizer
 from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, vix_stress_overlay, volatility_target_overlay
@@ -225,6 +230,25 @@ def build_rotation_strategy(params):
         target_vol=float(params["target_vol"]),
         periods_per_year=252.0,
         lookback=int(params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
+
+def build_hysteresis_rotation_strategy(params):
+    base = leveraged_hysteresis_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbol="SPY",
+        sma_window=int(params["sma"]),
+        entry_band=float(params["entry_band"]),
+        exit_band=float(params["exit_band"]),
+    )
+    return volatility_target_overlay(
+        base,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=60,
         max_gross=1.5,
         max_scale=1.5,
     )
@@ -443,6 +467,64 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 pbo=None if meta_pbo is None else meta_pbo["pbo"],
                 cost_stress_multiplier=cost_stress,
             )
+
+    # ------------------------------------------------------------------
+    # Family A1c: QQQ SMA hysteresis -> TQQQ/SPY, causal vol target
+    # ------------------------------------------------------------------
+    hysteresis_specs = [
+        ParameterSpec("sma", (150, 175, 200)),
+        ParameterSpec("entry_band", (0.00, 0.02, 0.04)),
+        ParameterSpec("exit_band", (0.00, 0.02, 0.04)),
+        ParameterSpec("target_vol", (0.24, 0.28, 0.32)),
+    ]
+    hysteresis_trial_count = int(
+        np.prod([len(s.values) for s in hysteresis_specs])
+    )
+
+    def evaluate_hysteresis(params):
+        res = eng.run(
+            build_hysteresis_rotation_strategy(params),
+            risk_policy=private,
+            num_trials=hysteresis_trial_count,
+            cost_stress_multiplier=cost_stress,
+        )
+        return {
+            "fold_scores": fold_cagr_scores(
+                res.returns, 252.0, private.max_dd_pct
+            ),
+            "primary_score": float(res.metrics.cost_stress_cagr_pct),
+            "gate_ok": bool(res.gate_ok),
+            "structural_fingerprint": "leveraged_sma_hysteresis_voltarget_v1",
+        }
+
+    hysteresis_param = StableParameterOptimizer(
+        hysteresis_specs,
+        max_trials=100,
+        plateau_neighbors=6,
+        dispersion_penalty=0.20,
+        multiple_test_penalty=0.17,
+    ).optimize(
+        evaluate_hysteresis,
+        frozen_structure="leveraged_sma_hysteresis_voltarget_v1",
+    )
+    hysteresis_pbo = optimizer_pbo(hysteresis_param)
+    hysteresis_family_ok = pbo_gate(hysteresis_pbo, private.max_pbo)
+
+    hysteresis_optimized = None
+    if hysteresis_param.chosen is not None:
+        hysteresis_optimized = eng.run(
+            build_hysteresis_rotation_strategy(
+                hysteresis_param.chosen.params
+            ),
+            risk_policy=private,
+            num_trials=hysteresis_trial_count,
+            pbo=(
+                None
+                if hysteresis_pbo is None
+                else hysteresis_pbo["pbo"]
+            ),
+            cost_stress_multiplier=cost_stress,
+        )
 
     # ------------------------------------------------------------------
     # Family A2: QQQ signal -> TQQQ, otherwise cash
@@ -813,6 +895,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     ):
         eligible_returns["rotation_walkforward_meta_filter"] = meta_optimized.returns
     if (
+        hysteresis_optimized is not None
+        and hysteresis_optimized.gate_ok
+        and hysteresis_family_ok
+    ):
+        eligible_returns["rotation_sma_hysteresis"] = (
+            hysteresis_optimized.returns
+        )
+    if (
         cash_optimized is not None
         and cash_optimized.gate_ok
         and cash_family_ok
@@ -873,6 +963,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
     if meta_optimized is not None:
         strategies["rotation_walkforward_meta_filter"] = meta_optimized.summary()
+    if hysteresis_optimized is not None:
+        strategies["rotation_sma_hysteresis"] = hysteresis_optimized.summary()
     if cash_optimized is not None:
         strategies["cash_rotation_risk_budgeted"] = cash_optimized.summary()
     if vix_optimized is not None:
@@ -916,6 +1008,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "rotation_family_ok": rotation_family_ok,
             "meta_pbo": meta_pbo,
             "meta_family_ok": meta_family_ok,
+            "hysteresis_pbo": hysteresis_pbo,
+            "hysteresis_family_ok": hysteresis_family_ok,
             "cash_pbo": cash_pbo,
             "cash_family_ok": cash_family_ok,
             "vix_pbo": vix_pbo,
@@ -931,6 +1025,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "meta_parameter_optimizer": (
             None if meta_param is None else meta_param.to_dict()
         ),
+        "hysteresis_parameter_optimizer": hysteresis_param.to_dict(),
         "cash_parameter_optimizer": cash_param.to_dict(),
         "vix_parameter_optimizer": (
             None if vix_param is None else vix_param.to_dict()

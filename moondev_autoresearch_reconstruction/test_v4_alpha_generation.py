@@ -14,7 +14,11 @@ from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
 from v4.live_bootstrap import json_safe, read_market_csv
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
-from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
+from v4.multi_asset_engine import (
+    MultiAssetBacktester,
+    PortfolioLimits,
+    leveraged_hysteresis_rotation,
+)
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
@@ -79,6 +83,64 @@ class V4AlphaGenerationTests(unittest.TestCase):
         res = engine.run(strat, cost_stress_multiplier=5.0)
         self.assertIsNotNone(res.metrics.cost_stress_cagr_pct)
         self.assertLess(res.metrics.cost_stress_cagr_pct, res.metrics.cagr_pct)
+
+    def test_hysteresis_rotation_retains_state_inside_band(self):
+        idx = pd.date_range("2020-01-01", periods=8, freq="D")
+        close = np.array([100, 100, 100, 104, 102, 101, 98, 96], dtype=float)
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close + 1.0,
+                "Low": close - 1.0,
+                "Close": close,
+            },
+            index=idx,
+        )
+        strat = leveraged_hysteresis_rotation(
+            signal_symbol="QQQ",
+            risk_symbol="TQQQ",
+            defensive_symbol="SPY",
+            sma_window=3,
+            entry_band=0.02,
+            exit_band=0.02,
+        )
+        weights = strat(
+            {"QQQ": frame, "TQQQ": frame, "SPY": frame},
+            None,
+        )
+        self.assertEqual(float(weights.loc[idx[3], "TQQQ"]), 1.0)
+        self.assertEqual(float(weights.loc[idx[4], "TQQQ"]), 1.0)
+        self.assertEqual(float(weights.loc[idx[-1], "SPY"]), 1.0)
+
+    def test_hysteresis_rotation_is_prefix_invariant(self):
+        idx = pd.date_range("2020-01-01", periods=120, freq="D")
+        close = (
+            100.0
+            + np.sin(np.arange(len(idx)) / 6.0) * 8.0
+            + np.arange(len(idx)) * 0.05
+        )
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close + 1.0,
+                "Low": close - 1.0,
+                "Close": close,
+            },
+            index=idx,
+        )
+        strat = leveraged_hysteresis_rotation(
+            signal_symbol="QQQ",
+            risk_symbol="TQQQ",
+            defensive_symbol="SPY",
+            sma_window=20,
+            entry_band=0.02,
+            exit_band=0.02,
+        )
+        short = {s: frame.iloc[:80] for s in ("QQQ", "TQQQ", "SPY")}
+        full = {s: frame for s in ("QQQ", "TQQQ", "SPY")}
+        a = strat(short, None)
+        b = strat(full, None)
+        pd.testing.assert_frame_equal(a, b.loc[a.index])
 
     def test_volatility_target_overlay_is_prefix_invariant(self):
         data = synthetic_daily_market(bars=500)

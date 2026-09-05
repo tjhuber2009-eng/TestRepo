@@ -264,3 +264,53 @@ def leveraged_regime_rotation(
             out.loc[~risk_on, defensive_symbol] = defensive_weight
         return out
     return strategy
+
+def leveraged_hysteresis_rotation(
+    *,
+    signal_symbol: str,
+    risk_symbol: str,
+    defensive_symbol: str | None = None,
+    sma_window: int = 175,
+    entry_band: float = 0.02,
+    exit_band: float = 0.02,
+    risk_weight: float = 1.0,
+    defensive_weight: float = 1.0,
+) -> StrategyFn:
+    """Stateful causal SMA-band regime intended to reduce threshold whipsaw.
+
+    At close[t], risk-on is entered only above SMA*(1+entry_band) and is
+    retained until close[t] falls below SMA*(1-exit_band). The target produced
+    at t is shifted by the engine and cannot execute before open[t+1].
+    """
+    if sma_window < 2:
+        raise ValueError("sma_window must be >=2")
+    if entry_band < 0.0 or exit_band < 0.0:
+        raise ValueError("hysteresis bands must be non-negative")
+
+    def strategy(data: Mapping[str, pd.DataFrame], features=None) -> pd.DataFrame:
+        if signal_symbol not in data or risk_symbol not in data:
+            raise KeyError("signal/risk symbol missing from market data")
+        if defensive_symbol is not None and defensive_symbol not in data:
+            raise KeyError("defensive symbol missing from market data")
+        close = data[signal_symbol]["Close"]
+        sma = close.rolling(sma_window, min_periods=sma_window).mean()
+        out = pd.DataFrame(0.0, index=close.index, columns=sorted(data))
+        active = False
+        for i, ts in enumerate(close.index):
+            c = float(close.iloc[i])
+            s = float(sma.iloc[i]) if pd.notna(sma.iloc[i]) else float("nan")
+            if np.isfinite(s):
+                if not active and c > s * (1.0 + float(entry_band)):
+                    active = True
+                elif active and c < s * (1.0 - float(exit_band)):
+                    active = False
+            else:
+                active = False
+            if active:
+                out.loc[ts, risk_symbol] = float(risk_weight)
+            elif defensive_symbol is not None:
+                out.loc[ts, defensive_symbol] = float(defensive_weight)
+        return out
+
+    return strategy
+
