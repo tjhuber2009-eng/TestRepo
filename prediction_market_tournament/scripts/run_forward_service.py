@@ -318,6 +318,8 @@ async def run_service(root: Path) -> None:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
+    # Verify the deliberate start before creating any service artifact.
+    require_forward_started(root)
     lock_path = root / "data" / "forward_service.lock"
     with ServiceLock(lock_path):
         try:
