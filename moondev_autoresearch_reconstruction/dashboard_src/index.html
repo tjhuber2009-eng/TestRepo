@@ -77,6 +77,20 @@
               <option value="private">Private ≤32% DD</option>
             </select>
             <select id="marketFilter"><option value="all">All markets</option></select>
+            <select id="evidenceFilter">
+              <option value="all">All evidence</option>
+              <option value="A">Evidence A</option>
+              <option value="B">Evidence B+</option>
+              <option value="C">Evidence C+</option>
+            </select>
+            <select id="rankMetric">
+              <option value="development_score">Rank: Robust K</option>
+              <option value="development_cagr_pct">Rank: CAGR</option>
+              <option value="excess_cagr_vs_buyhold_pct">Rank: Excess CAGR</option>
+              <option value="development_calmar">Rank: Calmar</option>
+              <option value="development_psr_zero">Rank: PSR</option>
+              <option value="selection_score">Rank: Overfit-adjusted K</option>
+            </select>
             <input id="championSearch" type="search" placeholder="Search family / target">
           </div>
         </div>
@@ -85,9 +99,11 @@
             <thead>
               <tr>
                 <th>#</th><th>Family</th><th>Target</th><th>Profile</th>
-                <th class="num">Robust K</th><th class="num">CAGR</th><th class="num">Cum. Return</th>
-                <th class="num">Years</th><th class="num">Sharpe</th><th class="num">PF</th>
-                <th class="num">DD</th><th class="num">Valid tests</th>
+                <th class="num">Robust K</th><th class="num">CAGR</th><th class="num">Excess CAGR</th>
+                <th class="num">B&H CAGR</th><th class="num">Years</th><th class="num">Sharpe</th>
+                <th class="num">PF</th><th class="num">DD</th><th class="num">PSR</th>
+                <th class="num">FDR q</th><th class="num">PBO</th><th>Evidence</th>
+                <th class="num">3× cost ret</th><th class="num">Valid</th>
               </tr>
             </thead>
             <tbody></tbody>
