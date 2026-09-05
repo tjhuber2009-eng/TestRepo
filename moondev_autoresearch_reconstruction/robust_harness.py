@@ -25,6 +25,14 @@ import numpy as np
 import pandas as pd
 from backtesting import Backtest
 
+from research_metrics import (
+    annualized_k,
+    deterministic_block_bootstrap_diagnostics,
+    geometric_cagr,
+    probabilistic_sharpe_ratio,
+    tail_metrics,
+)
+
 HERE = Path(__file__).resolve().parent
 BASELINE = HERE / "baseline.json"
 LAST_RUN = HERE / "last_run.json"
@@ -49,13 +57,17 @@ MIN_ACTIVE_FOLDS = int(os.environ.get("AUTORESEARCH_MIN_ACTIVE_FOLDS", "3"))
 MIN_FOLD_BARS = int(os.environ.get("AUTORESEARCH_MIN_FOLD_BARS", "100"))
 VOL_BAND = float(os.environ.get("AUTORESEARCH_VOL_BAND", "0.25"))
 COST_STRESS_MULT = float(os.environ.get("AUTORESEARCH_COST_STRESS_MULT", "2.0"))
+EXTREME_COST_STRESS_MULT = float(
+    os.environ.get("AUTORESEARCH_EXTREME_COST_STRESS_MULT", "3.0")
+)
+BOOTSTRAP_REPS = int(os.environ.get("AUTORESEARCH_BOOTSTRAP_REPS", "500"))
 
 SEARCH_START = os.environ.get("AUTORESEARCH_IS_START", "2017-08-17")
 VALIDATION_START = os.environ.get("AUTORESEARCH_VALIDATION_START", "2021-01-01")
 VALIDATION_END = os.environ.get("AUTORESEARCH_VALIDATION_END", "2022-12-31")
 DEV_END = (pd.Timestamp(VALIDATION_START) - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
-PROTOCOL = "nested_chronological_v2"
+PROTOCOL = "nested_chronological_v3"
 
 
 def sha256_file(path):
@@ -156,70 +168,118 @@ def slice_trades(stats, start, end):
 
 
 def intrabar_drawdown_proxy(stats, price_df, start, end):
-    """Conservative one-trade-at-a-time adverse-excursion equity proxy.
+    """OHLC adverse-equity proxy that supports overlapping open trades.
 
-    Daily close equity can hide an intraday breach. For each realized trade we
-    mark its worst daily low/high while open against pre-entry equity and the
-    prior equity peak. This is still a proxy (especially if a strategy
-    pyramids), so it is reported explicitly rather than called exact.
+    Backtesting.py exposes bar-close equity. For every bar, this proxy adjusts
+    close equity by marking each active long to that bar's Low and each active
+    short to that bar's High. It therefore catches many intrabar risk-cap
+    breaches that close-only equity can hide. Exit bars are excluded because
+    orders execute at the next bar open with trade_on_close=False.
+
+    It is still explicitly a proxy: intrabar path ordering and gaps within a
+    daily bar cannot be reconstructed from OHLC alone.
     """
     if price_df is None:
         return 0.0
-    tr = slice_trades(stats, start, end)
-    if tr.empty:
+    trades = slice_trades(stats, start, end)
+    if trades.empty:
         return 0.0
-    eq = stats["_equity_curve"]["Equity"].astype(float).reset_index(drop=True)
-    lows = pd.to_numeric(price_df["Low"], errors="coerce").reset_index(drop=True)
-    highs = pd.to_numeric(price_df["High"], errors="coerce").reset_index(drop=True)
-    worst = 0.0
-    for _, row in tr.iterrows():
+
+    eq_series = stats["_equity_curve"]["Equity"].astype(float)
+    eq = eq_series.to_numpy(dtype=float)
+    px = price_df.copy()
+    px.index = pd.to_datetime(px.index, utc=True)
+    px = px.reindex(pd.to_datetime(eq_series.index, utc=True))
+    close = pd.to_numeric(px["Close"], errors="coerce").to_numpy(dtype=float)
+    low = pd.to_numeric(px["Low"], errors="coerce").to_numpy(dtype=float)
+    high = pd.to_numeric(px["High"], errors="coerce").to_numpy(dtype=float)
+    if len(eq) != len(close):
+        return 0.0
+
+    adjustment = np.zeros(len(eq), dtype=float)
+    for _, row in trades.iterrows():
         try:
             eb = int(row["EntryBar"])
             xb = int(row["ExitBar"])
             size = float(row["Size"])
-            entry = float(row["EntryPrice"])
         except Exception:
             continue
-        if eb < 0 or eb >= len(eq) or not np.isfinite([size, entry]).all():
+        if not np.isfinite(size) or size == 0 or eb < 0 or eb >= len(eq):
             continue
-        xb = min(max(xb, eb), len(eq) - 1)
-        base_i = max(0, eb - 1)
-        base_equity = float(eq.iloc[base_i])
-        peak_equity = float(eq.iloc[: eb + 1].max())
-        if base_equity <= 0 or peak_equity <= 0:
-            continue
-        if size > 0:
-            adverse_px = float(lows.iloc[eb:xb + 1].min())
-            adverse_pnl = size * (adverse_px - entry)
-        elif size < 0:
-            adverse_px = float(highs.iloc[eb:xb + 1].max())
-            adverse_pnl = abs(size) * (entry - adverse_px)
-        else:
-            continue
-        adverse_equity = base_equity + adverse_pnl
-        dd = 100.0 * (adverse_equity / peak_equity - 1.0)
-        worst = min(worst, dd)
-    return round(float(worst), 3)
+        # Exit orders execute at the exit bar open, so do not expose the
+        # position to the remainder of that bar. A same-bar trade still gets
+        # one bar of conservative adverse marking.
+        last = min(len(eq) - 1, max(eb, xb - 1))
+        for j in range(eb, last + 1):
+            if not np.isfinite(close[j]):
+                continue
+            adverse = low[j] if size > 0 else high[j]
+            if not np.isfinite(adverse):
+                continue
+            adjustment[j] += size * (adverse - close[j])
+
+    adverse_eq = eq + adjustment
+    peak = np.maximum.accumulate(eq)
+    valid = np.isfinite(adverse_eq) & np.isfinite(peak) & (peak > 0)
+    if not np.any(valid):
+        return 0.0
+    dd = np.where(valid, adverse_eq / peak - 1.0, 0.0)
+    return round(float(np.min(dd) * 100.0), 3)
+
+
+def benchmark_metrics(price_df, start, end):
+    if price_df is None or "Close" not in price_df.columns:
+        return {
+            "benchmark_cagr_pct": 0.0,
+            "benchmark_sharpe": 0.0,
+            "benchmark_ann_vol_pct": 0.0,
+            "benchmark_max_dd_pct": 0.0,
+        }
+    a = to_utc_timestamp(start)
+    b = to_utc_timestamp(end, end=True)
+    close = pd.to_numeric(
+        price_df.loc[(price_df.index >= a) & (price_df.index <= b), "Close"],
+        errors="coerce",
+    ).dropna()
+    if len(close) < 2:
+        return {
+            "benchmark_cagr_pct": 0.0,
+            "benchmark_sharpe": 0.0,
+            "benchmark_ann_vol_pct": 0.0,
+            "benchmark_max_dd_pct": 0.0,
+        }
+    r = close.pct_change().replace([np.inf, -np.inf], np.nan).dropna()
+    total = float(close.iloc[-1] / close.iloc[0] - 1.0)
+    years = max(len(r) / float(BARS_PER_YEAR), 1.0 / float(BARS_PER_YEAR))
+    cagr = geometric_cagr(total, years)
+    vol = float(r.std(ddof=0) * math.sqrt(BARS_PER_YEAR)) if len(r) else 0.0
+    sharpe = float(cagr / vol) if vol > 0 and np.isfinite(cagr) else 0.0
+    dd = close / close.cummax() - 1.0
+    return {
+        "benchmark_cagr_pct": round(float(cagr * 100.0), 3),
+        "benchmark_sharpe": round(float(sharpe), 4),
+        "benchmark_ann_vol_pct": round(float(vol * 100.0), 3),
+        "benchmark_max_dd_pct": round(float(dd.min() * 100.0), 3),
+    }
 
 
 def metrics_from_stats(stats, start, end, price_df=None):
     eq = slice_equity(stats, start, end)
     if len(eq) < 2:
         return {
-            "raw_k": float("-inf"), "return_pct": 0.0, "sharpe": 0.0,
-            "ann_vol_pct": 0.0, "max_dd_pct": 0.0, "trades": 0,
-            "win_pct": 0.0, "pf": 0.0, "bars": int(len(eq)),
+            "raw_k": float("-inf"), "return_pct": 0.0, "cagr_pct": 0.0,
+            "development_years": 0.0, "sharpe": 0.0, "ann_vol_pct": 0.0,
+            "max_dd_pct": 0.0, "trades": 0, "win_pct": 0.0, "pf": 0.0,
+            "bars": int(len(eq)), "psr_zero": 0.0,
+            "bootstrap_mean_positive_pvalue": 1.0,
         }
 
     rets = eq.pct_change().replace([np.inf, -np.inf], np.nan).dropna()
     total = float(eq.iloc[-1] / eq.iloc[0] - 1.0)
     years = max(len(rets) / float(BARS_PER_YEAR), 1.0 / float(BARS_PER_YEAR))
-    if total <= -1.0:
-        ann_ret = -1.0
-    else:
-        ann_ret = (1.0 + total) ** (1.0 / years) - 1.0
+    cagr = geometric_cagr(total, years)
     vol = float(rets.std(ddof=0) * math.sqrt(BARS_PER_YEAR)) if len(rets) else 0.0
-    sharpe = float(ann_ret / vol) if vol > 0 and np.isfinite(vol) else 0.0
+    sharpe = float(cagr / vol) if vol > 0 and np.isfinite(vol) else 0.0
     peak = eq.cummax()
     dd = eq / peak - 1.0
     max_dd = float(dd.min() * 100.0)
@@ -246,21 +306,40 @@ def metrics_from_stats(stats, start, end, price_df=None):
         float(positive.iloc[:3].sum()) / gross_profit
         if gross_profit > 0 and len(positive) else 0.0
     )
-    raw_k = math.log1p(total) * sharpe if total > -1 and np.isfinite(sharpe) else float("-inf")
+
+    raw_k = annualized_k(total, years, sharpe)
     intrabar_proxy = intrabar_drawdown_proxy(stats, price_df, start, end)
+    tail = tail_metrics(eq.to_numpy(dtype=float), rets.to_numpy(dtype=float), cagr)
+    psr = probabilistic_sharpe_ratio(rets.to_numpy(dtype=float), 0.0)
+    bench = benchmark_metrics(price_df, start, end)
 
     return {
         "raw_k": round(float(raw_k), 6) if np.isfinite(raw_k) else float("-inf"),
         "return_pct": round(total * 100.0, 3),
+        "cagr_pct": round(float(cagr * 100.0), 3) if np.isfinite(cagr) else -100.0,
+        "development_years": round(float(years), 4),
         "sharpe": round(sharpe, 4),
         "ann_vol_pct": round(vol * 100.0, 3),
         "max_dd_pct": round(max_dd, 3),
         "intrabar_dd_proxy_pct": intrabar_proxy,
+        "intrabar_dd_proxy_method": "ohlc_active_positions_v2",
         "trades": int(len(pnl)),
         "win_pct": round(win_pct, 2),
         "pf": round(float(min(pf, 99.0)), 3),
         "top1_profit_concentration": round(top1_concentration, 4),
         "top3_profit_concentration": round(top3_concentration, 4),
+        "psr_zero": round(float(psr), 6),
+        "ulcer_index_pct": round(float(tail["ulcer_index_pct"]), 3),
+        "daily_cvar_5_pct": round(float(tail["daily_cvar_5_pct"]), 4),
+        "sortino_per_bar": round(float(tail["sortino_per_bar"]), 6),
+        "calmar": round(float(tail["calmar"]), 4),
+        "excess_cagr_vs_buyhold_pct": round(
+            float(cagr * 100.0 - bench["benchmark_cagr_pct"]), 3
+        ),
+        "sharpe_minus_buyhold": round(
+            float(sharpe - bench["benchmark_sharpe"]), 4
+        ),
+        **bench,
         "bars": int(len(eq)),
     }
 
@@ -295,30 +374,31 @@ def fold_windows(eq_index, start, end):
     return half
 
 
-def deterministic_bootstrap_p10(stats, start, end, reps=200, block=10):
+def deterministic_bootstrap(stats, start, end):
     eq = slice_equity(stats, start, end)
     r = eq.pct_change().replace([np.inf, -np.inf], np.nan).dropna().to_numpy(dtype=float)
-    n = len(r)
-    if n < 30:
-        return float("-inf")
     seed_material = (
         sha256_file(STRATEGY_FILE) + "|" + SYMBOL + "|" + PROFILE + "|" + start + "|" + end
     ).encode()
     seed = int(hashlib.sha256(seed_material).hexdigest()[:16], 16) % (2**32)
     rng = np.random.default_rng(seed)
-    vals = []
-    for _ in range(reps):
-        pieces = []
-        while sum(len(x) for x in pieces) < n:
-            j = int(rng.integers(0, max(1, n - block + 1)))
-            pieces.append(r[j:j + block])
-        sample = np.concatenate(pieces)[:n]
-        sd = float(np.std(sample, ddof=0))
-        vals.append(float(np.mean(sample) / sd * math.sqrt(BARS_PER_YEAR)) if sd > 0 else 0.0)
-    return round(float(np.quantile(vals, 0.10)), 4)
+    out = deterministic_block_bootstrap_diagnostics(
+        r,
+        bars_per_year=BARS_PER_YEAR,
+        rng=rng,
+        reps=BOOTSTRAP_REPS,
+        block=10,
+    )
+    return {
+        "sharpe_p10": round(float(out["sharpe_p10"]), 4)
+        if np.isfinite(float(out["sharpe_p10"])) else float("-inf"),
+        "mean_positive_pvalue": round(float(out["mean_positive_pvalue"]), 6),
+        "reps": int(out["reps"]),
+        "block": int(out["block"]),
+    }
 
 
-def robust_score(folds, stress, bootstrap_p10):
+def robust_score(folds, stress, extreme_stress, bootstrap, psr_zero):
     scores = np.array([float(x["raw_k"]) for x in folds], dtype=float)
     scores = scores[np.isfinite(scores)]
     if len(scores) == 0:
@@ -328,14 +408,24 @@ def robust_score(folds, stress, bootstrap_p10):
     worst = float(np.min(scores))
     dispersion = float(np.std(scores))
     stress_k = float(stress["raw_k"]) if np.isfinite(float(stress["raw_k"])) else -1e6
-    boot_penalty = max(0.0, -float(bootstrap_p10)) if np.isfinite(bootstrap_p10) else 1.0
+    extreme_k = (
+        float(extreme_stress["raw_k"])
+        if np.isfinite(float(extreme_stress["raw_k"])) else -1e6
+    )
+    boot_p10 = float(bootstrap["sharpe_p10"])
+    boot_penalty = max(0.0, -boot_p10) if np.isfinite(boot_p10) else 1.0
+    psr_penalty = max(0.0, 0.80 - float(psr_zero))
+    pvalue_penalty = max(0.0, float(bootstrap["mean_positive_pvalue"]) - 0.10)
     return (
-        0.40 * med
-        + 0.25 * p25
-        + 0.20 * worst
+        0.35 * med
+        + 0.20 * p25
+        + 0.15 * worst
         + 0.15 * stress_k
+        + 0.10 * extreme_k
         - 0.10 * dispersion
         - 0.05 * boot_penalty
+        - 0.05 * psr_penalty
+        - 0.05 * pvalue_penalty
     )
 
 
@@ -348,8 +438,10 @@ def evaluate_search(df):
 
     base_stats = run_bt(work, COMMISSION)
     stress_stats = run_bt(work, COMMISSION * COST_STRESS_MULT)
+    extreme_stats = run_bt(work, COMMISSION * EXTREME_COST_STRESS_MULT)
     full = metrics_from_stats(base_stats, SEARCH_START, DEV_END, work)
     stress = metrics_from_stats(stress_stats, SEARCH_START, DEV_END, work)
+    extreme = metrics_from_stats(extreme_stats, SEARCH_START, DEV_END, work)
 
     eq_idx = pd.to_datetime(base_stats["_equity_curve"].index, utc=True)
     windows = fold_windows(eq_idx, SEARCH_START, DEV_END)
@@ -364,31 +456,47 @@ def evaluate_search(df):
         sum(1 for x in folds if float(x["return_pct"]) > 0) / len(folds)
         if folds else 0.0
     )
-    boot = deterministic_bootstrap_p10(base_stats, SEARCH_START, DEV_END)
-    score = robust_score(folds, stress, boot)
+    bootstrap = deterministic_bootstrap(base_stats, SEARCH_START, DEV_END)
+    score = robust_score(folds, stress, extreme, bootstrap, full["psr_zero"])
     worst_risk_dd = max(
         abs(float(full["max_dd_pct"])),
         abs(float(full["intrabar_dd_proxy_pct"])),
         abs(float(stress["max_dd_pct"])),
         abs(float(stress["intrabar_dd_proxy_pct"])),
+        abs(float(extreme["max_dd_pct"])),
+        abs(float(extreme["intrabar_dd_proxy_pct"])),
     )
     risk_utilization = worst_risk_dd / MAX_DD_PCT if MAX_DD_PCT > 0 else float("inf")
     dd_headroom_penalty = 0.10 * max(0.0, risk_utilization - 0.70)
     score -= dd_headroom_penalty
 
+    evidence_grade = "A"
+    if full["development_years"] < 3.0 or full["trades"] < max(MIN_TRADES, 20):
+        evidence_grade = "B"
+    if full["development_years"] < 2.0 or full["trades"] < MIN_TRADES:
+        evidence_grade = "C"
+    if full["psr_zero"] < 0.80 or bootstrap["mean_positive_pvalue"] > 0.10:
+        evidence_grade = chr(min(ord("D"), ord(evidence_grade) + 1))
+
     full.update({
         "score": round(score, 6) if np.isfinite(score) else float("-inf"),
         "raw_full_k": full.pop("raw_k"),
+        "score_definition": "annualized_log_growth_x_sharpe_robust_v3",
         "stress": stress,
+        "extreme_stress": extreme,
         "folds": folds,
         "active_folds": len(folds),
         "positive_fold_fraction": round(positive_fraction, 4),
         "worst_fold_k": round(min(finite_k), 6) if finite_k else float("-inf"),
         "median_fold_k": round(float(np.median(finite_k)), 6) if finite_k else float("-inf"),
         "fold_score_std": round(float(np.std(finite_k)), 6) if finite_k else float("inf"),
-        "bootstrap_sharpe_p10": boot,
+        "bootstrap_sharpe_p10": bootstrap["sharpe_p10"],
+        "bootstrap_mean_positive_pvalue": bootstrap["mean_positive_pvalue"],
+        "bootstrap_reps": bootstrap["reps"],
+        "bootstrap_block": bootstrap["block"],
         "risk_cap_utilization": round(risk_utilization, 4),
         "dd_headroom_penalty": round(dd_headroom_penalty, 6),
+        "evidence_grade": evidence_grade,
         "start": SEARCH_START,
         "end": DEV_END,
     })
@@ -404,17 +512,21 @@ def evaluate_validation(df):
 
     base_stats = run_bt(work, COMMISSION)
     stress_stats = run_bt(work, COMMISSION * COST_STRESS_MULT)
+    extreme_stats = run_bt(work, COMMISSION * EXTREME_COST_STRESS_MULT)
     full = metrics_from_stats(base_stats, VALIDATION_START, VALIDATION_END, work)
     stress = metrics_from_stats(stress_stats, VALIDATION_START, VALIDATION_END, work)
+    extreme = metrics_from_stats(extreme_stats, VALIDATION_START, VALIDATION_END, work)
     eq_idx = pd.to_datetime(base_stats["_equity_curve"].index, utc=True)
     windows = fold_windows(eq_idx, VALIDATION_START, VALIDATION_END)
     folds = []
     for name, start, end, n in windows:
-        x = metrics_from_stats(base_stats, start, end)
+        x = metrics_from_stats(base_stats, start, end, work)
         x.update({"name": name, "start": start, "end": end, "bars": n})
         folds.append(x)
+    bootstrap = deterministic_bootstrap(base_stats, VALIDATION_START, VALIDATION_END)
     full.update({
         "stress": stress,
+        "extreme_stress": extreme,
         "folds": folds,
         "active_folds": len(folds),
         "positive_fold_fraction": round(
@@ -422,9 +534,10 @@ def evaluate_validation(df):
             if folds else (1.0 if full["return_pct"] > 0 else 0.0),
             4,
         ),
-        "bootstrap_sharpe_p10": deterministic_bootstrap_p10(
-            base_stats, VALIDATION_START, VALIDATION_END
-        ),
+        "bootstrap_sharpe_p10": bootstrap["sharpe_p10"],
+        "bootstrap_mean_positive_pvalue": bootstrap["mean_positive_pvalue"],
+        "bootstrap_reps": bootstrap["reps"],
+        "bootstrap_block": bootstrap["block"],
         "start": VALIDATION_START,
         "end": VALIDATION_END,
     })
@@ -445,6 +558,8 @@ def search_guard(summary):
         details.append("development return not positive")
     if summary["stress"]["return_pct"] <= 0:
         details.append("2x-cost stressed development return not positive")
+    if summary["extreme_stress"]["return_pct"] <= 0:
+        details.append("3x-cost stressed development return not positive")
     if summary["max_dd_pct"] < -MAX_DD_PCT:
         details.append("development drawdown limit exceeded")
     if summary["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
@@ -453,6 +568,10 @@ def search_guard(summary):
         details.append("stressed development drawdown limit exceeded")
     if summary["stress"]["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
         details.append("stressed intrabar DD proxy exceeded limit")
+    if summary["extreme_stress"]["max_dd_pct"] < -MAX_DD_PCT:
+        details.append("3x-cost stressed development drawdown limit exceeded")
+    if summary["extreme_stress"]["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
+        details.append("3x-cost stressed intrabar DD proxy exceeded limit")
     if summary["trades"] >= 10 and summary["top1_profit_concentration"] > 0.70:
         details.append("single winning trade supplies >70% of gross profit")
     if summary["positive_fold_fraction"] < 0.40:
@@ -483,6 +602,8 @@ def validation_guard(summary):
         details.append("hidden-validation return not positive")
     if summary["stress"]["return_pct"] <= 0:
         details.append("hidden-validation stressed return not positive")
+    if summary["extreme_stress"]["return_pct"] <= 0:
+        details.append("hidden-validation 3x-cost stressed return not positive")
     if summary["max_dd_pct"] < -MAX_DD_PCT:
         details.append("hidden-validation drawdown limit exceeded")
     if summary["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
@@ -491,6 +612,10 @@ def validation_guard(summary):
         details.append("hidden-validation stressed drawdown limit exceeded")
     if summary["stress"]["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
         details.append("hidden-validation stressed intrabar DD proxy exceeded limit")
+    if summary["extreme_stress"]["max_dd_pct"] < -MAX_DD_PCT:
+        details.append("hidden-validation 3x-cost drawdown limit exceeded")
+    if summary["extreme_stress"]["intrabar_dd_proxy_pct"] < -MAX_DD_PCT:
+        details.append("hidden-validation 3x-cost intrabar DD proxy exceeded limit")
     if summary["positive_fold_fraction"] < 0.50:
         details.append("less than half of hidden-validation folds are profitable")
     ok = not details
@@ -510,6 +635,7 @@ def common_metadata(summary, stage):
         "profile": PROFILE,
         "commission": COMMISSION,
         "cost_stress_multiplier": COST_STRESS_MULT,
+        "extreme_cost_stress_multiplier": EXTREME_COST_STRESS_MULT,
         "margin": MARGIN,
         "bars_per_year": BARS_PER_YEAR,
         "max_dd_limit_pct": MAX_DD_PCT,
