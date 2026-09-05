@@ -40,6 +40,16 @@ def signal_from_json(row: dict) -> Signal:
         size_usd=float(payload.get("size_usd", 1.0)),
         fee_rate=float(payload.get("fee_rate", 0.0)),
         fee_exponent=float(payload.get("fee_exponent", 1.0)),
+        executed_shares=(
+            None
+            if payload.get("executed_shares") is None
+            else float(payload["executed_shares"])
+        ),
+        entry_fee_usd=(
+            None
+            if payload.get("entry_fee_usd") is None
+            else float(payload["entry_fee_usd"])
+        ),
         notes=str(payload.get("notes", "")),
         metadata=dict(payload.get("metadata") or {}),
     )
@@ -74,9 +84,7 @@ def terminal_outcome(
         str(x)
         for x in parse_jsonish_list(market.get("outcomes"))
     ]
-    prices_raw = parse_jsonish_list(
-        market.get("outcomePrices")
-    )
+    prices_raw = parse_jsonish_list(market.get("outcomePrices"))
     if len(outcomes) < 2 or len(outcomes) != len(prices_raw):
         return None
 
@@ -106,9 +114,7 @@ def outcome_matches_side(side: str, outcome: str) -> bool:
     return side.strip().casefold() == outcome.strip().casefold()
 
 
-def resolve_signal(
-    signal: Signal, market: dict
-) -> ResolvedTrade | None:
+def resolve_signal(signal: Signal, market: dict) -> ResolvedTrade | None:
     outcome = terminal_outcome(market)
     if outcome is None:
         return None
@@ -123,13 +129,11 @@ def resolve_signal(
 
 
 def read_jsonl(path: str | Path) -> list[dict]:
-    p = Path(path)
-    if not p.exists():
+    file_path = Path(path)
+    if not file_path.exists():
         return []
     out: list[dict] = []
-    for line in p.read_text(
-        encoding="utf-8"
-    ).splitlines():
+    for line in file_path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         try:
