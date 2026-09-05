@@ -236,10 +236,11 @@ def main():
         "<style>\n" + css + "\n</style>",
     )
     embedded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    embedded = embedded.replace("</", "<\\/")
     html = html.replace(
         '<script src="app.js"></script>',
-        "<script>window.__AUTORESEARCH_DATA__=" + embedded + ";<\/script>\n"
-        "<script>\n" + js + "\n<\/script>",
+        "<script>window.__AUTORESEARCH_DATA__=" + embedded + ";</script>\n"
+        "<script>\n" + js + "\n</script>",
     )
     (output / "dashboard.html").write_text(html, encoding="utf-8")
 
