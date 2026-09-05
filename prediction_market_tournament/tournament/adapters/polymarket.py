@@ -143,6 +143,25 @@ def _book_min_order_shares(book: dict) -> float:
     return value
 
 
+def validate_book_identity(
+    book: dict,
+    *,
+    token_id: str,
+    condition_id: str,
+) -> None:
+    """Fail closed unless a CLOB book belongs to the requested market/token."""
+    market = str(book.get("market") or "").strip()
+    asset_id = str(book.get("asset_id") or "").strip()
+    if not market or market != str(condition_id):
+        raise ValueError(
+            f"order book market mismatch: expected={condition_id!r} got={market!r}"
+        )
+    if not asset_id or asset_id != str(token_id):
+        raise ValueError(
+            f"order book asset mismatch: expected={token_id!r} got={asset_id!r}"
+        )
+
+
 def market_buy_quote(
     book: dict,
     stake_usd: float,
