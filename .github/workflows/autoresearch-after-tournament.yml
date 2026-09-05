@@ -1,0 +1,54 @@
+name: Start AUTORESEARCH after finalized tournament
+
+on:
+  push:
+    branches:
+      - model-tournament-state
+    paths:
+      - "moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: model-tournament-state
+
+      - name: Verify finalized v3 tournament
+        id: gate
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          p=Path("moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json")
+          x=json.loads(p.read_text())
+          ready=(
+              x.get("protocol")=="nested_chronological_v3"
+              and not bool(x.get("provisional"))
+              and int(x.get("available_models",0) or 0)>0
+              and not bool(x.get("hidden_validation_opened"))
+              and not bool(x.get("final_oos_opened"))
+          )
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"ready={'true' if ready else 'false'}\n")
+          print({
+              "ready":ready,
+              "available_models":x.get("available_models"),
+              "winner":(x.get("ranking") or [{}])[0].get("model"),
+              "provisional":x.get("provisional"),
+          })
+
+      - name: Start continuous v3 campaign
+        if: steps.gate.outputs.ready == 'true'
+        shell: bash
+        run: |
+          echo "Finalized tournament is ready; starting continuous AUTORESEARCH."
+          gh workflow run continuous-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
