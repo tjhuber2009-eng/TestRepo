@@ -35,12 +35,22 @@ def annualized_log_growth(total_return, years):
 
 
 def annualized_k(total_return, years, sharpe):
-    """Duration-invariant K = annualized log growth × annualized Sharpe."""
+    """Sign-safe duration-invariant growth × Sharpe score.
+
+    The magnitude remains |annualized log growth × annualized Sharpe|, but K is
+    positive only when BOTH growth and Sharpe are positive. A naive product
+    rewards the pathological case where both are negative.
+    """
     g = annualized_log_growth(total_return, years)
     s = finite_float(sharpe, float("nan"))
     if not math.isfinite(g) or not math.isfinite(s):
         return float("-inf")
-    return g * s
+    magnitude = abs(g * s)
+    if g > 0.0 and s > 0.0:
+        return magnitude
+    if magnitude == 0.0:
+        return 0.0
+    return -magnitude
 
 
 def moment_skew_kurtosis(returns):
@@ -85,7 +95,7 @@ def probabilistic_sharpe_ratio(returns, benchmark_sharpe_per_period=0.0):
     return float(NormalDist().cdf(z))
 
 
-def tail_metrics(equity, returns, cagr):
+def tail_metrics(equity, returns, cagr, bars_per_year=1):
     eq = np.asarray(equity, dtype=float)
     r = np.asarray(returns, dtype=float)
     r = r[np.isfinite(r)]
@@ -93,7 +103,8 @@ def tail_metrics(equity, returns, cagr):
         return {
             "ulcer_index_pct": 0.0,
             "daily_cvar_5_pct": 0.0,
-            "sortino": 0.0,
+            "sortino_per_bar": 0.0,
+            "sortino_annualized": 0.0,
             "calmar": 0.0,
         }
     peak = np.maximum.accumulate(eq)
@@ -105,17 +116,27 @@ def tail_metrics(equity, returns, cagr):
         q = float(np.quantile(r, 0.05))
         tail = r[r <= q]
         cvar = float(np.mean(tail)) if len(tail) else q
-        downside = r[r < 0]
-        downside_dev = float(np.std(downside, ddof=0)) if len(downside) else 0.0
-        sortino = float(np.mean(r) / downside_dev) if downside_dev > 0 else 0.0
+        # Standard downside deviation about a zero minimum acceptable return:
+        # square every negative shortfall while zeroing non-negative periods.
+        shortfall = np.minimum(r, 0.0)
+        downside_dev = math.sqrt(float(np.mean(shortfall ** 2))) if len(r) else 0.0
+        sortino_per_bar = (
+            float(np.mean(r) / downside_dev) if downside_dev > 0 else 0.0
+        )
+        bpy = finite_float(bars_per_year, 1.0)
+        sortino_annualized = (
+            sortino_per_bar * math.sqrt(bpy) if bpy > 0 else 0.0
+        )
     else:
         cvar = 0.0
-        sortino = 0.0
+        sortino_per_bar = 0.0
+        sortino_annualized = 0.0
     calmar = float(cagr / max_dd) if max_dd > 0 and math.isfinite(cagr) else 0.0
     return {
         "ulcer_index_pct": float(ulcer),
         "daily_cvar_5_pct": float(cvar * 100.0),
-        "sortino_per_bar": float(sortino),
+        "sortino_per_bar": float(sortino_per_bar),
+        "sortino_annualized": float(sortino_annualized),
         "calmar": float(calmar),
     }
 
