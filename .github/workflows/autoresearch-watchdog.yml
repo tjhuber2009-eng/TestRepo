@@ -1,0 +1,67 @@
+name: AUTORESEARCH liveness watchdog
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: autoresearch-liveness-watchdog
+  cancel-in-progress: true
+
+jobs:
+  ensure-running:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check terminal state
+        id: state
+        shell: bash
+        run: |
+          git fetch origin continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state || true
+          terminal=false
+          if git rev-parse --verify refs/remotes/origin/continuous-autoresearch-state >/dev/null 2>&1; then
+            if git show refs/remotes/origin/continuous-autoresearch-state:moondev_autoresearch_reconstruction/continuous_state/progress.json > /tmp/progress.json 2>/dev/null; then
+              terminal="$(python - <<'PY'
+          import json
+          try:
+              x=json.load(open('/tmp/progress.json'))
+              print('true' if x.get('all_runnable_tracks_terminal') else 'false')
+          except Exception:
+              print('false')
+          PY
+              )"
+            fi
+          fi
+          echo "terminal=$terminal" >> "$GITHUB_OUTPUT"
+
+      - name: Check active continuous runs
+        id: active
+        shell: bash
+        run: |
+          active="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/continuous-autoresearch.yml/runs?per_page=30"             --jq '[.workflow_runs[] | select(.status=="in_progress" or .status=="queued" or .status=="waiting" or .status=="pending" or .status=="requested")] | length')"
+          echo "count=$active" >> "$GITHUB_OUTPUT"
+          echo "active_or_queued=$active"
+
+      - name: Restart if idle and incomplete
+        if: steps.state.outputs.terminal != 'true' && steps.active.outputs.count == '0'
+        shell: bash
+        run: |
+          echo "AUTORESEARCH is incomplete and idle; dispatching a recovery cycle."
+          gh workflow run continuous-autoresearch.yml             --repo "$GITHUB_REPOSITORY"             --ref main
+
+      - name: Report healthy state
+        if: steps.state.outputs.terminal == 'true' || steps.active.outputs.count != '0'
+        shell: bash
+        run: |
+          echo "No recovery needed."
