@@ -1,8 +1,7 @@
 name: Continuous AUTORESEARCH admission canary
 
 on:
-  issue_comment:
-    types: [created]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,11 +10,6 @@ permissions:
 
 jobs:
   canary:
-    if: >
-      github.event.issue.pull_request &&
-      github.event.issue.number == 13 &&
-      github.event.comment.body == '/continuous-autoresearch-canary' &&
-      github.event.comment.user.login == 'tjhuber2009-eng'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
