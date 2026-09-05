@@ -1,6 +1,7 @@
 import db from "../db.server.ts";
 import {
   autoAuditDebounceMs,
+  autoAuditTaskPriority,
   type AutoAuditResourceType,
 } from "./auto-audit-core.ts";
 
@@ -48,10 +49,12 @@ export async function enqueueAutoAuditTask(args: {
       resourceType: args.resourceType,
       resourceId: args.resourceId,
       reason: args.topic,
+      priority: autoAuditTaskPriority(args.resourceType),
       availableAt,
     },
     update: {
       reason: args.topic,
+      priority: autoAuditTaskPriority(args.resourceType),
       generation: { increment: 1 },
       attempts: 0,
       availableAt,
@@ -78,4 +81,47 @@ export async function markShopChanged(shop: string, topic: string) {
     resourceType: "SHOP",
     resourceId: shop,
   });
+}
+
+export async function enqueueReconciliationProducts(shop: string, productIds: string[]) {
+  const uniqueIds = Array.from(new Set(
+    productIds.filter((id) => /^gid:\/\/shopify\/Product\/\d+$/.test(id)),
+  ));
+  if (!uniqueIds.length) return 0;
+
+  const availableAt = new Date();
+  for (let offset = 0; offset < uniqueIds.length; offset += 100) {
+    const chunk = uniqueIds.slice(offset, offset + 100);
+    await db.$transaction(
+      chunk.map((resourceId) =>
+        db.auditTask.upsert({
+          where: {
+            shop_resourceType_resourceId: {
+              shop,
+              resourceType: "RECONCILE_PRODUCT",
+              resourceId,
+            },
+          },
+          create: {
+            shop,
+            resourceType: "RECONCILE_PRODUCT",
+            resourceId,
+            reason: "PERIODIC_RECONCILIATION",
+            priority: autoAuditTaskPriority("RECONCILE_PRODUCT"),
+            availableAt,
+          },
+          update: {
+            reason: "PERIODIC_RECONCILIATION",
+            generation: { increment: 1 },
+            attempts: 0,
+            availableAt,
+            lastError: null,
+          },
+        }),
+      ),
+    );
+  }
+
+  await syncPendingAuditCount(shop);
+  return uniqueIds.length;
 }
