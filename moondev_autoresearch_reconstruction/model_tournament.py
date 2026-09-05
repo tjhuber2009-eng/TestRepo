@@ -14,10 +14,12 @@ The tournament measures generation quality on development data only:
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
 import shutil
+import statistics
 import subprocess
 import sys
 import time
@@ -210,22 +212,64 @@ def find_track(track_id):
     return tracks[track_id]
 
 
+def score_strategy_under_current_protocol(track, strategy_source):
+    """Re-score a frozen strategy under the current harness without state mutation."""
+    cr.prepare_data(track)
+    env = cr.safe_harness_env(cr.target_env(track))
+    (HERE / "strategy.py").write_text(strategy_source, encoding="utf-8")
+    p = HERE / "last_run.json"
+    if p.exists():
+        p.unlink()
+    proc = subprocess.run(
+        [sys.executable, "robust_harness.py", "--is"],
+        cwd=HERE,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=300,
+    )
+    if proc.returncode != 0 or not p.exists():
+        raise RuntimeError(
+            f"baseline re-score failed for {track['id']}: "
+            + (proc.stdout[-1200:] if proc.stdout else f"exit {proc.returncode}")
+        )
+    baseline = cr.load_json(p)
+    if baseline.get("protocol") != cr.PROTOCOL:
+        raise RuntimeError("baseline re-score returned wrong protocol")
+    return baseline
+
+
 def load_frozen_case(track):
     track_dir = cr.TRACKS / track["id"]
     meta_path = track_dir / "state_meta.json"
     strategy_path = track_dir / "strategy_best.py"
-    if not meta_path.exists() or not strategy_path.exists():
-        raise RuntimeError(f"frozen continuous state missing for {track['id']}")
-    meta = cr.load_json(meta_path)
-    if meta.get("protocol") != cr.PROTOCOL:
-        raise RuntimeError(
-            f"track {track['id']} state protocol {meta.get('protocol')} != {cr.PROTOCOL}"
-        )
+
+    meta = cr.load_json(meta_path) if meta_path.exists() else {}
+    if strategy_path.exists():
+        strategy = strategy_path.read_text(encoding="utf-8")
+        source_kind = "frozen_continuous_champion"
+    else:
+        # Tournament cases remain runnable even immediately after a protocol
+        # migration: generate the documented family seed, then freeze it for
+        # this matched benchmark only.
+        cr.generate_seed(track)
+        strategy = (HERE / "strategy.py").read_text(encoding="utf-8")
+        source_kind = "generated_family_seed"
+
     baseline = meta.get("baseline") or {}
+    score = finite_or_none(baseline.get("score"))
+    if meta.get("protocol") != cr.PROTOCOL or score is None:
+        baseline = score_strategy_under_current_protocol(track, strategy)
+        meta = {
+            "protocol": cr.PROTOCOL,
+            "baseline_source_protocol": meta.get("protocol"),
+            "tournament_rescored": True,
+        }
+    meta["tournament_strategy_source"] = source_kind
     score = finite_or_none(baseline.get("score"))
     if score is None:
         raise RuntimeError(f"non-finite frozen baseline score for {track['id']}")
-    strategy = strategy_path.read_text(encoding="utf-8")
     return meta, baseline, strategy
 
 
@@ -271,6 +315,7 @@ def evaluate_case(client, provider, model, track_id, trial=1):
         "profile": track["profile_name"],
         "baseline_score": finite_or_none(baseline.get("score")),
         "baseline_return_pct": finite_or_none(baseline.get("return_pct")),
+        "baseline_cagr_pct": finite_or_none(baseline.get("cagr_pct")),
         "baseline_sharpe": finite_or_none(baseline.get("sharpe")),
         "baseline_max_dd_pct": finite_or_none(baseline.get("max_dd_pct")),
         "provider": provider,
@@ -289,7 +334,10 @@ def evaluate_case(client, provider, model, track_id, trial=1):
         "delta_k": None,
         "would_keep": False,
         "candidate_return_pct": None,
+        "candidate_cagr_pct": None,
         "candidate_sharpe": None,
+        "candidate_psr_zero": None,
+        "candidate_evidence_grade": None,
         "candidate_max_dd_pct": None,
         "candidate_pf": None,
         "harness_seconds": None,
@@ -345,7 +393,10 @@ def evaluate_case(client, provider, model, track_id, trial=1):
     score = finite_or_none(summary.get("score"))
     record["candidate_score"] = score
     record["candidate_return_pct"] = finite_or_none(summary.get("return_pct"))
+    record["candidate_cagr_pct"] = finite_or_none(summary.get("cagr_pct"))
     record["candidate_sharpe"] = finite_or_none(summary.get("sharpe"))
+    record["candidate_psr_zero"] = finite_or_none(summary.get("psr_zero"))
+    record["candidate_evidence_grade"] = summary.get("evidence_grade")
     record["candidate_max_dd_pct"] = finite_or_none(summary.get("max_dd_pct"))
     record["candidate_pf"] = finite_or_none(summary.get("pf"))
     if score is not None:
@@ -358,7 +409,7 @@ def evaluate_case(client, provider, model, track_id, trial=1):
     return record
 
 
-def aggregate_single_model(provider, model, cases):
+def aggregate_single_model(provider, model, cases, trials=2):
     client, missing = provider_client(provider)
     out = {
         "created_at": now(),
@@ -368,6 +419,7 @@ def aggregate_single_model(provider, model, cases):
         "available": False,
         "availability_detail": missing,
         "cases_requested": len(cases),
+        "trials_per_case": int(trials),
         "cases": [],
         "summary": {},
         "hidden_validation_opened": False,
@@ -384,25 +436,33 @@ def aggregate_single_model(provider, model, cases):
         json_dump(RESULT, out)
         return out
 
-    for i, case in enumerate(cases, 1):
-        print(f"[{i}/{len(cases)}] {provider} {model} -> {case}", flush=True)
-        try:
-            rec = evaluate_case(client, provider, model, case, trial=1)
-        except Exception as exc:
-            rec = {
-                "track_id": case,
-                "provider": provider,
-                "model": model,
-                "api_success": False,
-                "admitted": False,
-                "backtested": False,
-                "guard_ok": False,
-                "would_keep": False,
-                "delta_k": None,
-                "admission_reason": f"runner_exception: {type(exc).__name__}: {str(exc)[:1000]}",
-            }
-        out["cases"].append(rec)
-        json_dump(RESULT, out)
+    total_runs = len(cases) * int(trials)
+    nrun = 0
+    for case in cases:
+        for trial in range(1, int(trials) + 1):
+            nrun += 1
+            print(
+                f"[{nrun}/{total_runs}] {provider} {model} -> {case} trial={trial}",
+                flush=True,
+            )
+            try:
+                rec = evaluate_case(client, provider, model, case, trial=trial)
+            except Exception as exc:
+                rec = {
+                    "track_id": case,
+                    "provider": provider,
+                    "model": model,
+                    "trial": trial,
+                    "api_success": False,
+                    "admitted": False,
+                    "backtested": False,
+                    "guard_ok": False,
+                    "would_keep": False,
+                    "delta_k": None,
+                    "admission_reason": f"runner_exception: {type(exc).__name__}: {str(exc)[:1000]}",
+                }
+            out["cases"].append(rec)
+            json_dump(RESULT, out)
 
     rows = out["cases"]
     deltas = [r["delta_k"] for r in rows if r.get("delta_k") is not None]
@@ -422,12 +482,18 @@ def aggregate_single_model(provider, model, cases):
         ),
         "mean_delta_k": round(sum(deltas) / len(deltas), 6) if deltas else None,
         "median_delta_k": (
-            round(sorted(deltas)[len(deltas)//2], 6) if deltas else None
+            round(float(statistics.median(deltas)), 6) if deltas else None
         ),
         "mean_guard_delta_k": (
             round(sum(guard_deltas) / len(guard_deltas), 6)
             if guard_deltas else None
         ),
+        "unique_proposals": len({
+            hashlib.sha256(
+                " ".join(str(r.get("proposal") or "").lower().split()).encode()
+            ).hexdigest()
+            for r in rows if r.get("proposal")
+        }),
         "total_seconds": round(
             sum(float(r.get("elapsed_seconds") or 0.0) for r in rows), 3
         ),
@@ -442,9 +508,12 @@ def main():
     ap.add_argument("--provider", choices=sorted(PROVIDERS), required=True)
     ap.add_argument("--model", required=True)
     ap.add_argument("--cases", default=",".join(CASES))
+    ap.add_argument("--trials", type=int, default=2)
     args = ap.parse_args()
     cases = [x.strip() for x in args.cases.split(",") if x.strip()]
-    result = aggregate_single_model(args.provider, args.model, cases)
+    if args.trials < 1 or args.trials > 5:
+        raise SystemExit("--trials must be between 1 and 5")
+    result = aggregate_single_model(args.provider, args.model, cases, trials=args.trials)
     print(json.dumps(result["summary"], indent=2, sort_keys=True))
 
 
