@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   adminPriceToCents,
+  buildAjaxCartUrl,
   buildAjaxProductUrl,
   expectedAvailable,
   fingerprintIdentity,
@@ -61,6 +62,17 @@ test("locale-aware Online Store paths are preserved for Ajax product JSON", () =
   assert.equal(
     buildAjaxProductUrl("https://example.com/en-ca/products/red-shirt?variant=123").toString(),
     "https://example.com/en-ca/products/red-shirt.js",
+  );
+});
+
+test("locale-aware cart URL preserves the market root for currency checks", () => {
+  assert.equal(
+    buildAjaxCartUrl("https://example.com/en-ca/products/red-shirt?variant=123").toString(),
+    "https://example.com/en-ca/cart.js",
+  );
+  assert.equal(
+    buildAjaxCartUrl("https://example.com/products/red-shirt").toString(),
+    "https://example.com/cart.js",
   );
 });
 
