@@ -65,9 +65,10 @@ def implementation_hash(root: str | Path) -> str:
                     (path.relative_to(base).as_posix(), path)
                 )
 
-    pyproject = base / "pyproject.toml"
-    if pyproject.exists():
-        labeled_files.append(("pyproject.toml", pyproject))
+    for root_file in ("pyproject.toml", ".gitignore"):
+        path = base / root_file
+        if path.exists():
+            labeled_files.append((root_file, path))
 
     workflow = (
         base.parent
