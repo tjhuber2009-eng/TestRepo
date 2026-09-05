@@ -127,6 +127,8 @@ const VARIANTS_QUERY = `#graphql
 
 const RETRYABLE_HTTP = new Set([429, 500, 502, 503, 504]);
 const STOREFRONT_MAX_BYTES = 5 * 1024 * 1024;
+const AUDIT_LEASE_MS = 10 * 60_000;
+const AUDIT_LEASE_HEARTBEAT_MS = 2 * 60_000;
 
 export class AuditInProgressError extends Error {
   constructor() {
@@ -756,7 +758,7 @@ async function mapWithConcurrency<T, R>(
 
 async function acquireAuditLease(shop: string, owner: string) {
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 60 * 60_000);
+  const expiresAt = new Date(now.getTime() + AUDIT_LEASE_MS);
   const rows = await db.$queryRaw<Array<{ owner: string }>>`
     INSERT INTO "AuditLease" ("shop", "owner", "expiresAt", "updatedAt")
     VALUES (${shop}, ${owner}, ${expiresAt}, CURRENT_TIMESTAMP)
@@ -769,6 +771,22 @@ async function acquireAuditLease(shop: string, owner: string) {
   `;
 
   if (rows.length !== 1 || rows[0].owner !== owner) throw new AuditInProgressError();
+}
+
+function startAuditLeaseHeartbeat(shop: string, owner: string) {
+  const timer = setInterval(() => {
+    void db.auditLease.updateMany({
+      where: { shop, owner },
+      data: { expiresAt: new Date(Date.now() + AUDIT_LEASE_MS) },
+    }).catch((error) => {
+      console.error("CatalogMirror could not renew audit lease", {
+        shop,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, AUDIT_LEASE_HEARTBEAT_MS);
+  timer.unref();
+  return timer;
 }
 
 async function releaseAuditLease(shop: string, owner: string) {
@@ -789,6 +807,7 @@ export async function runCatalogAudit(args: {
   const started = Date.now();
 
   await acquireAuditLease(args.shop, owner);
+  const leaseHeartbeat = startAuditLeaseHeartbeat(args.shop, owner);
 
   let run: { id: string } | null = null;
 
@@ -961,6 +980,7 @@ export async function runCatalogAudit(args: {
     }
     throw error;
   } finally {
+    clearInterval(leaseHeartbeat);
     try {
       await releaseAuditLease(args.shop, owner);
     } catch (releaseError) {
