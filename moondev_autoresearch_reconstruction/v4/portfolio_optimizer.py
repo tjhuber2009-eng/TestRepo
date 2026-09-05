@@ -231,11 +231,20 @@ class RobustPortfolioOptimizer:
             raise ValueError("portfolio optimizer requires >=50 aligned rows")
         names = list(x.columns)
         arr = x.to_numpy(dtype=float)
-        rng = np.random.default_rng(self.seed)
-        compositions = self._candidate_compositions(len(names), rng)
+        # Composition search and bootstrap resampling must have independent
+        # deterministic RNG streams. Otherwise a different concentration cap
+        # changes rejection-sampling consumption and silently changes the
+        # bootstrap paths, defeating paired sensitivity comparisons.
+        composition_rng = np.random.default_rng(self.seed)
+        bootstrap_rng = np.random.default_rng(self.seed + 104729)
+        compositions = self._candidate_compositions(
+            len(names), composition_rng
+        )
 
         boot_idx = np.vstack([
-            _block_bootstrap_indices(len(x), self.block, rng)
+            _block_bootstrap_indices(
+                len(x), self.block, bootstrap_rng
+            )
             for _ in range(self.bootstrap_reps)
         ])
         boot_assets = arr[boot_idx]
