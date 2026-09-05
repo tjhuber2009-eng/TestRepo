@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import numpy as np
@@ -294,6 +295,62 @@ class MoonStrategy:
         self.assertGreaterEqual(d["pbo"], 0.0)
         self.assertLessEqual(d["pbo"], 1.0)
         self.assertGreater(d["cscv_splits"], 0)
+
+
+
+    def test_depth_promotion_requires_guard_passing_champion(self):
+        tracks = continuous_runner.build_tracks()[:2]
+        metas = {
+            tracks[0]["id"]: {"baseline": {"score": 1.0, "guard_ok": False}},
+            tracks[1]["id"]: {"baseline": {"score": 0.5, "guard_ok": True}},
+        }
+        def meta(track):
+            return metas[track["id"]]
+        with mock.patch.object(continuous_runner, "is_terminal_block", return_value=False), \
+             mock.patch.object(continuous_runner, "track_counts", return_value={"valid": 10}), \
+             mock.patch.object(continuous_runner, "track_meta", side_effect=meta), \
+             mock.patch.object(continuous_runner, "development_overfit", return_value=None):
+            rows = continuous_runner.ranked_viable(tracks, 10)
+        self.assertEqual([x[2]["id"] for x in rows], [tracks[1]["id"]])
+
+    def test_hidden_validation_selector_only_uses_elite_ids(self):
+        tracks = continuous_runner.build_tracks()[:4]
+        elite = tracks[2]["id"]
+        old = continuous_runner.SELECTIONS
+        with tempfile.TemporaryDirectory() as td:
+            continuous_runner.SELECTIONS = Path(td) / "selections.json"
+            continuous_runner.save_json(
+                continuous_runner.SELECTIONS,
+                {"protocol": continuous_runner.PROTOCOL, "depth_ids": [elite], "elite_ids": [elite]},
+            )
+            try:
+                with mock.patch.object(continuous_runner, "is_terminal_block", return_value=False), \
+                     mock.patch.object(continuous_runner, "validation_state", return_value=None):
+                    result = continuous_runner.next_validation_track(tracks, 0)
+                self.assertIsNotNone(result)
+                self.assertEqual(result[1]["id"], elite)
+            finally:
+                continuous_runner.SELECTIONS = old
+
+    def test_no_eligible_depth_tracks_completes_without_hidden_validation(self):
+        tracks = continuous_runner.build_tracks()[:3]
+        old = continuous_runner.SELECTIONS
+        with tempfile.TemporaryDirectory() as td:
+            continuous_runner.SELECTIONS = Path(td) / "selections.json"
+            try:
+                with mock.patch.object(continuous_runner, "breadth_complete", return_value=True), \
+                     mock.patch.object(continuous_runner, "freeze_depth_selection", return_value={
+                         "protocol": continuous_runner.PROTOCOL,
+                         "depth_ids": [],
+                         "elite_ids": [],
+                     }):
+                    phase, plan = continuous_runner.current_search_plan(
+                        tracks, 10, 30, 60, 0.25, 0.20
+                    )
+                self.assertEqual(phase, "complete")
+                self.assertEqual(plan, {})
+            finally:
+                continuous_runner.SELECTIONS = old
 
 
 
