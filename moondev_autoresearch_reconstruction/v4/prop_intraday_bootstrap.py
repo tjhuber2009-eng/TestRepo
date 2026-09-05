@@ -317,7 +317,16 @@ def aggregate_prague_days_scaled(
     scale_arr = np.asarray(tuple(float(x) for x in scales), dtype=float)
     raw_r = bar_returns.to_numpy(dtype=float)
     raw_a = bar_adverse.to_numpy(dtype=float)
-    gross = weights.reindex(idx).fillna(0.0).abs().sum(axis=1).to_numpy(dtype=float)
+    aligned_weights = weights.reindex(idx).fillna(0.0)
+    weight_matrix = aligned_weights.to_numpy(dtype=float)
+    gross = aligned_weights.abs().sum(axis=1).to_numpy(dtype=float)
+    raw_turnover = np.zeros(len(idx), dtype=float)
+    if len(idx):
+        raw_turnover[0] = float(np.abs(weight_matrix[0]).sum())
+    if len(idx) > 1:
+        raw_turnover[1:] = np.abs(
+            weight_matrix[1:] - weight_matrix[:-1]
+        ).sum(axis=1)
 
     profit_cap = None if day_profit_cap is None else float(day_profit_cap)
     loss_cap = None if day_loss_cap is None else float(day_loss_cap)
@@ -340,6 +349,11 @@ def aggregate_prague_days_scaled(
     return_rows = []
     adverse_rows = []
     opened_values = []
+    # If a brake flattened a scaled account on the prior Prague day, the raw
+    # backtest may still assume that position was carried. Track that mismatch
+    # so the next real re-entry pays any one-way turnover missing from the raw
+    # strategy's transaction-cost series.
+    needs_reopen = np.zeros(len(scale_arr), dtype=bool)
     for day, positions in groups:
         pos = positions.to_numpy(dtype=int)
         if not brake_enabled:
@@ -366,6 +380,34 @@ def aggregate_prague_days_scaled(
                 active = ~stopped
                 if not np.any(active):
                     break
+
+                # Reconcile an emergency-flat account with the raw strategy at
+                # the first point where the raw path carries exposure again.
+                # Raw returns already include raw strategy turnover. We charge
+                # only the additional one-way turnover required because the
+                # brake forced the real scaled path to zero previously.
+                reopen_mask = active & needs_reopen
+                if np.any(reopen_mask):
+                    if float(gross[i]) <= 1e-15:
+                        needs_reopen[reopen_mask] = False
+                    else:
+                        missing_turnover = max(
+                            float(gross[i]) - float(raw_turnover[i]),
+                            0.0,
+                        )
+                        if missing_turnover > 0.0:
+                            reopen_frac = (
+                                scale_arr[reopen_mask]
+                                * missing_turnover
+                                * emergency_close_fraction
+                            )
+                            ending[reopen_mask] *= 1.0 - reopen_frac
+                            worst[reopen_mask] = np.minimum(
+                                worst[reopen_mask],
+                                ending[reopen_mask],
+                            )
+                        needs_reopen[reopen_mask] = False
+
                 adverse_equity = ending * (
                     1.0 + scale_arr * float(raw_a[i])
                 )
@@ -398,6 +440,7 @@ def aggregate_prague_days_scaled(
                     ending[hit] *= 1.0 - close_frac
                     worst[hit] = np.minimum(worst[hit], ending[hit])
                     stopped[hit] = True
+            needs_reopen = stopped.copy()
             worst = np.minimum(1.0, worst)
 
         days.append(day)
