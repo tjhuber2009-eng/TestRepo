@@ -88,6 +88,7 @@ class PropOptimizationResult:
     funded_scale_table: list[FundedSimulation]
     input_precision: str
     objective: str
+    views: dict[str, PropOptimizationCandidate | None]
 
     def to_dict(self) -> dict:
         return {
@@ -102,6 +103,10 @@ class PropOptimizationResult:
             "funded_scale_table": [x.to_dict() for x in self.funded_scale_table],
             "input_precision": self.input_precision,
             "objective": self.objective,
+            "views": {
+                key: (None if value is None else value.to_dict())
+                for key, value in self.views.items()
+            },
         }
 
 
@@ -349,6 +354,113 @@ def simulate_funded_reward(
     )
 
 
+def _candidate_within_risk_tier(
+    candidate: PropOptimizationCandidate,
+    *,
+    evaluation_daily_breach_cap: float,
+    funded_daily_breach_cap: float,
+    funded_survival_floor: float,
+) -> bool:
+    if candidate.challenge.daily_loss_breach_probability > evaluation_daily_breach_cap:
+        return False
+    if (
+        candidate.verification is not None
+        and candidate.verification.daily_loss_breach_probability
+        > evaluation_daily_breach_cap
+    ):
+        return False
+    if candidate.funded.daily_loss_breach_probability > funded_daily_breach_cap:
+        return False
+    if candidate.funded.survival_probability < funded_survival_floor:
+        return False
+    return True
+
+
+def _candidate_views(
+    candidates: Sequence[PropOptimizationCandidate],
+) -> dict[str, PropOptimizationCandidate | None]:
+    if not candidates:
+        return {
+            "max_payout_efficiency": None,
+            "max_evaluation_pass": None,
+            "safest_funded": None,
+            "balanced": None,
+            "conservative": None,
+        }
+
+    max_payout = max(
+        candidates,
+        key=lambda x: (
+            x.payout_efficiency_score,
+            x.combined_evaluation_pass_probability,
+        ),
+    )
+    max_pass = max(
+        candidates,
+        key=lambda x: (
+            x.combined_evaluation_pass_probability,
+            x.funded.expected_reward_pct,
+            x.funded.survival_probability,
+        ),
+    )
+    safest = max(
+        candidates,
+        key=lambda x: (
+            x.funded.survival_probability,
+            -x.funded.daily_loss_breach_probability,
+            x.funded.expected_reward_pct,
+        ),
+    )
+
+    balanced_pool = [
+        x for x in candidates
+        if _candidate_within_risk_tier(
+            x,
+            evaluation_daily_breach_cap=0.15,
+            funded_daily_breach_cap=0.10,
+            funded_survival_floor=0.85,
+        )
+    ]
+    conservative_pool = [
+        x for x in candidates
+        if _candidate_within_risk_tier(
+            x,
+            evaluation_daily_breach_cap=0.10,
+            funded_daily_breach_cap=0.05,
+            funded_survival_floor=0.90,
+        )
+    ]
+    balanced = (
+        None
+        if not balanced_pool
+        else max(
+            balanced_pool,
+            key=lambda x: (
+                x.payout_efficiency_score,
+                x.combined_evaluation_pass_probability,
+            ),
+        )
+    )
+    conservative = (
+        None
+        if not conservative_pool
+        else max(
+            conservative_pool,
+            key=lambda x: (
+                x.payout_efficiency_score,
+                x.combined_evaluation_pass_probability,
+            ),
+        )
+    )
+    return {
+        "max_payout_efficiency": max_payout,
+        "max_evaluation_pass": max_pass,
+        "safest_funded": safest,
+        "balanced": balanced,
+        "conservative": conservative,
+    }
+
+
 def optimize_prop_exposure(
     returns: Sequence[float],
     adverse_returns: Sequence[float],
@@ -470,19 +582,20 @@ def optimize_prop_exposure(
     )
     candidates = candidates[: max(int(top_candidates), 1)]
 
+    views = _candidate_views(candidates)
     return PropOptimizationResult(
         program=program.to_dict(),
-        selected=(candidates[0] if candidates else None),
+        selected=views["max_payout_efficiency"],
         candidates=candidates,
         challenge_scale_table=challenge_table,
         verification_scale_table=verification_table,
         funded_scale_table=funded_table,
         input_precision=input_precision,
         objective=(
-            "independently optimize Challenge, Verification, and funded exposure "
-            "to maximize combined evaluation-pass probability times unconditional "
-            "expected first-reward percent per expected evaluation+reward day"
+            "independently optimize Challenge, Verification, and funded exposure; "
+            "report payout, pass-probability, balanced, and conservative risk views"
         ),
+        views=views,
     )
 
 
