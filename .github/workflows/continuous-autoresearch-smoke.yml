@@ -56,11 +56,11 @@ jobs:
               subprocess.run([sys.executable,"-m","py_compile","strategy.py"],check=True)
           print(f"runnable_families={len(runnable)}")
 
-      - name: Prepare BTC pre-OOS data
+      - name: Prepare BTC development-only data
         run: >
           python prepare_market_data.py
           --source binance --symbol BTCUSDT --id btc
-          --start 2017-08-17 --end 2022-12-31
+          --start 2017-08-17 --end 2020-12-31
 
       - name: Run development-only robust harness smoke
         shell: bash
