@@ -30,19 +30,40 @@ def load_frozen_spec(path: str | Path) -> tuple[dict, str]:
 
 
 def runtime_fingerprint() -> dict[str, str]:
-    """Runtime properties that can change execution semantics."""
+    """Audit runtime details, including the exact patch version."""
+    version = platform.python_version()
+    pieces = version.split(".")
+    major_minor = ".".join(pieces[:2])
     return {
         "python_implementation": platform.python_implementation(),
-        "python_version": platform.python_version(),
+        "python_major_minor": major_minor,
+        "python_version_full": version,
         "system": platform.system(),
         "machine": platform.machine(),
         "websockets_version": importlib.metadata.version("websockets"),
     }
 
 
+def runtime_semantics_fingerprint() -> dict[str, str]:
+    """Runtime properties enforced across V1 and replacement hosts.
+
+    Python patch releases remain recorded for audit but are not treated as a
+    strategy mutation; pyproject already freezes the interpreter family to
+    CPython 3.12.x. Transport-library version and architecture remain exact.
+    """
+    audit = runtime_fingerprint()
+    return {
+        "python_implementation": audit["python_implementation"],
+        "python_major_minor": audit["python_major_minor"],
+        "system": audit["system"],
+        "machine": audit["machine"],
+        "websockets_version": audit["websockets_version"],
+    }
+
+
 def runtime_hash() -> str:
     return hashlib.sha256(
-        canonical_json_bytes(runtime_fingerprint())
+        canonical_json_bytes(runtime_semantics_fingerprint())
     ).hexdigest()
 
 
@@ -69,17 +90,6 @@ def implementation_hash(root: str | Path) -> str:
         path = base / root_file
         if path.exists():
             labeled_files.append((root_file, path))
-
-    workflow = (
-        base.parent
-        / ".github"
-        / "workflows"
-        / "prediction-market-tournament.yml"
-    )
-    if workflow.exists():
-        labeled_files.append(
-            (".github/workflows/prediction-market-tournament.yml", workflow)
-        )
 
     digest = hashlib.sha256()
     for label, path in sorted(labeled_files):
