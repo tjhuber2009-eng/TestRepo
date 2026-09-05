@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "47e7a6a324fb971b79f16068db01e2b9cbb815fc22fba26cd45d464e92a9acf0",
+  "first": "2010-01-04T14:30:00+00:00",
+  "id": "spy",
+  "last": "2022-12-30T14:30:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2022-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 3272,
+  "source": "yahoo",
+  "symbol": "SPY",
+  "version": 1
+}

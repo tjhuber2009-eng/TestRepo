@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "2962f980ac4c393dcc20c9a55dc1b8065f805992201cdede08337c61f1eb23fa",
+  "first": "2020-08-11T00:00:00+00:00",
+  "id": "sol",
+  "last": "2022-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "published monthly archive SHA256 verified",
+  "requested_end": "2022-12-31",
+  "requested_start": "2020-08-11",
+  "rows": 873,
+  "source": "binance",
+  "symbol": "SOLUSDT",
+  "version": 1
+}

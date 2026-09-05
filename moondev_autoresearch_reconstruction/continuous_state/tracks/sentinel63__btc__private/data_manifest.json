@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "78d70aae03d742ed71d7488b636bd05ecf15c7500b3c33c5f4c30cfb679c9fb5",
+  "first": "2017-08-17T00:00:00+00:00",
+  "id": "btc",
+  "last": "2022-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "published monthly archive SHA256 verified",
+  "requested_end": "2022-12-31",
+  "requested_start": "2017-08-17",
+  "rows": 1963,
+  "source": "binance",
+  "symbol": "BTCUSDT",
+  "version": 1
+}

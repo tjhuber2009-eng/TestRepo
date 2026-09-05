@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T14:33:19Z	1	REJECTED	0.063859	0.099608	102.91	0.5876	11.44	42	-24.951	K 0.063859 did not exceed 0.099608 by required delta 0.0050	Add ATR-based stop loss to long entries
+2026-09-04T14:34:53Z	2	REJECTED	0.085659	0.099608	101.903	0.6711	9.943	22	-15.842	K 0.085659 did not exceed 0.099608 by required delta 0.0050	Add ADX trend filter to only enter longs when ADX > 20

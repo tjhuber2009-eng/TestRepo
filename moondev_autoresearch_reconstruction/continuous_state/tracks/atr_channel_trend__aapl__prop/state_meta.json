@@ -1,0 +1,9 @@
+{
+  "family": "atr_channel_trend",
+  "profile": "prop",
+  "protocol": "chronological_robust_v1",
+  "reason": "total trades 18 < 20; F4_2022 insufficient trades",
+  "status": "seed_blocked",
+  "target": "aapl",
+  "updated_at": "2026-09-04T04:45:19Z"
+}

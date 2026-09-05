@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T18:41:03Z	1	KEPT	0.01248	0.001703	19.014	0.4665	3.424	149	-6.044	K 0.001703 -> 0.01248 (required delta 0.0050)	Add ATR-based stop-loss to entry orders
+2026-09-04T18:42:27Z	2	REJECTED	-0.006305	0.01248	5.254	0.1526	3.062	95	-6.597	K -0.006305 did not exceed 0.01248 by required delta 0.0050	Add volume confirmation filter to entry condition requiring current volume above 20-day average volume

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T11:01:21Z	1	REJECTED	-0.025275	-0.020805	8.937	0.4484	1.745	24	-3.809	guard: development robustness gate failed	Add a volatility regime filter: only enter when realized volatility is below its 20-bar moving average.
+2026-09-04T11:04:35Z	2	KEPT	-0.003567	-0.020805	3.715	0.1244	2.673	24	-5.475	K -0.020805 -> -0.003567 (required delta 0.0050)	Add a volatility regime filter: only enter when realized volatility is above its 20-bar moving average.

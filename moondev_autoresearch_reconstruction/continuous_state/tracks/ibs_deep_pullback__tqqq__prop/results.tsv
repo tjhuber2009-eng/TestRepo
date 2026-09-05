@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T21:33:29Z	1	REJECTED	0.039156	0.064922	64.483	0.8979	5.214	151	-7.644	guard: development robustness gate failed	Add ATR-based stop loss to entries
+2026-09-04T21:34:09Z	2	REJECTED	-0.002909	0.064922	36.514	0.7697	3.771	55	-6.213	guard: development robustness gate failed	Add 50-day SMA trend filter to long entries

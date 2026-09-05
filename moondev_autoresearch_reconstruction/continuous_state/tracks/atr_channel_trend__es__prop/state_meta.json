@@ -1,0 +1,9 @@
+{
+  "family": "atr_channel_trend",
+  "profile": "prop",
+  "protocol": "chronological_robust_v1",
+  "reason": "total trades 19 < 20",
+  "status": "seed_blocked",
+  "target": "es",
+  "updated_at": "2026-09-04T04:51:54Z"
+}

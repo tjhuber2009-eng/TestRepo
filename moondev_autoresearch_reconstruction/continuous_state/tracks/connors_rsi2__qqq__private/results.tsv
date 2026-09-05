@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T11:09:57Z	1	KEPT	-0.002497	-0.056293	10.256	0.1085	8.226	15	-16.266	K -0.056293 -> -0.002497 (required delta 0.0050)	Add ADX trend strength filter to entry condition
+2026-09-04T11:10:38Z	2	REJECTED	-0.027204	-0.002497	-1.099	-0.014	7.156	17	-24.244	guard: development robustness gate failed	Add ATR-based stop loss to entry orders

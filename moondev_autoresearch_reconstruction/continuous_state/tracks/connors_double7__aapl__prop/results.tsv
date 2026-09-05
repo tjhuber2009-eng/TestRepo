@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T05:27:41Z	1	RISK_CONTROL_CHANGE	nan	-0.016249	nan	nan	nan	0	nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Change exit condition to ATR-based trailing stop (close below prior close minus 1*ATR) instead of fixed high7 breakout.
+2026-09-04T05:30:25Z	2	CRASH	nan	-0.016249	nan	nan	nan	0	nan	NVIDIA research-agent call failed: delimiter parse failed (required output markers missing or out of order); JSON fallback failed (Expecting value: line 1 column 1 (char 0))	(agent failed)

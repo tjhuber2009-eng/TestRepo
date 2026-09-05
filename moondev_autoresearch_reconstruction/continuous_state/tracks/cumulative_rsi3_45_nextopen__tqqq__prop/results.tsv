@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T18:33:22Z	1	REJECTED	-0.012295	0.014902	0.936	0.0364	2.354	25	-5.587	K -0.012295 did not exceed 0.014902 by required delta 0.0050	Add a 50-day simple moving average trend filter to only enter longs when price is above its 50-day SMA.
+2026-09-04T18:33:49Z	2	KEPT	0.027613	0.014902	39.533	0.6846	4.543	71	-7.839	K 0.014902 -> 0.027613 (required delta 0.0050)	Change exit condition to use 3-period RSI sum > 165 instead of RSI(2) > 65

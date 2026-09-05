@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T11:26:01Z	1	KEPT	0.047124	0.019195	72.995	0.4823	10.609	27	-12.417	K 0.019195 -> 0.047124 (required delta 0.0050)	Add an ADX(14) > 20 trend filter to entry condition
+2026-09-04T11:26:38Z	2	PARAMETER_ONLY	nan	0.047124	nan	nan	nan	0	nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Loosen the entry RSI threshold from <5 to <10 to allow slightly less oversold conditions

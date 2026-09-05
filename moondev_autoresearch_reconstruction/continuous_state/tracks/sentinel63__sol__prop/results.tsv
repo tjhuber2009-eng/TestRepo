@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-05T00:05:15Z	1	PARAMETER_ONLY	nan	0.027896	nan	nan	nan	0	nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Adjust z-score entry and exit thresholds from ±0.5 to ±0.4 to increase sensitivity to mean reversion signals.
+2026-09-05T00:05:52Z	2	REJECTED	0.029556	0.027896	12.95	0.9683	9.462	3	-9.718	guard: development robustness gate failed	Add ATR-based stop loss to long entries to limit downside risk.

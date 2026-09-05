@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T14:27:45Z	1	REJECTED	-0.04278	-0.048988	31.253	0.2031	12.345	28	-17.871	guard: development robustness gate failed	Add medium-term trend filter: only enter when 50-day SMA > 200-day SMA
+2026-09-04T14:28:30Z	2	REJECTED	-0.05442	-0.048988	12.934	0.1525	7.301	12	-14.01	guard: development robustness gate failed	Add volatility regime filter: only enter when current realized volatility is below its 60-day SMA.

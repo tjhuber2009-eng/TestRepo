@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "3bd5e67ca6beb7e6bf9e3c0fd884de9a8b774323bbdbaf9ac3959ff5025accf5",
+  "first": "2010-01-04T05:00:00+00:00",
+  "id": "oil",
+  "last": "2022-12-30T05:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2022-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 3270,
+  "source": "yahoo",
+  "symbol": "CL=F",
+  "version": 1
+}

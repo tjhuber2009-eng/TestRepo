@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T21:37:32Z	1	REJECTED	-0.08267	0.058037	15.334	0.2485	5.26	10	-14.26	guard: development robustness gate failed	Add a volatility filter that only allows entries when realized volatility is below a threshold.
+2026-09-04T21:38:42Z	2	REJECTED	0.005719	0.058037	55.179	0.6154	6.632	28	-10.572	guard: development robustness gate failed	Add an ADX trend filter: only enter long when ADX > 20, indicating a trending market.

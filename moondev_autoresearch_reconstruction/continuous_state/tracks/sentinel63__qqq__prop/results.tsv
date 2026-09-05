@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-05T00:01:08Z	1	REJECTED	-0.007692	0.01187	25.046	0.3997	5.144	25	-8.966	K -0.007692 did not exceed 0.01187 by required delta 0.0050	Add ADX trend filter: only enter long when ADX > 20, indicating a trending market.
+2026-09-05T00:02:24Z	2	KEPT	0.025152	0.01187	49.424	0.6993	5.325	38	-9.117	K 0.01187 -> 0.025152 (required delta 0.0050)	Add ATR-based stop loss to long entries

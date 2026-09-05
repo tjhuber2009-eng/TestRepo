@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T11:25:04Z	1	REJECTED	0.009255	0.005063	10.582	0.4038	2.278	22	-6.223	K 0.009255 did not exceed 0.005063 by required delta 0.0050	Add a volatility regime filter: only enter long when current 30-day realized volatility is below its 60-day simple moving average (low volatility regime).
+2026-09-04T11:25:33Z	2	REJECTED	-0.037467	0.005063	10.332	0.3139	2.865	49	-10.269	guard: development robustness gate failed	Add ATR-based stop loss to long entries

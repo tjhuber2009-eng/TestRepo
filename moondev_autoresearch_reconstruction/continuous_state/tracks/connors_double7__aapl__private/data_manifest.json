@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "19ac0bd11518ce276497a97741743eda844b280e8eb97d57bd17005e820c70ca",
+  "first": "2010-01-04T14:30:00+00:00",
+  "id": "aapl",
+  "last": "2022-12-30T14:30:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2022-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 3272,
+  "source": "yahoo",
+  "symbol": "AAPL",
+  "version": 1
+}

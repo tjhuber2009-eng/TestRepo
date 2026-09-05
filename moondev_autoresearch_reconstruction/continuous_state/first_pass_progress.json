@@ -1,0 +1,4077 @@
+{
+  "blocked_families": [
+    {
+      "exactness": "unrecovered",
+      "id": "calendar_monthly",
+      "origin": "Monthly seasonality research; exact frozen rule not yet recovered",
+      "requires": [
+        "frozen monthly seasonality rule from prior project"
+      ]
+    },
+    {
+      "exactness": "documented",
+      "id": "pead",
+      "origin": "PEAD academic/mechanical research",
+      "requires": [
+        "point-in-time earnings announcement data",
+        "surprise measure",
+        "event engine"
+      ]
+    },
+    {
+      "exactness": "unrecovered",
+      "id": "zanger_exact",
+      "origin": "ZANGER-MECH exact chart-pattern implementation",
+      "requires": [
+        "exact mechanical pattern rules",
+        "curated universe reconstruction"
+      ]
+    },
+    {
+      "exactness": "provisional",
+      "id": "nbe_volume_profile",
+      "origin": "NodeBreachEngine POC/POV volume-profile rejection",
+      "requires": [
+        "intraday volume-profile engine",
+        "POC/POV parity"
+      ]
+    },
+    {
+      "exactness": "documented_live_family",
+      "id": "orb_twp",
+      "origin": "TWP ORB EA / OE-ORB-FM-001 research",
+      "requires": [
+        "intraday session data",
+        "broker/session execution model"
+      ]
+    },
+    {
+      "exactness": "research_queue",
+      "id": "opening_reversal_futures",
+      "origin": "HR-005 futures opening reversal",
+      "requires": [
+        "intraday futures data",
+        "contract calendar"
+      ]
+    },
+    {
+      "exactness": "research_queue",
+      "id": "overnight_intraday_reversal",
+      "origin": "HR-001 overnight-to-intraday reversal",
+      "requires": [
+        "overnight/intraday session decomposition"
+      ]
+    },
+    {
+      "exactness": "research_queue",
+      "id": "intraday_residual_reversal",
+      "origin": "HR-002 intraday residual reversal",
+      "requires": [
+        "intraday cross-sectional data"
+      ]
+    },
+    {
+      "exactness": "research_queue",
+      "id": "bounded_vrp",
+      "origin": "HR-004 bounded volatility risk premium",
+      "requires": [
+        "options/volatility surface data"
+      ]
+    },
+    {
+      "exactness": "research_queue",
+      "id": "fx_futures_mean_reversion",
+      "origin": "HR-007 FX-futures mean reversion",
+      "requires": [
+        "clean futures/FX data and contract model"
+      ]
+    },
+    {
+      "exactness": "research_family",
+      "id": "liquidation_mean_reversion",
+      "origin": "Crypto liquidation mean-reversion research",
+      "requires": [
+        "historical liquidation feed"
+      ]
+    },
+    {
+      "exactness": "research_family",
+      "id": "funding_basis",
+      "origin": "Coinbase/Bitnomial funding-basis research",
+      "requires": [
+        "historical funding",
+        "mark/index/basis data"
+      ]
+    },
+    {
+      "exactness": "family",
+      "id": "stat_arb_pairs",
+      "origin": "Cointegration/stat-arb pairs repositories researched previously",
+      "requires": [
+        "multi-asset synchronized engine"
+      ]
+    },
+    {
+      "exactness": "documented",
+      "id": "finlab_rotation_exact",
+      "origin": "QQQ SMA200 + 126d momentum; leveraged risk-on and IEF/GLD/SHY defensive rotation",
+      "requires": [
+        "multi-asset portfolio engine"
+      ]
+    },
+    {
+      "exactness": "partially_documented",
+      "id": "hr_dual_alpha",
+      "origin": "HR-DUAL-ALPHA-001 research",
+      "requires": [
+        "frozen exact implementation from prior project"
+      ]
+    },
+    {
+      "exactness": "external_signal",
+      "id": "copy_trader_signal_replication",
+      "origin": "Copy-trader research project",
+      "requires": [
+        "historical timestamped source signals",
+        "execution mapping"
+      ]
+    }
+  ],
+  "blocked_family_count": 16,
+  "completed_track_count": 6,
+  "pending_track_count": 430,
+  "protocol": "chronological_robust_v1",
+  "required_valid_attempts_per_viable_track": 10,
+  "rows": [
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "seed_rejected",
+      "target": "aapl",
+      "track_id": "atr_channel_trend__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "seed_rejected",
+      "target": "aapl",
+      "track_id": "atr_channel_trend__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "seed_rejected",
+      "target": "btc",
+      "track_id": "atr_channel_trend__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "seed_rejected",
+      "target": "btc",
+      "track_id": "atr_channel_trend__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "seed_rejected",
+      "target": "es",
+      "track_id": "atr_channel_trend__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "seed_rejected",
+      "target": "es",
+      "track_id": "atr_channel_trend__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 2,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "researching",
+      "target": "eth",
+      "track_id": "atr_channel_trend__eth__prop",
+      "valid_attempts": 2
+    },
+    {
+      "attempts": 2,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "researching",
+      "target": "eth",
+      "track_id": "atr_channel_trend__eth__private",
+      "valid_attempts": 2
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "atr_channel_trend__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "atr_channel_trend__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "atr_channel_trend__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "atr_channel_trend__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "atr_channel_trend__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "atr_channel_trend__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "atr_channel_trend__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "atr_channel_trend__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "atr_channel_trend__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "atr_channel_trend__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "atr_channel_trend__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "atr_channel_trend__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "atr_channel_trend__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "atr_channel_trend__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "atr_channel_trend__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "atr_channel_trend",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "atr_channel_trend__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "bollinger_mean_reversion__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "bollinger_mean_reversion__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "bollinger_mean_reversion__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "bollinger_mean_reversion__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "bollinger_mean_reversion__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "bollinger_mean_reversion__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "bollinger_mean_reversion__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "bollinger_mean_reversion__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "bollinger_mean_reversion__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "bollinger_mean_reversion__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "bollinger_mean_reversion__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "bollinger_mean_reversion__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "bollinger_mean_reversion__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "bollinger_mean_reversion__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "bollinger_mean_reversion__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "bollinger_mean_reversion__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "bollinger_mean_reversion__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "bollinger_mean_reversion__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "bollinger_mean_reversion__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "bollinger_mean_reversion__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "bollinger_mean_reversion__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "bollinger_mean_reversion__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "bollinger_mean_reversion__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "bollinger_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "bollinger_mean_reversion__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "btc_rsi_adx",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "btc_rsi_adx__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "btc_rsi_adx",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "btc_rsi_adx__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "btc_rsi_adx",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "btc_rsi_adx__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "btc_rsi_adx",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "btc_rsi_adx__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "btc_rsi_adx",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "btc_rsi_adx__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "btc_rsi_adx",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "btc_rsi_adx__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "connors_double7__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "connors_double7__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "connors_double7__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "connors_double7__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "connors_double7__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "connors_double7__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "connors_double7__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "connors_double7__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "connors_double7__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_double7",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "connors_double7__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "connors_rsi2__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "connors_rsi2__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "connors_rsi2__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "connors_rsi2__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "connors_rsi2__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "connors_rsi2__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "connors_rsi2__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "connors_rsi2__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "connors_rsi2__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "connors_rsi2",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "connors_rsi2__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "donchian_20_10__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "donchian_20_10__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "donchian_20_10__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "donchian_20_10__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "donchian_20_10__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "donchian_20_10__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "donchian_20_10__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "donchian_20_10__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "donchian_20_10__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "donchian_20_10__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "donchian_20_10__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "donchian_20_10__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "donchian_20_10__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "donchian_20_10__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "donchian_20_10__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "donchian_20_10__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "donchian_20_10__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "donchian_20_10__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "donchian_20_10__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "donchian_20_10__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "donchian_20_10__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "donchian_20_10__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "donchian_20_10__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_20_10",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "donchian_20_10__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "donchian_sma50__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "donchian_sma50__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "donchian_sma50__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "donchian_sma50__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "donchian_sma50__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "donchian_sma50__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "donchian_sma50__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "donchian_sma50__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "donchian_sma50__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "donchian_sma50__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "donchian_sma50__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "donchian_sma50__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "donchian_sma50__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "donchian_sma50__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "donchian_sma50__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "donchian_sma50__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "donchian_sma50__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "donchian_sma50__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "donchian_sma50__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "donchian_sma50__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "donchian_sma50__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "donchian_sma50__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "donchian_sma50__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "donchian_sma50",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "donchian_sma50__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "halftrend_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "halftrend_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "halftrend_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "halftrend_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "halftrend_proxy__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "halftrend_proxy__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "halftrend_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "halftrend_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "halftrend_proxy__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "halftrend_proxy__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "halftrend_proxy__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "halftrend_proxy__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "halftrend_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "halftrend_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "halftrend_proxy__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "halftrend_proxy__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "halftrend_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "halftrend_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "halftrend_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "halftrend_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "halftrend_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "halftrend_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "halftrend_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "halftrend_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "halftrend_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "ibs_deep_pullback__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "ibs_deep_pullback__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "ibs_deep_pullback__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "ibs_deep_pullback__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "ibs_deep_pullback__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "ibs_deep_pullback__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "ibs_deep_pullback__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "ibs_deep_pullback__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "ibs_deep_pullback__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "ibs_deep_pullback",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "ibs_deep_pullback__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "qqe_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "qqe_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "qqe_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "qqe_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "qqe_proxy__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "qqe_proxy__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "qqe_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "qqe_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "qqe_proxy__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "qqe_proxy__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "qqe_proxy__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "qqe_proxy__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "qqe_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "qqe_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "qqe_proxy__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "qqe_proxy__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "qqe_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "qqe_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "qqe_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "qqe_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "qqe_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "qqe_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "qqe_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "qqe_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "qqe_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "roc126_regime__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "roc126_regime__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "roc126_regime__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "roc126_regime__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "roc126_regime__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "roc126_regime__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "roc126_regime__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "roc126_regime__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "roc126_regime__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "roc126_regime__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "roc126_regime__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "roc126_regime__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "roc126_regime__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "roc126_regime__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "roc126_regime__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "roc126_regime__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "roc126_regime__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "roc126_regime__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "roc126_regime__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "roc126_regime__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "roc126_regime__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "roc126_regime__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "roc126_regime__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "roc126_regime",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "roc126_regime__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "sentinel63__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "sentinel63__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "sentinel63__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "sentinel63__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "sentinel63__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "sentinel63__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "sentinel63__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "sentinel63__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "sentinel63__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "sentinel63__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "sentinel63__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "sentinel63__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "sentinel63__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "sentinel63__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "sentinel63__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "sentinel63__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "sentinel63__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "sentinel63__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "sentinel63__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "sentinel63__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "sentinel63__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "sentinel63__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "sentinel63__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sentinel63",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "sentinel63__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "sma175_regime_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "sma175_regime_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "sma175_regime_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "sma175_regime_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "sma175_regime_proxy__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "sma175_regime_proxy__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "sma175_regime_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "sma175_regime_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "sma175_regime_proxy__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "sma175_regime_proxy__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "sma175_regime_proxy__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "sma175_regime_proxy__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "sma175_regime_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "sma175_regime_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "sma175_regime_proxy__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "sma175_regime_proxy__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "sma175_regime_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "sma175_regime_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "sma175_regime_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "sma175_regime_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "sma175_regime_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "sma175_regime_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "sma175_regime_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma175_regime_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "sma175_regime_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "sma200_roc126_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "sma200_roc126_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "sma200_roc126_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "sma200_roc126_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "sma200_roc126_proxy__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "sma200_roc126_proxy__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "sma200_roc126_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "sma200_roc126_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "sma200_roc126_proxy__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "sma200_roc126_proxy__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "sma200_roc126_proxy__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "sma200_roc126_proxy__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "sma200_roc126_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "sma200_roc126_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "sma200_roc126_proxy__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "sma200_roc126_proxy__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "sma200_roc126_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "sma200_roc126_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "sma200_roc126_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "sma200_roc126_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "sma200_roc126_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "sma200_roc126_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "sma200_roc126_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "sma200_roc126_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "sma200_roc126_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "swing_terminal_breakout_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "swing_terminal_breakout_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "swing_terminal_breakout_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "swing_terminal_breakout_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "swing_terminal_breakout_proxy__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "swing_terminal_breakout_proxy__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "swing_terminal_breakout_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "swing_terminal_breakout_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "swing_terminal_breakout_proxy__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "swing_terminal_breakout_proxy__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "swing_terminal_breakout_proxy__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "swing_terminal_breakout_proxy__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "swing_terminal_breakout_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "swing_terminal_breakout_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "swing_terminal_breakout_proxy__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "swing_terminal_breakout_proxy__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "swing_terminal_breakout_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "swing_terminal_breakout_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "swing_terminal_breakout_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "swing_terminal_breakout_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "swing_terminal_breakout_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "swing_terminal_breakout_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "swing_terminal_breakout_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "swing_terminal_breakout_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "swing_terminal_pullback_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "swing_terminal_pullback_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "swing_terminal_pullback_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "swing_terminal_pullback_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "swing_terminal_pullback_proxy__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "swing_terminal_pullback_proxy__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "swing_terminal_pullback_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "swing_terminal_pullback_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "swing_terminal_pullback_proxy__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "swing_terminal_pullback_proxy__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "swing_terminal_pullback_proxy__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "swing_terminal_pullback_proxy__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "swing_terminal_pullback_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "swing_terminal_pullback_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "swing_terminal_pullback_proxy__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "swing_terminal_pullback_proxy__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "swing_terminal_pullback_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "swing_terminal_pullback_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "swing_terminal_pullback_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "swing_terminal_pullback_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "swing_terminal_pullback_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "swing_terminal_pullback_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "swing_terminal_pullback_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "swing_terminal_pullback_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "tsmom_252__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "tsmom_252__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "tsmom_252__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "tsmom_252__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "tsmom_252__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "tsmom_252__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "tsmom_252__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "tsmom_252__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "tsmom_252__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "tsmom_252__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "tsmom_252__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "tsmom_252__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "tsmom_252__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "tsmom_252__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "tsmom_252__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "tsmom_252__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "tsmom_252__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "tsmom_252__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "tsmom_252__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "tsmom_252__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "tsmom_252__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "tsmom_252__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "tsmom_252__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "tsmom_252",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "tsmom_252__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "turtle_55_20__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "turtle_55_20__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "turtle_55_20__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "turtle_55_20__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "turtle_55_20__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "turtle_55_20__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "turtle_55_20__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "turtle_55_20__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "turtle_55_20__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "turtle_55_20__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "turtle_55_20__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "turtle_55_20__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "turtle_55_20__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "turtle_55_20__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "turtle_55_20__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "turtle_55_20__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "turtle_55_20__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "turtle_55_20__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "turtle_55_20__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "turtle_55_20__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "turtle_55_20__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "turtle_55_20__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "turtle_55_20__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "turtle_55_20",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "turtle_55_20__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "vol_contraction_breakout__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "vol_contraction_breakout__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "vol_contraction_breakout__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "vol_contraction_breakout__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "vol_contraction_breakout__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "vol_contraction_breakout__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "vol_contraction_breakout__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "vol_contraction_breakout__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "vol_contraction_breakout__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "vol_contraction_breakout__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "vol_contraction_breakout__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "vol_contraction_breakout__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "vol_contraction_breakout__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "vol_contraction_breakout__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "vol_contraction_breakout__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "vol_contraction_breakout__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "vol_contraction_breakout__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "vol_contraction_breakout__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "vol_contraction_breakout__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "vol_contraction_breakout__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "vol_contraction_breakout__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "vol_contraction_breakout__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "vol_contraction_breakout__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "vol_contraction_breakout",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "vol_contraction_breakout__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "zanger_volume_breakout_proxy__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "zanger_volume_breakout_proxy__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "zanger_volume_breakout_proxy__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "zanger_volume_breakout_proxy__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "zanger_volume_breakout_proxy__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "zanger_volume_breakout_proxy__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "zanger_volume_breakout_proxy__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "zanger_volume_breakout_proxy__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "zanger_volume_breakout_proxy__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "zanger_volume_breakout_proxy__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "zanger_volume_breakout_proxy__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "zanger_volume_breakout_proxy__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "zanger_volume_breakout_proxy__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "zanger_volume_breakout_proxy__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "zanger_volume_breakout_proxy__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zanger_volume_breakout_proxy",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "zanger_volume_breakout_proxy__tqqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "zscore_mean_reversion__aapl__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "aapl",
+      "track_id": "zscore_mean_reversion__aapl__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "zscore_mean_reversion__btc__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "btc",
+      "track_id": "zscore_mean_reversion__btc__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "es",
+      "track_id": "zscore_mean_reversion__es__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "es",
+      "track_id": "zscore_mean_reversion__es__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "zscore_mean_reversion__eth__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "eth",
+      "track_id": "zscore_mean_reversion__eth__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "zscore_mean_reversion__gold__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "gold",
+      "track_id": "zscore_mean_reversion__gold__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "zscore_mean_reversion__nq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "nq",
+      "track_id": "zscore_mean_reversion__nq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "zscore_mean_reversion__nvda__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "nvda",
+      "track_id": "zscore_mean_reversion__nvda__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "zscore_mean_reversion__oil__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "oil",
+      "track_id": "zscore_mean_reversion__oil__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "zscore_mean_reversion__qqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "qqq",
+      "track_id": "zscore_mean_reversion__qqq__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "zscore_mean_reversion__sol__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "sol",
+      "track_id": "zscore_mean_reversion__sol__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "zscore_mean_reversion__spy__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "spy",
+      "track_id": "zscore_mean_reversion__spy__private",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "prop",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "zscore_mean_reversion__tqqq__prop",
+      "valid_attempts": 0
+    },
+    {
+      "attempts": 0,
+      "family": "zscore_mean_reversion",
+      "profile": "private",
+      "status": "pending",
+      "target": "tqqq",
+      "track_id": "zscore_mean_reversion__tqqq__private",
+      "valid_attempts": 0
+    }
+  ],
+  "runnable_first_pass_complete": false,
+  "runnable_track_count": 436,
+  "seed_rejected_track_count": 6,
+  "total_crashes_recorded": 0,
+  "updated_at": "2026-09-04T04:55:16Z",
+  "validated_track_count": 0
+}

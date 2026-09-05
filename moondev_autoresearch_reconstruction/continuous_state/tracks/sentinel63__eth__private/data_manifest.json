@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "c1652b2869b787fdd32e01ce63b71755c7d03356cdc9155d134867d613e216e0",
+  "first": "2017-08-17T00:00:00+00:00",
+  "id": "eth",
+  "last": "2022-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "published monthly archive SHA256 verified",
+  "requested_end": "2022-12-31",
+  "requested_start": "2017-08-17",
+  "rows": 1963,
+  "source": "binance",
+  "symbol": "ETHUSDT",
+  "version": 1
+}

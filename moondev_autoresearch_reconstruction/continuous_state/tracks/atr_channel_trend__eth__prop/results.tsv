@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T04:52:36Z	1	REJECTED	0.012162	0.031282	33.967	0.6813	8.201	22	-8.028	K 0.012162 did not beat 0.031282	Add ADX trend filter requiring ADX > 20 for entry signals.
+2026-09-04T04:53:20Z	2	REJECTED	0.01817	0.031282	41.449	0.7585	8.78	16	-9.844	guard: chronological robustness gate failed	Add a volatility regime filter that only allows entries when current ATR exceeds its 50-period SMA.

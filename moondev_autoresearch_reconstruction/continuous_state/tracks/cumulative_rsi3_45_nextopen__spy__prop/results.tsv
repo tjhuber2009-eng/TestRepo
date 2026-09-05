@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T18:28:57Z	1	REJECTED	-0.00284	-0.001018	10.163	0.3009	2.941	52	-7.242	K -0.00284 did not exceed -0.001018 by required delta 0.0050	Add a 200-day simple moving average trend filter to only enter long when price is above its SMA.
+2026-09-04T18:29:33Z	2	KEPT	0.009839	-0.001018	11.384	0.6225	1.585	33	-2.654	K -0.001018 -> 0.009839 (required delta 0.0050)	Add a low-volatility regime filter: only enter long when current realized volatility is below its 60-day simple moving average.

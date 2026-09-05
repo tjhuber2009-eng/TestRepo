@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T21:39:26Z	1	REJECTED	0.202437	0.240787	540.786	0.7816	23.573	28	-29.46	K 0.202437 did not exceed 0.240787 by required delta 0.0050	Add volatility filter: only enter long when realized volatility is below a threshold.
+2026-09-04T21:39:51Z	2	REJECTED	0.160919	0.240787	383.05	0.7391	20.861	29	-28.298	K 0.160919 did not exceed 0.240787 by required delta 0.0050	Add a long-term trend filter: only enter long when price is above the 200-bar SMA.

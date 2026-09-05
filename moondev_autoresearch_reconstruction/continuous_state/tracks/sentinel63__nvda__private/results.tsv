@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	sharpe	ann_vol	trades	max_dd	guard	desc
+2026-09-04T23:56:17Z	1	REJECTED	0.044624	0.047704	113.722	0.6453	11.095	39	-30.071	K 0.044624 did not exceed 0.047704 by required delta 0.0050	Add a stop‑loss order based on the existing volatility estimate (sd63) when entering a long position.
+2026-09-04T23:57:05Z	2	REJECTED	0.046392	0.047704	101.068	0.673	9.756	23	-21.735	K 0.046392 did not exceed 0.047704 by required delta 0.0050	Add ADX trend filter: only enter long when ADX > 20
