@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
 
@@ -145,7 +145,7 @@ jobs:
     if: always() && needs.freeze.result == 'success'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       issues: write
       pull-requests: write
     steps:
@@ -285,6 +285,28 @@ jobs:
           ]
           Path("tournament-report.md").write_text("\n".join(out)+"\n")
           print("\n".join(out))
+
+      - name: Prepare persistent tournament state
+        shell: bash
+        run: |
+          mkdir -p moondev_autoresearch_reconstruction/tournament_state
+          cp tournament-summary.json moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json
+          cp tournament-report.md moondev_autoresearch_reconstruction/tournament_state/tournament-report.md
+
+      - name: Persist tournament state branch
+        shell: bash
+        run: |
+          git fetch origin model-tournament-state:refs/remotes/origin/model-tournament-state || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C model-tournament-state
+          git add -f moondev_autoresearch_reconstruction/tournament_state
+          if git diff --cached --quiet; then
+            echo "no tournament state changes"
+          else
+            git commit -m "Model tournament state run $GITHUB_RUN_ID"
+          fi
+          git push --force-with-lease origin model-tournament-state
 
       - name: Upload aggregate report
         uses: actions/upload-artifact@v4
