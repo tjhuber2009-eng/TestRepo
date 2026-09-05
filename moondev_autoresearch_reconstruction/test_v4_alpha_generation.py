@@ -36,6 +36,8 @@ from v4.prop_firm_engine import (
 from v4.prop_intraday_bootstrap import (
     PRAGUE,
     _frontier_structural_mutations,
+    _frontier_universe_mutations,
+    _resolve_prop_symbols,
     aggregate_prague_days,
     aggregate_prague_days_scaled,
     hourly_rotation_strategy,
@@ -840,6 +842,41 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreaterEqual(len(dr), 1)
         self.assertLessEqual(float(da.min()), -0.02)
         self.assertTrue(bool(opened.iloc[0]))
+
+    def test_prop_universe_mutations_remove_bnb_without_losing_core(self):
+        data = {
+            "BTCUSDT": object(),
+            "ETHUSDT": object(),
+            "BNBUSDT": object(),
+            "LTCUSDT": object(),
+        }
+        self.assertEqual(
+            _resolve_prop_symbols(data, "btc_eth"),
+            ("BTCUSDT", "ETHUSDT"),
+        )
+        self.assertEqual(
+            _resolve_prop_symbols(data, "no_bnb"),
+            ("BTCUSDT", "ETHUSDT", "LTCUSDT"),
+        )
+        leader = {
+            "params": {
+                "family": "cross_sectional_long",
+                "lookback": 168,
+                "trend": 168,
+                "top_k": 1,
+                "vol_target": 0.30,
+                "vol_lookback": 72,
+            },
+            "candidate": object(),
+        }
+        mutations = _frontier_universe_mutations(
+            {"p": {"balanced": leader}},
+            ("balanced",),
+        )
+        self.assertEqual(
+            {x["universe"] for x in mutations},
+            {"no_bnb", "btc_eth"},
+        )
 
     def test_prop_frontier_mutations_are_small_and_nonduplicative(self):
         seeds = [
