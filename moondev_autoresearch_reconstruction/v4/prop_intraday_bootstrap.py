@@ -27,7 +27,7 @@ def read_hourly(path: Path) -> pd.DataFrame:
     x = pd.read_csv(path)
     if "Date" not in x:
         raise ValueError(f"{path}: Date required")
-    idx = pd.to_datetime(x.pop("Date"), utc=True)
+    idx = pd.to_datetime(x.pop("Date"), utc=True, format="mixed")
     x.index = pd.DatetimeIndex(idx)
     x.index.name = "Date"
     if x.index.has_duplicates or not x.index.is_monotonic_increasing:
