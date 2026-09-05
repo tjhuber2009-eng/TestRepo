@@ -90,5 +90,28 @@ class EvidenceDataTests(unittest.TestCase):
             self.assertLess(comp["max_abs_diff_bp"], 1e-9)
 
 
+    def test_cross_source_shadow_ignores_dividend_basis(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            a = root / "a.csv"
+            b = root / "b.csv"
+            header = "Date,Open,High,Low,Close,Volume,Dividend"
+            rows_a = [header]
+            rows_b = [header]
+            for i in range(25):
+                day = i + 1
+                px = 100.0 + i
+                div_a = 10.0 if i == 8 else 0.0
+                div_b = 0.01 if i == 8 else 0.0
+                rows_a.append(f"2020-02-{day:02d},{px},{px},{px},{px},0,{div_a}")
+                rows_b.append(f"2020-02-{day:02d},{px},{px},{px},{px},0,{div_b}")
+            a.write_text("\n".join(rows_a) + "\n", encoding="utf-8")
+            b.write_text("\n".join(rows_b) + "\n", encoding="utf-8")
+            comp = compare_return_files(a, b)
+            self.assertTrue(comp["cross_source_pass"])
+            self.assertLess(comp["max_abs_diff_bp"], 1e-9)
+
+
+
 if __name__ == "__main__":
     unittest.main()
