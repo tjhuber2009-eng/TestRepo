@@ -55,6 +55,9 @@ jobs:
       - name: Prepare SHY development data
         run: python prepare_market_data.py --source yahoo --symbol SHY --id shy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
+      - name: Prepare VIX development context
+        run: python prepare_market_data.py --source yahoo --symbol ^VIX --id vix --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+
       - name: Prepare BTC development data
         run: python prepare_market_data.py --source binance --symbol BTCUSDT --id btc --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
 
