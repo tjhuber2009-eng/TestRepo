@@ -1,9 +1,14 @@
 """Prepare daily OHLCV for the cross-market tournament.
 
 Crypto uses Binance Data Vision checksum-verified monthly archives.
-ETFs, FX and continuous futures use Yahoo's public chart endpoint. For symbols
-with adjusted close, OHLC are adjusted by the same factor to avoid split
-artifacts (important for leveraged ETFs such as TQQQ).
+ETFs, FX and continuous futures use Yahoo's public chart endpoint.
+
+The default Yahoo convention is deliberately point-in-time stable:
+- OHLC are adjusted for stock splits occurring no later than the requested end;
+- dividends are emitted as explicit cash flows;
+- Yahoo's mutable all-history adjusted-close series is not used.
+
+A legacy adjusted-close mode remains available only for historical comparison.
 """
 
 import argparse
@@ -95,49 +100,127 @@ def prepare_binance(symbol, start, end, out):
     print(f"Binance {symbol}: {len(rows)} verified daily bars -> {out}")
 
 
-def prepare_yahoo(symbol, start, end, out):
+def _event_ratio(event):
+    numerator = event.get("numerator")
+    denominator = event.get("denominator")
+    if numerator is not None and denominator not in (None, 0):
+        return float(numerator) / float(denominator)
+    ratio = str(event.get("splitRatio", "")).replace(":", "/")
+    if "/" in ratio:
+        left, right = ratio.split("/", 1)
+        return float(left) / float(right)
+    if ratio:
+        return float(ratio)
+    raise ValueError(f"cannot parse Yahoo split event: {event}")
+
+
+def yahoo_rows_from_chart(result, adjustment="split_dividend_v2"):
+    """Convert one Yahoo chart result to reproducible daily rows.
+
+    split_dividend_v2 uses only split/dividend events inside the requested
+    response window. Prices before each split are restated onto the share basis
+    at the requested period end. Dividends remain explicit cash flows instead
+    of being retroactively embedded through Yahoo Adjusted Close.
+    """
+    x = result
+    stamps = x["timestamp"]
+    q = x["indicators"]["quote"][0]
+    events = x.get("events") or {}
+
+    if adjustment == "legacy_adjusted_close":
+        adj_block = x["indicators"].get("adjclose", [{}])[0]
+        adj = adj_block.get("adjclose") or q["close"]
+        rows = []
+        for i, ts in enumerate(stamps):
+            vals = [q[k][i] for k in ["open", "high", "low", "close"]]
+            if any(v is None for v in vals):
+                continue
+            close = float(q["close"][i])
+            adjclose = adj[i]
+            factor = 1.0
+            if adjclose is not None and close:
+                factor = float(adjclose) / close
+            o, h, l, c = [float(v) * factor for v in vals]
+            vol = q.get("volume", [None] * len(stamps))[i]
+            stamp = datetime.fromtimestamp(ts, tz=timezone.utc)
+            rows.append([
+                stamp.isoformat(), o, h, l, c,
+                0.0 if vol is None else float(vol), 0.0,
+            ])
+        return rows
+
+    if adjustment != "split_dividend_v2":
+        raise ValueError(f"unsupported Yahoo adjustment: {adjustment}")
+
+    splits = []
+    for event in (events.get("splits") or {}).values():
+        event_ts = int(event.get("date", 0))
+        ratio = _event_ratio(event)
+        if event_ts > 0 and ratio > 0:
+            splits.append((event_ts, ratio))
+    splits.sort()
+
+    dividends_by_date = {}
+    for event in (events.get("dividends") or {}).values():
+        event_ts = int(event.get("date", 0))
+        amount = float(event.get("amount", 0.0) or 0.0)
+        if event_ts <= 0 or amount == 0.0:
+            continue
+        event_date = datetime.fromtimestamp(event_ts, tz=timezone.utc).date()
+        future_split_factor = 1.0
+        for split_ts, ratio in splits:
+            if split_ts > event_ts:
+                future_split_factor /= ratio
+        dividends_by_date[event_date] = (
+            dividends_by_date.get(event_date, 0.0)
+            + amount * future_split_factor
+        )
+
+    rows = []
+    for i, ts in enumerate(stamps):
+        vals = [q[k][i] for k in ["open", "high", "low", "close"]]
+        if any(v is None for v in vals):
+            continue
+        price_factor = 1.0
+        for split_ts, ratio in splits:
+            if split_ts > int(ts):
+                price_factor /= ratio
+        o, h, l, c = [float(v) * price_factor for v in vals]
+        raw_vol = q.get("volume", [None] * len(stamps))[i]
+        volume = 0.0 if raw_vol is None else float(raw_vol)
+        if price_factor > 0:
+            volume /= price_factor
+        stamp = datetime.fromtimestamp(ts, tz=timezone.utc)
+        dividend = dividends_by_date.get(stamp.date(), 0.0)
+        rows.append([
+            stamp.isoformat(), o, h, l, c, volume, dividend,
+        ])
+    return rows
+
+
+def prepare_yahoo(symbol, start, end, out, *, adjustment="split_dividend_v2"):
     p1 = int(start.timestamp())
     p2 = int((end + timedelta(days=1)).timestamp())
     enc = urllib.parse.quote(symbol, safe="")
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{enc}"
-        f"?period1={p1}&period2={p2}&interval=1d&events=history"
+        f"?period1={p1}&period2={p2}&interval=1d&events=div%2Csplits"
         f"&includeAdjustedClose=true"
     )
     payload = json.loads(request_bytes(url).decode())
     result = payload["chart"]["result"]
     if not result:
         raise RuntimeError(f"Yahoo returned no data for {symbol}")
-    x = result[0]
-    stamps = x["timestamp"]
-    q = x["indicators"]["quote"][0]
-    adj_block = x["indicators"].get("adjclose", [{}])[0]
-    adj = adj_block.get("adjclose") or q["close"]
-
-    rows = []
-    for i, ts in enumerate(stamps):
-        vals = [q[k][i] for k in ["open","high","low","close"]]
-        if any(v is None for v in vals):
-            continue
-        close = float(q["close"][i])
-        adjclose = adj[i]
-        factor = 1.0
-        if adjclose is not None and close:
-            factor = float(adjclose) / close
-        o,h,l,c = [float(v) * factor for v in vals]
-        vol = q.get("volume", [None]*len(stamps))[i]
-        stamp = datetime.fromtimestamp(ts, tz=timezone.utc)
-        rows.append([
-            stamp.isoformat(), o, h, l, c,
-            0.0 if vol is None else float(vol),
-        ])
+    rows = yahoo_rows_from_chart(result[0], adjustment=adjustment)
 
     with out.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["Date","Open","High","Low","Close","Volume"])
+        w.writerow(["Date", "Open", "High", "Low", "Close", "Volume", "Dividend"])
         w.writerows(rows)
-    print(f"Yahoo {symbol}: {len(rows)} adjusted daily bars -> {out}")
-
+    print(
+        f"Yahoo {symbol}: {len(rows)} daily bars "
+        f"adjustment={adjustment} -> {out}"
+    )
 
 def sha256_path(path):
     h = hashlib.sha256()
@@ -147,13 +230,22 @@ def sha256_path(path):
     return h.hexdigest()
 
 
-def write_manifest(out, source, symbol, ident, start, end):
+def write_manifest(
+    out,
+    source,
+    symbol,
+    ident,
+    start,
+    end,
+    *,
+    yahoo_adjustment=None,
+):
     with out.open(encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
     if not rows:
         raise RuntimeError(f"cannot manifest empty file: {out}")
     manifest = {
-        "version": 1,
+        "version": 2 if source == "yahoo" else 1,
         "source": source,
         "symbol": symbol,
         "id": ident,
@@ -170,6 +262,9 @@ def write_manifest(out, source, symbol, ident, start, end):
         ),
         "oos_included": False,
     }
+    if source == "yahoo":
+        manifest["adjustment_method"] = yahoo_adjustment
+        manifest["dividends_explicit"] = yahoo_adjustment == "split_dividend_v2"
     path = out.with_suffix(".manifest.json")
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"manifest -> {path} sha256={manifest['csv_sha256']}")
@@ -183,6 +278,15 @@ def main():
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
     ap.add_argument("--end", default="2022-12-31")
+    ap.add_argument(
+        "--yahoo-adjustment",
+        choices=["split_dividend_v2", "legacy_adjusted_close"],
+        default="split_dividend_v2",
+        help=(
+            "Yahoo price convention. split_dividend_v2 is stable and default; "
+            "legacy_adjusted_close exists only for historical comparisons."
+        ),
+    )
     ap.add_argument(
         "--output-dir",
         default="data",
@@ -201,8 +305,24 @@ def main():
     if args.source == "binance":
         prepare_binance(args.symbol, start, end, out)
     else:
-        prepare_yahoo(args.symbol, start, end, out)
-    write_manifest(out, args.source, args.symbol, args.id, start, end)
+        prepare_yahoo(
+            args.symbol,
+            start,
+            end,
+            out,
+            adjustment=args.yahoo_adjustment,
+        )
+    write_manifest(
+        out,
+        args.source,
+        args.symbol,
+        args.id,
+        start,
+        end,
+        yahoo_adjustment=(
+            args.yahoo_adjustment if args.source == "yahoo" else None
+        ),
+    )
 
 
 if __name__ == "__main__":

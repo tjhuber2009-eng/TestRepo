@@ -72,6 +72,10 @@ def _validate_ohlcv(frame: pd.DataFrame, symbol: str) -> pd.DataFrame:
     x = frame.copy()
     for col in required:
         x[col] = pd.to_numeric(x[col], errors="coerce")
+    if "Dividend" in x:
+        x["Dividend"] = pd.to_numeric(
+            x["Dividend"], errors="coerce"
+        ).fillna(0.0)
     if x[list(required)].isna().any().any():
         raise ValueError(f"{symbol}: OHLC contains nonnumeric/missing values")
     if (x["High"] < x[["Open", "Close", "Low"]].max(axis=1)).any():
@@ -140,7 +144,13 @@ class MultiAssetBacktester:
     def open_to_next_open_returns(self) -> pd.DataFrame:
         out = {}
         for symbol, frame in self.data.items():
-            out[symbol] = frame["Open"].shift(-1) / frame["Open"] - 1.0
+            ret = frame["Open"].shift(-1) / frame["Open"] - 1.0
+            if "Dividend" in frame:
+                # A dividend on t+1 is earned by a position carried from
+                # open[t] through the next open. Dividend values are expressed
+                # on the same split-adjusted share basis as OHLC.
+                ret = ret + frame["Dividend"].shift(-1) / frame["Open"]
+            out[symbol] = ret
         return pd.DataFrame(out, index=self.index)
 
     def run(

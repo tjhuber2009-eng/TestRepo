@@ -1,3 +1,4 @@
+from prepare_market_data import yahoo_rows_from_chart
 import json
 import tempfile
 import unittest
@@ -52,6 +53,75 @@ class V4AlphaGenerationTests(unittest.TestCase):
         frame.index = pd.date_range("2022-06-01", periods=len(frame), freq="D")
         with self.assertRaises(RuntimeError):
             assert_v4_data_boundary({"QQQ": frame}, stage="development")
+
+    def test_yahoo_split_dividend_rows_ignore_adjusted_close(self):
+        stamps = [
+            int(pd.Timestamp("2020-01-01T14:30:00Z").timestamp()),
+            int(pd.Timestamp("2020-01-02T14:30:00Z").timestamp()),
+            int(pd.Timestamp("2020-01-03T14:30:00Z").timestamp()),
+        ]
+        split_ts = int(pd.Timestamp("2020-01-03T00:00:00Z").timestamp())
+        div_ts = int(pd.Timestamp("2020-01-02T00:00:00Z").timestamp())
+        result = {
+            "timestamp": stamps,
+            "indicators": {
+                "quote": [{
+                    "open": [100.0, 102.0, 51.0],
+                    "high": [101.0, 103.0, 52.0],
+                    "low": [99.0, 101.0, 50.0],
+                    "close": [100.0, 102.0, 51.0],
+                    "volume": [1000.0, 1200.0, 2500.0],
+                }],
+                # Deliberately absurd mutable adjusted close. Stable mode
+                # must not depend on it.
+                "adjclose": [{"adjclose": [1.0, 2.0, 3.0]}],
+            },
+            "events": {
+                "splits": {
+                    str(split_ts): {
+                        "date": split_ts,
+                        "numerator": 2.0,
+                        "denominator": 1.0,
+                        "splitRatio": "2:1",
+                    }
+                },
+                "dividends": {
+                    str(div_ts): {
+                        "date": div_ts,
+                        "amount": 1.0,
+                    }
+                },
+            },
+        }
+        rows = yahoo_rows_from_chart(
+            result,
+            adjustment="split_dividend_v2",
+        )
+        self.assertAlmostEqual(rows[0][1], 50.0)
+        self.assertAlmostEqual(rows[1][4], 51.0)
+        self.assertAlmostEqual(rows[2][1], 51.0)
+        self.assertAlmostEqual(rows[0][5], 2000.0)
+        self.assertAlmostEqual(rows[1][6], 0.5)
+
+    def test_multi_asset_open_return_includes_next_day_dividend(self):
+        idx = pd.date_range("2020-01-01", periods=3, freq="D")
+        frame = pd.DataFrame(
+            {
+                "Open": [100.0, 100.0, 100.0],
+                "High": [101.0, 101.0, 101.0],
+                "Low": [99.0, 99.0, 99.0],
+                "Close": [100.0, 100.0, 100.0],
+                "Dividend": [0.0, 1.0, 0.0],
+            },
+            index=idx,
+        )
+        engine = MultiAssetBacktester(
+            {"A": frame},
+            periods_per_year=252,
+        )
+        r = engine.open_to_next_open_returns()
+        self.assertAlmostEqual(float(r.loc[idx[0], "A"]), 0.01)
+        self.assertAlmostEqual(float(r.loc[idx[1], "A"]), 0.0)
 
     def test_multi_asset_signals_execute_next_open(self):
         idx = pd.date_range("2020-01-01", periods=6, freq="D")

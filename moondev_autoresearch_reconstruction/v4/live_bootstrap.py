@@ -53,7 +53,15 @@ def read_market_csv(path: Path) -> pd.DataFrame:
     if x.index.has_duplicates:
         raise ValueError(f"{path}: duplicate daily dates after normalization")
     x = x.sort_index()
-    return x[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in x.columns]]
+    return x[
+        [
+            c
+            for c in [
+                "Open", "High", "Low", "Close", "Volume", "Dividend"
+            ]
+            if c in x.columns
+        ]
+    ]
 
 
 def load_data(root: Path) -> dict[str, pd.DataFrame]:
