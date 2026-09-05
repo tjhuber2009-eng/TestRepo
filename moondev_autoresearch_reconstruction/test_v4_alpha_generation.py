@@ -37,6 +37,7 @@ from v4.prop_firm_engine import (
 from v4.prop_intraday_bootstrap import (
     PRAGUE,
     _frontier_day_brake_mutations,
+    _frontier_rank,
     _frontier_structural_mutations,
     _frontier_universe_mutations,
     _resolve_prop_symbols,
@@ -990,6 +991,34 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(
             {x["universe"] for x in mutations},
             {"no_bnb", "btc_eth"},
+        )
+
+    def test_repeat_payout_frontier_rank_uses_repeat_score(self):
+        funded = FundedSimulation(
+            exposure_scale=0.5, paths=100, reward_window_days=14,
+            survival_probability=0.95, reward_eligible_probability=0.8,
+            positive_reward_probability=0.7, expected_reward_pct=1.0,
+            median_positive_reward_pct=1.2, daily_loss_breach_probability=0.01,
+            max_loss_breach_probability=0.01, best_day_ineligible_probability=0.0,
+        )
+        stage = StageSimulation(
+            stage_id="challenge", exposure_scale=0.5, paths=100,
+            analysis_horizon_days=252, pass_probability=0.5,
+            fail_probability=0.5, timeout_probability=0.0,
+            daily_loss_breach_probability=0.1, max_loss_breach_probability=0.1,
+            median_days_to_pass=50.0, p75_days_to_pass=80.0,
+        )
+        a = PropOptimizationCandidate(
+            0.5, None, 0.5, stage, None, funded, 0.5, 50.0, 0.02,
+            repeat_payout_efficiency_score=0.001,
+        )
+        b = PropOptimizationCandidate(
+            0.5, None, 0.5, stage, None, funded, 0.5, 50.0, 0.01,
+            repeat_payout_efficiency_score=0.003,
+        )
+        self.assertGreater(
+            _frontier_rank("max_repeat_payout_efficiency", b),
+            _frontier_rank("max_repeat_payout_efficiency", a),
         )
 
     def test_prop_frontier_mutations_are_small_and_nonduplicative(self):
