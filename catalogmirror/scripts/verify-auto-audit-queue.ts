@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import db from "../app/db.server.ts";
-import { enqueueAutoAuditTask, syncPendingAuditCount } from "../app/lib/auto-audit-queue.server.ts";
+import {
+  enqueueAutoAuditTask,
+  syncPendingAuditCount,
+  wakeReconciliationTask,
+} from "../app/lib/auto-audit-queue.server.ts";
 
 const shop = "catalogmirror-ci-queue.myshopify.com";
 
@@ -60,9 +64,56 @@ async function main() {
     },
   });
   assert.equal(reconcile?.priority, 5);
-  const state = await db.shopAuditState.findUnique({ where: { shop } });
+  let state = await db.shopAuditState.findUnique({ where: { shop } });
   assert.equal(state?.pendingChanges, 3);
   assert.equal(state?.lastWebhookTopic, "INVENTORY_LEVELS_UPDATE");
+
+  const operationId = "gid://shopify/BulkOperation/999";
+  await db.shopAuditState.update({
+    where: { shop },
+    data: { reconciliationBulkOperationId: operationId },
+  });
+
+  const reconcileBefore = await db.auditTask.findUnique({
+    where: {
+      shop_resourceType_resourceId: {
+        shop,
+        resourceType: "RECONCILE",
+        resourceId: shop,
+      },
+    },
+  });
+  assert.ok(reconcileBefore);
+
+  assert.equal(
+    await wakeReconciliationTask(shop, "gid://shopify/BulkOperation/123"),
+    false,
+    "unrelated bulk operations must not wake CatalogMirror reconciliation",
+  );
+
+  assert.equal(
+    await wakeReconciliationTask(shop, operationId),
+    true,
+    "matching bulk operation should wake reconciliation",
+  );
+  const reconcileAfter = await db.auditTask.findUnique({
+    where: {
+      shop_resourceType_resourceId: {
+        shop,
+        resourceType: "RECONCILE",
+        resourceId: shop,
+      },
+    },
+  });
+  assert.ok(reconcileAfter);
+  assert.ok(reconcileAfter.availableAt <= new Date(Date.now() + 1000));
+
+  state = await db.shopAuditState.findUnique({ where: { shop } });
+  assert.equal(
+    state?.lastWebhookTopic,
+    "INVENTORY_LEVELS_UPDATE",
+    "bulk-finish accelerator must not overwrite last catalog webhook metadata",
+  );
 
   await db.auditTask.deleteMany({ where: { shop } });
   const pending = await syncPendingAuditCount(shop);

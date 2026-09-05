@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  bulkOperationGidFromPayload,
   isReconciliationEnabled,
   productUpdatedAtQuery,
   reconciliationIntervalMs,
@@ -9,6 +10,20 @@ import {
   reconciliationSchedulerPollMs,
   reconciliationWindow,
 } from "./reconciliation-core.ts";
+
+test("bulk finish payload accepts only Shopify BulkOperation GIDs", () => {
+  assert.equal(
+    bulkOperationGidFromPayload({
+      admin_graphql_api_id: "gid://shopify/BulkOperation/720918",
+    }),
+    "gid://shopify/BulkOperation/720918",
+  );
+  assert.equal(
+    bulkOperationGidFromPayload({ admin_graphql_api_id: "gid://shopify/Product/720918" }),
+    null,
+  );
+  assert.equal(bulkOperationGidFromPayload({ admin_graphql_api_id: "bad" }), null);
+});
 
 test("reconciliation defaults on only in production", () => {
   assert.equal(isReconciliationEnabled({ NODE_ENV: "production" } as NodeJS.ProcessEnv), true);
