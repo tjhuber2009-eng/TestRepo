@@ -31,7 +31,7 @@ jobs:
         with:
           ref: moondev-nvidia-autoresearch
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -106,7 +106,7 @@ jobs:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -170,7 +170,7 @@ jobs:
         with:
           ref: moondev-nvidia-autoresearch
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
