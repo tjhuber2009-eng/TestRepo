@@ -50,7 +50,7 @@ from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
 from v4.research_allocator import ResearchAllocator, ResearchCell, ResearchObservation
-from v4.strategy_examples import leveraged_defensive_rotation, pead_event_weights
+from v4.strategy_examples import independent_trend_basket, leveraged_defensive_rotation, pead_event_weights
 from v4.strategy_intake import HypothesisQueue, StrategyHypothesis
 
 
@@ -252,6 +252,31 @@ class V4AlphaGenerationTests(unittest.TestCase):
         a = overlay({"QQQ": data["QQQ"].iloc[:350]})
         b = overlay({"QQQ": data["QQQ"]})
         pd.testing.assert_frame_equal(a, b.loc[a.index])
+
+    def test_long_history_trend_basket_is_prefix_invariant(self):
+        idx = pd.date_range("2018-01-01", periods=320, freq="B")
+        data = {}
+        for j, symbol in enumerate(("SPY", "IEF", "GLD")):
+            close = pd.Series(
+                100.0 + j * 10.0 + np.linspace(0.0, 25.0 + j * 3.0, len(idx)),
+                index=idx,
+            )
+            data[symbol] = pd.DataFrame({
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+            }, index=idx)
+        strategy = independent_trend_basket(
+            symbols=("SPY", "IEF", "GLD"),
+            momentum_window=126,
+            trend_window=150,
+        )
+        full = strategy(data)
+        cut = 260
+        prefix_data = {k: v.iloc[:cut].copy() for k, v in data.items()}
+        prefix = strategy(prefix_data)
+        pd.testing.assert_frame_equal(full.iloc[:cut], prefix)
 
     def test_rsi2_pullback_is_prefix_invariant(self):
         data = synthetic_daily_market(bars=650)
