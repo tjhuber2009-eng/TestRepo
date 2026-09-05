@@ -36,6 +36,7 @@ CURSOR = STATE / "cursor.json"
 LEDGER = STATE / "cycles.jsonl"
 PROGRESS = STATE / "progress.json"
 SELECTIONS = STATE / "search_selections.json"
+LEADERBOARD = STATE / "leaderboard_latest.json"
 TOURNAMENT_STATE = HERE / "tournament_state" / "tournament-summary.json"
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
 
@@ -75,11 +76,27 @@ def load_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def json_safe(value):
+    """Convert non-finite numeric sentinels to JSON null recursively."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [json_safe(v) for v in value]
+    if isinstance(value, tuple):
+        return [json_safe(v) for v in value]
+    return value
+
+
 def save_json(path, obj):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = Path(str(path) + ".tmp")
-    tmp.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.write_text(
+        json.dumps(json_safe(obj), indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     os.replace(tmp, path)
 
 
@@ -573,13 +590,17 @@ def discard_stale_track_state(track_dir):
 def reset_stale_protocol_state():
     """Discard active-state files from older scoring protocols.
 
-    The prior branch is archived before v3 starts, so this reset cannot destroy
-    the v2 audit trail. A protocol change must never mix old and new scores.
+    The exact v2 state is preserved on the dedicated archive branch before v3
+    starts. The active persistent branch must become protocol-pure: tracks,
+    cursor, selections, progress, leaderboard, cycle ledger, completion marker,
+    and cached dashboard are all reset together when stale v2 state is found.
     """
-    if not TRACKS.exists():
-        return 0
+    STATE.mkdir(parents=True, exist_ok=True)
+    TRACKS.mkdir(parents=True, exist_ok=True)
     removed = 0
-    for track_dir in TRACKS.iterdir():
+    stale_detected = False
+
+    for track_dir in list(TRACKS.iterdir()):
         if not track_dir.is_dir():
             continue
         meta = track_dir / "state_meta.json"
@@ -590,16 +611,37 @@ def reset_stale_protocol_state():
         if payload.get("protocol") != PROTOCOL:
             shutil.rmtree(track_dir)
             removed += 1
-    for path in [CURSOR, SELECTIONS, PROGRESS]:
-        if path.exists():
-            try:
-                payload = load_json(path)
-            except Exception:
-                payload = {}
-            if payload.get("protocol") != PROTOCOL:
-                path.unlink()
-    if removed:
-        print(f"[protocol migration] removed {removed} stale track states")
+            stale_detected = True
+
+    for path in [CURSOR, SELECTIONS, PROGRESS, LEADERBOARD]:
+        if not path.exists():
+            continue
+        try:
+            payload = load_json(path)
+        except Exception:
+            payload = {}
+        if payload.get("protocol") != PROTOCOL:
+            path.unlink()
+            stale_detected = True
+
+    # v2 cycle rows predate reliable per-row protocol tags, so once any stale
+    # active-state artifact is detected the whole active ledger must reset.
+    if stale_detected and LEDGER.exists():
+        LEDGER.unlink()
+
+    if stale_detected:
+        marker = STATE / "ALL_RUNNABLE_TRACKS_TERMINAL"
+        if marker.exists():
+            marker.unlink()
+        stale_dashboard = STATE / "dashboard"
+        if stale_dashboard.exists():
+            shutil.rmtree(stale_dashboard)
+
+    if stale_detected:
+        print(
+            f"[protocol migration] reset stale active state; "
+            f"removed {removed} stale track states"
+        )
     return removed
 
 
@@ -1189,7 +1231,7 @@ def rebuild_leaderboard(tracks):
         ),
         reverse=True,
     )
-    save_json(STATE / "leaderboard_latest.json", {
+    save_json(LEADERBOARD, {
         "updated_at": now(),
         "protocol": PROTOCOL,
         "count": len(rows),
