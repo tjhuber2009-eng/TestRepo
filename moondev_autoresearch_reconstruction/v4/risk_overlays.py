@@ -108,3 +108,52 @@ def compose_overlays(base_strategy: StrategyFn, *overlays: Callable[[StrategyFn]
     for overlay in overlays:
         out = overlay(out)
     return out
+
+
+def vix_stress_overlay(
+    base_strategy: StrategyFn,
+    vix_close: pd.Series,
+    *,
+    stress_quantile: float = 0.85,
+    severe_quantile: float = 0.97,
+    stress_scale: float = 0.50,
+    severe_scale: float = 0.0,
+    min_history: int = 252,
+) -> StrategyFn:
+    """Causal exposure scaling from the market's volatility regime.
+
+    VIX close[t] is compared with percentile thresholds estimated from VIX
+    history ending at t-1. The resulting target weight is formed after close[t]
+    and still executes only at open[t+1] in the portfolio engine.
+    """
+    if not (0.5 <= stress_quantile < severe_quantile < 1.0):
+        raise ValueError("require 0.5 <= stress_quantile < severe_quantile < 1")
+    if not (0.0 <= severe_scale <= stress_scale <= 1.0):
+        raise ValueError("require 0 <= severe_scale <= stress_scale <= 1")
+    vix = pd.to_numeric(vix_close, errors="coerce").sort_index()
+    stress_threshold = (
+        vix.expanding(min_periods=int(min_history))
+        .quantile(float(stress_quantile))
+        .shift(1)
+    )
+    severe_threshold = (
+        vix.expanding(min_periods=int(min_history))
+        .quantile(float(severe_quantile))
+        .shift(1)
+    )
+
+    def strategy(
+        data: Mapping[str, pd.DataFrame],
+        features: Mapping[str, pd.DataFrame] | None = None,
+    ) -> pd.DataFrame:
+        base = base_strategy(data, features).copy()
+        idx = base.index
+        vv = vix.reindex(idx).ffill()
+        st = stress_threshold.reindex(idx).ffill()
+        sv = severe_threshold.reindex(idx).ffill()
+        scale = pd.Series(1.0, index=idx)
+        scale.loc[(vv >= st) & st.notna()] = float(stress_scale)
+        scale.loc[(vv >= sv) & sv.notna()] = float(severe_scale)
+        return base.mul(scale, axis=0)
+
+    return strategy
