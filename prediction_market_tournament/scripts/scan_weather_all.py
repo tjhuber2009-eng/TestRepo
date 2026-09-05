@@ -103,7 +103,7 @@ def main() -> int:
     ledger_path = root / "data" / "signals.jsonl"
     scan_log = root / "data" / "weather_scan_log.jsonl"
     lane_cfg = spec["lanes"]["weather_ensemble_taker"]
-    paper_stake_usd = (
+    paper_cash_budget_usd = (
         float(spec["risk"]["paper_account_usd"])
         * float(spec["risk"]["risk_fraction_per_trade"])
     )
@@ -140,7 +140,7 @@ def main() -> int:
                     target_date=target,
                     observed_at=now,
                     min_edge=float(lane_cfg["min_edge"]),
-                    cash_budget_usd=paper_stake_usd,
+                    cash_budget_usd=paper_cash_budget_usd,
                 )
             except Exception as exc:
                 errors.append(
@@ -169,7 +169,7 @@ def main() -> int:
             "temperature_events": len(temp_events),
             "markets_examined": markets_examined,
             "signals_recorded": recorded,
-            "paper_stake_usd": paper_stake_usd,
+            "paper_cash_budget_usd": paper_cash_budget_usd,
             "errors": errors[:50],
             "error_count": len(errors),
         },
