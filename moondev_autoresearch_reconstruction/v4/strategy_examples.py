@@ -105,3 +105,64 @@ def regime_conditioned_mean_reversion(
             out.iloc[i, out.columns.get_loc(symbol)] = 1.0 if active else 0.0
         return out
     return strategy
+
+
+def leveraged_defensive_rotation(
+    *,
+    signal_symbol: str,
+    risk_symbol: str,
+    defensive_symbols: Sequence[str],
+    risk_sma_window: int = 175,
+    risk_momentum_window: int = 126,
+    defensive_momentum_window: int = 126,
+    defensive_trend_window: int = 200,
+    risk_weight: float = 1.0,
+    defensive_weight: float = 1.0,
+):
+    """Risk-on leveraged asset; otherwise rotate to strongest healthy defense.
+
+    If no defensive asset has positive momentum and is above its own trend
+    filter, the portfolio remains in cash. All decisions use close[t] and are
+    executed by the multi-asset engine at open[t+1].
+    """
+    defensive_symbols = tuple(defensive_symbols)
+
+    def strategy(data: Mapping[str, pd.DataFrame], features=None) -> pd.DataFrame:
+        required = {signal_symbol, risk_symbol, *defensive_symbols}
+        missing = required.difference(data)
+        if missing:
+            raise KeyError(f"missing defensive-rotation assets: {sorted(missing)}")
+        index = data[signal_symbol].index
+        out = pd.DataFrame(0.0, index=index, columns=sorted(data))
+
+        signal_close = data[signal_symbol]["Close"]
+        signal_sma = signal_close.rolling(
+            risk_sma_window, min_periods=risk_sma_window
+        ).mean()
+        signal_mom = (
+            signal_close / signal_close.shift(risk_momentum_window) - 1.0
+        )
+        risk_on = (signal_close > signal_sma) & (signal_mom > 0.0)
+
+        def_scores = pd.DataFrame(index=index)
+        def_ok = pd.DataFrame(False, index=index, columns=list(defensive_symbols))
+        for symbol in defensive_symbols:
+            close = data[symbol]["Close"]
+            mom = close / close.shift(defensive_momentum_window) - 1.0
+            trend = close.rolling(
+                defensive_trend_window, min_periods=defensive_trend_window
+            ).mean()
+            def_scores[symbol] = mom
+            def_ok[symbol] = (close > trend) & (mom > 0.0)
+
+        for i, ts in enumerate(index):
+            if bool(risk_on.iloc[i]):
+                out.loc[ts, risk_symbol] = float(risk_weight)
+                continue
+            healthy = def_scores.loc[ts].where(def_ok.loc[ts]).dropna()
+            if not healthy.empty:
+                winner = str(healthy.idxmax())
+                out.loc[ts, winner] = float(defensive_weight)
+        return out
+
+    return strategy
