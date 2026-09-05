@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from datetime import datetime, timezone
 from typing import Literal, Optional
 
 OrderMode = Literal["taker", "maker", "shadow"]
-Side = Literal["YES", "NO"]
+Side = Literal["YES", "NO", "UP", "DOWN"]
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,9 @@ class Signal:
     order_mode: OrderMode
     size_usd: float = 1.0
     fee_rate: float = 0.0
+    fee_exponent: float = 1.0
     notes: str = ""
+    metadata: dict[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.observed_at.tzinfo is None:
@@ -33,8 +35,8 @@ class Signal:
                 raise ValueError(f"{name} must be in [0,1]")
         if self.size_usd <= 0:
             raise ValueError("size_usd must be > 0")
-        if self.fee_rate < 0:
-            raise ValueError("fee_rate must be >= 0")
+        if self.fee_rate < 0 or self.fee_exponent < 0:
+            raise ValueError("fee rate/exponent must be >= 0")
 
     def as_json(self) -> dict:
         d = asdict(self)
