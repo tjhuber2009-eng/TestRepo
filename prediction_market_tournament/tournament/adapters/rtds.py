@@ -26,17 +26,55 @@ class RtdsTick:
     window_seconds: int | None = None
 
 
-def subscribe_frame() -> str:
-    # Polymarket's official py-sdk subscribes to the wire topics and filters
-    # symbols client-side. We do the same rather than relying on undocumented
-    # server-side filter behavior.
-    return json.dumps({
-        "action": "subscribe",
-        "subscriptions": [
-            {"topic": TOPIC_RAW, "type": "update"},
-            {"topic": TOPIC_TWAP60, "type": "update"},
-        ],
-    }, separators=(",", ":"))
+def subscribe_frame(symbol: str = "btc/usd") -> str:
+    """Build the production RTDS subscription using compact-string filters.
+
+    RTDS requires filters for these topics to be a JSON STRING containing the
+    compact lowercase symbol object, not a nested JSON object. This distinction
+    is load-bearing for crypto_prices_twap_sixty.
+    """
+    wanted = symbol.strip().lower()
+    if not wanted:
+        raise ValueError("symbol cannot be empty")
+    filters = json.dumps(
+        {"symbol": wanted},
+        separators=(",", ":"),
+    )
+    return json.dumps(
+        {
+            "action": "subscribe",
+            "subscriptions": [
+                {
+                    "topic": TOPIC_RAW,
+                    "type": "update",
+                    "filters": filters,
+                },
+                {
+                    "topic": TOPIC_TWAP60,
+                    "type": "update",
+                    "filters": filters,
+                },
+            ],
+        },
+        separators=(",", ":"),
+    )
+
+
+def server_error_message(raw) -> str | None:
+    if isinstance(raw, (bytes, bytearray)):
+        raw = raw.decode("utf-8", errors="replace")
+    if not isinstance(raw, str) or not raw.strip().startswith("{"):
+        return None
+    try:
+        message = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(message, dict):
+        return None
+    error = message.get("message") or message.get("error")
+    if error and message.get("type") != "update":
+        return str(error)
+    return None
 
 
 def _twap_value(payload: dict) -> Decimal:
@@ -106,7 +144,7 @@ async def stream_ticks(
                 open_timeout=15,
                 close_timeout=5,
             ) as ws:
-                await ws.send(subscribe_frame())
+                await ws.send(subscribe_frame(wanted))
                 next_ping = time.monotonic() + ping_interval_s
                 last_data = time.monotonic()
                 attempt = 0
@@ -122,6 +160,11 @@ async def stream_ticks(
                         raw = await asyncio.wait_for(ws.recv(), timeout=timeout)
                     except asyncio.TimeoutError:
                         continue
+                    server_error = server_error_message(raw)
+                    if server_error is not None:
+                        raise ConnectionError(
+                            f"RTDS server error: {server_error}"
+                        )
                     tick = parse_frame(raw)
                     if tick is None or tick.symbol != wanted:
                         continue
