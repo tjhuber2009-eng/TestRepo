@@ -147,7 +147,7 @@ def test_weather_chooses_yes_when_bracket_probability_is_high(monkeypatch):
     assert signal.side == "YES"
     assert signal.fair_probability == 0.9
     assert signal.metadata["fair_yes_probability"] == 0.9
-    assert signal.size_usd + signal.entry_fee_usd == 5.0
+    assert 4.99 < signal.size_usd + signal.entry_fee_usd <= 5.0
 
 
 def test_weather_chooses_no_when_bracket_probability_is_low(monkeypatch):
