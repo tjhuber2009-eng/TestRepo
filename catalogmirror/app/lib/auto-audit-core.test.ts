@@ -18,15 +18,20 @@ test("product webhook IDs normalize to Shopify GIDs", () => {
   assert.equal(productGidFromPayload({ id: "bad" }), null);
 });
 
-test("inventory level webhook IDs normalize to inventory item GIDs", () => {
-  assert.equal(
-    inventoryItemGidFromPayload({ inventory_item_id: 271878346596884015 }),
-    "gid://shopify/InventoryItem/271878346596884000",
-  );
+test("inventory level webhook GID strings avoid unsafe integer rounding", () => {
   assert.equal(
     inventoryItemGidFromPayload({
+      inventory_item_id: 271878346596884015,
       admin_graphql_api_id: "gid://shopify/InventoryLevel/24826418?inventory_item_id=271878346596884015",
     }),
+    "gid://shopify/InventoryItem/271878346596884015",
+  );
+  assert.equal(
+    inventoryItemGidFromPayload({ inventory_item_id: 271878346596884015 }),
+    null,
+  );
+  assert.equal(
+    inventoryItemGidFromPayload({ inventory_item_id: "271878346596884015" }),
     "gid://shopify/InventoryItem/271878346596884015",
   );
 });
