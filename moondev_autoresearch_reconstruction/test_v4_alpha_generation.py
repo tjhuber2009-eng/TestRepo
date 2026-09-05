@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from v4.account_profiles import FTMO_1STEP, FTMO_2STEP
 from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, pareto_frontier
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
@@ -16,6 +17,7 @@ from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
+from v4.prop_firm_engine import daily_adverse_proxy, optimize_prop_exposure, simulate_stage
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
@@ -368,6 +370,56 @@ class V4AlphaGenerationTests(unittest.TestCase):
         ok,_=hard_gate(m,p)
         self.assertTrue(ok)
         self.assertEqual(pareto_frontier({"a":m}),["a"])
+
+    def test_ftmo_profiles_are_separate_from_private_objective(self):
+        self.assertEqual(FTMO_2STEP.challenge.profit_target_pct, 10.0)
+        self.assertEqual(FTMO_2STEP.verification.profit_target_pct, 5.0)
+        self.assertEqual(FTMO_2STEP.challenge.max_daily_loss_pct, 5.0)
+        self.assertEqual(FTMO_2STEP.challenge.max_loss_pct, 10.0)
+        self.assertEqual(FTMO_1STEP.challenge.max_daily_loss_pct, 3.0)
+        self.assertTrue(FTMO_1STEP.challenge.trailing_max_loss)
+
+    def test_prop_stage_rewards_lower_risk_when_daily_limit_is_tight(self):
+        rng = np.random.default_rng(77)
+        r = rng.normal(0.0012, 0.015, 1000)
+        adverse = np.minimum(rng.normal(-0.006, 0.012, 1000), 0.0)
+        active = np.ones(len(r), dtype=bool)
+        result = optimize_prop_exposure(
+            r,
+            adverse,
+            active,
+            FTMO_1STEP,
+            exposure_scales=(0.25, 0.50, 0.75, 1.00),
+            paths=250,
+            block=10,
+            seed=12,
+        )
+        self.assertIsNotNone(result.selected)
+        self.assertGreaterEqual(result.selected.exposure_scale, 0.25)
+        self.assertLessEqual(result.selected.exposure_scale, 1.0)
+        self.assertGreaterEqual(
+            result.selected.combined_evaluation_pass_probability, 0.0
+        )
+        self.assertLessEqual(
+            result.selected.combined_evaluation_pass_probability, 1.0
+        )
+
+    def test_prop_daily_adverse_proxy_uses_low_for_long_positions(self):
+        idx = pd.date_range("2020-01-01", periods=4, freq="D")
+        frame = pd.DataFrame(
+            {
+                "Open": [100, 100, 100, 100],
+                "High": [102, 102, 102, 102],
+                "Low": [95, 96, 97, 98],
+                "Close": [101, 101, 101, 101],
+            },
+            index=idx,
+        )
+        weights = pd.DataFrame({"A": [1.0, 1.0, 0.5, 0.0]}, index=idx)
+        adverse = daily_adverse_proxy({"A": frame}, weights)
+        self.assertAlmostEqual(adverse.iloc[0], -0.05)
+        self.assertAlmostEqual(adverse.iloc[2], -0.015)
+        self.assertAlmostEqual(adverse.iloc[3], 0.0)
 
     def test_full_v4_integration_demo(self):
         out=run_integration_demo()
