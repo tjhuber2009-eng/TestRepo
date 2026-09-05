@@ -81,7 +81,7 @@ jobs:
             git push origin HEAD:autoresearch-v4-state
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: autoresearch-v4-prop-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/v4_state/prop-bootstrap.json

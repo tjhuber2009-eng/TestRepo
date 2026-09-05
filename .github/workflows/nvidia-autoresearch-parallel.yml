@@ -260,7 +260,7 @@ jobs:
 
       - name: Upload profile artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: parallel-${{ matrix.profile }}-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/parallel_export/

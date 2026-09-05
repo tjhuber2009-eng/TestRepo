@@ -37,7 +37,7 @@ jobs:
           assert x["protocol"]=="alpha_generation_v4"
           assert x["policy"]=="discovery only; not trading evidence"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: autoresearch-v4-harvest-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/v4_state/external-source-candidates.json

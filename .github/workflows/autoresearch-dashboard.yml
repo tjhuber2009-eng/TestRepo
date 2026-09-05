@@ -101,7 +101,7 @@ jobs:
             --body-file live-dashboard.md
 
       - name: Upload private dashboard artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: autoresearch-dashboard-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/dashboard_output
