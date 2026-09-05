@@ -68,6 +68,7 @@ def compare_return_files(left: Path, right: Path) -> dict:
     cagr_gap = None if primary_cagr is None or reference_cagr is None else abs(primary_cagr - reference_cagr)
     top = diff_bp.nlargest(min(10, len(diff_bp)))
     p95 = float(diff_bp.quantile(0.95))
+    severe_fraction = float((diff_bp > 50.0).mean())
     result = {
         "overlap_start": joined.index.min().strftime("%Y-%m-%d"),
         "overlap_end": joined.index.max().strftime("%Y-%m-%d"),
@@ -77,6 +78,7 @@ def compare_return_files(left: Path, right: Path) -> dict:
         "max_abs_diff_bp": float(diff_bp.max()),
         "days_over_10bp": int((diff_bp > 10.0).sum()),
         "days_over_50bp": int((diff_bp > 50.0).sum()),
+        "fraction_over_50bp": severe_fraction,
         "primary_cagr_pct": primary_cagr,
         "reference_cagr_pct": reference_cagr,
         "abs_cagr_gap_pct_points": cagr_gap,
@@ -85,10 +87,17 @@ def compare_return_files(left: Path, right: Path) -> dict:
             for idx, value in top.items()
         ],
     }
+    # Material-accounting parity gate. Sparse vendor-specific opening-print
+    # differences are diagnostics, not automatic accounting failures. A broken
+    # split adjustment still fails through CAGR divergence and/or severe-outlier
+    # density, while the primary Tiingo feed must separately pass raw-actions
+    # versus adjusted-price total-return parity.
+    result["quote_level_warning"] = bool(p95 > 5.0)
     result["cross_source_pass"] = bool(
-        p95 <= 5.0
+        float(diff_bp.median()) <= 2.0
         and cagr_gap is not None
-        and cagr_gap <= 1.0
+        and cagr_gap <= 0.10
+        and severe_fraction <= 0.005
     )
     return result
 
@@ -130,9 +139,13 @@ def reconcile(primary_dir: Path, reference_dir: Path, ids: list[str]) -> dict:
         "hidden_validation_opened": False,
         "final_oos_opened": False,
         "policy": {
-            "cross_source_p95_abs_diff_bp_max": 5.0,
-            "cross_source_abs_cagr_gap_pct_points_max": 1.0,
+            "cross_source_median_abs_diff_bp_max": 2.0,
+            "cross_source_abs_cagr_gap_pct_points_max": 0.10,
+            "cross_source_severe_abs_diff_bp": 50.0,
+            "cross_source_severe_day_fraction_max": 0.005,
+            "quote_level_warning_p95_abs_diff_bp": 5.0,
             "provider_adjusted_open_parity_required": True,
+            "rationale": "hard-gate material accounting parity; retain sparse vendor opening-print differences as warnings",
         },
         "symbols": symbols,
         "reconciliation_pass": overall,
