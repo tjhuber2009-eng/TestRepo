@@ -5,6 +5,7 @@ export type AdminVariantCore = {
   title: string;
   sku: string | null;
   price: string;
+  availableForSale: boolean;
   inventoryQuantity: number | null;
   inventoryPolicy: "DENY" | "CONTINUE";
   inventoryItem: { tracked: boolean } | null;
@@ -29,9 +30,7 @@ export function fingerprintIdentity(finding: FingerprintableFinding) {
 }
 
 export function expectedAvailable(variant: AdminVariantCore) {
-  if (!variant.inventoryItem?.tracked) return true;
-  if (variant.inventoryPolicy === "CONTINUE") return true;
-  return (variant.inventoryQuantity ?? 0) > 0;
+  return variant.availableForSale;
 }
 
 export function shopifyNumericId(gid: string | null | undefined) {
