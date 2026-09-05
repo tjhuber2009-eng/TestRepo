@@ -18,7 +18,8 @@
     "typecheck": "react-router typegen && tsc --noEmit",
     "audit": "npm audit --audit-level=low",
     "prisma": "prisma",
-    "shopify": "shopify"
+    "shopify": "shopify",
+    "test:queue": "node scripts/verify-auto-audit-queue.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",

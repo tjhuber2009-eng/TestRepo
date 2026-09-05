@@ -18,7 +18,7 @@ function durationLabel(durationMs: number | null) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
-  const [lastRun, openCritical, openWarnings, recent, state, recentRuns] = await Promise.all([
+  const [lastRun, openCritical, openWarnings, recent, state, recentRuns, queuedTasks] = await Promise.all([
     db.auditRun.findFirst({ where: { shop: session.shop }, orderBy: { startedAt: "desc" } }),
     db.incident.count({ where: { shop: session.shop, status: "OPEN", severity: "CRITICAL" } }),
     db.incident.count({ where: { shop: session.shop, status: "OPEN", severity: "WARNING" } }),
@@ -33,6 +33,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       orderBy: { startedAt: "desc" },
       take: 5,
     }),
+    db.auditTask.count({ where: { shop: session.shop } }),
   ]);
 
   return {
@@ -40,10 +41,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
     openCritical,
     openWarnings,
     recent,
-    pendingChanges: state?.pendingChanges ?? 0,
+    pendingChanges: queuedTasks,
     lastWebhookAt: state?.lastWebhookAt ?? null,
     maxProducts: getAuditMaxProducts(),
     recentRuns,
+    lastAutoAuditAt: state?.lastAutoAuditAt ?? null,
+    lastAutoAuditError: state?.lastAutoAuditError ?? null,
+    autoAuditEnabled:
+      process.env.AUTO_AUDIT_ENABLED === "true" ||
+      (process.env.AUTO_AUDIT_ENABLED !== "false" && process.env.NODE_ENV === "production"),
   };
 }
 
@@ -86,7 +92,14 @@ export default function Dashboard() {
     <s-page heading="CatalogMirror">
       {data.pendingChanges > 0 ? (
         <s-banner tone="warning">
-          Shopify has reported {String(data.pendingChanges)} catalog or inventory change{data.pendingChanges === 1 ? "" : "s"} since the last complete audit. Run an audit to verify storefront parity.
+          {data.autoAuditEnabled
+            ? `${data.pendingChanges} catalog verification task${data.pendingChanges === 1 ? "" : "s"} queued for automatic checking.`
+            : `${data.pendingChanges} catalog change${data.pendingChanges === 1 ? "" : "s"} waiting for verification. Automatic audits are disabled.`}
+        </s-banner>
+      ) : null}
+      {data.lastAutoAuditError ? (
+        <s-banner tone="critical">
+          Automatic verification encountered an error and will retry: {data.lastAutoAuditError}
         </s-banner>
       ) : null}
 
@@ -122,8 +135,16 @@ export default function Dashboard() {
             <s-text>{String(data.pendingChanges)}</s-text>
           </s-box>
           <s-box padding="base" border="base" borderRadius="base">
+            <s-heading>Auto monitor</s-heading>
+            <s-text>{data.autoAuditEnabled ? "On" : "Off"}</s-text>
+          </s-box>
+          <s-box padding="base" border="base" borderRadius="base">
             <s-heading>Last audit</s-heading>
             <s-text>{data.lastRun?.finishedAt ? new Date(data.lastRun.finishedAt).toLocaleString() : "Not run yet"}</s-text>
+          </s-box>
+          <s-box padding="base" border="base" borderRadius="base">
+            <s-heading>Last automatic check</s-heading>
+            <s-text>{data.lastAutoAuditAt ? new Date(data.lastAutoAuditAt).toLocaleString() : "Not run yet"}</s-text>
           </s-box>
         </s-stack>
         {data.lastRun ? (
