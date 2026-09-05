@@ -20,7 +20,7 @@ jobs:
         with:
           ref: autoresearch-v4-alpha-generation
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
