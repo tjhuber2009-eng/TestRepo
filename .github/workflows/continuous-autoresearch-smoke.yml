@@ -108,8 +108,40 @@ jobs:
           },indent=2))
           PY
 
+      - name: Verify prefix-invariance lookahead audit
+        shell: bash
+        env:
+          AUTORESEARCH_SYMBOL: BTCUSDT
+          AUTORESEARCH_MARKET: crypto
+          AUTORESEARCH_DATA_FILE: data/btc_1d.csv
+          AUTORESEARCH_COMMISSION: "0.001"
+          AUTORESEARCH_MARGIN: "0.25"
+          AUTORESEARCH_BARS_PER_YEAR: "365"
+          AUTORESEARCH_PROFILE: prop
+          AUTORESEARCH_MAX_DD_PCT: "10"
+          AUTORESEARCH_MIN_TRADES: "8"
+          AUTORESEARCH_MIN_ACTIVE_FOLDS: "3"
+          AUTORESEARCH_MIN_FOLD_BARS: "100"
+          AUTORESEARCH_VOL_BAND: "0.25"
+          AUTORESEARCH_COST_STRESS_MULT: "2.0"
+          AUTORESEARCH_EXTREME_COST_STRESS_MULT: "3.0"
+          AUTORESEARCH_BOOTSTRAP_REPS: "200"
+          AUTORESEARCH_IS_START: "2017-08-17"
+          AUTORESEARCH_VALIDATION_START: "2021-01-01"
+          AUTORESEARCH_VALIDATION_END: "2022-12-31"
+        run: |
+          python robust_harness.py --lookahead-audit
+          python - <<'PY'
+          import json
+          x=json.load(open("lookahead_audit.json"))
+          assert x["passed"] is True, x
+          assert x["oos_opened"] is False
+          assert len(x["checks"]) == 3
+          print(json.dumps(x,indent=2))
+          PY
+
       - name: Comment smoke result
         if: success()
         shell: bash
         run: |
-          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. All runnable seeds compile; nested development-only harness, cost stress, integrity tests, and >=3 continuous-path folds passed smoke. Hidden validation and 2023+ OOS were not opened."
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. All runnable seeds compile; protocol-v3 development harness, 2x/3x cost stress, prefix-invariance lookahead audit, integrity tests, and >=3 continuous-path folds passed. Hidden validation and 2023+ OOS were not opened."
