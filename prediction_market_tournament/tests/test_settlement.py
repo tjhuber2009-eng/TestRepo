@@ -97,6 +97,7 @@ def test_exact_recorded_fee_and_shares_survive_settlement():
     assert trade.fee_usd == 0.14
     assert trade.payout_usd == 12.5
     assert trade.pnl_usd == pytest.approx(8.36)
+    assert trade.return_on_stake == pytest.approx(8.36 / 4.14)
 
 
 def test_signal_from_json_rejects_missing_observation_time():
