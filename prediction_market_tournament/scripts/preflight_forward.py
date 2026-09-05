@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tournament.adapters.aviation import station_coordinates
+from tournament.adapters.aviation import station_location
 from tournament.adapters.open_meteo import (
     fetch_temperature_ensemble,
     member_daily_extremes,
@@ -156,7 +156,7 @@ def _weather_probe(
 ) -> dict:
     # KLAX is a representative live-resolution station and exercises the same
     # AviationWeather -> Open-Meteo path as the active weather scanner.
-    lat, lon = station_coordinates("KLAX")
+    lat, lon, elevation = station_location("KLAX")
     target = datetime.now(timezone.utc).date()
     counts: dict[str, int] = {}
 
@@ -168,6 +168,7 @@ def _weather_probe(
             model=model,
             unit="fahrenheit",
             timezone="auto",
+            elevation=elevation,
         )
         values = member_daily_extremes(payload, kind="max")
         count = len(values)
@@ -182,6 +183,7 @@ def _weather_probe(
         "station": "KLAX",
         "latitude": lat,
         "longitude": lon,
+        "elevation_m": elevation,
         "target_date": target.isoformat(),
         "model_member_counts": counts,
     }
