@@ -577,6 +577,268 @@ def _candidate_views(
     }
 
 
+def _simulate_stage_scale_table(
+    returns: Sequence[float],
+    adverse_returns: Sequence[float],
+    opened_trade_days: Sequence[bool],
+    rule: PropStageRule,
+    *,
+    exposure_scales: Sequence[float],
+    paths: int,
+    block: int,
+    seed: int,
+) -> list[StageSimulation]:
+    """Evaluate all exposure scales on identical bootstrap paths.
+
+    Common random numbers remove scale-ranking noise and the batched state
+    update avoids repeating the day loop once per scale.
+    """
+    r = np.asarray(returns, dtype=float)
+    a = np.asarray(adverse_returns, dtype=float)
+    opened = np.asarray(opened_trade_days, dtype=bool)
+    good = np.isfinite(r) & np.isfinite(a)
+    r, a, opened = r[good], a[good], opened[good]
+    if len(r) < 50:
+        raise ValueError("prop simulation requires >=50 aligned daily observations")
+
+    scales = np.asarray([float(x) for x in exposure_scales], dtype=float)
+    if scales.size < 1:
+        raise ValueError("at least one exposure scale required")
+    horizon = int(rule.analysis_horizon_days)
+    n = int(paths)
+    rng = np.random.default_rng(seed)
+    idx = _moving_block_sample_matrix(len(r), horizon, int(block), n, rng)
+    sampled_r = r[idx]
+    sampled_a = a[idx]
+    sampled_opened = opened[idx]
+    scale_col = scales[:, None]
+    m = int(scales.size)
+
+    balance = np.ones((m, n), dtype=float)
+    highest_midnight = np.ones((m, n), dtype=float)
+    trade_days = np.zeros((m, n), dtype=int)
+    positive_sum = np.zeros((m, n), dtype=float)
+    best_positive_day = np.zeros((m, n), dtype=float)
+    status = np.zeros((m, n), dtype=np.int8)
+    event_day = np.full((m, n), horizon, dtype=int)
+
+    target = (
+        None
+        if rule.profit_target_pct is None
+        else 1.0 + rule.profit_target_pct / 100.0
+    )
+
+    for day in range(horizon):
+        active = status == 0
+        if not np.any(active):
+            break
+        trade_days += active * sampled_opened[:, day][None, :]
+
+        start = balance.copy()
+        adverse = sampled_a[:, day][None, :] * scale_col
+        worst = start * (1.0 + adverse)
+        daily_floor = start - rule.max_daily_loss_pct / 100.0
+        daily_fail = active & (worst <= daily_floor)
+        status[daily_fail] = 2
+        event_day[daily_fail] = day + 1
+
+        active = status == 0
+        if rule.trailing_max_loss:
+            overall_floor = (
+                np.maximum(1.0, highest_midnight)
+                - rule.max_loss_pct / 100.0
+            )
+        else:
+            overall_floor = np.full(
+                (m, n), 1.0 - rule.max_loss_pct / 100.0, dtype=float
+            )
+        max_fail = active & (worst <= overall_floor)
+        status[max_fail] = 3
+        event_day[max_fail] = day + 1
+
+        active = status == 0
+        if not np.any(active):
+            continue
+        ret = sampled_r[:, day][None, :] * scale_col
+        new_balance = start * (1.0 + ret)
+        profit = new_balance - start
+        pos = np.maximum(profit, 0.0)
+        positive_sum += np.where(active, pos, 0.0)
+        best_positive_day = np.where(
+            active, np.maximum(best_positive_day, pos), best_positive_day
+        )
+        balance = np.where(active, new_balance, balance)
+        highest_midnight = np.where(
+            active, np.maximum(highest_midnight, balance), highest_midnight
+        )
+
+        if target is not None:
+            best_day_ok = np.ones((m, n), dtype=bool)
+            if rule.best_day_rule_pct is not None:
+                allowed = positive_sum * rule.best_day_rule_pct / 100.0
+                best_day_ok = (
+                    (positive_sum > 0.0)
+                    & (best_positive_day <= allowed + 1e-12)
+                )
+            passed = (
+                (status == 0)
+                & (balance >= target)
+                & (trade_days >= rule.min_trading_days)
+                & best_day_ok
+            )
+            status[passed] = 1
+            event_day[passed] = day + 1
+
+    status[status == 0] = 4
+    out: list[StageSimulation] = []
+    for i, scale in enumerate(scales):
+        row_status = status[i]
+        pass_mask = row_status == 1
+        daily_mask = row_status == 2
+        max_mask = row_status == 3
+        timeout_mask = row_status == 4
+        pass_days = event_day[i][pass_mask]
+        denom = float(n)
+        out.append(StageSimulation(
+            stage_id=rule.id,
+            exposure_scale=float(scale),
+            paths=n,
+            analysis_horizon_days=horizon,
+            pass_probability=float(pass_mask.sum() / denom),
+            fail_probability=float((daily_mask | max_mask).sum() / denom),
+            timeout_probability=float(timeout_mask.sum() / denom),
+            daily_loss_breach_probability=float(daily_mask.sum() / denom),
+            max_loss_breach_probability=float(max_mask.sum() / denom),
+            median_days_to_pass=(
+                None if pass_days.size == 0 else float(np.median(pass_days))
+            ),
+            p75_days_to_pass=(
+                None if pass_days.size == 0
+                else float(np.quantile(pass_days, 0.75))
+            ),
+        ))
+    return out
+
+
+def _simulate_funded_scale_table(
+    returns: Sequence[float],
+    adverse_returns: Sequence[float],
+    opened_trade_days: Sequence[bool],
+    program: PropFirmProgram,
+    *,
+    exposure_scales: Sequence[float],
+    paths: int,
+    block: int,
+    seed: int,
+) -> list[FundedSimulation]:
+    r = np.asarray(returns, dtype=float)
+    a = np.asarray(adverse_returns, dtype=float)
+    opened = np.asarray(opened_trade_days, dtype=bool)
+    good = np.isfinite(r) & np.isfinite(a)
+    r, a, opened = r[good], a[good], opened[good]
+    if len(r) < 50:
+        raise ValueError("prop simulation requires >=50 aligned daily observations")
+
+    scales = np.asarray([float(x) for x in exposure_scales], dtype=float)
+    if scales.size < 1:
+        raise ValueError("at least one exposure scale required")
+    days = int(program.first_reward_eligible_days)
+    n = int(paths)
+    rng = np.random.default_rng(seed)
+    idx = _moving_block_sample_matrix(len(r), days, int(block), n, rng)
+    sampled_r = r[idx]
+    sampled_a = a[idx]
+    scale_col = scales[:, None]
+    m = int(scales.size)
+
+    balance = np.ones((m, n), dtype=float)
+    highest_midnight = np.ones((m, n), dtype=float)
+    positive_sum = np.zeros((m, n), dtype=float)
+    best_positive_day = np.zeros((m, n), dtype=float)
+    status = np.zeros((m, n), dtype=np.int8)
+
+    for day in range(days):
+        active = status == 0
+        if not np.any(active):
+            break
+        start = balance.copy()
+        adverse = sampled_a[:, day][None, :] * scale_col
+        worst = start * (1.0 + adverse)
+        daily_floor = start - program.funded.max_daily_loss_pct / 100.0
+        daily_fail = active & (worst <= daily_floor)
+        status[daily_fail] = 2
+
+        active = status == 0
+        if program.funded.trailing_max_loss:
+            overall_floor = (
+                np.maximum(1.0, highest_midnight)
+                - program.funded.max_loss_pct / 100.0
+            )
+        else:
+            overall_floor = np.full(
+                (m, n),
+                1.0 - program.funded.max_loss_pct / 100.0,
+                dtype=float,
+            )
+        max_fail = active & (worst <= overall_floor)
+        status[max_fail] = 3
+
+        active = status == 0
+        if not np.any(active):
+            continue
+        ret = sampled_r[:, day][None, :] * scale_col
+        new_balance = start * (1.0 + ret)
+        profit = new_balance - start
+        pos = np.maximum(profit, 0.0)
+        positive_sum += np.where(active, pos, 0.0)
+        best_positive_day = np.where(
+            active, np.maximum(best_positive_day, pos), best_positive_day
+        )
+        balance = np.where(active, new_balance, balance)
+        highest_midnight = np.where(
+            active, np.maximum(highest_midnight, balance), highest_midnight
+        )
+
+    survived = status == 0
+    best_day_ok = np.ones((m, n), dtype=bool)
+    if program.funded.best_day_rule_pct is not None:
+        allowed = positive_sum * program.funded.best_day_rule_pct / 100.0
+        best_day_ok = (
+            (positive_sum > 0.0)
+            & (best_positive_day <= allowed + 1e-12)
+        )
+    eligible = survived & best_day_ok
+    reward = np.where(
+        eligible,
+        np.maximum(balance - 1.0, 0.0) * program.reward_share * 100.0,
+        0.0,
+    )
+
+    out: list[FundedSimulation] = []
+    for i, scale in enumerate(scales):
+        positive = reward[i] > 0.0
+        denom = float(n)
+        out.append(FundedSimulation(
+            exposure_scale=float(scale),
+            paths=n,
+            reward_window_days=days,
+            survival_probability=float(survived[i].sum() / denom),
+            reward_eligible_probability=float(eligible[i].sum() / denom),
+            positive_reward_probability=float(positive.sum() / denom),
+            expected_reward_pct=float(reward[i].mean()),
+            median_positive_reward_pct=(
+                None if not np.any(positive)
+                else float(np.median(reward[i][positive]))
+            ),
+            daily_loss_breach_probability=float((status[i] == 2).sum() / denom),
+            max_loss_breach_probability=float((status[i] == 3).sum() / denom),
+            best_day_ineligible_probability=float(
+                (survived[i] & ~best_day_ok[i]).sum() / denom
+            ),
+        ))
+    return out
+
+
 def optimize_prop_exposure(
     returns: Sequence[float],
     adverse_returns: Sequence[float],
@@ -592,46 +854,46 @@ def optimize_prop_exposure(
     input_precision: str = "daily_ohlc_conservative_proxy",
     top_candidates: int = 100,
 ) -> PropOptimizationResult:
-    """Optimize challenge, verification, and funded risk independently."""
+    """Optimize Challenge, Verification, and funded risk independently."""
     base_r = np.asarray(returns, dtype=float)
     base_a = np.asarray(adverse_returns, dtype=float)
     opened = np.asarray(opened_trade_days, dtype=bool)
     scales = [float(x) for x in exposure_scales]
 
-    challenge_table = [
-        simulate_stage(
-            base_r, base_a, opened, program.challenge,
-            exposure_scale=s,
-            paths=paths,
-            block=block,
-            seed=seed + 1000 * i,
-        )
-        for i, s in enumerate(scales)
-    ]
+    challenge_table = _simulate_stage_scale_table(
+        base_r,
+        base_a,
+        opened,
+        program.challenge,
+        exposure_scales=scales,
+        paths=paths,
+        block=block,
+        seed=seed,
+    )
 
     verification_table = None
     if program.verification is not None:
-        verification_table = [
-            simulate_stage(
-                base_r, base_a, opened, program.verification,
-                exposure_scale=s,
-                paths=paths,
-                block=block,
-                seed=seed + 100000 + 1000 * i,
-            )
-            for i, s in enumerate(scales)
-        ]
-
-    funded_table = [
-        simulate_funded_reward(
-            base_r, base_a, opened, program,
-            exposure_scale=s,
+        verification_table = _simulate_stage_scale_table(
+            base_r,
+            base_a,
+            opened,
+            program.verification,
+            exposure_scales=scales,
             paths=paths,
             block=block,
-            seed=seed + 200000 + 1000 * i,
+            seed=seed + 100000,
         )
-        for i, s in enumerate(scales)
-    ]
+
+    funded_table = _simulate_funded_scale_table(
+        base_r,
+        base_a,
+        opened,
+        program,
+        exposure_scales=scales,
+        paths=paths,
+        block=block,
+        seed=seed + 200000,
+    )
 
     candidates: list[PropOptimizationCandidate] = []
     verification_choices = (
@@ -664,9 +926,6 @@ def optimize_prop_exposure(
             1.0,
         )
 
-        # funded.expected_reward_pct is already unconditional across funded
-        # paths, so it already incorporates funded rule failures and Best Day
-        # ineligibility. Do not multiply survival a second time.
         score = (
             float(eval_pass)
             * float(funded.expected_reward_pct)
@@ -696,20 +955,24 @@ def optimize_prop_exposure(
         ),
         reverse=True,
     )
-    candidates = candidates[: max(int(top_candidates), 1)]
 
+    # Risk-frontier views must see the complete Cartesian product. Truncating
+    # to the top payout candidates first can silently discard the safest,
+    # balanced, or conservative solution.
     views = _candidate_views(candidates)
+    kept_candidates = candidates[: max(int(top_candidates), 1)]
     return PropOptimizationResult(
         program=program.to_dict(),
         selected=views["max_payout_efficiency"],
-        candidates=candidates,
+        candidates=kept_candidates,
         challenge_scale_table=challenge_table,
         verification_scale_table=verification_table,
         funded_scale_table=funded_table,
         input_precision=input_precision,
         objective=(
             "independently optimize Challenge, Verification, and funded exposure; "
-            "report payout, pass-probability, balanced, and conservative risk views"
+            "use common bootstrap paths across scales; report payout, pass-probability, "
+            "safest-funded, balanced, and conservative risk views"
         ),
         views=views,
     )

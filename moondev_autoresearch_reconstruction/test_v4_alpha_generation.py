@@ -414,6 +414,52 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertIn("balanced", result.views)
         self.assertIn("conservative", result.views)
 
+    def test_prop_exposure_scale_order_does_not_change_monte_carlo_paths(self):
+        rng = np.random.default_rng(314)
+        r = rng.normal(0.0010, 0.012, 800)
+        adverse = np.minimum(rng.normal(-0.004, 0.009, 800), 0.0)
+        active = np.ones(len(r), dtype=bool)
+        a = optimize_prop_exposure(
+            r,
+            adverse,
+            active,
+            FTMO_2STEP,
+            exposure_scales=(0.25, 0.50, 0.75),
+            paths=180,
+            block=10,
+            seed=991,
+        )
+        b = optimize_prop_exposure(
+            r,
+            adverse,
+            active,
+            FTMO_2STEP,
+            exposure_scales=(0.75, 0.50, 0.25),
+            paths=180,
+            block=10,
+            seed=991,
+        )
+        def by_scale(rows):
+            return {round(x.exposure_scale, 8): x for x in rows}
+        ac = by_scale(a.challenge_scale_table)
+        bc = by_scale(b.challenge_scale_table)
+        af = by_scale(a.funded_scale_table)
+        bf = by_scale(b.funded_scale_table)
+        for scale in ac:
+            self.assertAlmostEqual(ac[scale].pass_probability, bc[scale].pass_probability)
+            self.assertAlmostEqual(
+                ac[scale].daily_loss_breach_probability,
+                bc[scale].daily_loss_breach_probability,
+            )
+            self.assertAlmostEqual(
+                af[scale].survival_probability,
+                bf[scale].survival_probability,
+            )
+            self.assertAlmostEqual(
+                af[scale].expected_reward_pct,
+                bf[scale].expected_reward_pct,
+            )
+
     def test_ftmo_daily_loss_subtracts_fixed_initial_capital_amount(self):
         rule = PropStageRule(
             id="test",
