@@ -50,7 +50,8 @@ declare global {
 }
 
 const WORKER_ID = os.hostname() + ":" + process.pid + ":" + crypto.randomUUID();
-const TASK_LOCK_MS = 55 * 60_000;
+const TASK_LOCK_MS = 10 * 60_000;
+const TASK_LOCK_HEARTBEAT_MS = 2 * 60_000;
 
 function truncate(value: string, max = 1800) {
   return value.length > max ? value.slice(0, max) + "…" : value;
@@ -148,6 +149,23 @@ async function resolveTaskProducts(
   throw new Error("Unsupported automatic audit resource type: " + task.resourceType);
 }
 
+function startTaskHeartbeat(task: ClaimedTask) {
+  const timer = setInterval(() => {
+    void db.auditTask.updateMany({
+      where: { id: task.id, lockedBy: WORKER_ID },
+      data: { lockedUntil: new Date(Date.now() + TASK_LOCK_MS) },
+    }).catch((error) => {
+      console.error("CatalogMirror could not renew automatic audit task lock", {
+        taskId: task.id,
+        shop: task.shop,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }, TASK_LOCK_HEARTBEAT_MS);
+  timer.unref();
+  return timer;
+}
+
 async function completeTask(task: ClaimedTask) {
   const deleted = await db.auditTask.deleteMany({
     where: {
@@ -216,6 +234,7 @@ async function failTask(task: ClaimedTask, error: unknown) {
 }
 
 async function processTask(task: ClaimedTask) {
+  const heartbeat = startTaskHeartbeat(task);
   try {
     const { admin } = await unauthenticated.admin(task.shop);
     const productIds = await resolveTaskProducts(task, admin);
@@ -245,6 +264,8 @@ async function processTask(task: ClaimedTask) {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  } finally {
+    clearInterval(heartbeat);
   }
 }
 
