@@ -164,24 +164,26 @@ def validate_book_identity(
 
 def market_buy_quote(
     book: dict,
-    stake_usd: float,
+    cash_budget_usd: float,
     *,
     fee_rate: float,
     fee_exponent: float = 1.0,
     min_order_shares: float = 0.0,
 ) -> MarketBuyQuote | None:
-    """Full-stake executable BUY quote with price-level fee integration.
+    """Executable BUY quote under a hard all-in cash budget.
 
-    Ask sizes are outcome shares. The quote is rejected if displayed depth
-    cannot absorb the full stake or if the filled share count is below either
-    the CLOB market-info minimum or the order-book minimum.
+    Ask sizes are outcome shares. Each consumed level uses its own fee curve,
+    so the cash cost per share is::
 
-    Fees are integrated over consumed price levels. This matters because the
-    Polymarket fee curve is nonlinear in price; applying it only to the final
-    VWAP can misstate a multi-level fill.
+        price + fee_rate * (price * (1-price)) ** fee_exponent
+
+    The quote is rejected if displayed depth cannot absorb the entire cash
+    budget or if the resulting share count is below either published minimum
+    order size. This mirrors the V2 SDK principle that BUY notional must be
+    reduced when fees would otherwise exceed available USDC.
     """
-    if stake_usd <= 0:
-        raise ValueError("stake_usd must be > 0")
+    if cash_budget_usd <= 0:
+        raise ValueError("cash_budget_usd must be > 0")
     if fee_rate < 0 or fee_exponent < 0:
         raise ValueError("fee rate/exponent must be >= 0")
     if min_order_shares < 0:
@@ -199,46 +201,63 @@ def market_buy_quote(
             levels.append((price, size))
     levels.sort()
 
-    remaining = stake_usd
+    remaining_cash = cash_budget_usd
     shares = 0.0
     spent = 0.0
     fee = 0.0
+
     for price, available_shares in levels:
-        max_cost = price * available_shares
-        use_cost = min(remaining, max_cost)
-        use_shares = use_cost / price
+        fee_per_share = (
+            fee_rate
+            * ((price * (1.0 - price)) ** fee_exponent)
+        )
+        all_in_per_share = price + fee_per_share
+        if all_in_per_share <= 0:
+            continue
+
+        max_all_in = available_shares * all_in_per_share
+        use_all_in = min(remaining_cash, max_all_in)
+        use_shares = use_all_in / all_in_per_share
+
         shares += use_shares
-        spent += use_cost
-        fee += use_shares * fee_rate * ((price * (1.0 - price)) ** fee_exponent)
-        remaining -= use_cost
-        if remaining <= 1e-9:
+        spent += use_shares * price
+        fee += use_shares * fee_per_share
+        remaining_cash -= use_all_in
+
+        if remaining_cash <= 1e-9:
             break
 
     if (
-        remaining > 1e-7
+        remaining_cash > 1e-7
         or shares <= 0
         or shares + 1e-12 < effective_min_shares
     ):
         return None
 
+    # Keep internal economics precise. USDC settlement itself is six-decimal,
+    # but premature rounding here can create a paper account that spends more
+    # than the frozen cash budget by a few micro-dollars.
+    if spent + fee > cash_budget_usd + 1e-8:
+        raise ArithmeticError("all-in BUY quote exceeded cash budget")
+
     return MarketBuyQuote(
         spent_usd=spent,
         shares=shares,
         average_price=spent / shares,
-        fee_usd=round(fee, 5),
+        fee_usd=fee,
     )
 
 
 def market_buy_vwap(
     book: dict,
-    stake_usd: float,
+    cash_budget_usd: float,
     *,
     min_order_shares: float = 0.0,
 ) -> float | None:
     """Backward-compatible fee-free VWAP helper used by shadow scanners."""
     quote = market_buy_quote(
         book,
-        stake_usd,
+        cash_budget_usd,
         fee_rate=0.0,
         min_order_shares=min_order_shares,
     )
