@@ -1340,6 +1340,18 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "final_oos_opened": False,
         "reset_timezone": PRAGUE,
         "policy": "force flat for execution at each Prague midnight reset",
+        "venue_hours_assumption": {
+            "research_proxy": "Binance spot 1h is continuous except exchange data gaps",
+            "ftmo_historical_maintenance_reconstructed": False,
+            "policy": (
+                "do not invent a fixed historical FTMO crypto maintenance window; "
+                "FTMO states weekend crypto hours can vary by platform and maintenance"
+            ),
+            "deployment_requirement": (
+                "verify symbol trading hours, maintenance gaps, spread, and fills on "
+                "the intended FTMO platform during forward testing"
+            ),
+        },
         "market_mapping": {
             symbol: {
                 "research_source": (
