@@ -247,6 +247,28 @@ class MoonStrategy:
         b = research_metrics.annualized_k(five_total, 5.0, 1.25)
         self.assertAlmostEqual(a, b, places=10)
 
+    def test_annualized_k_never_rewards_negative_growth_and_negative_sharpe(self):
+        losing = research_metrics.annualized_k(-0.25, 2.0, -1.1)
+        winning = research_metrics.annualized_k(0.25, 2.0, 1.1)
+        self.assertLess(losing, 0.0)
+        self.assertGreater(winning, 0.0)
+        self.assertAlmostEqual(abs(losing), abs(winning), places=10)
+
+    def test_annualized_k_requires_positive_growth_and_positive_sharpe(self):
+        self.assertLess(research_metrics.annualized_k(0.20, 1.0, -0.5), 0.0)
+        self.assertLess(research_metrics.annualized_k(-0.20, 1.0, 0.5), 0.0)
+
+    def test_sortino_uses_zero_target_downside_deviation_and_annualizes(self):
+        r = np.array([0.02, -0.01, 0.01, -0.02], dtype=float)
+        eq = np.cumprod(np.r_[100.0, 1.0 + r])
+        out = research_metrics.tail_metrics(eq, r, 0.10, bars_per_year=4)
+        downside = np.sqrt(np.mean(np.minimum(r, 0.0) ** 2))
+        expected_per_bar = np.mean(r) / downside
+        self.assertAlmostEqual(out["sortino_per_bar"], expected_per_bar, places=12)
+        self.assertAlmostEqual(
+            out["sortino_annualized"], expected_per_bar * 2.0, places=12
+        )
+
     def test_probabilistic_sharpe_prefers_positive_edge(self):
         positive = np.array([0.003, -0.001, 0.002, 0.001, -0.0005] * 80)
         flat = np.array([0.001, -0.001] * 200)
