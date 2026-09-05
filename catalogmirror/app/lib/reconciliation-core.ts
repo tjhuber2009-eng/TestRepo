@@ -48,3 +48,10 @@ export function productUpdatedAtQuery(since: Date | null, cutoff: Date) {
   if (!since) return upper;
   return "updated_at:>'" + since.toISOString() + "' " + upper;
 }
+
+export function bulkOperationGidFromPayload(payload: Record<string, unknown>) {
+  const id = payload.admin_graphql_api_id;
+  return typeof id === "string" && /^gid:\/\/shopify\/BulkOperation\/\d+$/.test(id)
+    ? id
+    : null;
+}
