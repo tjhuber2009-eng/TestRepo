@@ -50,9 +50,10 @@ def test_book_level_fee_is_integrated_at_each_price():
         min_order_shares=1.0,
     )
     assert quote is not None
-    assert math.isclose(quote.shares, 12.5)
-    assert math.isclose(quote.average_price, 0.32)
-    assert math.isclose(quote.fee_usd, 0.14)
+    assert math.isclose(quote.shares, 12.32741617357002)
+    assert math.isclose(quote.average_price, 0.31328)
+    assert math.isclose(quote.fee_usd, 0.13806706114398423)
+    assert math.isclose(quote.spent_usd + quote.fee_usd, 4.0)
 
     # A nonlinear fee applied only to VWAP would be materially wrong here.
     vwap_approx_fee = (
@@ -100,3 +101,21 @@ def test_book_identity_must_match_condition_and_token():
         pass
     else:
         raise AssertionError("mismatched asset id must fail closed")
+
+
+def test_fee_enabled_quote_treats_budget_as_all_in_cash():
+    book = {
+        "min_order_size": "1",
+        "asks": [{"price": "0.50", "size": "100"}],
+    }
+    quote = pm.market_buy_quote(
+        book,
+        5.0,
+        fee_rate=0.07,
+        fee_exponent=1.0,
+        min_order_shares=1.0,
+    )
+    assert quote is not None
+    assert quote.spent_usd < 5.0
+    assert quote.fee_usd > 0.0
+    assert math.isclose(quote.spent_usd + quote.fee_usd, 5.0)
