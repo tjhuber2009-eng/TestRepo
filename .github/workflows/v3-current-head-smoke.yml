@@ -1,0 +1,140 @@
+name: V3 current-head smoke
+
+on:
+  push:
+    branches:
+      - moondev-nvidia-autoresearch
+    paths:
+      - ".github/workflows/v3-current-head-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - run: python -m pip install -r requirements.txt
+
+      - name: Compile and run integrity tests
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
+
+      - name: Generate and compile every runnable family
+        shell: python
+        run: |
+          import json, subprocess, sys
+          from pathlib import Path
+          reg=json.loads(Path("strategy_library/registry.json").read_text())
+          runnable=[x for x in reg["families"] if x.get("status")=="runnable"]
+          for row in runnable:
+              subprocess.run([
+                  sys.executable,"seed_factory.py",
+                  "--family",row["id"],
+                  "--output","strategy.py",
+                  "--bars-per-year","365",
+                  "--vol-target","0.08",
+                  "--f-max","0.5",
+              ],check=True)
+              subprocess.run([sys.executable,"-m","py_compile","strategy.py"],check=True)
+          print(f"runnable_families={len(runnable)}")
+
+      - name: Prepare BTC development-only data
+        run: >
+          python prepare_market_data.py
+          --source binance --symbol BTCUSDT --id btc
+          --start 2017-08-17 --end 2020-12-31
+
+      - name: Run development-only robust harness smoke
+        shell: bash
+        env:
+          AUTORESEARCH_SYMBOL: BTCUSDT
+          AUTORESEARCH_MARKET: crypto
+          AUTORESEARCH_DATA_FILE: data/btc_1d.csv
+          AUTORESEARCH_COMMISSION: "0.001"
+          AUTORESEARCH_MARGIN: "0.25"
+          AUTORESEARCH_BARS_PER_YEAR: "365"
+          AUTORESEARCH_PROFILE: prop
+          AUTORESEARCH_MAX_DD_PCT: "10"
+          AUTORESEARCH_MIN_TRADES: "8"
+          AUTORESEARCH_MIN_ACTIVE_FOLDS: "3"
+          AUTORESEARCH_MIN_FOLD_BARS: "100"
+          AUTORESEARCH_VOL_BAND: "0.25"
+          AUTORESEARCH_COST_STRESS_MULT: "2.0"
+          AUTORESEARCH_EXTREME_COST_STRESS_MULT: "3.0"
+          AUTORESEARCH_BOOTSTRAP_REPS: "200"
+          AUTORESEARCH_IS_START: "2017-08-17"
+          AUTORESEARCH_VALIDATION_START: "2021-01-01"
+          AUTORESEARCH_VALIDATION_END: "2022-12-31"
+        run: |
+          rm -f baseline.json last_run.json validation_run.json
+          python seed_factory.py --family sentinel63 --output strategy.py --bars-per-year 365 --vol-target 0.04 --f-max 0.5
+          python robust_harness.py --is
+          python - <<'PY'
+          import json
+          x=json.load(open("last_run.json"))
+          assert x["protocol"]=="nested_chronological_v3"
+          assert x["stage"]=="adaptive_development"
+          assert x["oos_opened"] is False
+          assert x["end"]=="2020-12-31"
+          assert x["hidden_validation_start"]=="2021-01-01"
+          assert x["active_folds"] >= 3
+          assert "stress" in x
+          assert x["cost_stress_multiplier"] == 2.0
+          print(json.dumps({
+              "score":x["score"],
+              "return_pct":x["return_pct"],
+              "max_dd_pct":x["max_dd_pct"],
+              "active_folds":x["active_folds"],
+              "stress_return_pct":x["stress"]["return_pct"],
+              "guard_ok":x["guard_ok"],
+          },indent=2))
+          PY
+
+      - name: Verify prefix-invariance lookahead audit
+        shell: bash
+        env:
+          AUTORESEARCH_SYMBOL: BTCUSDT
+          AUTORESEARCH_MARKET: crypto
+          AUTORESEARCH_DATA_FILE: data/btc_1d.csv
+          AUTORESEARCH_COMMISSION: "0.001"
+          AUTORESEARCH_MARGIN: "0.25"
+          AUTORESEARCH_BARS_PER_YEAR: "365"
+          AUTORESEARCH_PROFILE: prop
+          AUTORESEARCH_MAX_DD_PCT: "10"
+          AUTORESEARCH_MIN_TRADES: "8"
+          AUTORESEARCH_MIN_ACTIVE_FOLDS: "3"
+          AUTORESEARCH_MIN_FOLD_BARS: "100"
+          AUTORESEARCH_VOL_BAND: "0.25"
+          AUTORESEARCH_COST_STRESS_MULT: "2.0"
+          AUTORESEARCH_EXTREME_COST_STRESS_MULT: "3.0"
+          AUTORESEARCH_BOOTSTRAP_REPS: "200"
+          AUTORESEARCH_IS_START: "2017-08-17"
+          AUTORESEARCH_VALIDATION_START: "2021-01-01"
+          AUTORESEARCH_VALIDATION_END: "2022-12-31"
+        run: |
+          python robust_harness.py --lookahead-audit
+          python - <<'PY'
+          import json
+          x=json.load(open("lookahead_audit.json"))
+          assert x["passed"] is True, x
+          assert x["oos_opened"] is False
+          assert len(x["checks"]) == 3
+          print(json.dumps(x,indent=2))
+          PY
