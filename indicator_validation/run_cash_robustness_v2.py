@@ -7,7 +7,8 @@ START=pd.Timestamp("2020-09-01",tz="UTC"); CUT=pd.Timestamp("2023-01-01",tz="UTC
 BASE_COST=.0007; COSTS=[.0007,.0010,.0015,.0025]; HAIRCUTS=[0,.25,.50,.75,1.0]
 PROXIES=["SGOV","BIL","SHV"]; BLOCKS=[5,20,60]; NSIM=1000; SEED=20260905
 FROZEN_SW=.20; FROZEN_SCALAR=.525
-GRID_SCALARS=np.arange(.10,.8001,.005)\nBOOT_SCALARS=np.arange(.10,.6501,.015)
+GRID_SCALARS=np.arange(.10,.8001,.005)
+BOOT_SCALARS=np.arange(.10,.6501,.015)
 C12=["BTC-USD","ETH-USD","BNB-USD","SOL-USD","XRP-USD","ADA-USD","DOGE-USD","LTC-USD","BCH-USD","LINK-USD","DOT-USD","AVAX-USD"]
 E11=["SPY","QQQ","IWM","GLD","SLV","IEF","TLT","DBC","VNQ","EFA","EEM"]; ALL=C12+E11
 
@@ -178,7 +179,9 @@ pd.DataFrame(bf).to_csv(OUT/"bootstrap_3pct_frontier.csv",index=False)
 
 print("FROZEN 20/80 52.5% SENSITIVITY")
 print(pd.DataFrame(frozen).to_string(index=False))
-print("\nTRAIN-SELECTED 3% BY CASH-YIELD HAIRCUT")
+print("
+TRAIN-SELECTED 3% BY CASH-YIELD HAIRCUT")
 print(pd.DataFrame(select).to_string(index=False))
-print("\nBOOTSTRAP 3% FRONTIER")
+print("
+BOOTSTRAP 3% FRONTIER")
 print(pd.DataFrame(bf).to_string(index=False))
