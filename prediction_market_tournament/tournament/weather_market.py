@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
-from .adapters.aviation import station_coordinates
+from .adapters.aviation import station_location
 from .adapters.open_meteo import (
     bracket_probability,
     fetch_temperature_ensemble,
@@ -170,7 +170,7 @@ def weather_signal_from_market(
         str(market.get("description") or ""),
         str(market.get("resolutionSource") or ""),
     )
-    lat, lon = station_coordinates(station)
+    lat, lon, elevation = station_location(station)
     unit = "fahrenheit" if bracket.unit == "F" else "celsius"
     if not models:
         raise ValueError("at least one weather ensemble model is required")
@@ -185,6 +185,7 @@ def weather_signal_from_market(
             model=model,
             unit=unit,
             timezone="auto",
+            elevation=elevation,
         )
         values = member_daily_extremes(payload, kind=bracket.kind)
         model_members[model] = len(values)
@@ -296,6 +297,7 @@ def weather_signal_from_market(
             "no_token_id": tokens["NO"],
             "chosen_token_id": tokens[side],
             "station": station,
+            "station_elevation_m": elevation,
             "fee_source": "clob-market-info.fd",
             "ask_source": "batch-full-size-book-level-fill",
             "min_order_shares": execution.min_order_shares,
