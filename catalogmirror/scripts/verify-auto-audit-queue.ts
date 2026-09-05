@@ -46,6 +46,7 @@ async function main() {
     topic: "PERIODIC_RECONCILIATION",
     resourceType: "RECONCILE",
     resourceId: shop,
+    recordWebhook: false,
   });
 
   assert.equal(await db.auditTask.count({ where: { shop } }), 3);
