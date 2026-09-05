@@ -89,9 +89,22 @@ class V4AlphaGenerationTests(unittest.TestCase):
         pd.testing.assert_frame_equal(a, b.loc[a.index])
 
     def test_strict_v4_json_sanitizes_nonfinite_values(self):
-        payload = json_safe({"bad": float("-inf"), "nested": [float("nan"), 1.0]})
+        payload = json_safe({
+            "bad": float("-inf"),
+            "nested": [float("nan"), 1.0],
+            "sealed": False,
+            "enabled": True,
+        })
         raw = json.dumps(payload, allow_nan=False)
-        self.assertEqual(json.loads(raw), {"bad": None, "nested": [None, 1.0]})
+        self.assertEqual(
+            json.loads(raw),
+            {
+                "bad": None,
+                "nested": [None, 1.0],
+                "sealed": False,
+                "enabled": True,
+            },
+        )
 
     def test_feature_context_join_is_backward_and_lagged(self):
         data = synthetic_daily_market(bars=300)
