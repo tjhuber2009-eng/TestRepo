@@ -1,4 +1,4 @@
-name: Indicator Sentinel RSI2 Weight Frontier
+name: Indicator Sentinel10 RSI90 Bootstrap
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run Sentinel RSI2 weight frontier
-        run: python indicator_validation/run_sentinel_rsi2_weightgrid.py
+      - name: Run holdout-selected 10-90 bootstrap
+        run: python indicator_validation/run_sentinel10_rsi90_bootstrap.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_sentinel_rsi2_weightgrid.py indicator_validation/output_sentinel_rsi2_weightgrid/* > indicator_validation/SHA256SUMS_SENTINEL_RSI2_WEIGHT.txt
+        run: sha256sum indicator_validation/run_sentinel10_rsi90_bootstrap.py indicator_validation/output_sentinel10_rsi90_bootstrap/* > indicator_validation/SHA256SUMS_SENTINEL10_RSI90.txt
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-sentinel-rsi2-weight-frontier
+          name: indicator-sentinel10-rsi90-bootstrap
           path: |
-            indicator_validation/output_sentinel_rsi2_weightgrid/
-            indicator_validation/SHA256SUMS_SENTINEL_RSI2_WEIGHT.txt
+            indicator_validation/output_sentinel10_rsi90_bootstrap/
+            indicator_validation/SHA256SUMS_SENTINEL10_RSI90.txt
           if-no-files-found: error
           retention-days: 7
