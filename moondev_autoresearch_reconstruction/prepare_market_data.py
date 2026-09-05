@@ -250,7 +250,8 @@ def write_manifest(
     }
     if source == "yahoo":
         manifest["adjustment_method"] = yahoo_adjustment
-        manifest["dividends_explicit"] = yahoo_adjustment == "provider_split_adjusted_v3"\n        manifest["shadow_validation_only"] = yahoo_adjustment == "provider_split_adjusted_v3"
+        manifest["dividends_explicit"] = yahoo_adjustment == "provider_split_adjusted_v3"
+        manifest["shadow_validation_only"] = yahoo_adjustment == "provider_split_adjusted_v3"
     path = out.with_suffix(".manifest.json")
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"manifest -> {path} sha256={manifest['csv_sha256']}")
@@ -266,8 +267,8 @@ def main():
     ap.add_argument("--end", default="2022-12-31")
     ap.add_argument(
         "--yahoo-adjustment",
-        choices=["split_dividend_v2", "legacy_adjusted_close"],
-        default="split_dividend_v2",
+        choices=["provider_split_adjusted_v3", "legacy_adjusted_close"],
+        default="provider_split_adjusted_v3",
         help=(
             "Yahoo price convention. provider_split_adjusted_v3 keeps provider split-adjusted OHLC; "
             "legacy_adjusted_close exists only for historical comparisons."
