@@ -234,6 +234,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
         return {
             "fold_scores": fold_cagr_scores(res.returns, 252.0, private.max_dd_pct),
+            "primary_score": float(res.metrics.cost_stress_cagr_pct),
             "gate_ok": bool(res.gate_ok),
             "structural_fingerprint": "leveraged_regime_rotation_voltarget_v1",
         }
@@ -324,6 +325,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "fold_scores": fold_cagr_scores(
                     res.returns, 252.0, private.max_dd_pct
                 ),
+                "primary_score": float(res.metrics.cost_stress_cagr_pct),
                 "gate_ok": bool(res.gate_ok),
                 "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
             }
@@ -380,6 +382,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     "fold_scores": fold_cagr_scores(
                         res.returns, 252.0, private.max_dd_pct
                     ),
+                    "primary_score": float(res.metrics.cost_stress_cagr_pct),
                     "gate_ok": bool(res.gate_ok),
                     "structural_fingerprint": "defensive_rotation_drawdown_brake_v1",
                 }
@@ -456,6 +459,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "fold_scores": fold_cagr_scores(
                 res.returns, 252.0, private.max_dd_pct
             ),
+            "primary_score": float(res.metrics.cost_stress_cagr_pct),
             "gate_ok": bool(res.gate_ok),
             "structural_fingerprint": "cross_asset_momentum_voltarget_v1",
         }
