@@ -11,7 +11,6 @@ CUTOFF = "2023-01-01T00:00:00"
 def main():
     violations = []
 
-    for path in sorted((HERE / "data").glob("*.csv")):
     for root_name in ("data", "validation_data"):
         root = HERE / root_name
         for path in sorted(root.glob("*.csv")):
