@@ -33,6 +33,9 @@ jobs:
             /model-tournament)
               gh workflow run model-tournament.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /model-tournament-recover)
+              gh workflow run model-tournament-recovery.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             /dashboard)
               gh workflow run autoresearch-dashboard.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
