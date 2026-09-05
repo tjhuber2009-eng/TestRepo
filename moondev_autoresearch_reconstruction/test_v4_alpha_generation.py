@@ -1170,6 +1170,30 @@ class V4AlphaGenerationTests(unittest.TestCase):
         # an adverse excursion that already occurred inside that trigger bar.
         self.assertLessEqual(float(braked_adv[1.0].iloc[0]), -0.06 + 1e-12)
 
+    def test_prop_day_brake_charges_missing_next_day_reentry(self):
+        idx = pd.DatetimeIndex([
+            "2020-01-01T10:00:00Z",
+            "2020-01-01T11:00:00Z",
+            "2020-01-02T10:00:00Z",
+            "2020-01-02T11:00:00Z",
+        ])
+        returns = pd.Series([0.02, 0.0, 0.0, 0.0], index=idx)
+        adverse = pd.Series([0.0, 0.0, 0.0, 0.0], index=idx)
+        # The raw strategy carries the same exposure across the Prague-day
+        # boundary, so its own turnover series contains no next-day re-entry.
+        weights = pd.DataFrame({"A": [1.0, 1.0, 1.0, 1.0]}, index=idx)
+        braked, _, _ = aggregate_prague_days_scaled(
+            returns,
+            adverse,
+            weights,
+            scales=(1.0,),
+            day_profit_cap=0.015,
+            day_loss_cap=0.015,
+        )
+        self.assertEqual(len(braked[1.0]), 2)
+        # 3x stressed 3.25 bp commission + 2 bp slippage = 15.75 bp.
+        self.assertLessEqual(float(braked[1.0].iloc[1]), -0.001575 + 1e-12)
+
     def test_prop_day_brake_mutations_are_compact(self):
         leader = {
             "params": {
