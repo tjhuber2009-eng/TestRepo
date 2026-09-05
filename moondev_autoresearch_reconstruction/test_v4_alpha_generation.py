@@ -12,7 +12,7 @@ from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, paret
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
-from v4.live_bootstrap import json_safe, read_market_csv, select_portfolio_history_cohort
+from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, read_market_csv, select_portfolio_history_cohort
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import (
@@ -243,6 +243,24 @@ class V4AlphaGenerationTests(unittest.TestCase):
         )
         a = overlay({"QQQ": data["QQQ"].iloc[:350]})
         b = overlay({"QQQ": data["QQQ"]})
+        pd.testing.assert_frame_equal(a, b.loc[a.index])
+
+    def test_rsi2_pullback_is_prefix_invariant(self):
+        data = synthetic_daily_market(bars=650)
+        qqq = data["QQQ"].copy()
+        tqqq = qqq.copy()
+        tqqq[["Open", "High", "Low", "Close"]] *= 1.5
+        core = {"QQQ": qqq, "TQQQ": tqqq}
+        features = FeatureStoreBuilder().build(core).by_asset
+        strategy = build_rsi2_pullback_strategy({
+            "entry_rsi": 10.0,
+            "target_vol": 0.20,
+            "vol_lookback": 20,
+        })
+        short_data = {k: v.iloc[:500] for k, v in core.items()}
+        short_features = {k: v.iloc[:500] for k, v in features.items()}
+        a = strategy(short_data, short_features)
+        b = strategy(core, features)
         pd.testing.assert_frame_equal(a, b.loc[a.index])
 
     def test_vix_stress_overlay_is_prefix_invariant(self):
