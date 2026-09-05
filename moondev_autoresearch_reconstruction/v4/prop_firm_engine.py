@@ -63,6 +63,9 @@ class PropOptimizationCandidate:
     combined_evaluation_pass_probability: float
     expected_evaluation_days_if_passed: float | None
     payout_efficiency_score: float
+    repeat_reward_cycles: int = 12
+    repeat_expected_reward_pct: float = 0.0
+    repeat_payout_efficiency_score: float = 0.0
 
     def to_dict(self) -> dict:
         return {
@@ -75,6 +78,9 @@ class PropOptimizationCandidate:
             "combined_evaluation_pass_probability": self.combined_evaluation_pass_probability,
             "expected_evaluation_days_if_passed": self.expected_evaluation_days_if_passed,
             "payout_efficiency_score": self.payout_efficiency_score,
+            "repeat_reward_cycles": self.repeat_reward_cycles,
+            "repeat_expected_reward_pct": self.repeat_expected_reward_pct,
+            "repeat_payout_efficiency_score": self.repeat_payout_efficiency_score,
         }
 
 
@@ -508,12 +514,47 @@ def _candidate_within_risk_tier(
         return False
     return True
 
+def repeat_payout_projection(
+    *,
+    expected_reward_pct: float,
+    survival_probability: float,
+    evaluation_pass_probability: float,
+    evaluation_days: float,
+    reward_cycle_days: int,
+    cycles: int = 12,
+) -> tuple[float, float]:
+    """Finite repeated-payout proxy from existing funded-window evidence.
+
+    Assumptions are deliberately conservative: each cycle has the same length
+    as the first eligible reward window, the funded account must survive a
+    cycle to reach the next one, profits are not compounded or rolled over,
+    and challenge retries, fees, scaling upgrades, and rollover are excluded.
+    """
+    n = max(int(cycles), 1)
+    s = min(max(float(survival_probability), 0.0), 1.0)
+    if abs(1.0 - s) <= 1e-12:
+        continuation = float(n)
+    else:
+        continuation = float((1.0 - s ** n) / (1.0 - s))
+    expected = max(float(expected_reward_pct), 0.0) * continuation
+    elapsed = max(
+        float(evaluation_days) + float(n * max(int(reward_cycle_days), 1)),
+        1.0,
+    )
+    score = (
+        max(float(evaluation_pass_probability), 0.0)
+        * expected
+        / elapsed
+    )
+    return float(expected), float(score)
+
 def _candidate_views(
     candidates: Sequence[PropOptimizationCandidate],
 ) -> dict[str, PropOptimizationCandidate | None]:
     if not candidates:
         return {
             "max_payout_efficiency": None,
+            "max_repeat_payout_efficiency": None,
             "max_evaluation_pass": None,
             "safest_funded": None,
             "balanced": None,
@@ -524,6 +565,14 @@ def _candidate_views(
         candidates,
         key=lambda x: (
             x.payout_efficiency_score,
+            x.combined_evaluation_pass_probability,
+        ),
+    )
+    max_repeat = max(
+        candidates,
+        key=lambda x: (
+            x.repeat_payout_efficiency_score,
+            x.funded.survival_probability,
             x.combined_evaluation_pass_probability,
         ),
     )
@@ -591,6 +640,7 @@ def _candidate_views(
     )
     return {
         "max_payout_efficiency": max_payout,
+        "max_repeat_payout_efficiency": max_repeat,
         "max_evaluation_pass": max_pass,
         "safest_funded": safest,
         "balanced": balanced,
@@ -1061,6 +1111,18 @@ def optimize_prop_exposure(
             * float(funded.expected_reward_pct)
             / float(denominator)
         )
+        repeat_expected_reward_pct, repeat_score = repeat_payout_projection(
+            expected_reward_pct=funded.expected_reward_pct,
+            survival_probability=funded.survival_probability,
+            evaluation_pass_probability=eval_pass,
+            evaluation_days=(
+                eval_days
+                if eval_days is not None
+                else float(program.challenge.analysis_horizon_days)
+            ),
+            reward_cycle_days=program.first_reward_eligible_days,
+            cycles=12,
+        )
 
         candidates.append(
             PropOptimizationCandidate(
@@ -1073,6 +1135,9 @@ def optimize_prop_exposure(
                 combined_evaluation_pass_probability=float(eval_pass),
                 expected_evaluation_days_if_passed=eval_days,
                 payout_efficiency_score=float(score),
+                repeat_reward_cycles=12,
+                repeat_expected_reward_pct=float(repeat_expected_reward_pct),
+                repeat_payout_efficiency_score=float(repeat_score),
             )
         )
 
@@ -1101,7 +1166,8 @@ def optimize_prop_exposure(
         input_precision=input_precision,
         objective=(
             "independently optimize Challenge, Verification, and funded exposure; "
-            "use common bootstrap paths across scales; report payout, pass-probability, "
+            "use common bootstrap paths across scales; report first-reward payout, "
+            "12-cycle survival-discounted repeat-payout, pass-probability, "
             "safest-funded, balanced, and conservative risk views"
         ),
         views=views,
