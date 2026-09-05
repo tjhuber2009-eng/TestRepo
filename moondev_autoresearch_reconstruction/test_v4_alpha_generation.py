@@ -18,8 +18,9 @@ from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import volatility_target_overlay
+from v4.selection_diagnostics import cscv_pbo
 from v4.research_allocator import ResearchAllocator, ResearchCell, ResearchObservation
-from v4.strategy_examples import pead_event_weights
+from v4.strategy_examples import leveraged_defensive_rotation, pead_event_weights
 from v4.strategy_intake import HypothesisQueue, StrategyHypothesis
 
 
@@ -185,6 +186,55 @@ class V4AlphaGenerationTests(unittest.TestCase):
         ])
         rows = planner.plan([{"id":"sentinel63","markets":["crypto"]}], ["crypto"], ["private"])
         self.assertEqual(rows[0]["motif_id"], "long_term_trend_gate")
+
+    def test_defensive_rotation_can_choose_bond_defense_or_cash(self):
+        idx = pd.bdate_range("2018-01-01", periods=120)
+        qqq = np.linspace(120.0, 80.0, len(idx))
+        tqqq = np.linspace(90.0, 30.0, len(idx))
+        ief = np.linspace(90.0, 120.0, len(idx))
+        gld = np.full(len(idx), 100.0)
+        shy = np.full(len(idx), 100.0)
+        def frame(close):
+            close = np.asarray(close, dtype=float)
+            return pd.DataFrame({
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+            }, index=idx)
+        data = {
+            "QQQ": frame(qqq),
+            "TQQQ": frame(tqqq),
+            "IEF": frame(ief),
+            "GLD": frame(gld),
+            "SHY": frame(shy),
+        }
+        strat = leveraged_defensive_rotation(
+            signal_symbol="QQQ",
+            risk_symbol="TQQQ",
+            defensive_symbols=("IEF", "GLD", "SHY"),
+            risk_sma_window=20,
+            risk_momentum_window=10,
+            defensive_momentum_window=10,
+            defensive_trend_window=20,
+        )
+        w = strat(data)
+        self.assertEqual(w.iloc[-1]["TQQQ"], 0.0)
+        self.assertEqual(w.iloc[-1]["IEF"], 1.0)
+
+    def test_v4_cscv_pbo_is_bounded_on_even_fold_matrix(self):
+        matrix = np.array([
+            [3, 3, 3, 3, -1, -1, -1, -1],
+            [-1, -1, -1, -1, 3, 3, 3, 3],
+            [2, 2, -1, -1, 2, 2, -1, -1],
+            [0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+            [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2],
+        ], dtype=float)
+        diag = cscv_pbo(matrix)
+        self.assertIsNotNone(diag)
+        self.assertGreaterEqual(diag["pbo"], 0.0)
+        self.assertLessEqual(diag["pbo"], 1.0)
+        self.assertEqual(diag["fold_count"], 8)
 
     def test_research_allocator_breadth_then_thompson(self):
         cells=[ResearchCell("a","crypto","private"),ResearchCell("b","crypto","private")]
