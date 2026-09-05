@@ -30,45 +30,80 @@ model Session {
 }
 
 model AuditRun {
-  id             String   @id @default(cuid())
-  shop           String
-  status         String
-  productsSeen   Int      @default(0)
-  productsAudited Int     @default(0)
-  findings       Int      @default(0)
-  critical       Int      @default(0)
-  expected       Int      @default(0)
-  errorMessage   String?
-  startedAt      DateTime @default(now())
-  finishedAt     DateTime?
+  id               String   @id @default(cuid())
+  shop             String
+  status           String
+  trigger          String   @default("MANUAL")
+  productsSeen     Int      @default(0)
+  productsAudited  Int      @default(0)
+  findings         Int      @default(0)
+  critical         Int      @default(0)
+  warnings         Int      @default(0)
+  expected         Int      @default(0)
+  catalogTruncated Boolean  @default(false)
+  durationMs       Int?
+  errorMessage     String?
+  startedAt        DateTime @default(now())
+  finishedAt       DateTime?
 
   incidents Incident[]
+
   @@index([shop, startedAt])
 }
 
 model Incident {
-  id            String   @id @default(cuid())
-  shop          String
-  auditRunId    String
-  productId     String?
-  productTitle  String?
-  handle        String?
-  variantId     String?
-  variantTitle  String?
-  sku           String?
-  kind          String
-  severity      String
-  status        String   @default("OPEN")
-  expectedValue String?
-  observedValue String?
-  detail        String?
-  fingerprint   String
-  firstSeenAt   DateTime @default(now())
-  lastSeenAt    DateTime @default(now())
-  resolvedAt    DateTime?
+  id              String   @id @default(cuid())
+  shop            String
+  auditRunId      String
+  productId       String?
+  productTitle    String?
+  handle          String?
+  variantId       String?
+  variantTitle    String?
+  sku             String?
+  kind            String
+  severity        String
+  status          String   @default("OPEN")
+  expectedValue   String?
+  observedValue   String?
+  detail          String?
+  fingerprint     String
+  occurrenceCount Int      @default(1)
+  firstSeenAt     DateTime @default(now())
+  lastSeenAt      DateTime @default(now())
+  resolvedAt      DateTime?
 
   auditRun AuditRun @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
 
   @@index([shop, status, severity])
-  @@index([shop, fingerprint])
+  @@unique([shop, fingerprint])
+}
+
+model WebhookReceipt {
+  id          String    @id
+  shop        String
+  topic       String
+  attempts    Int       @default(1)
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([receivedAt])
+  @@index([shop, receivedAt])
+}
+
+model ShopAuditState {
+  shop             String   @id
+  shopGid          String?
+  pendingChanges   Int      @default(0)
+  lastWebhookTopic String?
+  lastWebhookAt    DateTime?
+  lastAuditAt      DateTime?
+  updatedAt        DateTime @updatedAt
+}
+
+model AuditLease {
+  shop      String   @id
+  owner     String
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
 }

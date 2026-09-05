@@ -28,8 +28,20 @@ topics = ["app/scopes_update"]
 uri = "/webhooks/app/scopes_update"
 
 [[webhooks.subscriptions]]
+topics = ["products/create"]
+uri = "/webhooks/products/create"
+
+[[webhooks.subscriptions]]
 topics = ["products/update"]
 uri = "/webhooks/products/update"
+
+[[webhooks.subscriptions]]
+topics = ["products/delete"]
+uri = "/webhooks/products/delete"
+
+[[webhooks.subscriptions]]
+topics = ["inventory_levels/update"]
+uri = "/webhooks/inventory_levels/update"
 
 [[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request"]
