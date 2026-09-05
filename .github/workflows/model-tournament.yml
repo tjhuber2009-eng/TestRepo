@@ -92,6 +92,13 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Restore immutable pre-OOS market-data cache
+        uses: actions/cache@v4
+        with:
+          path: moondev_autoresearch_reconstruction/data
+          key: autoresearch-preoos-v3-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
+
+
       - name: Restore exact frozen research-state snapshot
         shell: bash
         working-directory: .
@@ -191,6 +198,14 @@ jobs:
             tournament-summary.json
             tournament-report.md
           retention-days: 30
+
+      - name: Refresh live dashboard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh workflow run autoresearch-dashboard.yml
+          --repo tjhuber2009-eng/TestRepo
+          --ref main
 
       - name: Comment tournament result on PR
         env:
