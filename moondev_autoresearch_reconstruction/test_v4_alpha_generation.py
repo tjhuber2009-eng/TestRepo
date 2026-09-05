@@ -1206,10 +1206,24 @@ class V4AlphaGenerationTests(unittest.TestCase):
             },
             "candidate": object(),
         }
+        payout_leader = {
+            "params": {
+                **leader["params"],
+                "trend": 336,
+            },
+            "candidate": object(),
+        }
         rows = _frontier_day_brake_mutations(
-            {"p": {"balanced": leader, "conservative": leader}}
+            {
+                "p": {
+                    "balanced": leader,
+                    "conservative": leader,
+                    "max_payout_efficiency": payout_leader,
+                }
+            }
         )
-        self.assertEqual(len(rows), 4)
+        # Two distinct frontier parameter sets x the fixed 2x2 brake grid.
+        self.assertEqual(len(rows), 8)
         self.assertEqual(
             {x["day_profit_cap"] for x in rows},
             {0.010, 0.015},
