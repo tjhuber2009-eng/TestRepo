@@ -102,6 +102,8 @@ def main() -> int:
         "window_start": start.astimezone(timezone.utc).isoformat(),
         "as_of": as_of.astimezone(timezone.utc).isoformat(),
         "window_days": int(spec["ranking"]["primary_window_days"]),
+        "paper_account_usd": float(spec["risk"]["paper_account_usd"]),
+        "position_sizing": "exact_observed_fixed_cash_no_hidden_compounding",
         "audit_override": marker is None,
         "lanes": [safe_row(row) for row in rows],
     }
