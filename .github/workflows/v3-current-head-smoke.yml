@@ -1,4 +1,5 @@
 name: V3 current-head smoke
+# rerun: dashboard syntax fixed
 
 on:
   push:
