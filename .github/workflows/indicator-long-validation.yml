@@ -1,4 +1,4 @@
-name: Indicator TQQQ IBS Combo
+name: Indicator Cash Enhanced Frontier
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run TQQQ IBS diversification test
-        run: python indicator_validation/run_tqqq_combo.py
+      - name: Run cash-enhanced frontier
+        run: python indicator_validation/run_cash_enhanced.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_tqqq_combo.py indicator_validation/output_tqqq_combo/* > indicator_validation/SHA256SUMS_TQQQ_COMBO.txt
+        run: sha256sum indicator_validation/run_cash_enhanced.py indicator_validation/output_cash_enhanced/* > indicator_validation/SHA256SUMS_CASH_ENHANCED.txt
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-tqqq-combo
+          name: indicator-cash-enhanced-frontier
           path: |
-            indicator_validation/output_tqqq_combo/
-            indicator_validation/SHA256SUMS_TQQQ_COMBO.txt
+            indicator_validation/output_cash_enhanced/
+            indicator_validation/SHA256SUMS_CASH_ENHANCED.txt
           if-no-files-found: error
           retention-days: 7
