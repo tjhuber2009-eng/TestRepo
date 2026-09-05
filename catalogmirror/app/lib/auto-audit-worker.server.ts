@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import os from "node:os";
+import { Prisma } from "@prisma/client";
 import db from "../db.server";
 import { unauthenticated } from "../shopify.server";
 import {
@@ -73,33 +74,25 @@ function autoAuditProductLimit() {
 async function claimTask(): Promise<ClaimedTask | null> {
   const now = new Date();
   const lockedUntil = new Date(now.getTime() + TASK_LOCK_MS);
-  const sql = [
-    'WITH candidate AS (',
-    '  SELECT "id"',
-    '  FROM "AuditTask"',
-    '  WHERE "availableAt" <= $1',
-    '    AND ("lockedUntil" IS NULL OR "lockedUntil" < $2)',
-    '  ORDER BY "availableAt" ASC, "createdAt" ASC',
-    '  FOR UPDATE SKIP LOCKED',
-    '  LIMIT 1',
-    ')',
-    'UPDATE "AuditTask" AS task',
-    'SET "lockedBy" = $3,',
-    '    "lockedUntil" = $4,',
-    '    "attempts" = task."attempts" + 1,',
-    '    "updatedAt" = CURRENT_TIMESTAMP',
-    'FROM candidate',
-    'WHERE task."id" = candidate."id"',
-    'RETURNING task.*',
-  ].join("\n");
-
-  const rows = await db.$queryRawUnsafe<ClaimedTask[]>(
-    sql,
-    now,
-    now,
-    WORKER_ID,
-    lockedUntil,
-  );
+  const rows = await db.$queryRaw<ClaimedTask[]>(Prisma.sql`
+    WITH candidate AS (
+      SELECT "id"
+      FROM "AuditTask"
+      WHERE "availableAt" <= ${now}
+        AND ("lockedUntil" IS NULL OR "lockedUntil" < ${now})
+      ORDER BY "availableAt" ASC, "createdAt" ASC
+      FOR UPDATE SKIP LOCKED
+      LIMIT 1
+    )
+    UPDATE "AuditTask" AS task
+    SET "lockedBy" = ${WORKER_ID},
+        "lockedUntil" = ${lockedUntil},
+        "attempts" = task."attempts" + 1,
+        "updatedAt" = CURRENT_TIMESTAMP
+    FROM candidate
+    WHERE task."id" = candidate."id"
+    RETURNING task.*
+  `);
 
   return rows[0] ?? null;
 }
