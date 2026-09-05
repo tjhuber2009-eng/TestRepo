@@ -161,6 +161,9 @@
     "preflight_clock_max_abs_offset_seconds": 1.5,
     "preflight_clob_time_max_rtt_seconds": 2,
     "preflight_rtds_max_source_to_host_lag_seconds": 5,
-    "freeze_verify_interval_seconds": 30
+    "freeze_verify_interval_seconds": 30,
+    "preflight_weather_min_members_per_model": 20,
+    "preflight_rtds_timeout_seconds": 20,
+    "preflight_btc_market_timeout_seconds": 15
   }
 }
