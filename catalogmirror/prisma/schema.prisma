@@ -98,9 +98,14 @@ model ShopAuditState {
   lastWebhookTopic String?
   lastWebhookAt     DateTime?
   lastAuditAt       DateTime?
-  lastAutoAuditAt   DateTime?
-  lastAutoAuditError String?
-  updatedAt         DateTime @updatedAt
+  lastAutoAuditAt              DateTime?
+  lastAutoAuditError           String?
+  lastReconciliationAt         DateTime?
+  lastReconciliationError      String?
+  reconciliationBulkOperationId String?
+  reconciliationCutoffAt       DateTime?
+  reconciliationDiscovered     Int      @default(0)
+  updatedAt                    DateTime @updatedAt
 }
 
 model AuditLease {
@@ -116,6 +121,7 @@ model AuditTask {
   resourceType String
   resourceId   String
   reason       String
+  priority     Int      @default(50)
   generation   Int      @default(1)
   attempts     Int      @default(0)
   availableAt  DateTime
@@ -126,6 +132,6 @@ model AuditTask {
   updatedAt    DateTime @updatedAt
 
   @@unique([shop, resourceType, resourceId])
-  @@index([availableAt, lockedUntil])
-  @@index([shop, availableAt])
+  @@index([priority, availableAt, lockedUntil])
+  @@index([shop, priority, availableAt])
 }
