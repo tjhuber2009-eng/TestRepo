@@ -119,3 +119,8 @@ def test_fee_enabled_quote_treats_budget_as_all_in_cash():
     assert quote.spent_usd < 5.0
     assert quote.fee_usd > 0.0
     assert math.isclose(quote.spent_usd + quote.fee_usd, 5.0)
+
+
+def test_server_time_adapter_validates_positive_timestamp(monkeypatch):
+    monkeypatch.setattr(pm, "_get_json", lambda _: 1788620000)
+    assert pm.get_server_time() == 1788620000.0
