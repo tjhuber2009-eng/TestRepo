@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from v4.account_profiles import FTMO_1STEP, FTMO_2STEP
+from v4.account_profiles import FTMO_1STEP, FTMO_2STEP, PropStageRule
 from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, pareto_frontier
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
@@ -17,7 +17,7 @@ from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
-from v4.prop_firm_engine import daily_adverse_proxy, optimize_prop_exposure, simulate_stage
+from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
@@ -378,6 +378,8 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(FTMO_2STEP.challenge.max_loss_pct, 10.0)
         self.assertEqual(FTMO_1STEP.challenge.max_daily_loss_pct, 3.0)
         self.assertTrue(FTMO_1STEP.challenge.trailing_max_loss)
+        self.assertEqual(FTMO_1STEP.challenge.best_day_rule_pct, 50.0)
+        self.assertEqual(FTMO_1STEP.funded.best_day_rule_pct, 50.0)
 
     def test_prop_stage_rewards_lower_risk_when_daily_limit_is_tight(self):
         rng = np.random.default_rng(77)
@@ -395,14 +397,66 @@ class V4AlphaGenerationTests(unittest.TestCase):
             seed=12,
         )
         self.assertIsNotNone(result.selected)
-        self.assertGreaterEqual(result.selected.exposure_scale, 0.25)
-        self.assertLessEqual(result.selected.exposure_scale, 1.0)
+        self.assertGreaterEqual(result.selected.challenge_exposure_scale, 0.25)
+        self.assertLessEqual(result.selected.challenge_exposure_scale, 1.0)
+        self.assertGreaterEqual(result.selected.funded_exposure_scale, 0.25)
+        self.assertLessEqual(result.selected.funded_exposure_scale, 1.0)
         self.assertGreaterEqual(
             result.selected.combined_evaluation_pass_probability, 0.0
         )
         self.assertLessEqual(
             result.selected.combined_evaluation_pass_probability, 1.0
         )
+
+    def test_ftmo_daily_loss_subtracts_fixed_initial_capital_amount(self):
+        rule = PropStageRule(
+            id="test",
+            profit_target_pct=50.0,
+            max_daily_loss_pct=5.0,
+            max_loss_pct=20.0,
+            analysis_horizon_days=2,
+        )
+        status, days, reason = _simulate_one_stage(
+            np.array([0.10, 0.0]),
+            np.array([0.0, -0.046]),
+            np.array([True, True]),
+            rule,
+        )
+        self.assertEqual(status, "fail")
+        self.assertEqual(days, 2)
+        self.assertEqual(reason, "daily_loss")
+
+    def test_ftmo_one_step_best_day_rule_delays_passing(self):
+        rule = PropStageRule(
+            id="one_step_test",
+            profit_target_pct=10.0,
+            max_daily_loss_pct=3.0,
+            max_loss_pct=10.0,
+            trailing_max_loss=True,
+            best_day_rule_pct=50.0,
+            analysis_horizon_days=3,
+        )
+        status, days, reason = _simulate_one_stage(
+            np.array([0.06, 0.04, 0.02]),
+            np.array([-0.005, -0.005, -0.005]),
+            np.array([True, True, True]),
+            rule,
+        )
+        self.assertEqual(status, "pass")
+        self.assertEqual(days, 3)
+        self.assertIsNone(reason)
+
+    def test_prop_trading_days_count_new_openings_not_days_held(self):
+        idx = pd.date_range("2020-01-01", periods=6, freq="D")
+        weights = pd.DataFrame(
+            {"A": [0.0, 1.0, 1.0, 1.0, 0.0, 1.0]},
+            index=idx,
+        )
+        opened = active_day_proxy(weights)
+        self.assertEqual(int(opened.sum()), 2)
+        self.assertTrue(opened.iloc[1])
+        self.assertTrue(opened.iloc[5])
+        self.assertFalse(opened.iloc[2])
 
     def test_prop_daily_adverse_proxy_uses_low_for_long_positions(self):
         idx = pd.date_range("2020-01-01", periods=4, freq="D")
