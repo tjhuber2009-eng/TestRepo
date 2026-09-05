@@ -3,6 +3,7 @@ import { lookup } from "node:dns/promises";
 import db from "../db.server";
 import {
   adminPriceToCents,
+  buildAjaxCartUrl,
   buildAjaxProductUrl,
   expectedAvailable,
   fingerprintIdentity,
@@ -63,6 +64,8 @@ type ProductConnectionData = { nodes: AdminProduct[]; pageInfo: PageInfo };
 type VariantConnectionData = { nodes: AdminVariant[]; pageInfo: PageInfo };
 type ProductsQueryData = { products: ProductConnectionData };
 type VariantsQueryData = { product: { variants: VariantConnectionData } | null };
+type ShopContextData = { shop: { currencyCode: string } };
+type StorefrontCurrencyCache = Map<string, Promise<string>>;
 
 type GraphqlError = { message?: string; extensions?: { code?: string } };
 type GraphqlEnvelope<T> = {
@@ -77,6 +80,12 @@ type GraphqlEnvelope<T> = {
     };
   };
 };
+
+const SHOP_CONTEXT_QUERY = `#graphql
+  query CatalogMirrorShopContext {
+    shop { currencyCode }
+  }
+`;
 
 const PRODUCTS_QUERY = `#graphql
   query CatalogMirrorProducts($first: Int!, $after: String) {
@@ -328,7 +337,44 @@ async function readStorefrontProduct(response: Response) {
   return parsed as StorefrontProduct;
 }
 
-async function auditProduct(admin: AdminClient, product: AdminProduct): Promise<ProductAuditResult> {
+async function getPresentmentCurrency(
+  onlineStoreUrl: string,
+  cache: StorefrontCurrencyCache,
+) {
+  const cartUrl = buildAjaxCartUrl(onlineStoreUrl);
+  const key = cartUrl.toString();
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const pending = (async () => {
+    const response = await fetchStorefront(cartUrl);
+    if (!response.ok) throw new Error(`Storefront cart currency request returned HTTP ${response.status}`);
+
+    const declaredLength = Number(response.headers.get("content-length") || 0);
+    if (declaredLength > 1024 * 1024) throw new Error("Storefront cart payload is unexpectedly large");
+
+    const text = await response.text();
+    if (Buffer.byteLength(text, "utf8") > 1024 * 1024) {
+      throw new Error("Storefront cart payload exceeded the safety limit");
+    }
+
+    const body = JSON.parse(text) as { currency?: unknown };
+    if (typeof body.currency !== "string" || !/^[A-Z]{3,4}$/i.test(body.currency)) {
+      throw new Error("Storefront cart response did not include a valid currency");
+    }
+    return body.currency.toUpperCase();
+  })();
+
+  cache.set(key, pending);
+  return pending;
+}
+
+async function auditProduct(
+  admin: AdminClient,
+  product: AdminProduct,
+  shopCurrency: string,
+  currencyCache: StorefrontCurrencyCache,
+): Promise<ProductAuditResult> {
   if (product.status !== "ACTIVE") {
     return { product, findings: [], canReconcile: true, audited: false };
   }
@@ -473,6 +519,38 @@ async function auditProduct(admin: AdminClient, product: AdminProduct): Promise<
 
   const findings: Finding[] = [];
   let canReconcile = !variantsResult.coverageLimited;
+  let priceComparable = true;
+
+  try {
+    const presentmentCurrency = await getPresentmentCurrency(product.onlineStoreUrl, currencyCache);
+    if (presentmentCurrency !== shopCurrency) {
+      priceComparable = false;
+      canReconcile = false;
+      findings.push({
+        productId: product.id,
+        productTitle: product.title,
+        handle: product.handle,
+        kind: "PRICE_PRESENTMENT_CURRENCY",
+        severity: "INFO",
+        expectedValue: shopCurrency,
+        observedValue: presentmentCurrency,
+        detail: "Price parity is skipped because the public storefront is serving a different presentment currency than Shopify Admin.",
+      });
+    }
+  } catch (error) {
+    priceComparable = false;
+    canReconcile = false;
+    findings.push({
+      productId: product.id,
+      productTitle: product.title,
+      handle: product.handle,
+      kind: "PRICE_CURRENCY_UNVERIFIED",
+      severity: "WARNING",
+      expectedValue: shopCurrency,
+      observedValue: "unknown",
+      detail: truncate(error instanceof Error ? error.message : String(error)),
+    });
+  }
 
   if (variantsResult.coverageLimited) {
     findings.push({
@@ -555,35 +633,37 @@ async function auditProduct(admin: AdminClient, product: AdminProduct): Promise<
 
     matchedStorefrontIds.add(String(storefrontVariant.id));
 
-    const adminCents = adminPriceToCents(adminVariant.price);
-    const storefrontCents = Number(storefrontVariant.price);
-    if (adminCents === null || !Number.isFinite(storefrontCents)) {
-      canReconcile = false;
-      findings.push({
-        productId: product.id,
-        productTitle: product.title,
-        handle: product.handle,
-        variantId: adminVariant.id,
-        variantTitle: adminVariant.title,
-        sku: adminVariant.sku,
-        kind: "INVALID_PRICE_DATA",
-        severity: "WARNING",
-        expectedValue: adminVariant.price,
-        observedValue: String(storefrontVariant.price),
-      });
-    } else if (adminCents !== storefrontCents) {
-      findings.push({
-        productId: product.id,
-        productTitle: product.title,
-        handle: product.handle,
-        variantId: adminVariant.id,
-        variantTitle: adminVariant.title,
-        sku: adminVariant.sku,
-        kind: "PRICE_MISMATCH",
-        severity: "CRITICAL",
-        expectedValue: `$${(adminCents / 100).toFixed(2)}`,
-        observedValue: `$${(storefrontCents / 100).toFixed(2)}`,
-      });
+    if (priceComparable) {
+      const adminCents = adminPriceToCents(adminVariant.price);
+      const storefrontCents = Number(storefrontVariant.price);
+      if (adminCents === null || !Number.isFinite(storefrontCents)) {
+        canReconcile = false;
+        findings.push({
+          productId: product.id,
+          productTitle: product.title,
+          handle: product.handle,
+          variantId: adminVariant.id,
+          variantTitle: adminVariant.title,
+          sku: adminVariant.sku,
+          kind: "INVALID_PRICE_DATA",
+          severity: "WARNING",
+          expectedValue: adminVariant.price,
+          observedValue: String(storefrontVariant.price),
+        });
+      } else if (adminCents !== storefrontCents) {
+        findings.push({
+          productId: product.id,
+          productTitle: product.title,
+          handle: product.handle,
+          variantId: adminVariant.id,
+          variantTitle: adminVariant.title,
+          sku: adminVariant.sku,
+          kind: "PRICE_MISMATCH",
+          severity: "CRITICAL",
+          expectedValue: `${(adminCents / 100).toFixed(2)}`,
+          observedValue: `${(storefrontCents / 100).toFixed(2)}`,
+        });
+      }
     }
 
     const expected = expectedAvailable(adminVariant);
@@ -685,8 +765,20 @@ export async function runCatalogAudit(args: {
   });
 
   try {
+    const shopContext: ShopContextData = await adminQuery<ShopContextData>(
+      args.admin,
+      SHOP_CONTEXT_QUERY,
+      {},
+    );
+    const shopCurrency = shopContext.shop.currencyCode.toUpperCase();
+    const currencyCache: StorefrontCurrencyCache = new Map();
+
     const { products, hasMore } = await loadProducts(args.admin, limit);
-    const results = await mapWithConcurrency(products, getAuditConcurrency(), (product) => auditProduct(args.admin, product));
+    const results = await mapWithConcurrency(
+      products,
+      getAuditConcurrency(),
+      (product) => auditProduct(args.admin, product, shopCurrency, currencyCache),
+    );
 
     const currentFingerprints = new Set<string>();
     const reconcilableProductIds = new Set<string>();
