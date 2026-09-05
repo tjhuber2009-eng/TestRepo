@@ -21,15 +21,19 @@ The frozen V1 comparison is designed to answer one question:
    - Resolve against the market's stated NOAA/NWS station/rules.
 
 2. **Crypto TWAP dislocation — taker baseline**
-   - Current Up/Down rules resolve from Chainlink TWAP, not the last spot print.
-   - Frozen V1 probability model is deliberately simple: a diffusion benchmark based
-     on the starting TWAP, current proxy price, realized volatility, and time remaining.
-   - The strategy must beat the executable ask **after the crypto taker fee**.
+   - BTC/USD only in V1. The market must explicitly resolve from Chainlink's 60-second TWAP.
+   - Capture the strike from the first official `crypto_prices_twap_sixty` tick at/after
+     the 5-minute boundary. If it arrives more than 3 seconds late, skip that market.
+   - Evaluate exactly once at **120 seconds remaining** (maximum 3-second checkpoint lag).
+   - Estimate short-horizon diffusion from the prior 120 seconds of raw Chainlink updates.
+   - Model the distribution of the **final 60-second average**, not a future spot close.
+   - The strategy must beat the executable ask by at least 4 percentage points **after fee**.
 
 3. **Late-resolution crypto**
-   - Same TWAP-aware model.
-   - Only signals with <=60 seconds remaining, fair probability >=92%, and at least
-     2.5 percentage points of after-fee edge.
+   - Separate, non-overlapping checkpoint: evaluate exactly once at **30 seconds remaining**.
+   - Half of the final 60-second averaging interval is then already observed; the model uses
+     that known time-weighted segment and only assigns uncertainty to the remaining half.
+   - Require fair probability >=92% and at least 2.5 percentage points of after-fee edge.
 
 4. **Favorite/longshot calibration — shadow**
    - No look-ahead calibration.
@@ -84,11 +88,13 @@ The V1 code has public adapters for:
 
 - Polymarket Gamma API
 - Polymarket CLOB order books
+- Polymarket RTDS raw Chainlink and exact 60-second TWAP (`full_accuracy_value`, E18)
 - Open-Meteo ensemble forecasts
 
 NOAA/NWS should be treated as the settlement reference when the market rules specify
 a NOAA/NWS station. Current crypto Up/Down markets must be audited against their
-stated Chainlink TWAP resolution source.
+stated Chainlink TWAP resolution source. V1 never substitutes Binance, Coinbase, or a
+last-trade print for a missing official TWAP strike.
 
 ## Run tests
 
