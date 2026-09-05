@@ -15,6 +15,7 @@ import {
   type AutoAuditResourceType,
 } from "./auto-audit-core";
 import { syncPendingAuditCount } from "./auto-audit-queue.server";
+import { processReconciliationTask } from "./reconciliation.server";
 
 type ClaimedTask = {
   id: string;
@@ -22,6 +23,7 @@ type ClaimedTask = {
   resourceType: string;
   resourceId: string;
   reason: string;
+  priority: number;
   generation: number;
   attempts: number;
   availableAt: Date;
@@ -80,7 +82,7 @@ async function claimTask(): Promise<ClaimedTask | null> {
       FROM "AuditTask"
       WHERE "availableAt" <= ${now}
         AND ("lockedUntil" IS NULL OR "lockedUntil" < ${now})
-      ORDER BY "availableAt" ASC, "createdAt" ASC
+      ORDER BY "priority" DESC, "availableAt" ASC, "createdAt" ASC
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )
@@ -136,9 +138,10 @@ async function resolveTaskProducts(
   admin: AdminClient,
 ) {
   const type = task.resourceType as AutoAuditResourceType;
-  if (type === "PRODUCT") return [task.resourceId];
+  if (type === "PRODUCT" || type === "RECONCILE_PRODUCT") return [task.resourceId];
   if (type === "INVENTORY_ITEM") return productIdsForInventoryItem(admin, task.resourceId);
   if (type === "SHOP") return null;
+  if (type === "RECONCILE") return null;
   throw new Error("Unsupported automatic audit resource type: " + task.resourceType);
 }
 
@@ -191,6 +194,29 @@ async function completeTask(task: ClaimedTask) {
   await syncPendingAuditCount(task.shop);
 }
 
+async function deferTask(task: ClaimedTask, delayMs: number) {
+  const updated = await db.auditTask.updateMany({
+    where: {
+      id: task.id,
+      generation: task.generation,
+      lockedBy: WORKER_ID,
+    },
+    data: {
+      lockedBy: null,
+      lockedUntil: null,
+      availableAt: new Date(Date.now() + Math.max(1000, delayMs)),
+      lastError: null,
+    },
+  });
+
+  if (updated.count === 0) {
+    await db.auditTask.updateMany({
+      where: { id: task.id, lockedBy: WORKER_ID },
+      data: { lockedBy: null, lockedUntil: null },
+    });
+  }
+}
+
 async function failTask(task: ClaimedTask, error: unknown) {
   const message = truncate(error instanceof Error ? error.message : String(error));
   const auditBusy = error instanceof AuditInProgressError;
@@ -230,6 +256,18 @@ async function processTask(task: ClaimedTask) {
   const heartbeat = startTaskHeartbeat(task);
   try {
     const { admin } = await unauthenticated.admin(task.shop);
+    const type = task.resourceType as AutoAuditResourceType;
+
+    if (type === "RECONCILE") {
+      const reconciliation = await processReconciliationTask(admin, task.shop);
+      if (reconciliation.kind === "defer") {
+        await deferTask(task, reconciliation.delayMs);
+        return;
+      }
+      await completeTask(task);
+      return;
+    }
+
     const productIds = await resolveTaskProducts(task, admin);
 
     if (productIds && productIds.length === 0) {
@@ -237,7 +275,6 @@ async function processTask(task: ClaimedTask) {
       return;
     }
 
-    const type = task.resourceType as AutoAuditResourceType;
     await runCatalogAudit({
       admin,
       shop: task.shop,
