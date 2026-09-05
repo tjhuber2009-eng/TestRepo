@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 MONTHS = {
     name.lower(): index
@@ -58,4 +58,24 @@ def is_temperature_event(event: dict) -> bool:
     return (
         "highest temperature in " in title
         or "lowest temperature in " in title
+    )
+
+
+def target_date_in_scan_window(
+    target: date,
+    *,
+    now_utc: datetime,
+    backward_days: int = 1,
+    forward_days: int = 8,
+) -> bool:
+    """Broad UTC guard for station-local event dates worldwide."""
+    if now_utc.tzinfo is None:
+        raise ValueError("now_utc must be timezone-aware")
+    if backward_days < 0 or forward_days < 0:
+        raise ValueError("scan window days must be non-negative")
+    utc_date = now_utc.astimezone(timezone.utc).date()
+    return (
+        utc_date - timedelta(days=backward_days)
+        <= target
+        <= utc_date + timedelta(days=forward_days)
     )
