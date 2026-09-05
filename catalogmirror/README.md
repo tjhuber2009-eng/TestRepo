@@ -13,6 +13,7 @@ CatalogMirror is a read-only Shopify catalog integrity monitor. It compares Shop
 - Retry/backoff for storefront 429/502/503/504 responses.
 - Products with no `onlineStoreUrl` are `EXPECTED_EXCLUSION`, not false failures.
 - Railway Docker deployment and `/health` endpoint included.
+- GitHub Actions validates type generation, TypeScript, and the production build for CatalogMirror changes.
 
 ## One-time setup against the existing CatalogMirror app
 
