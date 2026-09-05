@@ -338,6 +338,71 @@ def benchmark_metrics(price_df, start, end):
     }
 
 
+def benchmark_relative_metrics(equity, price_df, start, end):
+    """Report-only zero-rate benchmark-relative return diagnostics."""
+    empty = {
+        "benchmark_beta": None,
+        "alpha_annualized_pct_zero_rf": None,
+        "benchmark_correlation": None,
+        "tracking_error_ann_pct": None,
+        "information_ratio": None,
+        "benchmark_relative_observations": 0,
+    }
+    if price_df is None or "Close" not in price_df.columns:
+        return empty
+
+    eq = equity.astype(float).copy()
+    eq.index = pd.to_datetime(eq.index, utc=True)
+    a = to_utc_timestamp(start)
+    b = to_utc_timestamp(end, end=True)
+    eq = eq.loc[(eq.index >= a) & (eq.index <= b)]
+
+    close = pd.to_numeric(price_df["Close"], errors="coerce").copy()
+    close.index = pd.to_datetime(close.index, utc=True)
+    close = close.loc[(close.index >= a) & (close.index <= b)]
+
+    pair = pd.concat(
+        [
+            eq.pct_change().rename("strategy"),
+            close.pct_change().rename("benchmark"),
+        ],
+        axis=1,
+        join="inner",
+    ).replace([np.inf, -np.inf], np.nan).dropna()
+
+    if len(pair) < 3:
+        return empty
+
+    s = pair["strategy"].to_numpy(dtype=float)
+    m = pair["benchmark"].to_numpy(dtype=float)
+    var_m = float(np.var(m, ddof=0))
+    sd_s = float(np.std(s, ddof=0))
+    sd_m = float(np.std(m, ddof=0))
+    if var_m <= 0 or sd_s <= 0 or sd_m <= 0:
+        return {**empty, "benchmark_relative_observations": int(len(pair))}
+
+    beta = float(np.mean((s - np.mean(s)) * (m - np.mean(m))) / var_m)
+    alpha_period = float(np.mean(s) - beta * np.mean(m))
+    corr = float(np.corrcoef(s, m)[0, 1])
+    active = s - m
+    active_sd = float(np.std(active, ddof=0))
+    tracking_error = active_sd * math.sqrt(BARS_PER_YEAR)
+    information_ratio = (
+        float(np.mean(active) / active_sd * math.sqrt(BARS_PER_YEAR))
+        if active_sd > 0 else 0.0
+    )
+    return {
+        "benchmark_beta": round(beta, 4),
+        "alpha_annualized_pct_zero_rf": round(
+            alpha_period * BARS_PER_YEAR * 100.0, 3
+        ),
+        "benchmark_correlation": round(corr, 4),
+        "tracking_error_ann_pct": round(tracking_error * 100.0, 3),
+        "information_ratio": round(information_ratio, 4),
+        "benchmark_relative_observations": int(len(pair)),
+    }
+
+
 def metrics_from_stats(stats, start, end, price_df=None):
     eq = slice_equity(stats, start, end)
     if len(eq) < 2:
@@ -395,6 +460,7 @@ def metrics_from_stats(stats, start, end, price_df=None):
     )
     psr = probabilistic_sharpe_ratio(rets.to_numpy(dtype=float), 0.0)
     bench = benchmark_metrics(price_df, start, end)
+    relative = benchmark_relative_metrics(eq, price_df, start, end)
 
     return {
         "raw_k": round(float(raw_k), 6) if np.isfinite(raw_k) else float("-inf"),
@@ -431,6 +497,7 @@ def metrics_from_stats(stats, start, end, price_df=None):
         "sharpe_minus_buyhold": round(
             float(sharpe - bench["benchmark_sharpe"]), 4
         ),
+        **relative,
         **bench,
         "bars": int(len(eq)),
     }
