@@ -3,10 +3,13 @@ from datetime import datetime, timezone
 
 import pytest
 
+import tournament.freeze as freeze_module
 from tournament.freeze import (
     create_forward_marker,
     implementation_hash,
     require_forward_started,
+    runtime_fingerprint,
+    runtime_hash,
 )
 
 
@@ -103,3 +106,39 @@ def test_implementation_hash_tracks_live_service_unit(tmp_path):
         encoding="utf-8",
     )
     assert implementation_hash(root) != before
+
+
+def test_runtime_hash_ignores_python_patch_but_records_it(monkeypatch):
+    monkeypatch.setattr(
+        freeze_module.platform,
+        "python_version",
+        lambda: "3.12.1",
+    )
+    first = runtime_hash()
+
+    monkeypatch.setattr(
+        freeze_module.platform,
+        "python_version",
+        lambda: "3.12.99",
+    )
+    second = runtime_hash()
+    audit = runtime_fingerprint()
+
+    assert first == second
+    assert audit["python_major_minor"] == "3.12"
+    assert audit["python_version_full"] == "3.12.99"
+
+
+def test_runtime_hash_changes_with_python_minor(monkeypatch):
+    monkeypatch.setattr(
+        freeze_module.platform,
+        "python_version",
+        lambda: "3.12.14",
+    )
+    first = runtime_hash()
+    monkeypatch.setattr(
+        freeze_module.platform,
+        "python_version",
+        lambda: "3.13.1",
+    )
+    assert runtime_hash() != first
