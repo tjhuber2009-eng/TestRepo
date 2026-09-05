@@ -5,6 +5,7 @@ import pytest
 from tournament.models import Signal
 from tournament.scoring import settle_binary_signal
 from tournament.settlement import (
+    read_jsonl,
     resolve_signal,
     signal_from_json,
     terminal_outcome,
@@ -138,3 +139,20 @@ def test_signal_from_json_rejects_missing_observation_time():
                 "order_mode": "taker",
             }
         )
+
+
+def test_read_jsonl_fails_closed_on_malformed_row(tmp_path):
+    path = tmp_path / "signals.jsonl"
+    path.write_text(
+        '{"kind":"signal"}\n{"broken":\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="malformed JSONL"):
+        read_jsonl(path)
+
+
+def test_read_jsonl_rejects_non_object_row(tmp_path):
+    path = tmp_path / "signals.jsonl"
+    path.write_text('["not","an","object"]\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="non-object JSONL"):
+        read_jsonl(path)
