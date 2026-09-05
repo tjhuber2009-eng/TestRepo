@@ -214,6 +214,10 @@ def weather_signal_from_market(
         )
     requested_tokens = [tokens["YES"], tokens["NO"]]
     batch = get_books(requested_tokens)
+    if len(batch) != len(requested_tokens):
+        raise LookupError(
+            "batch weather books returned duplicate/extra rows"
+        )
     by_asset = {
         str(book.get("asset_id") or ""): book
         for book in batch
