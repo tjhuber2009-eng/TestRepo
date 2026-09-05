@@ -1106,14 +1106,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
 
         # FTMO has no maximum evaluation duration. The 252-day broad
         # search horizon is therefore a computational screen, not a firm
-        # timeout. Re-evaluate the risk-relevant frontier leaders at longer
-        # research horizons to expose timeout/failure trade-offs explicitly.
+        # timeout. Re-evaluate every refined frontier at longer research
+        # horizons so the persisted state is complete and comparable.
         horizon_sensitivity = {}
-        for view_name in (
-            "max_evaluation_pass",
-            "balanced",
-            "conservative",
-        ):
+        for view_name in view_names:
             leader = leaders[program.id][view_name]
             if leader is None:
                 horizon_sensitivity[view_name] = None
