@@ -3,12 +3,40 @@ import { ApiVersion, AppDistribution, shopifyApp } from "@shopify/shopify-app-re
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
 
+function requiredEnv(name: string) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
+  return value;
+}
+
+const apiKey = requiredEnv("SHOPIFY_API_KEY");
+const apiSecretKey = requiredEnv("SHOPIFY_API_SECRET");
+const appUrl = requiredEnv("SHOPIFY_APP_URL");
+const parsedAppUrl = new URL(appUrl);
+
+if (process.env.NODE_ENV === "production" && parsedAppUrl.protocol !== "https:") {
+  throw new Error("SHOPIFY_APP_URL must use HTTPS in production");
+}
+
+const scopes = (process.env.SCOPES || "read_products,read_inventory")
+  .split(",")
+  .map((scope) => scope.trim())
+  .filter(Boolean);
+
+for (const required of ["read_products", "read_inventory"]) {
+  if (!scopes.includes(required)) throw new Error(`CatalogMirror requires the ${required} scope`);
+}
+
+if (scopes.some((scope) => scope.startsWith("write_"))) {
+  throw new Error("CatalogMirror is read-only and must not request write scopes");
+}
+
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiKey,
+  apiSecretKey,
   apiVersion: ApiVersion.July26,
-  scopes: (process.env.SCOPES || "read_products,read_inventory").split(","),
-  appUrl: process.env.SHOPIFY_APP_URL || "",
+  scopes,
+  appUrl,
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
