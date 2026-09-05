@@ -186,6 +186,30 @@ async def _leaderboard_loop(
         await asyncio.sleep(max(1.0, interval_seconds - elapsed))
 
 
+async def _freeze_guard_loop(
+    root: Path,
+    log_path: Path,
+    interval_seconds: float,
+) -> None:
+    """Terminate the service if frozen spec/code/runtime changes on disk."""
+    while True:
+        await asyncio.sleep(interval_seconds)
+        try:
+            require_forward_started(root)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            append_jsonl(
+                log_path,
+                {
+                    "kind": "service_freeze_mismatch",
+                    "observed_at": _now(),
+                    "error": f"{type(exc).__name__}:{exc}",
+                },
+            )
+            raise
+
+
 async def _crypto_supervisor(
     root: Path,
     log_path: Path,
@@ -261,6 +285,13 @@ async def run_service(root: Path) -> None:
     )
 
     tasks = [
+        asyncio.create_task(
+            _freeze_guard_loop(
+                root,
+                log_path,
+                float(service_cfg["freeze_verify_interval_seconds"]),
+            )
+        ),
         asyncio.create_task(
             _crypto_supervisor(
                 root,
