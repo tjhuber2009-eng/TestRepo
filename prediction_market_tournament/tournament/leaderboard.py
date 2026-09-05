@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterable
 
 from .models import ResolvedTrade, Signal
-from .replay import replay_resolved_trades
+from .replay import replay_forward_account
 from .scoring import summarize
 
 
@@ -18,10 +18,13 @@ class LaneLeaderboardRow:
     resolved_trades: int
     unresolved_signals: int
     admitted_trades: int
+    open_positions: int
     skipped_concurrency: int
     net_return: float
+    net_pnl_usd: float
     profit_factor: float
     capital_efficiency: float
+    peak_committed_usd: float
     max_drawdown: float
     brier_score: float
 
@@ -38,89 +41,79 @@ def build_equal_window_leaderboard(
     window_days: int = 30,
     risk_fraction: float = 0.10,
     max_concurrent_positions: int = 5,
+    paper_account_usd: float = 50.0,
 ) -> list[LaneLeaderboardRow]:
     if window_start.tzinfo is None:
-        raise ValueError(
-            "window_start must be timezone-aware"
-        )
+        raise ValueError("window_start must be timezone-aware")
     as_of = as_of or datetime.now(timezone.utc)
     if as_of.tzinfo is None:
         raise ValueError("as_of must be timezone-aware")
+    if paper_account_usd <= 0:
+        raise ValueError("paper_account_usd must be > 0")
 
-    hard_end = window_start + timedelta(
-        days=window_days
-    )
+    hard_end = window_start + timedelta(days=window_days)
     decision_end = min(as_of, hard_end)
     calendar_days = max(
         0.0,
-        (
-            decision_end - window_start
-        ).total_seconds()
-        / 86400.0,
+        (decision_end - window_start).total_seconds() / 86400.0,
     )
 
     sigs = [
-        s
-        for s in signals
-        if window_start
-        <= s.observed_at
-        < decision_end
+        signal
+        for signal in signals
+        if window_start <= signal.observed_at < decision_end
     ]
     rows = [
-        t
-        for t in trades
-        if window_start
-        <= t.signal.observed_at
-        < decision_end
+        trade
+        for trade in trades
+        if window_start <= trade.signal.observed_at < decision_end
     ]
     by_lane = sorted(
-        {s.lane for s in sigs}
-        | {t.signal.lane for t in rows}
+        {signal.lane for signal in sigs}
+        | {trade.signal.lane for trade in rows}
     )
     result: list[LaneLeaderboardRow] = []
 
     for lane in by_lane:
-        lane_sigs = [
-            s for s in sigs if s.lane == lane
-        ]
+        lane_sigs = [signal for signal in sigs if signal.lane == lane]
         lane_trades = [
-            t
-            for t in rows
+            trade
+            for trade in rows
             if (
-                t.signal.lane == lane
-                and t.resolved_at is not None
-                and t.resolved_at <= as_of
+                trade.signal.lane == lane
+                and trade.resolved_at is not None
+                and trade.resolved_at <= as_of
             )
         ]
         resolved_ids = {
-            t.signal.signal_id
-            for t in lane_trades
+            trade.signal.signal_id
+            for trade in lane_trades
         }
-        replay = replay_resolved_trades(
+
+        replay = replay_forward_account(
+            lane_sigs,
             lane_trades,
             risk_fraction=risk_fraction,
-            max_concurrent_positions=(
-                max_concurrent_positions
-            ),
+            max_concurrent_positions=max_concurrent_positions,
+            initial_equity=paper_account_usd,
+            as_of=as_of,
         )
-        admitted = set(
-            replay.admitted_signal_ids
-        )
+        admitted = set(replay.admitted_signal_ids)
         admitted_trades = [
-            t
-            for t in lane_trades
-            if t.signal.signal_id in admitted
+            trade
+            for trade in lane_trades
+            if trade.signal.signal_id in admitted
         ]
         metrics = summarize(
             admitted_trades,
             risk_fraction=risk_fraction,
         )
-        cap_eff = (
-            replay.net_return
-            / replay.peak_committed
+        capital_efficiency = (
+            replay.net_pnl / replay.peak_committed
             if replay.peak_committed
             else 0.0
         )
+
         result.append(
             LaneLeaderboardRow(
                 lane=lane,
@@ -128,33 +121,25 @@ def build_equal_window_leaderboard(
                 provisional=(
                     calendar_days < window_days
                     or len(lane_sigs) == 0
-                    or len(resolved_ids)
-                    < len(lane_sigs)
+                    or len(resolved_ids) < len(lane_sigs)
                 ),
                 signals=len(lane_sigs),
-                resolved_trades=len(
-                    lane_trades
-                ),
+                resolved_trades=len(lane_trades),
                 unresolved_signals=max(
                     0,
-                    len(lane_sigs)
-                    - len(resolved_ids),
+                    len(lane_sigs) - len(resolved_ids),
                 ),
-                admitted_trades=len(
-                    admitted_trades
-                ),
+                admitted_trades=len(admitted_trades),
+                open_positions=len(replay.open_signal_ids),
                 skipped_concurrency=len(
-                    replay
-                    .skipped_concurrency_signal_ids
+                    replay.skipped_concurrency_signal_ids
                 ),
                 net_return=replay.net_return,
-                profit_factor=(
-                    metrics.profit_factor
-                ),
-                capital_efficiency=cap_eff,
-                max_drawdown=(
-                    replay.max_drawdown
-                ),
+                net_pnl_usd=replay.net_pnl,
+                profit_factor=metrics.profit_factor,
+                capital_efficiency=capital_efficiency,
+                peak_committed_usd=replay.peak_committed,
+                max_drawdown=replay.max_drawdown,
                 brier_score=metrics.brier_score,
             )
         )
