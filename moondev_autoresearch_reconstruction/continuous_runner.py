@@ -659,6 +659,11 @@ def tournament_model_pool():
         return []
     if payload.get("protocol") != PROTOCOL:
         return []
+    # Never let an incomplete tournament steer adaptive research. Recovery
+    # workflows may publish provisional standings while a missing model is
+    # retried; model selection opens only after that ranking is finalized.
+    if payload.get("provisional"):
+        return []
     rows = payload.get("ranking", [])
     pool = []
     for row in rows:
