@@ -2,7 +2,7 @@
   "project": "prediction-market-tournament",
   "version": "PMT-FROZEN-V1",
   "frozen_at": "2026-09-05T01:40:00-07:00",
-  "pre_forward_refreeze_reason": "Final pre-start execution/model review completed before any forward data/start marker: exact book-level fees and identity, fee-inclusive all-in risk sizing, exact fixed-size account replay including unresolved exposure, two-sided equal-weight AIFS/IFS/GEFS weather probabilities, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
+  "pre_forward_refreeze_reason": "Final pre-start execution/model/source review completed before any forward data/start marker: current Wunderground station-rule parsing, exact book-level fees and identity, fee-inclusive all-in risk sizing, exact fixed-size account replay including unresolved exposure, two-sided equal-weight AIFS/IFS/GEFS weather probabilities, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
   "principles": {
     "paper_only": true,
     "real_money_execution_enabled": false,
@@ -48,7 +48,7 @@
       "status": "ACTIVE_FORWARD_CANDIDATE",
       "venue": "polymarket",
       "weather_source": "Open-Meteo individual-member ensembles",
-      "resolution_source": "exact market-named NOAA/NWS station",
+      "resolution_source": "market-specified Wunderground daily station history; station ID parsed from the frozen market rules",
       "fee_source": "live CLOB market-info fd",
       "execution_price": "full-stake book-level fill with integrated per-level fee curve",
       "min_edge": 0.05,
@@ -60,7 +60,8 @@
         "ncep_gefs025"
       ],
       "model_blend": "equal weight per model probability; all listed models required",
-      "binary_side_selection": "compare executable YES and NO after fees; choose higher edge"
+      "binary_side_selection": "compare executable YES and NO after fees; choose higher edge",
+      "forecast_day_boundary": "Open-Meteo timezone=auto at the resolution station coordinates, matching the station-local calendar day"
     },
     "crypto_twap_taker": {
       "mode": "taker",
