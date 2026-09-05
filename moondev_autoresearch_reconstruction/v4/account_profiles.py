@@ -24,7 +24,8 @@ class PropStageRule:
     max_loss_pct: float
     min_trading_days: int = 0
     trailing_max_loss: bool = False
-    horizon_days: int = 252
+    best_day_rule_pct: float | None = None
+    analysis_horizon_days: int = 252
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -66,7 +67,7 @@ FTMO_2STEP = PropFirmProgram(
         max_loss_pct=10.0,
         min_trading_days=4,
         trailing_max_loss=False,
-        horizon_days=252,
+        analysis_horizon_days=252,
     ),
     verification=PropStageRule(
         id="verification",
@@ -75,7 +76,7 @@ FTMO_2STEP = PropFirmProgram(
         max_loss_pct=10.0,
         min_trading_days=4,
         trailing_max_loss=False,
-        horizon_days=252,
+        analysis_horizon_days=252,
     ),
     funded=PropStageRule(
         id="funded",
@@ -84,7 +85,7 @@ FTMO_2STEP = PropFirmProgram(
         max_loss_pct=10.0,
         min_trading_days=0,
         trailing_max_loss=False,
-        horizon_days=252,
+        analysis_horizon_days=252,
     ),
     reward_share=0.80,
     first_reward_eligible_days=14,
@@ -102,7 +103,8 @@ FTMO_1STEP = PropFirmProgram(
         max_loss_pct=10.0,
         min_trading_days=0,
         trailing_max_loss=True,
-        horizon_days=252,
+        best_day_rule_pct=50.0,
+        analysis_horizon_days=252,
     ),
     verification=None,
     funded=PropStageRule(
@@ -112,7 +114,8 @@ FTMO_1STEP = PropFirmProgram(
         max_loss_pct=10.0,
         min_trading_days=0,
         trailing_max_loss=True,
-        horizon_days=252,
+        best_day_rule_pct=50.0,
+        analysis_horizon_days=252,
     ),
     reward_share=0.90,
     first_reward_eligible_days=14,
