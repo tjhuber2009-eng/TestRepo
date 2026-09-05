@@ -32,6 +32,7 @@ export async function enqueueAutoAuditTask(args: {
   topic: string;
   resourceType: AutoAuditResourceType;
   resourceId: string;
+  recordWebhook?: boolean;
 }) {
   const now = new Date();
   const availableAt = new Date(now.getTime() + autoAuditDebounceMs());
@@ -62,7 +63,11 @@ export async function enqueueAutoAuditTask(args: {
     },
   });
 
-  await syncPendingAuditCount(args.shop, { topic: args.topic, webhookAt: now });
+  if (args.recordWebhook === false) {
+    await syncPendingAuditCount(args.shop);
+  } else {
+    await syncPendingAuditCount(args.shop, { topic: args.topic, webhookAt: now });
+  }
 }
 
 export async function cancelAutoAuditTask(
