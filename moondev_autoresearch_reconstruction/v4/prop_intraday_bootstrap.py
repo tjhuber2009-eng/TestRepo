@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 import argparse
 import json
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -22,6 +23,18 @@ from .risk_overlays import volatility_target_overlay
 
 
 PRAGUE = "Europe/Prague"
+PROP_SCALES = tuple(np.round(np.arange(0.05, 1.01, 0.05), 2))
+
+
+def research_commit_sha() -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
 
 
 def read_hourly(path: Path) -> pd.DataFrame:
@@ -164,6 +177,68 @@ def aggregate_prague_days(
     )
 
 
+
+def aggregate_prague_days_scaled(
+    bar_returns: pd.Series,
+    bar_adverse: pd.Series,
+    weights: pd.DataFrame,
+    scales=PROP_SCALES,
+) -> tuple[
+    dict[float, pd.Series],
+    dict[float, pd.Series],
+    pd.Series,
+]:
+    """Apply each prop exposure scale before intraday/day compounding."""
+    idx = bar_returns.index
+    local_date = pd.Index(idx.tz_convert(PRAGUE).date, name="PragueDate")
+    groups = pd.Series(np.arange(len(idx)), index=idx).groupby(local_date)
+    opened_bar = active_day_proxy(weights).reindex(idx).fillna(False)
+    scales = tuple(float(x) for x in scales)
+
+    daily_r = {scale: {} for scale in scales}
+    daily_a = {scale: {} for scale in scales}
+    opened_day = {}
+
+    for day, positions in groups:
+        pos = positions.to_numpy(dtype=int)
+        opened_day[day] = bool(opened_bar.iloc[pos].any())
+        for scale in scales:
+            eq = 1.0
+            worst = 1.0
+            for i in pos:
+                worst = min(
+                    worst,
+                    eq * (1.0 + scale * float(bar_adverse.iloc[i])),
+                )
+                eq *= 1.0 + scale * float(bar_returns.iloc[i])
+            daily_r[scale][day] = eq - 1.0
+            daily_a[scale][day] = worst - 1.0
+
+    days = pd.to_datetime(list(opened_day.keys()))
+    returns = {
+        scale: pd.Series(
+            [daily_r[scale][day] for day in opened_day],
+            index=days,
+            name="return",
+        )
+        for scale in scales
+    }
+    adverse = {
+        scale: pd.Series(
+            [daily_a[scale][day] for day in opened_day],
+            index=days,
+            name="adverse",
+        )
+        for scale in scales
+    }
+    opened = pd.Series(
+        list(opened_day.values()),
+        index=days,
+        name="opened",
+    ).astype(bool)
+    return returns, adverse, opened
+
+
 def evaluate_strategy(data, params):
     """Build one causal hourly strategy path, reusable across prop programs."""
     symbols = tuple(sorted(data))
@@ -197,29 +272,54 @@ def evaluate_strategy(data, params):
         result.execution_weights,
         result.costs,
     ).reindex(result.returns.index)
+    aligned_weights = result.execution_weights.reindex(result.returns.index)
     daily_ret, daily_adv, opened = aggregate_prague_days(
         result.returns,
         bar_adverse,
-        result.execution_weights.reindex(result.returns.index),
+        aligned_weights,
     )
-    return result, daily_ret, daily_adv, opened
+    scaled_ret, scaled_adv, scaled_opened = aggregate_prague_days_scaled(
+        result.returns,
+        bar_adverse,
+        aligned_weights,
+        PROP_SCALES,
+    )
+    if not opened.equals(scaled_opened):
+        raise RuntimeError("scaled intraday aggregation changed trading-day flags")
+    return (
+        result,
+        daily_ret,
+        daily_adv,
+        opened,
+        scaled_ret,
+        scaled_adv,
+    )
 
 
 def evaluate_family(data, params, program, *, paths, seed):
-    result, daily_ret, daily_adv, opened = evaluate_strategy(data, params)
+    (
+        result,
+        daily_ret,
+        daily_adv,
+        opened,
+        scaled_ret,
+        scaled_adv,
+    ) = evaluate_strategy(data, params)
     prop = optimize_prop_exposure(
         daily_ret.to_numpy(dtype=float),
         daily_adv.to_numpy(dtype=float),
         opened.to_numpy(dtype=bool),
         program,
-        exposure_scales=tuple(np.round(np.arange(0.05, 1.01, 0.05), 2)),
+        exposure_scales=PROP_SCALES,
         paths=paths,
         block=10,
         seed=seed,
         input_precision=(
             "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
-            "prague_midnight_reset_daily_flat_policy"
+            "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
         ),
+        prescaled_returns_by_scale=scaled_ret,
+        prescaled_adverse_by_scale=scaled_adv,
     )
     return result, daily_ret, daily_adv, prop
 
@@ -290,23 +390,30 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     # daily return/adverse path. The same bootstrap seed is also reused across
     # parameter sets within a program to reduce Monte Carlo ranking noise.
     for i, params in enumerate(params_grid):
-        base, dret, dadv, opened = evaluate_strategy(data, params)
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
         for pidx, program in enumerate(programs):
             prop = optimize_prop_exposure(
                 dret.to_numpy(dtype=float),
                 dadv.to_numpy(dtype=float),
                 opened.to_numpy(dtype=bool),
                 program,
-                exposure_scales=tuple(
-                    np.round(np.arange(0.05, 1.01, 0.05), 2)
-                ),
+                exposure_scales=PROP_SCALES,
                 paths=400,
                 block=10,
                 seed=20261000 + pidx * 100000,
                 input_precision=(
                     "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
-                    "prague_midnight_reset_daily_flat_policy"
+                    "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
                 ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
             )
             sel = prop.selected
             rows_by_program[program.id].append({
@@ -357,22 +464,29 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             params = leader["params"]
             key = tuple(sorted(params.items()))
             if key not in refined_cache:
-                base, d_ret, d_adv, opened = evaluate_strategy(data, params)
+                (
+                    base,
+                    d_ret,
+                    d_adv,
+                    opened,
+                    scaled_ret,
+                    scaled_adv,
+                ) = evaluate_strategy(data, params)
                 final_prop = optimize_prop_exposure(
                     d_ret.to_numpy(dtype=float),
                     d_adv.to_numpy(dtype=float),
                     opened.to_numpy(dtype=bool),
                     program,
-                    exposure_scales=tuple(
-                        np.round(np.arange(0.05, 1.01, 0.05), 2)
-                    ),
+                    exposure_scales=PROP_SCALES,
                     paths=4000,
                     block=10,
                     seed=20269900 + pidx * 100000,
                     input_precision=(
                         "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
-                        "prague_midnight_reset_daily_flat_policy"
+                        "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
                     ),
+                    prescaled_returns_by_scale=scaled_ret,
+                    prescaled_adverse_by_scale=scaled_adv,
                 )
                 refined_cache[key] = {
                     "base": base,
@@ -433,6 +547,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "protocol": "alpha_generation_v4",
         "track": "prop_firm_intraday",
         "stage": "development_only",
+        "research_commit_sha": research_commit_sha(),
+        "exposure_scaling_method": (
+            "stage exposure applied to each hourly portfolio return/adverse "
+            "before Prague-day compounding"
+        ),
         "data_end": max(
             frame.index.max().tz_convert("UTC").strftime("%Y-%m-%d")
             for frame in data.values()

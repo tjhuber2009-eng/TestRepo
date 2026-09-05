@@ -587,30 +587,57 @@ def _simulate_stage_scale_table(
     paths: int,
     block: int,
     seed: int,
+    prescaled_returns: np.ndarray | None = None,
+    prescaled_adverse: np.ndarray | None = None,
 ) -> list[StageSimulation]:
     """Evaluate all exposure scales on identical bootstrap paths.
 
     Common random numbers remove scale-ranking noise and the batched state
     update avoids repeating the day loop once per scale.
     """
-    r = np.asarray(returns, dtype=float)
-    a = np.asarray(adverse_returns, dtype=float)
-    opened = np.asarray(opened_trade_days, dtype=bool)
-    good = np.isfinite(r) & np.isfinite(a)
-    r, a, opened = r[good], a[good], opened[good]
-    if len(r) < 50:
-        raise ValueError("prop simulation requires >=50 aligned daily observations")
-
     scales = np.asarray([float(x) for x in exposure_scales], dtype=float)
     if scales.size < 1:
         raise ValueError("at least one exposure scale required")
+
+    opened = np.asarray(opened_trade_days, dtype=bool)
+    use_prescaled = prescaled_returns is not None or prescaled_adverse is not None
+    if use_prescaled:
+        if prescaled_returns is None or prescaled_adverse is None:
+            raise ValueError("both prescaled return and adverse matrices are required")
+        scaled_r = np.asarray(prescaled_returns, dtype=float)
+        scaled_a = np.asarray(prescaled_adverse, dtype=float)
+        if scaled_r.shape != scaled_a.shape:
+            raise ValueError("prescaled return/adverse shape mismatch")
+        if scaled_r.ndim != 2 or scaled_r.shape[0] != len(scales):
+            raise ValueError("prescaled matrices must be scale x day")
+        if scaled_r.shape[1] != len(opened):
+            raise ValueError("prescaled day count must match opened_trade_days")
+        good = np.all(np.isfinite(scaled_r), axis=0) & np.all(
+            np.isfinite(scaled_a), axis=0
+        )
+        scaled_r = scaled_r[:, good]
+        scaled_a = scaled_a[:, good]
+        opened = opened[good]
+        data_len = scaled_r.shape[1]
+        r = a = None
+    else:
+        r = np.asarray(returns, dtype=float)
+        a = np.asarray(adverse_returns, dtype=float)
+        good = np.isfinite(r) & np.isfinite(a)
+        r, a, opened = r[good], a[good], opened[good]
+        data_len = len(r)
+
+    if data_len < 50:
+        raise ValueError("prop simulation requires >=50 aligned daily observations")
+
     horizon = int(rule.analysis_horizon_days)
     n = int(paths)
     rng = np.random.default_rng(seed)
-    idx = _moving_block_sample_matrix(len(r), horizon, int(block), n, rng)
-    sampled_r = r[idx]
-    sampled_a = a[idx]
+    idx = _moving_block_sample_matrix(data_len, horizon, int(block), n, rng)
     sampled_opened = opened[idx]
+    if not use_prescaled:
+        sampled_r = r[idx]
+        sampled_a = a[idx]
     scale_col = scales[:, None]
     m = int(scales.size)
 
@@ -635,7 +662,11 @@ def _simulate_stage_scale_table(
         trade_days += active * sampled_opened[:, day][None, :]
 
         start = balance.copy()
-        adverse = sampled_a[:, day][None, :] * scale_col
+        adverse = (
+            scaled_a[:, idx[:, day]]
+            if use_prescaled
+            else sampled_a[:, day][None, :] * scale_col
+        )
         worst = start * (1.0 + adverse)
         daily_floor = start - rule.max_daily_loss_pct / 100.0
         daily_fail = active & (worst <= daily_floor)
@@ -659,7 +690,11 @@ def _simulate_stage_scale_table(
         active = status == 0
         if not np.any(active):
             continue
-        ret = sampled_r[:, day][None, :] * scale_col
+        ret = (
+            scaled_r[:, idx[:, day]]
+            if use_prescaled
+            else sampled_r[:, day][None, :] * scale_col
+        )
         new_balance = start * (1.0 + ret)
         profit = new_balance - start
         pos = np.maximum(profit, 0.0)
@@ -730,24 +765,51 @@ def _simulate_funded_scale_table(
     paths: int,
     block: int,
     seed: int,
+    prescaled_returns: np.ndarray | None = None,
+    prescaled_adverse: np.ndarray | None = None,
 ) -> list[FundedSimulation]:
-    r = np.asarray(returns, dtype=float)
-    a = np.asarray(adverse_returns, dtype=float)
-    opened = np.asarray(opened_trade_days, dtype=bool)
-    good = np.isfinite(r) & np.isfinite(a)
-    r, a, opened = r[good], a[good], opened[good]
-    if len(r) < 50:
-        raise ValueError("prop simulation requires >=50 aligned daily observations")
-
     scales = np.asarray([float(x) for x in exposure_scales], dtype=float)
     if scales.size < 1:
         raise ValueError("at least one exposure scale required")
+
+    opened = np.asarray(opened_trade_days, dtype=bool)
+    use_prescaled = prescaled_returns is not None or prescaled_adverse is not None
+    if use_prescaled:
+        if prescaled_returns is None or prescaled_adverse is None:
+            raise ValueError("both prescaled return and adverse matrices are required")
+        scaled_r = np.asarray(prescaled_returns, dtype=float)
+        scaled_a = np.asarray(prescaled_adverse, dtype=float)
+        if scaled_r.shape != scaled_a.shape:
+            raise ValueError("prescaled return/adverse shape mismatch")
+        if scaled_r.ndim != 2 or scaled_r.shape[0] != len(scales):
+            raise ValueError("prescaled matrices must be scale x day")
+        if scaled_r.shape[1] != len(opened):
+            raise ValueError("prescaled day count must match opened_trade_days")
+        good = np.all(np.isfinite(scaled_r), axis=0) & np.all(
+            np.isfinite(scaled_a), axis=0
+        )
+        scaled_r = scaled_r[:, good]
+        scaled_a = scaled_a[:, good]
+        opened = opened[good]
+        data_len = scaled_r.shape[1]
+        r = a = None
+    else:
+        r = np.asarray(returns, dtype=float)
+        a = np.asarray(adverse_returns, dtype=float)
+        good = np.isfinite(r) & np.isfinite(a)
+        r, a, opened = r[good], a[good], opened[good]
+        data_len = len(r)
+
+    if data_len < 50:
+        raise ValueError("prop simulation requires >=50 aligned daily observations")
+
     days = int(program.first_reward_eligible_days)
     n = int(paths)
     rng = np.random.default_rng(seed)
-    idx = _moving_block_sample_matrix(len(r), days, int(block), n, rng)
-    sampled_r = r[idx]
-    sampled_a = a[idx]
+    idx = _moving_block_sample_matrix(data_len, days, int(block), n, rng)
+    if not use_prescaled:
+        sampled_r = r[idx]
+        sampled_a = a[idx]
     scale_col = scales[:, None]
     m = int(scales.size)
 
@@ -762,7 +824,11 @@ def _simulate_funded_scale_table(
         if not np.any(active):
             break
         start = balance.copy()
-        adverse = sampled_a[:, day][None, :] * scale_col
+        adverse = (
+            scaled_a[:, idx[:, day]]
+            if use_prescaled
+            else sampled_a[:, day][None, :] * scale_col
+        )
         worst = start * (1.0 + adverse)
         daily_floor = start - program.funded.max_daily_loss_pct / 100.0
         daily_fail = active & (worst <= daily_floor)
@@ -786,7 +852,11 @@ def _simulate_funded_scale_table(
         active = status == 0
         if not np.any(active):
             continue
-        ret = sampled_r[:, day][None, :] * scale_col
+        ret = (
+            scaled_r[:, idx[:, day]]
+            if use_prescaled
+            else sampled_r[:, day][None, :] * scale_col
+        )
         new_balance = start * (1.0 + ret)
         profit = new_balance - start
         pos = np.maximum(profit, 0.0)
@@ -853,12 +923,45 @@ def optimize_prop_exposure(
     seed: int = 20260905,
     input_precision: str = "daily_ohlc_conservative_proxy",
     top_candidates: int = 100,
+    prescaled_returns_by_scale: Mapping[float, Sequence[float]] | None = None,
+    prescaled_adverse_by_scale: Mapping[float, Sequence[float]] | None = None,
 ) -> PropOptimizationResult:
     """Optimize Challenge, Verification, and funded risk independently."""
     base_r = np.asarray(returns, dtype=float)
     base_a = np.asarray(adverse_returns, dtype=float)
     opened = np.asarray(opened_trade_days, dtype=bool)
     scales = [float(x) for x in exposure_scales]
+
+    prescaled_r = prescaled_a = None
+    if (
+        prescaled_returns_by_scale is not None
+        or prescaled_adverse_by_scale is not None
+    ):
+        if (
+            prescaled_returns_by_scale is None
+            or prescaled_adverse_by_scale is None
+        ):
+            raise ValueError(
+                "both prescaled_returns_by_scale and "
+                "prescaled_adverse_by_scale are required"
+            )
+
+        def scale_row(mapping, scale):
+            if scale in mapping:
+                return np.asarray(mapping[scale], dtype=float)
+            for key, values in mapping.items():
+                if abs(float(key) - float(scale)) <= 1e-12:
+                    return np.asarray(values, dtype=float)
+            raise KeyError(f"missing exact daily path for exposure scale {scale}")
+
+        prescaled_r = np.vstack([
+            scale_row(prescaled_returns_by_scale, scale)
+            for scale in scales
+        ])
+        prescaled_a = np.vstack([
+            scale_row(prescaled_adverse_by_scale, scale)
+            for scale in scales
+        ])
 
     challenge_table = _simulate_stage_scale_table(
         base_r,
@@ -869,6 +972,8 @@ def optimize_prop_exposure(
         paths=paths,
         block=block,
         seed=seed,
+        prescaled_returns=prescaled_r,
+        prescaled_adverse=prescaled_a,
     )
 
     verification_table = None
@@ -882,6 +987,8 @@ def optimize_prop_exposure(
             paths=paths,
             block=block,
             seed=seed + 100000,
+            prescaled_returns=prescaled_r,
+            prescaled_adverse=prescaled_a,
         )
 
     funded_table = _simulate_funded_scale_table(
@@ -893,6 +1000,8 @@ def optimize_prop_exposure(
         paths=paths,
         block=block,
         seed=seed + 200000,
+        prescaled_returns=prescaled_r,
+        prescaled_adverse=prescaled_a,
     )
 
     candidates: list[PropOptimizationCandidate] = []

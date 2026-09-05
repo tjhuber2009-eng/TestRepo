@@ -18,7 +18,7 @@ from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
-from v4.prop_intraday_bootstrap import aggregate_prague_days, hourly_rotation_strategy, read_hourly
+from v4.prop_intraday_bootstrap import aggregate_prague_days, aggregate_prague_days_scaled, hourly_rotation_strategy, read_hourly
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
@@ -584,6 +584,59 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreaterEqual(len(dr), 1)
         self.assertLessEqual(float(da.min()), -0.02)
         self.assertTrue(bool(opened.iloc[0]))
+
+    def test_prop_intraday_scale_compounds_before_daily_aggregation(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=3,
+            freq="h",
+            tz="UTC",
+        )
+        returns = pd.Series([0.10, 0.10, 0.0], index=idx)
+        adverse = pd.Series([-0.02, -0.01, 0.0], index=idx)
+        weights = pd.DataFrame({"A": [1.0, 1.0, 0.0]}, index=idx)
+        base_r, _, _ = aggregate_prague_days(returns, adverse, weights)
+        scaled_r, _, _ = aggregate_prague_days_scaled(
+            returns,
+            adverse,
+            weights,
+            scales=(0.5, 1.0),
+        )
+        self.assertAlmostEqual(float(scaled_r[1.0].iloc[0]), float(base_r.iloc[0]))
+        self.assertAlmostEqual(float(scaled_r[0.5].iloc[0]), 1.05 * 1.05 - 1.0)
+        self.assertNotAlmostEqual(
+            float(scaled_r[0.5].iloc[0]),
+            0.5 * float(base_r.iloc[0]),
+            places=8,
+        )
+
+    def test_prop_optimizer_accepts_exact_prescaled_daily_paths(self):
+        rng = np.random.default_rng(909)
+        n = 700
+        base = rng.normal(0.0008, 0.012, n)
+        adv = np.minimum(rng.normal(-0.004, 0.008, n), 0.0)
+        active = np.ones(n, dtype=bool)
+        scales = (0.5, 1.0)
+        exact_r = {
+            0.5: (1.0 + 0.5 * base) ** 2 - 1.0,
+            1.0: (1.0 + base) ** 2 - 1.0,
+        }
+        exact_a = {0.5: 0.5 * adv, 1.0: adv}
+        result = optimize_prop_exposure(
+            exact_r[1.0],
+            exact_a[1.0],
+            active,
+            FTMO_2STEP,
+            exposure_scales=scales,
+            paths=120,
+            block=10,
+            seed=44,
+            prescaled_returns_by_scale=exact_r,
+            prescaled_adverse_by_scale=exact_a,
+        )
+        table = {row.exposure_scale: row for row in result.challenge_scale_table}
+        self.assertEqual(set(table), {0.5, 1.0})
+        self.assertTrue(all(row.paths == 120 for row in table.values()))
 
     def test_full_v4_integration_demo(self):
         out=run_integration_demo()
