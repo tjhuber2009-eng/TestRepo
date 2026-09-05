@@ -1,7 +1,7 @@
 """
 Nested chronological robustness harness for continuous AUTORESEARCH.
 
-Protocol v2 deliberately separates adaptive development from hidden pre-OOS
+Protocol v3 deliberately separates adaptive development from hidden pre-OOS
 validation:
 
 * NVIDIA/search sees development data only.
@@ -139,6 +139,34 @@ def load_data():
     return out
 
 
+def assert_stage_data_boundary(df, stage):
+    """Fail closed if the physical dataset exceeds the chronology for a stage."""
+    if len(df) == 0:
+        raise RuntimeError("empty dataset after integrity checks")
+    last = pd.Timestamp(df.index.max()).tz_convert("UTC")
+    final_oos = to_utc_timestamp("2023-01-01")
+    if last >= final_oos:
+        raise RuntimeError(
+            f"FINAL OOS contamination: dataset contains {last.isoformat()}"
+        )
+
+    if stage in {"search", "check", "lookahead_audit"}:
+        hidden_start = to_utc_timestamp(VALIDATION_START)
+        if last >= hidden_start:
+            raise RuntimeError(
+                "hidden-validation contamination: adaptive stage physically "
+                f"contains rows through {last.date()} but must end before "
+                f"{VALIDATION_START}"
+            )
+    elif stage == "validation":
+        allowed_end = to_utc_timestamp(VALIDATION_END, end=True)
+        if last > allowed_end:
+            raise RuntimeError(
+                f"hidden validation dataset exceeds allowed end {VALIDATION_END}: "
+                f"{last.isoformat()}"
+            )
+
+
 def run_bt(df, commission):
     from strategy import MoonStrategy
     return Backtest(
@@ -171,49 +199,77 @@ def slice_trades(stats, start, end):
 
 
 def intrabar_drawdown_proxy(stats, price_df, start, end):
-    """OHLC adverse-equity proxy that supports overlapping open trades.
+    """OHLC adverse-equity proxy for every position active in the window.
 
-    Backtesting.py exposes bar-close equity. For every bar, this proxy adjusts
-    close equity by marking each active long to that bar's Low and each active
-    short to that bar's High. It therefore catches many intrabar risk-cap
-    breaches that close-only equity can hide. Exit bars are excluded because
-    orders execute at the next bar open with trade_on_close=False.
+    Closed trades and positions still open at the backtest end are both marked
+    to each bar's adverse OHLC extreme (Low for longs, High for shorts).
+    Overlapping positions are summed. Peaks are computed locally inside the
+    requested measurement window so fold/validation DD is comparable with the
+    close-equity DD for that same window.
 
-    It is still explicitly a proxy: intrabar path ordering and gaps within a
-    daily bar cannot be reconstructed from OHLC alone.
+    This remains a proxy: daily OHLC cannot reconstruct exact intrabar path
+    ordering, gap sequencing, or the order in which multiple stops would fire.
     """
     if price_df is None:
-        return 0.0
-    trades = slice_trades(stats, start, end)
-    if trades.empty:
         return 0.0
 
     eq_series = stats["_equity_curve"]["Equity"].astype(float)
     eq = eq_series.to_numpy(dtype=float)
+    eq_idx = pd.DatetimeIndex(pd.to_datetime(eq_series.index, utc=True))
+    if len(eq) == 0:
+        return 0.0
+
+    a = to_utc_timestamp(start)
+    b = to_utc_timestamp(end, end=True)
+    window_mask = (eq_idx >= a) & (eq_idx <= b)
+    window_pos = np.flatnonzero(window_mask)
+    if len(window_pos) == 0:
+        return 0.0
+    first_pos = int(window_pos[0])
+    last_pos = int(window_pos[-1])
+
     px = price_df.copy()
     px.index = pd.to_datetime(px.index, utc=True)
-    px = px.reindex(pd.to_datetime(eq_series.index, utc=True))
+    px = px.reindex(eq_idx)
     close = pd.to_numeric(px["Close"], errors="coerce").to_numpy(dtype=float)
     low = pd.to_numeric(px["Low"], errors="coerce").to_numpy(dtype=float)
     high = pd.to_numeric(px["High"], errors="coerce").to_numpy(dtype=float)
     if len(eq) != len(close):
         return 0.0
 
-    adjustment = np.zeros(len(eq), dtype=float)
-    for _, row in trades.iterrows():
+    trade_ranges = []
+    closed = stats["_trades"]
+    if closed is not None and len(closed):
+        for _, row in closed.iterrows():
+            try:
+                eb = int(row["EntryBar"])
+                xb = int(row["ExitBar"])
+                size = float(row["Size"])
+            except Exception:
+                continue
+            trade_ranges.append((eb, max(eb, xb - 1), size))
+
+    strategy = stats.get("_strategy")
+    for trade in (getattr(strategy, "trades", ()) if strategy is not None else ()):
         try:
-            eb = int(row["EntryBar"])
-            xb = int(row["ExitBar"])
-            size = float(row["Size"])
+            eb = int(trade.entry_bar)
+            size = float(trade.size)
         except Exception:
             continue
-        if not np.isfinite(size) or size == 0 or eb < 0 or eb >= len(eq):
+        trade_ranges.append((eb, len(eq) - 1, size))
+
+    if not trade_ranges:
+        return 0.0
+
+    adjustment = np.zeros(len(eq), dtype=float)
+    for eb, trade_last, size in trade_ranges:
+        if not np.isfinite(size) or size == 0:
             continue
-        # Exit orders execute at the exit bar open, so do not expose the
-        # position to the remainder of that bar. A same-bar trade still gets
-        # one bar of conservative adverse marking.
-        last = min(len(eq) - 1, max(eb, xb - 1))
-        for j in range(eb, last + 1):
+        left = max(0, first_pos, eb)
+        right = min(len(eq) - 1, last_pos, trade_last)
+        if right < left:
+            continue
+        for j in range(left, right + 1):
             if not np.isfinite(close[j]):
                 continue
             adverse = low[j] if size > 0 else high[j]
@@ -221,8 +277,9 @@ def intrabar_drawdown_proxy(stats, price_df, start, end):
                 continue
             adjustment[j] += size * (adverse - close[j])
 
-    adverse_eq = eq + adjustment
-    peak = np.maximum.accumulate(eq)
+    window_eq = eq[window_mask]
+    adverse_eq = (eq + adjustment)[window_mask]
+    peak = np.maximum.accumulate(window_eq)
     valid = np.isfinite(adverse_eq) & np.isfinite(peak) & (peak > 0)
     if not np.any(valid):
         return 0.0
@@ -788,6 +845,7 @@ def main():
     selected = args.mode or "search"
 
     df = load_data()
+    assert_stage_data_boundary(df, selected)
     if selected == "lookahead_audit":
         out = lookahead_prefix_audit(df)
         common_metadata(out, "development_lookahead_audit")
