@@ -17,6 +17,7 @@ import hashlib
 import json
 import math
 import os
+import random
 import re
 
 import overfit_diagnostics
@@ -650,7 +651,7 @@ def reset_stale_protocol_state():
     return removed
 
 
-def tournament_model_pool():
+def finalized_tournament_rows():
     if not TOURNAMENT_STATE.exists():
         return []
     try:
@@ -659,14 +660,12 @@ def tournament_model_pool():
         return []
     if payload.get("protocol") != PROTOCOL:
         return []
-    # Never let an incomplete tournament steer adaptive research. Recovery
-    # workflows may publish provisional standings while a missing model is
-    # retried; model selection opens only after that ranking is finalized.
+    # A provisional tournament is informational only. It must never steer
+    # adaptive research because its model set/ranking is still incomplete.
     if payload.get("provisional"):
         return []
-    rows = payload.get("ranking", [])
-    pool = []
-    for row in rows:
+    rows = []
+    for row in payload.get("ranking", []):
         if row.get("provider") != "nvidia":
             continue
         model = row.get("model")
@@ -674,35 +673,148 @@ def tournament_model_pool():
             continue
         if int(row.get("admitted", 0) or 0) <= 0:
             continue
-        pool.append(model)
-        if len(pool) >= 3:
-            break
-    return pool
+        rows.append(row)
+    return rows
+
+
+def tournament_model_pool():
+    """Compatibility helper: all finalized NVIDIA tournament candidates."""
+    return [row["model"] for row in finalized_tournament_rows()]
+
+
+def tournament_bandit_priors():
+    """Build Beta-Bernoulli priors at the matched-case level.
+
+    Each tournament case contains repeated trials. A case is a success when at
+    least one trial produced a keeper. This avoids treating repeated LLM draws
+    on the same strategy case as independent evidence.
+    """
+    out = []
+    for row in finalized_tournament_rows():
+        case_map = row.get("case_aggregates") or {}
+        if case_map:
+            cases = len(case_map)
+            successes = sum(
+                1 for x in case_map.values()
+                if float(x.get("keep_rate") or 0.0) > 0.0
+            )
+        else:
+            # Backward-compatible fallback for older summaries that did not
+            # persist case aggregates. New v3 tournament summaries do.
+            cases = int(row.get("attempts", 0) or 0)
+            successes = int(row.get("would_keep", 0) or 0)
+        if cases <= 0:
+            continue
+        successes = min(max(successes, 0), cases)
+        out.append({
+            "model": row["model"],
+            "tournament_cases": cases,
+            "tournament_successes": successes,
+            "prior_alpha": 1.0 + successes,
+            "prior_beta": 1.0 + (cases - successes),
+        })
+    return out
+
+
+def online_bandit_observations():
+    """Read one reward per model-selection visit from the persistent cycle log."""
+    counts = {}
+    if not LEDGER.exists():
+        return counts
+    with LEDGER.open(encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            model = row.get("model")
+            reward = row.get("bandit_reward")
+            if not model or reward not in (0, 1, False, True):
+                continue
+            x = counts.setdefault(model, {"visits": 0, "successes": 0})
+            x["visits"] += 1
+            x["successes"] += int(bool(reward))
+    return counts
+
+
+def model_bandit_snapshot():
+    """Posterior state used by Thompson sampling.
+
+    Tournament evidence initializes the posterior. Every subsequent continuous
+    research visit updates it online. The posterior therefore learns which
+    model is most likely to produce a *new robust keeper*, not merely which
+    model had the best frozen tournament rank.
+    """
+    live = online_bandit_observations()
+    rows = []
+    for prior in tournament_bandit_priors():
+        model = prior["model"]
+        obs = live.get(model, {"visits": 0, "successes": 0})
+        failures = max(0, obs["visits"] - obs["successes"])
+        alpha = float(prior["prior_alpha"]) + obs["successes"]
+        beta = float(prior["prior_beta"]) + failures
+        rows.append({
+            **prior,
+            "online_visits": obs["visits"],
+            "online_successes": obs["successes"],
+            "posterior_alpha": alpha,
+            "posterior_beta": beta,
+            "posterior_keeper_probability": alpha / (alpha + beta),
+        })
+    rows.sort(
+        key=lambda x: (
+            x["posterior_keeper_probability"],
+            x["tournament_successes"],
+            -x["tournament_cases"],
+            x["model"],
+        ),
+        reverse=True,
+    )
+    return rows
 
 
 def select_research_model(track, requested_model, valid_count):
     if requested_model != "auto":
         return requested_model
-    pool = tournament_model_pool()
-    if not pool:
+    candidates = model_bandit_snapshot()
+    if not candidates:
         return DEFAULT_MODEL
-    # Deterministic weighted diversity: best model gets 50%, second 30%,
-    # third 20%. This avoids a single-model monoculture while favoring the
-    # matched tournament winner.
-    weights = [5, 3, 2][:len(pool)]
-    wheel = []
-    for model, weight in zip(pool, weights):
-        wheel.extend([model] * weight)
-    material = f"{track['id']}|{valid_count}|{PROTOCOL}".encode()
-    idx = int(hashlib.sha256(material).hexdigest()[:8], 16) % len(wheel)
-    return wheel[idx]
+
+    # Thompson sampling: draw one plausible keeper probability from every
+    # model's current Beta posterior and use the model with the largest draw.
+    # The seed is deterministic from persistent state + track context so a
+    # rerun from the same exact state makes the same allocation decision.
+    posterior_fingerprint = "|".join(
+        f"{x['model']}:{x['posterior_alpha']:.6f}:{x['posterior_beta']:.6f}"
+        for x in sorted(candidates, key=lambda x: x["model"])
+    )
+    material = (
+        f"{track['id']}|{valid_count}|{PROTOCOL}|{posterior_fingerprint}"
+    ).encode()
+    seed = int(hashlib.sha256(material).hexdigest()[:16], 16)
+    rng = random.Random(seed)
+
+    draws = []
+    for row in candidates:
+        draw = rng.betavariate(
+            float(row["posterior_alpha"]),
+            float(row["posterior_beta"]),
+        )
+        draws.append((
+            draw,
+            row["posterior_keeper_probability"],
+            row["model"],
+        ))
+    draws.sort(reverse=True)
+    return draws[0][2]
 
 
 def process_track(track, iters, model):
     print("\n" + "=" * 88)
     print(
         f"TRACK {track['id']} family={track['family']['id']} "
-        f"market={track['target']['id']} profile={track['profile_name']}"
+        f"market={track['target']['id']} profile={track['profile_name']} "
+        f"model={model}"
     )
     print("=" * 88, flush=True)
 
@@ -740,6 +852,10 @@ def process_track(track, iters, model):
         "target": track["target"]["id"],
         "profile": track["profile_name"],
         "status": "active" if proc.returncode == 0 else "loop_error",
+        "model": model,
+        "bandit_reward": int(after["kept"] > before["kept"]),
+        "kept_before": before["kept"],
+        "kept_after": after["kept"],
         "valid_before": before["valid"],
         "valid_after": after["valid"],
         "attempts_after": after["attempts"],
@@ -1149,6 +1265,12 @@ def write_progress(
         "prior_terminal_family_count": len(prior_terminal_families),
         "prior_terminal_families": prior_terminal_families,
         "model_performance": aggregate_model_performance(tracks),
+        "model_allocator": {
+            "method": "deterministic_thompson_sampling_beta_bernoulli",
+            "reward_unit": "two-iteration visit with at least one keeper",
+            "tournament_prior_unit": "matched strategy case with at least one keeper",
+            "candidates": model_bandit_snapshot(),
+        },
         "rows": rows,
     }
     save_json(PROGRESS, payload)
