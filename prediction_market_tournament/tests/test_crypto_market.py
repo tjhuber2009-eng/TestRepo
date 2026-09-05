@@ -73,10 +73,16 @@ def _patch_books(monkeypatch, *, up=0.50, down=0.50, fee_rate=0.0):
     )
     books = {
         "up-token": {
+            "market": "0xabc",
+            "asset_id": "up-token",
+            "timestamp": "1788600181000",
             "min_order_size": "1",
             "asks": [{"price": str(up), "size": "1000"}],
         },
         "down-token": {
+            "market": "0xabc",
+            "asset_id": "down-token",
+            "timestamp": "1788600181001",
             "min_order_size": "1",
             "asks": [{"price": str(down), "size": "1000"}],
         },
