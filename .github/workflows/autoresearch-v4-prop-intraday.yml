@@ -58,6 +58,26 @@ jobs:
           --end 2020-12-31
           --output-dir v4_prop_intraday_data
 
+      - name: Prepare BNB 1h development proxy
+        run: >
+          python -m v4.prepare_binance_intraday
+          --symbol BNBUSDT
+          --id bnb
+          --interval 1h
+          --start 2017-08-17
+          --end 2020-12-31
+          --output-dir v4_prop_intraday_data
+
+      - name: Prepare LTC 1h development proxy
+        run: >
+          python -m v4.prepare_binance_intraday
+          --symbol LTCUSDT
+          --id ltc
+          --interval 1h
+          --start 2017-08-17
+          --end 2020-12-31
+          --output-dir v4_prop_intraday_data
+
       - name: Run Prague-aligned prop optimization
         run: >
           python -m v4.prop_intraday_bootstrap
