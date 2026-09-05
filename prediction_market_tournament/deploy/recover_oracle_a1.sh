@@ -30,6 +30,18 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   chrony
 sudo systemctl enable --now chrony
 
+if ! swapon --show=NAME --noheadings | grep -q .; then
+  if [[ ! -f /swapfile ]]; then
+    sudo fallocate -l 2G /swapfile
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+  fi
+  sudo swapon /swapfile
+  if ! grep -q '^/swapfile ' /etc/fstab; then
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+  fi
+fi
+
 git -C "$REPO" fetch origin "$BRANCH"
 git -C "$REPO" checkout "$BRANCH"
 git -C "$REPO" reset --hard "origin/$BRANCH"
