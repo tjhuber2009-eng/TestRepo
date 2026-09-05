@@ -6,7 +6,7 @@ set -euo pipefail
 # Expected host:
 #   - Ubuntu 24.04 ARM64
 #   - VM.Standard.A1.Flex
-#   - 1 OCPU / 6 GB RAM (within Always Free allowance)
+#   - 1 OCPU / 1 GB RAM (right-sized within Always Free allowance)
 #   - public subnet with outbound internet access
 #   - repository already cloned to ~/TestRepo on prediction-market-tournament
 #
@@ -50,6 +50,20 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   chrony
 
 sudo systemctl enable --now chrony
+
+# 1 GB RAM is sufficient for the steady-state collector. Add swap only as
+# installation/recovery headroom; this does not manufacture CPU/network load.
+if ! swapon --show=NAME --noheadings | grep -q .; then
+  if [[ ! -f /swapfile ]]; then
+    sudo fallocate -l 2G /swapfile
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+  fi
+  sudo swapon /swapfile
+  if ! grep -q '^/swapfile ' /etc/fstab; then
+    echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+  fi
+fi
 
 git -C "$REPO" fetch origin "$BRANCH"
 git -C "$REPO" checkout "$BRANCH"
