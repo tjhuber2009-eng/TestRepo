@@ -158,6 +158,76 @@ def hourly_rotation_strategy(params, symbols):
 
     return strategy
 
+
+def hourly_tsmom_strategy(params, symbols):
+    """Causal equal-risk-sign crypto time-series momentum hypothesis.
+
+    Each asset is long when its own trailing return is positive and short when
+    negative. Raw gross exposure is normalized to one before the portfolio
+    volatility target is applied. Session/rebalance timing is based only on
+    the known next execution-bar clock.
+    """
+    lookback = int(params["lookback"])
+    rebalance_hours = int(params.get("rebalance_hours", 4))
+    execution_session = str(params.get("execution_session", "all"))
+    if rebalance_hours not in (1, 2, 4, 8, 12, 24):
+        raise ValueError("unsupported rebalance_hours")
+    if execution_session not in (
+        "all",
+        "avoid_funding_hours",
+        "europe_us",
+    ):
+        raise ValueError("unsupported execution_session")
+
+    def strategy(data, features=None):
+        index = next(iter(data.values())).index
+        columns = sorted(data)
+        momentum = pd.DataFrame(
+            {
+                s: data[s]["Close"] / data[s]["Close"].shift(lookback) - 1.0
+                for s in symbols
+            },
+            index=index,
+        ).reindex(columns=columns)
+        signs = np.sign(momentum).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+        count = signs.ne(0.0).sum(axis=1).replace(0, np.nan)
+        desired = signs.div(count, axis=0).fillna(0.0)
+
+        utc_hours = pd.Series(
+            index.tz_convert("UTC").hour,
+            index=index,
+            dtype=int,
+        )
+        next_hours = utc_hours.shift(-1)
+        if execution_session == "all":
+            allowed = pd.Series(True, index=index)
+        elif execution_session == "avoid_funding_hours":
+            allowed = ~next_hours.isin([0, 8, 16])
+        else:
+            allowed = (next_hours >= 7) & (next_hours < 22)
+        allowed = allowed.fillna(False)
+        rebalance = (
+            next_hours.notna()
+            & (next_hours.astype("Int64") % rebalance_hours == 0)
+        )
+
+        local_dates = pd.Series(index.tz_convert(PRAGUE).date, index=index)
+        next_dates = local_dates.shift(-1)
+        reset = next_dates.notna() & (next_dates != local_dates)
+
+        update = (~allowed) | rebalance | reset
+        out = pd.DataFrame(np.nan, index=index, columns=columns)
+        zero_update = update & (~allowed | reset | ~rebalance)
+        signal_update = update & allowed & rebalance & ~reset
+        out.loc[zero_update] = 0.0
+        out.loc[signal_update] = desired.loc[signal_update]
+        out = out.ffill().fillna(0.0)
+        if len(out):
+            out.iloc[-1] = 0.0
+        return out
+
+    return strategy
+
 def intraday_bar_adverse(
     data: dict[str, pd.DataFrame],
     weights: pd.DataFrame,
@@ -297,18 +367,27 @@ def evaluate_strategy(data, params):
         )
         for s in symbols
     }
+    family = str(params.get("family", "cross_sectional_long"))
+    if family == "cross_sectional_long":
+        net_min, net_max = 0.0, 1.0
+        base_strategy = hourly_rotation_strategy(params, symbols)
+    elif family == "tsmom_long_short":
+        net_min, net_max = -1.0, 1.0
+        base_strategy = hourly_tsmom_strategy(params, symbols)
+    else:
+        raise ValueError(f"unknown intraday prop family: {family}")
+
     engine = MultiAssetBacktester(
         data,
         costs=costs,
         limits=PortfolioLimits(
             gross_leverage=1.0,
-            net_min=0.0,
-            net_max=1.0,
+            net_min=net_min,
+            net_max=net_max,
             per_asset_abs_weight=1.0,
         ),
         periods_per_year=365.0 * 24.0,
     )
-    base_strategy = hourly_rotation_strategy(params, symbols)
     strategy = volatility_target_overlay(
         base_strategy,
         target_vol=float(params["vol_target"]),
@@ -445,6 +524,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
 
     params_grid = [
         {
+            "family": "cross_sectional_long",
             "lookback": lb,
             "trend": tr,
             "top_k": k,
@@ -594,6 +674,73 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         "candidate": candidate,
                     }
 
+
+    # Independent compact family: volatility-normalized long/short
+    # time-series momentum. This is not a mutation of the long-only rotation.
+    tsmom_params = [
+        {
+            "family": "tsmom_long_short",
+            "lookback": lb,
+            "vol_target": vt,
+            "vol_lookback": 72,
+            "execution_session": session,
+            "rebalance_hours": rebalance,
+        }
+        for lb in (24, 72, 168)
+        for vt in (0.20, 0.30, 0.40)
+        for session in ("all", "europe_us")
+        for rebalance in (4, 8)
+    ]
+    for params in tsmom_params:
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
+                program,
+                exposure_scales=PROP_SCALES,
+                paths=400,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                    "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
+                ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
+            )
+            sel = prop.selected
+            rows_by_program[program.id].append({
+                "params": params,
+                "search_phase": "independent_tsmom_family",
+                "hourly_base_cagr_pct": base.metrics.cagr_pct,
+                "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
+                "daily_worst_adverse_pct": float(dadv.min() * 100.0),
+                "selected": None if sel is None else sel.to_dict(),
+            })
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
+
     program_results = {}
     for pidx, program in enumerate(programs):
         rows = rows_by_program[program.id]
@@ -711,6 +858,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "broad_base_candidates": len(params_grid),
             "frontier_seed_parameter_sets": len(seed_params),
             "frontier_structural_mutations": len(structural_params),
+            "independent_tsmom_candidates": len(tsmom_params),
+            "candidate_families": [
+                "cross_sectional_long",
+                "tsmom_long_short",
+            ],
             "structural_dimensions": {
                 "execution_session": [
                     "all",
@@ -720,8 +872,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "rebalance_hours": [1, 4, 8],
             },
             "policy": (
-                "broad alpha/risk search first; mutate only coarse frontier "
-                "leaders for session/rebalance structure"
+                "broad long-only alpha/risk search first; mutate only coarse "
+                "frontier leaders for session/rebalance structure; evaluate "
+                "time-series momentum as an independent compact family"
             ),
         },
         "data_end": max(

@@ -39,6 +39,7 @@ from v4.prop_intraday_bootstrap import (
     aggregate_prague_days,
     aggregate_prague_days_scaled,
     hourly_rotation_strategy,
+    hourly_tsmom_strategy,
     read_hourly,
 )
 from v4.regime_engine import RegimeEngine
@@ -817,6 +818,61 @@ class V4AlphaGenerationTests(unittest.TestCase):
                 and row["rebalance_hours"] == 1
                 for row in rows
             )
+        )
+
+    def test_prop_tsmom_can_hold_long_and_short_causally(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=40,
+            freq="h",
+            tz="UTC",
+        )
+        up = 100.0 * (1.01 ** np.arange(len(idx)))
+        down = 100.0 * (0.99 ** np.arange(len(idx)))
+        def frame(close):
+            return pd.DataFrame(
+                {
+                    "Open": close,
+                    "High": close * 1.001,
+                    "Low": close * 0.999,
+                    "Close": close,
+                    "Volume": 1.0,
+                },
+                index=idx,
+            )
+        data = {
+            "BTCUSDT": frame(up),
+            "ETHUSDT": frame(down),
+        }
+        params = {
+            "family": "tsmom_long_short",
+            "lookback": 2,
+            "execution_session": "all",
+            "rebalance_hours": 1,
+        }
+        target = hourly_tsmom_strategy(
+            params,
+            tuple(sorted(data)),
+        )(data)
+        active = target.abs().sum(axis=1) > 0
+        self.assertTrue(active.any())
+        row = target.loc[active].iloc[0]
+        self.assertGreater(float(row["BTCUSDT"]), 0.0)
+        self.assertLess(float(row["ETHUSDT"]), 0.0)
+        self.assertAlmostEqual(float(row.abs().sum()), 1.0)
+
+        short_data = {k: v.iloc[:25] for k, v in data.items()}
+        a = hourly_tsmom_strategy(
+            params,
+            tuple(sorted(short_data)),
+        )(short_data)
+        b = hourly_tsmom_strategy(
+            params,
+            tuple(sorted(data)),
+        )(data)
+        pd.testing.assert_frame_equal(
+            a.iloc[:-1],
+            b.loc[a.index].iloc[:-1],
         )
 
     def test_prop_intraday_session_filter_uses_next_execution_hour(self):
