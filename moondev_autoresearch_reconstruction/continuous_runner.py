@@ -799,11 +799,15 @@ def current_search_plan(
 
     selections = freeze_depth_selection(tracks, breadth_target, depth_fraction)
     depth_ids = selections.get("depth_ids", [])
+    if not depth_ids:
+        return "complete", {}
     if not all_reached(tracks, depth_ids, depth_target):
         return "depth", {x: depth_target for x in depth_ids}
 
     selections = freeze_elite_selection(tracks, depth_target, elite_fraction)
     elite_ids = selections.get("elite_ids", [])
+    if not elite_ids:
+        return "complete", {}
     if not all_reached(tracks, elite_ids, elite_target):
         return "elite", {x: elite_target for x in elite_ids}
 
@@ -900,6 +904,8 @@ def write_progress(
             status = "validation_pending" if track["id"] in elite_ids else (
                 "depth_eliminated" if track["id"] in depth_ids else "breadth_eliminated"
             )
+        elif phase == "complete":
+            status = "depth_eliminated" if track["id"] in depth_ids else "breadth_eliminated"
         elif depth_ids and phase in {"depth", "elite", "validation"}:
             status = "searching" if track["id"] in depth_ids else "breadth_eliminated"
         else:
@@ -1120,11 +1126,30 @@ def main():
             try:
                 validate_track(track)
             except Exception as exc:
+                meta_path = TRACKS / track["id"] / "state_meta.json"
+                meta = load_json(meta_path) if meta_path.exists() else {}
+                errors = int(meta.get("validation_runner_errors", 0) or 0) + 1
+                meta["validation_runner_errors"] = errors
+                meta["last_validation_runner_error"] = (
+                    f"{type(exc).__name__}: {str(exc)[:500]}"
+                )
+                save_json(meta_path, meta)
                 append_cycle({
                     "ts": now(), "track_id": track["id"],
                     "status": "validation_runner_error",
-                    "reason": f"{type(exc).__name__}: {str(exc)[:500]}",
+                    "attempt": errors,
+                    "reason": meta["last_validation_runner_error"],
                 })
+                if errors >= 3:
+                    save_json(TRACKS / track["id"] / "validation.json", {
+                        "guard_ok": False,
+                        "guard_reason": "validation runner failed 3 times",
+                        "runner_error": meta["last_validation_runner_error"],
+                        "protocol": PROTOCOL,
+                        "oos_opened": False,
+                    })
+                    meta["status"] = "validation_fail"
+                    save_json(meta_path, meta)
                 print(f"[validation error] {track['id']}: {exc}", file=sys.stderr)
             cursor = (idx + 1) % len(tracks)
             visits += 1
@@ -1172,6 +1197,9 @@ def main():
         "runnable_tracks": progress["runnable_track_count"],
         "validation_pass": progress["validation_pass_count"],
         "validation_fail": progress["validation_fail_count"],
+        "breadth_eliminated": progress.get("breadth_eliminated_count", 0),
+        "depth_eliminated": progress.get("depth_eliminated_count", 0),
+        "validation_pending": progress.get("validation_pending_count", 0),
         "data_insufficient": progress["data_insufficient_count"],
         "seed_blocked": progress["seed_blocked_count"],
         "next_cursor": cursor,
