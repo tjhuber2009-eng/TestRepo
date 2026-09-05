@@ -14,7 +14,7 @@ import {
   isAutoAuditEnabled,
   type AutoAuditResourceType,
 } from "./auto-audit-core";
-import { syncPendingAuditCount } from "./webhook.server";
+import { syncPendingAuditCount } from "./auto-audit-queue.server";
 
 type ClaimedTask = {
   id: string;
