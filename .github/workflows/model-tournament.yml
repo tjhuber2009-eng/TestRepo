@@ -1,0 +1,304 @@
+name: Zero-fee AI strategy model tournament
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: zero-fee-model-tournament
+  cancel-in-progress: false
+
+jobs:
+  freeze:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.issue.pull_request &&
+        github.event.issue.number == 13 &&
+        github.event.comment.body == '/model-tournament' &&
+        github.event.comment.user.login == 'tjhuber2009-eng'
+      )
+    runs-on: ubuntu-latest
+    outputs:
+      state_sha: ${{ steps.state.outputs.state_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - name: Freeze continuous-state snapshot
+        id: state
+        shell: bash
+        run: |
+          git fetch origin continuous-autoresearch-state
+          state_sha="$(git rev-parse origin/continuous-autoresearch-state)"
+          echo "state_sha=$state_sha" >> "$GITHUB_OUTPUT"
+          echo "Frozen tournament state: $state_sha"
+
+  model:
+    needs: freeze
+    if: needs.freeze.result == 'success'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - tag: nemotron-super
+            provider: nvidia
+            model: nvidia/nemotron-3-super-120b-a12b
+          - tag: nemotron-ultra
+            provider: nvidia
+            model: nvidia/nemotron-3-ultra-550b-a55b
+          - tag: nemotron-lightning
+            provider: nvidia
+            model: nvidia/nemotron-3.5-lightning-30b-a3b
+          - tag: deepseek-v4-pro
+            provider: nvidia
+            model: deepseek-ai/deepseek-v4-pro-0813
+          - tag: poolside-laguna
+            provider: nvidia
+            model: poolside/laguna-xs-2.1
+          - tag: glm-5-2
+            provider: nvidia
+            model: z-ai/glm-5.2
+          - tag: groq-gpt-oss-120b
+            provider: groq
+            model: openai/gpt-oss-120b
+          - tag: gemini-2-5-pro
+            provider: gemini
+            model: gemini-2.5-pro
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore exact frozen research-state snapshot
+        shell: bash
+        working-directory: .
+        env:
+          STATE_SHA: ${{ needs.freeze.outputs.state_sha }}
+        run: |
+          git fetch origin "$STATE_SHA"
+          git checkout "$STATE_SHA" -- moondev_autoresearch_reconstruction/continuous_state
+          echo "Using frozen state $STATE_SHA"
+
+      - name: Integrity and OOS guards
+        shell: bash
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
+          python oos_guard.py
+
+      - name: Run matched model benchmark
+        shell: bash
+        run: >
+          python model_tournament.py
+          --provider '${{ matrix.provider }}'
+          --model '${{ matrix.model }}'
+
+      - name: Post-run OOS guard
+        run: python oos_guard.py
+
+      - name: Name result
+        shell: bash
+        run: |
+          mv model_tournament_result.json "tournament_${{ matrix.tag }}.json"
+
+      - name: Upload model result
+        uses: actions/upload-artifact@v4
+        with:
+          name: tournament-${{ matrix.tag }}
+          path: moondev_autoresearch_reconstruction/tournament_${{ matrix.tag }}.json
+          retention-days: 30
+
+  aggregate:
+    needs: [freeze, model]
+    if: always() && needs.freeze.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+
+      - name: Download all model results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-*
+          path: tournament_results
+          merge-multiple: true
+
+      - name: Aggregate matched tournament
+        shell: python
+        run: |
+          import json
+          import statistics
+          from pathlib import Path
+
+          files=sorted(Path("tournament_results").glob("tournament_*.json"))
+          results=[]
+          for p in files:
+              try:
+                  x=json.loads(p.read_text())
+              except Exception:
+                  continue
+              results.append(x)
+
+          available=[x for x in results if x.get("available")]
+          unavailable=[x for x in results if not x.get("available")]
+
+          # Matched-case wins use only guard-passing backtests.
+          case_ids=sorted({
+              r.get("track_id")
+              for x in available
+              for r in x.get("cases",[])
+              if r.get("track_id")
+          })
+          wins={x["model"]:0 for x in available}
+          for case in case_ids:
+              candidates=[]
+              for x in available:
+                  row=next(
+                      (r for r in x.get("cases",[]) if r.get("track_id")==case),
+                      None
+                  )
+                  if row and row.get("guard_ok") and row.get("delta_k") is not None:
+                      candidates.append((float(row["delta_k"]),x["model"]))
+              if candidates:
+                  best=max(v for v,_ in candidates)
+                  for v,m in candidates:
+                      if abs(v-best) < 1e-12:
+                          wins[m]+=1
+
+          ranking=[]
+          for x in available:
+              s=dict(x.get("summary") or {})
+              s.update({
+                  "provider":x.get("provider"),
+                  "model":x.get("model"),
+                  "matched_case_wins":wins.get(x.get("model"),0),
+              })
+              ranking.append(s)
+
+          def n(v,default=-1e99):
+              try:
+                  return float(v)
+              except Exception:
+                  return default
+
+          ranking.sort(
+              key=lambda r:(
+                  int(r.get("would_keep",0)),
+                  int(r.get("matched_case_wins",0)),
+                  int(r.get("guard_pass",0)),
+                  n(r.get("median_delta_k")),
+                  int(r.get("admitted",0)),
+              ),
+              reverse=True,
+          )
+
+          payload={
+              "state_sha":"${{ needs.freeze.outputs.state_sha }}",
+              "available_models":len(available),
+              "unavailable_models":len(unavailable),
+              "case_count":len(case_ids),
+              "ranking":ranking,
+              "unavailable":[
+                  {
+                      "provider":x.get("provider"),
+                      "model":x.get("model"),
+                      "detail":x.get("availability_detail"),
+                  }
+                  for x in unavailable
+              ],
+              "hidden_validation_opened":False,
+              "final_oos_opened":False,
+          }
+          Path("tournament-summary.json").write_text(
+              json.dumps(payload,indent=2,sort_keys=True)+"\n"
+          )
+
+          out=[
+              "# Zero-fee AI model tournament — Round 1",
+              "",
+              f"Frozen continuous-state SHA: `{payload['state_sha']}`",
+              f"Matched benchmark cases: **{payload['case_count']}**",
+              f"Available models tested: **{payload['available_models']}**",
+              f"Unavailable/missing-key models: **{payload['unavailable_models']}**",
+              "",
+              "| Rank | Model | Provider | Keep-worthy | Case wins | Guard pass | Admitted | Median ΔK | Mean ΔK | Seconds |",
+              "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|",
+          ]
+          for i,r in enumerate(ranking,1):
+              out.append(
+                  f"| {i} | {r.get('model')} | {r.get('provider')} | "
+                  f"{r.get('would_keep',0)} | {r.get('matched_case_wins',0)} | "
+                  f"{r.get('guard_pass',0)} | {r.get('admitted',0)} | "
+                  f"{r.get('median_delta_k')} | {r.get('mean_delta_k')} | "
+                  f"{r.get('total_seconds')} |"
+              )
+
+          if unavailable:
+              out += ["","Unavailable or not configured:"]
+              for x in payload["unavailable"]:
+                  out.append(
+                      f"- `{x['model']}` ({x['provider']}): {x.get('detail')}"
+                  )
+
+          out += [
+              "",
+              "Ranking is matched and development-only: each model received the same frozen strategy champion and prompt for each case.",
+              "A 'keep-worthy' result means the candidate passed the hardened development guard and exceeded the same material ΔK threshold used by continuous AUTORESEARCH.",
+              "No model saw another model's output. Hidden pre-OOS validation and 2023+ final OOS were not opened.",
+          ]
+          Path("tournament-report.md").write_text("\n".join(out)+"\n")
+          print("\n".join(out))
+
+      - name: Upload aggregate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: tournament-round1-summary
+          path: |
+            tournament-summary.json
+            tournament-report.md
+          retention-days: 30
+
+      - name: Comment tournament result on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh pr comment 13
+          --repo tjhuber2009-eng/TestRepo
+          --body-file tournament-report.md
