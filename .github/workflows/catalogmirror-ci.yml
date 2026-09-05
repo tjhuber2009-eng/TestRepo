@@ -21,11 +21,13 @@ jobs:
           node-version: 20
       - name: Generate lockfile
         run: npm install --package-lock-only
-      - name: Apply non-breaking audit fixes
-        run: npm audit fix --package-lock-only
       - run: npm ci
       - name: Dependency audit
-        run: npm audit --audit-level=moderate || true
+        run: npm audit --audit-level=moderate
+      - name: Prisma validate
+        run: npx prisma validate
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
