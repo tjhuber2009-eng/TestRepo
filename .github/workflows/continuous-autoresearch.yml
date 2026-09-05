@@ -3,8 +3,6 @@ name: Continuous NVIDIA AUTORESEARCH
 on:
   schedule:
     - cron: "17 * * * *"
-  issue_comment:
-    types: [created]
   workflow_dispatch:
 
 permissions:
@@ -16,19 +14,10 @@ permissions:
 concurrency:
   group: continuous-nvidia-autoresearch
   cancel-in-progress: false
+  queue: max
 
 jobs:
   cycle:
-    if: >
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        github.event.issue.number == 13 &&
-        github.event.comment.body == '/continuous-autoresearch-cycle' &&
-        github.event.comment.user.login == 'tjhuber2009-eng'
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -261,15 +250,6 @@ jobs:
             moondev_autoresearch_reconstruction/continuous_state/dashboard/data.json
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Comment manual cycle result
-        if: github.event_name == 'issue_comment'
-        shell: bash
-        working-directory: .
-        run: >
-          gh pr comment 13
-          --repo tjhuber2009-eng/TestRepo
-          --body-file moondev_autoresearch_reconstruction/cycle-report.md
 
       - name: Comment final exhaustive completion
         if: steps.completion.outputs.new_completion == 'true'
