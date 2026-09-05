@@ -18,6 +18,8 @@ import json
 import math
 import os
 import re
+
+import overfit_diagnostics
 import shutil
 import subprocess
 import sys
@@ -232,6 +234,26 @@ def development_score(track):
     except Exception:
         return float("-inf")
     return score if math.isfinite(score) else float("-inf")
+
+
+def development_overfit(track):
+    p = TRACKS / track["id"] / "experiments.jsonl"
+    try:
+        return overfit_diagnostics.track_pbo(p)
+    except Exception:
+        return None
+
+
+def development_selection_score(track):
+    score = development_score(track)
+    if not math.isfinite(score):
+        return score
+    diag = development_overfit(track)
+    if not diag:
+        return score
+    excess = max(0.0, float(diag.get("pbo", 0.0)) - 0.50)
+    penalty = min(0.25, 0.50 * excess)
+    return score * (1.0 - penalty) if score >= 0 else score * (1.0 + penalty)
 
 
 def target_env(track):
@@ -702,9 +724,10 @@ def ranked_viable(tracks, min_valid):
         if track_counts(track)["valid"] < min_valid:
             continue
         score = development_score(track)
-        if math.isfinite(score):
-            rows.append((score, track))
-    rows.sort(key=lambda x: x[0], reverse=True)
+        selection = development_selection_score(track)
+        if math.isfinite(score) and math.isfinite(selection):
+            rows.append((selection, score, track))
+    rows.sort(key=lambda x: (x[0], x[1]), reverse=True)
     return rows
 
 
@@ -715,14 +738,14 @@ def freeze_depth_selection(tracks, breadth_target, depth_fraction):
             return x
 
     grouped = {}
-    for score, track in ranked_viable(tracks, breadth_target):
+    for selection_score, score, track in ranked_viable(tracks, breadth_target):
         key = (track["target"]["id"], track["profile_name"])
         grouped.setdefault(key, []).append((score, track))
 
     depth_ids = []
     for key, rows in sorted(grouped.items()):
         n = max(1, math.ceil(len(rows) * depth_fraction))
-        depth_ids.extend(track["id"] for _, track in rows[:n])
+        depth_ids.extend(track["id"] for _, _, track in rows[:n])
 
     x = {
         "protocol": PROTOCOL,
@@ -742,18 +765,20 @@ def freeze_elite_selection(tracks, depth_target, elite_fraction):
         return x
     depth_ids = set(x.get("depth_ids", []))
     rows = [
-        (score, track)
-        for score, track in ranked_viable(tracks, depth_target)
+        (selection_score, score, track)
+        for selection_score, score, track in ranked_viable(tracks, depth_target)
         if track["id"] in depth_ids
     ]
     by_profile = {}
-    for score, track in rows:
-        by_profile.setdefault(track["profile_name"], []).append((score, track))
+    for selection_score, score, track in rows:
+        by_profile.setdefault(track["profile_name"], []).append(
+            (selection_score, score, track)
+        )
 
     elite_ids = []
     for profile, group in sorted(by_profile.items()):
         n = max(3, math.ceil(len(group) * elite_fraction))
-        elite_ids.extend(track["id"] for _, track in group[:n])
+        elite_ids.extend(track["id"] for _, _, track in group[:n])
     x["elite_fraction"] = elite_fraction
     x["elite_created_at"] = now()
     x["elite_ids"] = sorted(set(elite_ids))
@@ -874,6 +899,10 @@ def write_progress(
             "valid_attempts": rc["valid"],
             "attempts": rc["attempts"],
             "development_score": development_score(track),
+            "selection_score": development_selection_score(track),
+            "pbo": (
+                (development_overfit(track) or {}).get("pbo")
+            ),
             "development_cagr_pct": (
                 (m.get("baseline") or {}).get("cagr_pct") if m else None
             ),
@@ -931,6 +960,7 @@ def rebuild_leaderboard(tracks):
             continue
         b = m["baseline"]
         val = validation_state(track)
+        pbo = development_overfit(track) or {}
         rows.append({
             "track_id": track["id"],
             "family": m.get("family"),
@@ -940,6 +970,11 @@ def rebuild_leaderboard(tracks):
             "profile": m.get("profile"),
             "valid_attempts": m.get("valid", m.get("valid_attempts", 0)),
             "development_score": b.get("score"),
+            "selection_score": development_selection_score(track),
+            "pbo": pbo.get("pbo"),
+            "pbo_candidate_count": pbo.get("candidate_count"),
+            "pbo_fold_count": pbo.get("fold_count"),
+            "pbo_cscv_splits": pbo.get("cscv_splits"),
             "development_return_pct": b.get("return_pct"),
             "development_cagr_pct": b.get("cagr_pct"),
             "development_years": b.get("development_years"),
