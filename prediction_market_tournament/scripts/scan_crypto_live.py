@@ -18,6 +18,7 @@ from tournament.crypto_market import (
     WINDOW_SECONDS,
     crypto_signal_from_market,
     discover_btc_5m_market,
+    strike_tick_is_on_time,
 )
 from tournament.freeze import (
     load_frozen_spec,
@@ -109,9 +110,11 @@ async def run(duration_seconds: float) -> int:
                 )
                 * 1000.0
             )
-            strike_on_time = (
-                0.0 <= strike_source_lag_ms <= max_strike_lag_ms
-                and 0.0 <= strike_receive_lag_ms <= max_strike_lag_ms
+            strike_on_time = strike_tick_is_on_time(
+                source_timestamp_ms=float(tick.source_timestamp_ms),
+                receive_timestamp_ms=receive_ms,
+                window_start_ms=start_ms,
+                max_lag_seconds=max_strike_lag_ms / 1000.0,
             )
             if strike_on_time and start_ms not in states:
                 states[start_ms] = {
