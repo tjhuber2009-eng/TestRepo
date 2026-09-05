@@ -8,7 +8,7 @@ permissions:
 
 concurrency:
   group: autoresearch-v4-prop-intraday
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   prop-intraday:
