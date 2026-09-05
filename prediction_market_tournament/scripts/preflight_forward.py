@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import subprocess
 import time
 from pathlib import Path
 
@@ -23,6 +24,76 @@ from tournament.freeze import (
     runtime_hash,
 )
 
+FROZEN_BRANCH = "prediction-market-tournament"
+
+
+def _git(
+    repo_root: Path,
+    *args: str,
+    check: bool = True,
+) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", "-C", str(repo_root), *args],
+        check=check,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+
+def _repository_probe(root: Path) -> dict:
+    repo_root = root.parent
+
+    branch = _git(repo_root, "branch", "--show-current").stdout.strip()
+    if branch != FROZEN_BRANCH:
+        raise RuntimeError(
+            f"expected branch {FROZEN_BRANCH!r}, got {branch!r}"
+        )
+
+    status = _git(
+        repo_root,
+        "status",
+        "--porcelain=v1",
+        "--untracked-files=all",
+    ).stdout.splitlines()
+    if status:
+        raise RuntimeError(
+            "working tree must be clean before V1 start: "
+            + " | ".join(status[:20])
+        )
+
+    fetch = _git(
+        repo_root,
+        "fetch",
+        "origin",
+        FROZEN_BRANCH,
+        check=False,
+    )
+    if fetch.returncode != 0:
+        raise RuntimeError(
+            "could not fetch frozen remote branch: "
+            + fetch.stderr[-1000:]
+        )
+
+    head = _git(repo_root, "rev-parse", "HEAD").stdout.strip()
+    remote = _git(
+        repo_root,
+        "rev-parse",
+        f"origin/{FROZEN_BRANCH}",
+    ).stdout.strip()
+    if not head or head != remote:
+        raise RuntimeError(
+            "local HEAD must exactly equal the remote frozen branch "
+            f"before start: local={head!r} remote={remote!r}"
+        )
+
+    return {
+        "branch": branch,
+        "head_sha": head,
+        "remote_sha": remote,
+        "working_tree_clean": True,
+    }
+
 
 def _data_artifacts(root: Path) -> list[str]:
     data = root / "data"
@@ -37,7 +108,11 @@ def _data_artifacts(root: Path) -> list[str]:
     )
 
 
-def _clock_probe() -> dict[str, float]:
+def _clock_probe(
+    *,
+    max_rtt_seconds: float,
+    max_abs_offset_seconds: float,
+) -> dict[str, float]:
     before = time.time()
     server = get_server_time()
     after = time.time()
@@ -46,12 +121,16 @@ def _clock_probe() -> dict[str, float]:
     offset = midpoint - server
 
     # /time is second-resolution. Allow quantization plus network delay, but
-    # fail well inside the frozen 3-second crypto checkpoint allowance.
-    if rtt > 2.0:
-        raise RuntimeError(f"CLOB server-time RTT too high: {rtt:.3f}s")
-    if abs(offset) > 1.5:
+    # fail comfortably inside the frozen 3-second crypto checkpoint allowance.
+    if rtt > max_rtt_seconds:
         raise RuntimeError(
-            f"host clock differs from CLOB server by {offset:.3f}s"
+            f"CLOB server-time RTT too high: {rtt:.3f}s "
+            f"> {max_rtt_seconds:.3f}s"
+        )
+    if abs(offset) > max_abs_offset_seconds:
+        raise RuntimeError(
+            f"host clock differs from CLOB server by {offset:.3f}s; "
+            f"limit={max_abs_offset_seconds:.3f}s"
         )
     return {
         "clob_time_rtt_seconds": rtt,
@@ -60,8 +139,9 @@ def _clock_probe() -> dict[str, float]:
 
 
 async def _rtds_probe(
-    timeout_seconds: float = 20.0,
-    max_source_lag_seconds: float = 5.0,
+    *,
+    timeout_seconds: float,
+    max_source_lag_seconds: float,
 ) -> dict:
     accepted: dict[str, dict] = {}
 
@@ -111,14 +191,32 @@ def main() -> int:
         )
 
     spec, spec_sha = load_frozen_spec(root / "config" / "frozen_v1.json")
+    service_cfg = spec["service"]
 
-    clock = _clock_probe()
+    repository = _repository_probe(root)
+
+    clock = _clock_probe(
+        max_rtt_seconds=float(
+            service_cfg["preflight_clob_time_max_rtt_seconds"]
+        ),
+        max_abs_offset_seconds=float(
+            service_cfg["preflight_clock_max_abs_offset_seconds"]
+        ),
+    )
 
     events = list_events(active=True, closed=False, limit=1, offset=0)
     if not isinstance(events, list) or not events:
         raise SystemExit("Polymarket Gamma probe returned no active events")
 
-    rtds = asyncio.run(_rtds_probe())
+    max_rtds_lag = float(
+        service_cfg["preflight_rtds_max_source_to_host_lag_seconds"]
+    )
+    rtds = asyncio.run(
+        _rtds_probe(
+            timeout_seconds=20.0,
+            max_source_lag_seconds=max_rtds_lag,
+        )
+    )
     expected = {TOPIC_RAW, TOPIC_TWAP60}
     if not expected.issubset(rtds):
         raise SystemExit(
@@ -134,10 +232,11 @@ def main() -> int:
         "implementation_sha256": implementation_hash(root),
         "runtime_sha256": runtime_hash(),
         "runtime": runtime_fingerprint(),
+        "repository": repository,
         "clock": clock,
         "gamma_active_event_probe": True,
         "rtds": rtds,
-        "rtds_freshness_limit_seconds": 5.0,
+        "rtds_freshness_limit_seconds": max_rtds_lag,
         "pre_start_data_clean": True,
         "checked_at_epoch": time.time(),
     }
