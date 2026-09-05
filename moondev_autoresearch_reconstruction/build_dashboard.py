@@ -48,6 +48,18 @@ def finite(v):
     return x if math.isfinite(x) else None
 
 
+def sanitize_json(value):
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: sanitize_json(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_json(v) for v in value]
+    if isinstance(value, tuple):
+        return [sanitize_json(v) for v in value]
+    return value
+
+
 def workflow_runs(payload, limit=8):
     if not isinstance(payload, dict):
         return []
@@ -207,6 +219,7 @@ def main():
         },
     }
 
+    payload = sanitize_json(payload)
     (output / "data.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
         encoding="utf-8",
