@@ -452,6 +452,22 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertLessEqual(result.chosen.gross_exposure, 1.5 + 1e-12)
         self.assertGreaterEqual(result.chosen.effective_n, 1.0)
 
+    def test_portfolio_max_weight_applies_to_seed_candidates(self):
+        optimizer = RobustPortfolioOptimizer(
+            dd_cap_pct=35,
+            n_candidates=60,
+            bootstrap_reps=10,
+            max_weight=0.50,
+            seed=7,
+        )
+        rows = optimizer._candidate_compositions(
+            3, np.random.default_rng(7)
+        )
+        self.assertEqual(len(rows), 60)
+        self.assertTrue(
+            all(float(np.max(w)) <= 0.50 + 1e-12 for w in rows)
+        )
+
     def test_portfolio_optimizer_uses_cash_when_full_investment_breaks_dd_cap(self):
         rng = np.random.default_rng(12)
         r = rng.normal(0.0010, 0.03, 600)
