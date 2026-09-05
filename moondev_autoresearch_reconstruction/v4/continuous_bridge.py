@@ -401,6 +401,21 @@ def _replay_metrics(stats, periods_per_year: float) -> tuple[pd.Series, dict]:
     }
 
 
+def private_portfolio_eligible(
+    replay_ok: bool,
+    pbo: float | None,
+    *,
+    max_pbo: float = 0.55,
+) -> bool:
+    """Fail closed when a promoted private family lacks PBO evidence."""
+    return bool(
+        replay_ok
+        and pbo is not None
+        and math.isfinite(float(pbo))
+        and float(pbo) <= float(max_pbo)
+    )
+
+
 def replay_private_candidate(
     candidate: PromotionCandidate,
     source: str,
@@ -455,10 +470,10 @@ def replay_private_candidate(
         and abs(min(base_metrics["max_dd_pct"], 0.0)) <= float(max_dd_pct)
         and base_metrics["trades"] >= 8
     )
-    portfolio_eligible = (
-        replay_ok
-        and candidate.pbo is not None
-        and float(candidate.pbo) <= 0.55
+    portfolio_eligible = private_portfolio_eligible(
+        replay_ok,
+        candidate.pbo,
+        max_pbo=0.55,
     )
     return returns, {
         "candidate": candidate.to_dict(),
