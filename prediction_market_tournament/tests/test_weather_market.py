@@ -165,3 +165,22 @@ def test_weather_chooses_no_when_bracket_probability_is_low(monkeypatch):
     assert signal.side == "NO"
     assert signal.fair_probability == 0.9
     assert signal.metadata["fair_yes_probability"] == pytest.approx(0.1)
+
+
+def test_weather_rejects_market_not_accepting_orders(monkeypatch):
+    event, market = _weather_market_fixture()
+    market["acceptingOrders"] = False
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("forecast path should not run")
+
+    monkeypatch.setattr(weather, "station_location", fail_if_called)
+    signal = weather.weather_signal_from_market(
+        market,
+        event=event,
+        target_date=date(2026, 9, 5),
+        observed_at=datetime(2026, 9, 5, tzinfo=timezone.utc),
+        min_edge=0.05,
+        cash_budget_usd=5.0,
+    )
+    assert signal is None
