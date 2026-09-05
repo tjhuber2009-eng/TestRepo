@@ -447,6 +447,32 @@ def fold_windows(eq_index, start, end):
     return half
 
 
+def fixed_cscv_windows(index, start, end, slices=8):
+    """Fixed even, contiguous development partitions for CSCV/PBO only."""
+    if slices < 4 or slices % 2:
+        raise ValueError("CSCV slices must be an even integer >= 4")
+    idx = pd.DatetimeIndex(pd.to_datetime(index, utc=True))
+    a = to_utc_timestamp(start)
+    b = to_utc_timestamp(end, end=True)
+    active = idx[(idx >= a) & (idx <= b)]
+    if len(active) < slices:
+        return []
+    chunks = np.array_split(np.arange(len(active)), slices)
+    out = []
+    for i, chunk in enumerate(chunks, 1):
+        if len(chunk) == 0:
+            return []
+        left = active[int(chunk[0])]
+        right = active[int(chunk[-1])]
+        out.append((
+            f"S{i:02d}",
+            left.strftime("%Y-%m-%d"),
+            right.strftime("%Y-%m-%d"),
+            int(len(chunk)),
+        ))
+    return out
+
+
 def deterministic_bootstrap(stats, start, end):
     eq = slice_equity(stats, start, end)
     r = eq.pct_change().replace([np.inf, -np.inf], np.nan).dropna().to_numpy(dtype=float)
@@ -529,6 +555,23 @@ def evaluate_search(df):
         sum(1 for x in folds if float(x["return_pct"]) > 0) / len(folds)
         if folds else 0.0
     )
+    # PBO uses its own fixed even partition rather than reusing variable
+    # annual/half-year robustness folds. This keeps CSCV geometry comparable
+    # across candidates and satisfies the symmetric half-split requirement.
+    cscv_slices = []
+    for name, start, end, n in fixed_cscv_windows(
+        eq_idx, SEARCH_START, DEV_END, slices=8
+    ):
+        x = metrics_from_stats(base_stats, start, end, work)
+        cscv_slices.append({
+            "name": name,
+            "start": start,
+            "end": end,
+            "bars": n,
+            "raw_k": x["raw_k"],
+            "return_pct": x["return_pct"],
+        })
+
     bootstrap = deterministic_bootstrap(base_stats, SEARCH_START, DEV_END)
     score = robust_score(folds, stress, extreme, bootstrap, full["psr_zero"])
     worst_risk_dd = max(
@@ -566,6 +609,8 @@ def evaluate_search(df):
         "stress": stress,
         "extreme_stress": extreme,
         "folds": folds,
+        "cscv_slices": cscv_slices,
+        "cscv_slice_count": len(cscv_slices),
         "active_folds": len(folds),
         "positive_fold_fraction": round(positive_fraction, 4),
         "worst_fold_k": round(min(finite_k), 6) if finite_k else float("-inf"),
