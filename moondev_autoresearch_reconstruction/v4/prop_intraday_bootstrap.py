@@ -293,12 +293,23 @@ def aggregate_prague_days_scaled(
     bar_adverse: pd.Series,
     weights: pd.DataFrame,
     scales=PROP_SCALES,
+    *,
+    day_profit_cap: float | None = None,
+    day_loss_cap: float | None = None,
 ) -> tuple[
     dict[float, pd.Series],
     dict[float, pd.Series],
     pd.Series,
 ]:
-    """Apply each prop exposure scale before intraday/day compounding."""
+    """Apply prop scale before compounding, with optional causal daily brake.
+
+    When a scaled account reaches a configured Prague-day profit or loss
+    threshold at an hourly close, exposure is flattened for subsequent hours
+    of that Prague day. The triggering hour and its adverse excursion remain
+    fully counted. An additional stressed one-way close cost is charged at the
+    trigger. This is development-only hourly execution realism, not tick-level
+    proof of FTMO rule compliance.
+    """
     idx = bar_returns.index
     local_date = pd.Index(idx.tz_convert(PRAGUE).date, name="PragueDate")
     groups = pd.Series(np.arange(len(idx)), index=idx).groupby(local_date)
@@ -306,6 +317,24 @@ def aggregate_prague_days_scaled(
     scale_arr = np.asarray(tuple(float(x) for x in scales), dtype=float)
     raw_r = bar_returns.to_numpy(dtype=float)
     raw_a = bar_adverse.to_numpy(dtype=float)
+    gross = weights.reindex(idx).fillna(0.0).abs().sum(axis=1).to_numpy(dtype=float)
+
+    profit_cap = None if day_profit_cap is None else float(day_profit_cap)
+    loss_cap = None if day_loss_cap is None else float(day_loss_cap)
+    if profit_cap is not None and profit_cap <= 0.0:
+        raise ValueError("day_profit_cap must be positive")
+    if loss_cap is not None and loss_cap <= 0.0:
+        raise ValueError("day_loss_cap must be positive")
+    brake_enabled = profit_cap is not None or loss_cap is not None
+
+    # Current stressed research transaction-cost assumption for an emergency
+    # flatten. Base bar returns already include ordinary strategy transaction
+    # costs; future base costs are zeroed once the day is stopped.
+    emergency_close_fraction = (
+        (FTMO_CRYPTO_COMMISSION_BPS + RESEARCH_SLIPPAGE_BPS)
+        / 10_000.0
+        * PROP_COST_STRESS_MULTIPLIER
+    )
 
     days = []
     return_rows = []
@@ -313,19 +342,64 @@ def aggregate_prague_days_scaled(
     opened_values = []
     for day, positions in groups:
         pos = positions.to_numpy(dtype=int)
-        rr = raw_r[pos]
-        aa = raw_a[pos]
-        factors = 1.0 + scale_arr[:, None] * rr[None, :]
-        eq_path = np.cumprod(factors, axis=1)
-        before = np.concatenate(
-            [np.ones((len(scale_arr), 1)), eq_path[:, :-1]],
-            axis=1,
-        )
-        adverse_path = before * (
-            1.0 + scale_arr[:, None] * aa[None, :]
-        )
-        ending = eq_path[:, -1] if len(pos) else np.ones(len(scale_arr))
-        worst = np.minimum(1.0, adverse_path.min(axis=1))
+        if not brake_enabled:
+            rr = raw_r[pos]
+            aa = raw_a[pos]
+            factors = 1.0 + scale_arr[:, None] * rr[None, :]
+            eq_path = np.cumprod(factors, axis=1)
+            before = np.concatenate(
+                [np.ones((len(scale_arr), 1)), eq_path[:, :-1]],
+                axis=1,
+            )
+            adverse_path = before * (
+                1.0 + scale_arr[:, None] * aa[None, :]
+            )
+            ending = (
+                eq_path[:, -1] if len(pos) else np.ones(len(scale_arr))
+            )
+            worst = np.minimum(1.0, adverse_path.min(axis=1))
+        else:
+            ending = np.ones(len(scale_arr), dtype=float)
+            worst = np.ones(len(scale_arr), dtype=float)
+            stopped = np.zeros(len(scale_arr), dtype=bool)
+            for i in pos:
+                active = ~stopped
+                if not np.any(active):
+                    break
+                adverse_equity = ending * (
+                    1.0 + scale_arr * float(raw_a[i])
+                )
+                worst[active] = np.minimum(
+                    worst[active], adverse_equity[active]
+                )
+                next_equity = ending * (
+                    1.0 + scale_arr * float(raw_r[i])
+                )
+                ending[active] = next_equity[active]
+                pnl = ending - 1.0
+                hit = active & (
+                    (
+                        False
+                        if profit_cap is None
+                        else pnl >= profit_cap
+                    )
+                    | (
+                        False
+                        if loss_cap is None
+                        else pnl <= -loss_cap
+                    )
+                )
+                if np.any(hit):
+                    close_frac = (
+                        scale_arr[hit]
+                        * float(gross[i])
+                        * emergency_close_fraction
+                    )
+                    ending[hit] *= 1.0 - close_frac
+                    worst[hit] = np.minimum(worst[hit], ending[hit])
+                    stopped[hit] = True
+            worst = np.minimum(1.0, worst)
+
         days.append(day)
         return_rows.append(ending - 1.0)
         adverse_rows.append(worst - 1.0)
@@ -356,7 +430,6 @@ def aggregate_prague_days_scaled(
         name="opened",
     ).astype(bool)
     return returns, adverse, opened
-
 
 
 def _resolve_prop_symbols(data, universe: str) -> tuple[str, ...]:
@@ -441,9 +514,14 @@ def evaluate_strategy(data, params):
         bar_adverse,
         aligned_weights,
         PROP_SCALES,
+        day_profit_cap=params.get("day_profit_cap"),
+        day_loss_cap=params.get("day_loss_cap"),
     )
     if not opened.equals(scaled_opened):
         raise RuntimeError("scaled intraday aggregation changed trading-day flags")
+    if params.get("day_profit_cap") is not None or params.get("day_loss_cap") is not None:
+        daily_ret = scaled_ret[1.0]
+        daily_adv = scaled_adv[1.0]
     return (
         result,
         daily_ret,
@@ -568,6 +646,33 @@ def _frontier_universe_mutations(
                     continue
                 seen.add(key)
                 out.append(candidate)
+    return out
+
+
+def _frontier_day_brake_mutations(
+    leaders_by_program: dict,
+) -> list[dict]:
+    """Compact risk/payout smoothing mutations around strict frontier leaders."""
+    seen = set()
+    out = []
+    for program_leaders in leaders_by_program.values():
+        for view_name in ("balanced", "conservative", "max_evaluation_pass"):
+            leader = program_leaders.get(view_name)
+            if leader is None:
+                continue
+            base = dict(leader["params"])
+            if str(base.get("family", "cross_sectional_long")) != "cross_sectional_long":
+                continue
+            for profit_cap in (0.010, 0.015):
+                for loss_cap in (0.010, 0.015):
+                    candidate = dict(base)
+                    candidate["day_profit_cap"] = float(profit_cap)
+                    candidate["day_loss_cap"] = float(loss_cap)
+                    key = tuple(sorted(candidate.items()))
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    out.append(candidate)
     return out
 
 def program_with_analysis_horizon(
@@ -786,6 +891,61 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             rows_by_program[program.id].append({
                 "params": params,
                 "search_phase": "frontier_universe_mutation",
+                "hourly_base_cagr_pct": base.metrics.cagr_pct,
+                "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
+                "daily_worst_adverse_pct": float(dadv.min() * 100.0),
+                "selected": None if sel is None else sel.to_dict(),
+            })
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
+
+
+    # Causal Prague-day risk/profit smoothing around the strict frontier.
+    # This directly targets daily-loss risk and the 1-Step Best Day rule.
+    brake_params = _frontier_day_brake_mutations(leaders)
+    for params in brake_params:
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
+                program,
+                exposure_scales=PROP_SCALES,
+                paths=400,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                    "prague_midnight_reset_exact_scale_compounding_daily_flat_"
+                    "hourly_close_day_brake_policy"
+                ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
+            )
+            sel = prop.selected
+            rows_by_program[program.id].append({
+                "params": params,
+                "search_phase": "frontier_prague_day_brake",
                 "hourly_base_cagr_pct": base.metrics.cagr_pct,
                 "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
                 "daily_worst_adverse_pct": float(dadv.min() * 100.0),
@@ -1058,6 +1218,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "frontier_seed_parameter_sets": len(seed_params),
             "frontier_structural_mutations": len(structural_params),
             "frontier_universe_mutations": len(universe_params),
+            "frontier_prague_day_brake_mutations": len(brake_params),
             "independent_tsmom_candidates": len(tsmom_params),
             "candidate_families": [
                 "cross_sectional_long",
@@ -1075,11 +1236,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     "no_bnb",
                     "btc_eth",
                 ],
+                "day_profit_cap": [0.010, 0.015],
+                "day_loss_cap": [0.010, 0.015],
             },
             "policy": (
                 "broad long-only alpha/risk search first; mutate only coarse "
-                "frontier leaders for session/rebalance structure and asset-"
-                "universe robustness; evaluate time-series momentum as an "
+                "frontier leaders for session/rebalance structure, asset-"
+                "universe robustness, and causal Prague-day risk/profit "
+                "smoothing; evaluate time-series momentum as an "
                 "independent compact family"
             ),
         },
