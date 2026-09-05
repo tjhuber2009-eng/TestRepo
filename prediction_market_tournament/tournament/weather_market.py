@@ -207,6 +207,10 @@ def weather_signal_from_market(
         )
 
     execution = market_execution_rules(condition_id)
+    if execution.taker_order_delay_enabled:
+        raise ValueError(
+            "taker order delay enabled; immediate executable fill is invalid"
+        )
     requested_tokens = [tokens["YES"], tokens["NO"]]
     batch = get_books(requested_tokens)
     by_asset = {
