@@ -2,7 +2,7 @@
   "project": "prediction-market-tournament",
   "version": "PMT-FROZEN-V1",
   "frozen_at": "2026-09-05T01:40:00-07:00",
-  "pre_forward_refreeze_reason": "Final pre-start execution/model/source review completed before any forward data/start marker: current Wunderground station-rule parsing, exact book-level fees and identity, fee-inclusive all-in risk sizing, exact fixed-size account replay including unresolved exposure, two-sided equal-weight AIFS/IFS/GEFS weather probabilities, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
+  "pre_forward_refreeze_reason": "Final pre-start execution/model/source/transport review completed before any forward data/start marker: documented RTDS compact-string filters and visible rejection errors, source+receive opening-TWAP causality, host-clock/fresh-feed preflight, current Wunderground weather rules, whole-degree two-sided equal-weight AIFS/IFS/GEFS weather probabilities, exact book-level fees and identity, fee-inclusive all-in sizing, exact fixed-size replay including unresolved exposure, deterministic BTC 5m discovery, post-book checkpoint timing, implementation/runtime freeze binding, persistent-host cadences, and guarded remote persistence were added.",
   "principles": {
     "paper_only": true,
     "real_money_execution_enabled": false,
@@ -79,7 +79,7 @@
       "resolution_oracle": "Chainlink 60-second TWAP",
       "rtds_symbol": "btc/usd",
       "twap_window_seconds": 60,
-      "strike_capture": "first crypto_prices_twap_sixty tick with source timestamp at/after the 5-minute boundary",
+      "strike_capture": "first crypto_prices_twap_sixty BTC/USD tick whose source AND collector receive timestamps are both within the frozen lag after the 5-minute boundary",
       "strike_capture_max_lag_seconds": 3,
       "skip_on_missing_strike": true,
       "volatility_source": "crypto_prices_chainlink",
@@ -87,7 +87,8 @@
       "minimum_raw_price_points": 30,
       "raw_spot_max_age_seconds": 3,
       "max_signals_per_market": 1,
-      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget"
+      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget",
+      "rtds_subscription_filter": "compact JSON string {\"symbol\":\"btc/usd\"}"
     },
     "crypto_late_resolution": {
       "mode": "taker",
@@ -112,7 +113,8 @@
       "raw_spot_max_age_seconds": 3,
       "known_final_window_segment_required": true,
       "max_signals_per_market": 1,
-      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget"
+      "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget",
+      "rtds_subscription_filter": "compact JSON string {\"symbol\":\"btc/usd\"}"
     },
     "favorite_longshot_shadow": {
       "mode": "shadow",
@@ -149,6 +151,9 @@
     "settlement_interval_seconds": 300,
     "complete_set_scan_interval_seconds": 3600,
     "leaderboard_interval_seconds": 300,
-    "git_persist_interval_seconds": 3600
+    "git_persist_interval_seconds": 3600,
+    "preflight_clock_max_abs_offset_seconds": 1.5,
+    "preflight_clob_time_max_rtt_seconds": 2,
+    "preflight_rtds_max_source_to_host_lag_seconds": 5
   }
 }
