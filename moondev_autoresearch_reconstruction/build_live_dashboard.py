@@ -13,7 +13,7 @@ HERE = Path(__file__).resolve().parent
 STATE = HERE / "continuous_state"
 TOURNAMENT = HERE / "tournament_state"
 RUNTIME = HERE / "dashboard_runtime"
-OUT = HERE / "live-dashboard.md"
+OUT = HERE / "live-dashboard.md"\nACTIVE_PROTOCOL = "nested_chronological_v3"
 
 def load(path, default=None):
     p=Path(path)
@@ -86,6 +86,35 @@ continuous=latest_run(RUNTIME/"continuous_runs.json")
 tournament_run=latest_run(RUNTIME/"tournament_runs.json")
 jobs=(load(RUNTIME/"tournament_jobs.json",{}) or {}).get("jobs",[])
 
+stale_state=None
+state_is_active=(
+    progress.get("protocol")==ACTIVE_PROTOCOL
+    and board.get("protocol")==ACTIVE_PROTOCOL
+)
+if not state_is_active:
+    stale_state={
+        "progress_protocol":progress.get("protocol"),
+        "leaderboard_protocol":board.get("protocol"),
+        "leaderboard_count":len(board.get("rows",[]) or []),
+        "updated_at":progress.get("updated_at"),
+    }
+    progress={
+        "protocol":ACTIVE_PROTOCOL,
+        "phase":"initializing",
+        "rows":[],
+        "runnable_track_count":0,
+        "total_valid_candidates":0,
+        "terminal_track_count":0,
+        "validation_pass_count":0,
+        "validation_fail_count":0,
+        "breadth_target":10,
+        "depth_target":30,
+        "elite_target":60,
+    }
+    board={"protocol":ACTIVE_PROTOCOL,"rows":[]}
+if tour and tour.get("protocol")!=ACTIVE_PROTOCOL:
+    tour=None
+
 rows=progress.get("rows",[])
 runnable=int(progress.get("runnable_track_count",len(rows)) or 0)
 valid=int(progress.get("total_valid_candidates",0) or 0)
@@ -106,9 +135,17 @@ out=[
 "# AUTORESEARCH Live Dashboard",
 "",
 f"> **Auto-updated:** {stamp}  ",
-f"> **Protocol:** `{progress.get('protocol','—')}`  ",
+f"> **Protocol:** `{ACTIVE_PROTOCOL}`  ",
 f"> **Phase:** **{str(progress.get('phase','—')).upper()}**",
 "",
+*(
+    [
+        "> ⚠️ **Protocol-stale persistent state detected.** The saved state is "
+        f"`{stale_state.get('progress_protocol')}`; its {stale_state.get('leaderboard_count',0)} "
+        "leaderboard rows are historical only and are intentionally hidden until a v3 cycle initializes fresh state.",
+        "",
+    ] if stale_state else []
+),
 "| Live status | Value |",
 "|---|---|",
 f"| Research phase | **{str(progress.get('phase','—')).upper()}** |",
@@ -200,7 +237,7 @@ out += [
 "",
 "## Project health",
 "",
-f"- Protocol migration: **{progress.get('protocol','—')}**",
+f"- Active protocol: **{ACTIVE_PROTOCOL}**",
 "- Prior protocol v2 state is preserved on branch **continuous-autoresearch-v2-archive-20260905**.",
 "- Candidate selection now uses duration-normalized K, 2×/3× cost stress, PSR, block-bootstrap diagnostics and CSCV PBO when enough candidates exist.",
 "- Multiple-testing FDR q-values are reported across current champions rather than silently treating 514 searches as independent.",
