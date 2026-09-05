@@ -14,6 +14,13 @@ export default async function handleRequest(
   reactRouterContext: EntryContext,
 ) {
   addDocumentResponseHeaders(request, responseHeaders);
+  responseHeaders.set("X-Content-Type-Options", "nosniff");
+  responseHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  responseHeaders.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (process.env.NODE_ENV === "production") {
+    responseHeaders.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+
   const callbackName = isbot(request.headers.get("user-agent") ?? "") ? "onAllReady" : "onShellReady";
 
   return new Promise<Response>((resolve, reject) => {
@@ -23,13 +30,16 @@ export default async function handleRequest(
         [callbackName]: () => {
           const body = new PassThrough();
           responseHeaders.set("Content-Type", "text/html");
-          resolve(new Response(createReadableStreamFromReadable(body), { headers: responseHeaders, status: responseStatusCode }));
+          resolve(new Response(createReadableStreamFromReadable(body), {
+            headers: responseHeaders,
+            status: responseStatusCode,
+          }));
           pipe(body);
         },
         onShellError: reject,
         onError(error) {
           responseStatusCode = 500;
-          console.error(error);
+          console.error("CatalogMirror SSR error", error);
         },
       },
     );

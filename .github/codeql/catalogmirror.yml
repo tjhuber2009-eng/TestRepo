@@ -1,0 +1,9 @@
+name: "CatalogMirror CodeQL"
+paths:
+  - catalogmirror
+paths-ignore:
+  - catalogmirror/node_modules
+  - catalogmirror/build
+  - catalogmirror/.react-router
+queries:
+  - uses: security-extended

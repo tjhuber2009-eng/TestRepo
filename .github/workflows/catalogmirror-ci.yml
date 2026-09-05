@@ -8,38 +8,77 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: catalogmirror-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://catalogmirror:catalogmirror@localhost:5432/catalogmirror
+      SHOPIFY_API_KEY: test
+      SHOPIFY_API_SECRET: test-secret
+      SHOPIFY_APP_URL: https://example.com
+      SCOPES: read_products,read_inventory
+      BILLING_ENFORCED: "false"
+      PORT: "3000"
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: catalogmirror
+          POSTGRES_PASSWORD: catalogmirror
+          POSTGRES_DB: catalogmirror
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U catalogmirror -d catalogmirror"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: catalogmirror
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: catalogmirror/package-lock.json
+          node-version: 24
+          package-manager-cache: false
       - run: npm ci
       - name: Dependency audit
-        run: npm audit --audit-level=moderate
-      - name: Prisma validate
+        run: npm audit --audit-level=low
+      - name: Unit tests
+        run: npm test
+      - name: Validate Prisma schema
         run: npx prisma validate
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
+      - name: Apply migrations to clean PostgreSQL
+        run: npm run migrate
       - run: npx prisma generate
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
       - run: npm run typecheck
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
-          SHOPIFY_API_KEY: test
-          SHOPIFY_API_SECRET: test
-          SHOPIFY_APP_URL: https://example.com
       - run: npm run build
-        env:
-          DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
-          SHOPIFY_API_KEY: test
-          SHOPIFY_API_SECRET: test
-          SHOPIFY_APP_URL: https://example.com
+      - name: Production runtime smoke test
+        run: |
+          npm run start > /tmp/catalogmirror.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:3000/health >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/catalogmirror.log
+            exit 1
+          fi
+          curl -fsS http://127.0.0.1:3000/ready
+          kill $APP_PID
+          wait $APP_PID 2>/dev/null || true
+          trap - EXIT
+      - name: Build production Docker image
+        run: docker build -t catalogmirror-ci .
