@@ -1,8 +1,6 @@
 name: Continuous NVIDIA AUTORESEARCH
 
 on:
-  schedule:
-    - cron: "17 * * * *"
   workflow_dispatch:
 
 permissions:
