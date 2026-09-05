@@ -23,6 +23,7 @@ class ParameterTrial:
     fold_scores: list[float]
     gate_ok: bool
     structural_fingerprint: str
+    primary_score: float
     median_score: float
     worst_score: float
     score_std: float
@@ -108,11 +109,19 @@ class StableParameterOptimizer:
                 median = float(np.median(scores))
                 worst = float(np.min(scores))
                 std = float(np.std(scores, ddof=1)) if len(scores) > 1 else 0.0
+            primary = result.get("primary_score", median)
+            try:
+                primary = float(primary)
+            except Exception:
+                primary = float("-inf")
+            if not np.isfinite(primary):
+                primary = float("-inf")
             trials.append(ParameterTrial(
                 params=dict(params),
                 fold_scores=scores,
                 gate_ok=bool(result.get("gate_ok", False)),
                 structural_fingerprint=fingerprint,
+                primary_score=primary,
                 median_score=median,
                 worst_score=worst,
                 score_std=std,
@@ -145,9 +154,15 @@ class StableParameterOptimizer:
                 - search_penalty
             )
 
-        eligible = [t for t in trials if t.gate_ok and np.isfinite(t.adjusted_score)]
+        eligible = [
+            t for t in trials
+            if t.gate_ok
+            and np.isfinite(t.primary_score)
+            and np.isfinite(t.adjusted_score)
+        ]
         eligible.sort(
             key=lambda t: (
+                t.primary_score,
                 t.adjusted_score,
                 t.plateau_score,
                 t.worst_score,
@@ -159,7 +174,7 @@ class StableParameterOptimizer:
         search_payload = {
             "frozen_structure": frozen_structure,
             "specs": [{"name": s.name, "values": list(s.values)} for s in self.specs],
-            "policy": "median+plateau+worst-dispersion-multiple_testing_penalty",
+            "policy": "hard_gate_then_primary_score_then_stability_tiebreakers",
         }
         search_hash = sha256(json.dumps(search_payload, sort_keys=True).encode()).hexdigest()
         return ParameterOptimizationResult(
@@ -168,7 +183,8 @@ class StableParameterOptimizer:
             frozen_structure=frozen_structure,
             search_hash=search_hash,
             selection_policy=(
-                "hard-gate first; prefer broad local plateaus and strong worst-fold performance; "
-                "penalize fold dispersion and search multiplicity"
+                "hard-gate first; maximize evaluator primary_score; then prefer broad local "
+                "plateaus and strong worst-fold performance while penalizing fold dispersion "
+                "and search multiplicity"
             ),
         )
