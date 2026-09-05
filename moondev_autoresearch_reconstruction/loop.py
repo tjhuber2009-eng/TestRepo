@@ -217,7 +217,7 @@ def file_sha256(path):
 def append_experiment_record(
     ts, iteration, model, verdict, reason, desc, base_score,
     candidate_score, candidate_ast_sha, candidate_source_sha,
-    best_before_ast_sha,
+    best_before_ast_sha, result=None,
 ):
     prompt_path = os.path.join(LOGS, f"prompt_{iteration}.txt")
     record = {
@@ -239,6 +239,30 @@ def append_experiment_record(
         "prompt_sha256": file_sha256(prompt_path) if os.path.exists(prompt_path) else None,
         "program_sha256": file_sha256(PROGRAM) if os.path.exists(PROGRAM) else None,
         "harness_sha256": file_sha256(HARNESS) if os.path.exists(HARNESS) else None,
+        "idea_sha256": hashlib.sha256(
+            " ".join(str(desc).lower().split()).encode("utf-8")
+        ).hexdigest() if desc else None,
+    }
+    if isinstance(result, dict):
+        for key in [
+            "return_pct", "cagr_pct", "sharpe", "ann_vol_pct",
+            "max_dd_pct", "intrabar_dd_proxy_pct", "trades", "pf",
+            "psr_zero", "bootstrap_sharpe_p10",
+            "bootstrap_mean_positive_pvalue", "evidence_grade",
+            "calmar", "ulcer_index_pct", "benchmark_cagr_pct",
+            "excess_cagr_vs_buyhold_pct", "sharpe_minus_buyhold",
+            "risk_cap_utilization", "positive_fold_fraction",
+        ]:
+            record[key] = result.get(key)
+        record["extreme_stress_return_pct"] = (
+            (result.get("extreme_stress") or {}).get("return_pct")
+        )
+        record["fold_raw_k"] = [
+            x.get("raw_k") for x in (result.get("folds") or [])
+        ]
+        record["fold_return_pct"] = [
+            x.get("return_pct") for x in (result.get("folds") or [])
+        ]
     }
     with open(EXPERIMENTS, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, sort_keys=True) + "\n")
@@ -264,8 +288,9 @@ def ensure_seed():
     if not os.path.exists(RESULTS):
         with open(RESULTS, "w", encoding="utf-8", newline="") as f:
             f.write(
-                "ts\titer\tverdict\tscore\tbase_score\tret_pct\tsharpe\t"
-                "ann_vol\ttrades\tmax_dd\tguard\tdesc\n"
+                "ts\titer\tverdict\tscore\tbase_score\tret_pct\tcagr_pct\t"
+                "sharpe\tann_vol\ttrades\tmax_dd\tpsr_zero\tboot_p\t"
+                "evidence\textreme_ret_pct\tguard\tdesc\n"
             )
     seen = load_seen_hashes()
     if os.path.exists(BEST):
@@ -300,7 +325,9 @@ def build_prompt(iteration, base):
             "or structural change that violates the profile's drawdown ceiling.",
             "",
             f"## Current baseline (must beat): score K={base['score']}, "
-            f"ann vol {base['ann_vol_pct']}%, trades {base['trades']}",
+            f"CAGR {base.get('cagr_pct', 'n/a')}%, Sharpe {base.get('sharpe', 'n/a')}, "
+            f"ann vol {base['ann_vol_pct']}%, trades {base['trades']}, "
+            f"PSR {base.get('psr_zero', 'n/a')}, evidence {base.get('evidence_grade', 'n/a')}",
             "",
             "## Last 30 results (newest last)",
             header,
@@ -313,6 +340,8 @@ def build_prompt(iteration, base):
             "You are the strategy research agent.",
             "You may change strategy.py only.",
             "Make exactly ONE conceptual strategy change.",
+            "Prefer a causal market hypothesis over another generic indicator filter.",
+            "Read the recent results and avoid repeating a concept that already failed on this track.",
             "Return the COMPLETE replacement strategy.py, not a patch.",
             "COPY the current file verbatim except for the smallest code region needed",
             "for that one conceptual change. Do not rewrite unchanged helpers/imports.",
@@ -645,7 +674,11 @@ def run_backtest(iteration):
     return load_json(LAST_RUN), "", time.time() - t0
 
 
-def append_result(ts, iteration, verdict, score, base, ret, sharpe, vol, trades, dd, reason, desc):
+def append_result(
+    ts, iteration, verdict, score, base, ret, sharpe, vol,
+    trades, dd, reason, desc, result=None,
+):
+    result = result if isinstance(result, dict) else {}
     with open(RESULTS, "a", encoding="utf-8", newline="") as f:
         f.write(
             "\t".join(
@@ -653,7 +686,13 @@ def append_result(ts, iteration, verdict, score, base, ret, sharpe, vol, trades,
                     str,
                     [
                         ts, iteration, verdict, score, base["score"], ret,
-                        sharpe, vol, trades, dd, reason.replace("\t", " "),
+                        result.get("cagr_pct", "nan"),
+                        sharpe, vol, trades, dd,
+                        result.get("psr_zero", "nan"),
+                        result.get("bootstrap_mean_positive_pvalue", "nan"),
+                        result.get("evidence_grade", ""),
+                        (result.get("extreme_stress") or {}).get("return_pct", "nan"),
+                        reason.replace("\t", " "),
                         desc.replace("\t", " "),
                     ],
                 )
@@ -729,6 +768,7 @@ def main():
         best_before_ast_sha = canonical_ast_hash(best_before_source)
         candidate_ast_sha = None
         candidate_source_sha = None
+        result = None
         shutil.copy(BEST, STRATEGY)
         if os.path.exists(PROPOSAL):
             os.remove(PROPOSAL)
@@ -849,7 +889,7 @@ def main():
         print(f"[3/4] VERDICT {verdict}: {reason}")
         append_result(
             ts, iteration, verdict, score, base, ret, sharpe, vol,
-            trades, dd, reason, desc
+            trades, dd, reason, desc, result=result
         )
         append_experiment_record(
             ts=ts,
@@ -863,6 +903,7 @@ def main():
             candidate_ast_sha=candidate_ast_sha,
             candidate_source_sha=candidate_source_sha,
             best_before_ast_sha=best_before_ast_sha,
+            result=result,
         )
         scoreboard()
 
