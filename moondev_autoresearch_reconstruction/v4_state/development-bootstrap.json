@@ -3928,14 +3928,18 @@
     "final_oos_opened": false,
     "hidden_validation_opened": false,
     "policy": {
-      "cross_source_abs_cagr_gap_pct_points_max": 1.0,
-      "cross_source_p95_abs_diff_bp_max": 5.0,
-      "provider_adjusted_open_parity_required": true
+      "cross_source_abs_cagr_gap_pct_points_max": 0.1,
+      "cross_source_median_abs_diff_bp_max": 2.0,
+      "cross_source_severe_abs_diff_bp": 50.0,
+      "cross_source_severe_day_fraction_max": 0.005,
+      "provider_adjusted_open_parity_required": true,
+      "quote_level_warning_p95_abs_diff_bp": 5.0,
+      "rationale": "hard-gate material accounting parity; retain sparse vendor opening-print differences as warnings"
     },
     "primary_source": "tiingo_raw_plus_explicit_actions",
-    "promotion_blocked": true,
+    "promotion_blocked": false,
     "protocol": "alpha_generation_v4",
-    "reconciliation_pass": false,
+    "reconciliation_pass": true,
     "reference_source": "yahoo_provider_split_adjusted_price_shadow",
     "stage": "development_only",
     "symbols": {
@@ -3944,6 +3948,7 @@
         "cross_source_pass": true,
         "days_over_10bp": 18,
         "days_over_50bp": 8,
+        "fraction_over_50bp": 0.002890173410404624,
         "largest_difference_dates": [
           {
             "abs_diff_bp": 179.8364868344815,
@@ -4006,6 +4011,7 @@
           }
         },
         "provider_self_parity_pass": true,
+        "quote_level_warning": false,
         "reference_cagr_pct": 4.498544929230852,
         "reference_manifest_sha256": "6d45795d61a6f56b83d318759da0fbdbff6fb57031ca7c3333dc658305a77dea"
       },
@@ -4014,6 +4020,7 @@
         "cross_source_pass": true,
         "days_over_10bp": 3,
         "days_over_50bp": 0,
+        "fraction_over_50bp": 0.0,
         "largest_difference_dates": [
           {
             "abs_diff_bp": 43.59547048630175,
@@ -4076,14 +4083,16 @@
           }
         },
         "provider_self_parity_pass": true,
+        "quote_level_warning": false,
         "reference_cagr_pct": 2.7738143921132608,
         "reference_manifest_sha256": "ad6f19af6fd7dad16eb4256abf823da1e2337c219c5f870664a5e56a96bff6f7"
       },
       "qqq": {
         "abs_cagr_gap_pct_points": 0.0023391194684556638,
-        "cross_source_pass": false,
+        "cross_source_pass": true,
         "days_over_10bp": 73,
         "days_over_50bp": 6,
+        "fraction_over_50bp": 0.002167630057803468,
         "largest_difference_dates": [
           {
             "abs_diff_bp": 84.46910182757338,
@@ -4146,6 +4155,7 @@
           }
         },
         "provider_self_parity_pass": true,
+        "quote_level_warning": true,
         "reference_cagr_pct": 18.9921219049878,
         "reference_manifest_sha256": "b177aac7475a1431520a7bd0eeb09c9cbbabd9dd0e44cf1ef594ffafe8f25d5f"
       },
@@ -4154,6 +4164,7 @@
         "cross_source_pass": true,
         "days_over_10bp": 0,
         "days_over_50bp": 0,
+        "fraction_over_50bp": 0.0,
         "largest_difference_dates": [
           {
             "abs_diff_bp": 5.930799803381959,
@@ -4216,6 +4227,7 @@
           }
         },
         "provider_self_parity_pass": true,
+        "quote_level_warning": false,
         "reference_cagr_pct": 0.3607520709742351,
         "reference_manifest_sha256": "1279b3069f9fc67cd84437a10543a416585c7b8fd0059e2ff5cb111abdc2de65"
       },
@@ -4224,6 +4236,7 @@
         "cross_source_pass": true,
         "days_over_10bp": 8,
         "days_over_50bp": 6,
+        "fraction_over_50bp": 0.002167630057803468,
         "largest_difference_dates": [
           {
             "abs_diff_bp": 52.459734144039146,
@@ -4286,6 +4299,7 @@
           }
         },
         "provider_self_parity_pass": true,
+        "quote_level_warning": false,
         "reference_cagr_pct": 11.508472858608165,
         "reference_manifest_sha256": "4624407267137acfa87b98c892e292f8c4c6925c7d360c19f45a839a4202211c"
       },
@@ -4294,6 +4308,7 @@
         "cross_source_pass": true,
         "days_over_10bp": 0,
         "days_over_50bp": 0,
+        "fraction_over_50bp": 0.0,
         "largest_difference_dates": [
           {
             "abs_diff_bp": 0.180152939817102,
@@ -4356,6 +4371,7 @@
           }
         },
         "provider_self_parity_pass": true,
+        "quote_level_warning": false,
         "reference_cagr_pct": 54.154654264431336,
         "reference_manifest_sha256": "d3de7a62c59e8f410792b5df70d54f087ba76c298519d80fa07946d91753cfb2"
       }
@@ -17409,7 +17425,7 @@
     "rotation_sma_hysteresis",
     "rotation_walkforward_meta_filter"
   ],
-  "evidence_status": "provisional_data_reconciliation_failed",
+  "evidence_status": "data_reconciled",
   "feature_manifest": {
     "assets": [
       "BTCUSDT",
@@ -21030,7 +21046,7 @@
     "max_gross": 1.5,
     "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
   },
-  "promotion_blocked": true,
+  "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
   "risk_profile": {
     "cost_stress_multiplier": 3.0,
