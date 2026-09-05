@@ -1,9 +1,9 @@
 name: CatalogMirror CI
 on:
   push:
-    paths: ["catalogmirror/**"]
+    paths: ["catalogmirror/**", ".github/workflows/catalogmirror-ci.yml"]
   pull_request:
-    paths: ["catalogmirror/**"]
+    paths: ["catalogmirror/**", ".github/workflows/catalogmirror-ci.yml"]
 
 jobs:
   build:
@@ -17,6 +17,8 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - name: Dependency audit
+        run: npm audit --json || true
       - run: npx prisma generate
         env:
           DATABASE_URL: postgresql://user:pass@localhost:5432/catalogmirror
