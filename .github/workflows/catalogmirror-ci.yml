@@ -19,8 +19,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: catalogmirror/package-lock.json
       - name: Generate lockfile
         run: npm install --package-lock-only
       - name: Apply non-breaking audit fixes
