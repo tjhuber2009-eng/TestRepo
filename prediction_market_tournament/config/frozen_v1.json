@@ -2,7 +2,7 @@
   "project": "prediction-market-tournament",
   "version": "PMT-FROZEN-V1",
   "frozen_at": "2026-09-05T01:40:00-07:00",
-  "pre_forward_refreeze_reason": "Final execution-realism review completed before any forward data/start marker: exact book-level fees and identity, fee-inclusive all-in risk sizing, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
+  "pre_forward_refreeze_reason": "Final execution-realism review completed before any forward data/start marker: exact book-level fees and identity, fee-inclusive all-in risk sizing, exact fixed-size account replay including unresolved exposure, deterministic BTC 5m discovery, causal data gates, post-book checkpoint timing, spec+implementation+runtime freeze binding, persistent-host cadences, and guarded remote ledger persistence were added.",
   "principles": {
     "paper_only": true,
     "real_money_execution_enabled": false,
@@ -18,14 +18,16 @@
     "implementation_hash_required": true,
     "explicit_forward_start_marker_required": true,
     "new_parameters_require_new_version_after_forward_start": true,
-    "risk_fraction_includes_entry_fees": true
+    "risk_fraction_includes_entry_fees": true,
+    "no_automatic_lane_elimination_for_drawdown": true
   },
   "risk": {
     "paper_account_usd": 50,
     "risk_fraction_per_trade": 0.1,
     "max_concurrent_positions": 5,
-    "max_lane_drawdown": 0.2,
-    "allocation_semantics": "risk_fraction_per_trade is a hard all-in cash ceiling including entry fees"
+    "allocation_semantics": "risk_fraction_per_trade is a hard all-in cash ceiling including entry fees",
+    "drawdown_reference_threshold": 0.2,
+    "drawdown_reference_semantics": "reporting/reference threshold only; does not halt or remove a lane"
   },
   "ranking": {
     "primary_window_days": 30,
