@@ -131,7 +131,7 @@ def weather_signal_from_market(
     observed_at: datetime | None = None,
     model: str = "ncep_gefs025",
     min_edge: float = 0.05,
-    size_usd: float = 5.0,
+    cash_budget_usd: float = 5.0,
 ) -> Signal | None:
     observed_at = observed_at or datetime.now(timezone.utc)
     if observed_at.tzinfo is None:
@@ -177,7 +177,7 @@ def weather_signal_from_market(
     )
     quote = market_buy_quote(
         book,
-        size_usd,
+        cash_budget_usd,
         fee_rate=execution.fee_rate,
         fee_exponent=execution.fee_exponent,
         min_order_shares=execution.min_order_shares,
