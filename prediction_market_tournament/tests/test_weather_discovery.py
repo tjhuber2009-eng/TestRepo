@@ -1,6 +1,6 @@
 from datetime import date
 
-from scripts.scan_weather_all import is_temperature_event, target_date_from_event
+from tournament.weather_discovery import is_temperature_event, target_date_from_event
 
 
 def test_temperature_event_filter():
