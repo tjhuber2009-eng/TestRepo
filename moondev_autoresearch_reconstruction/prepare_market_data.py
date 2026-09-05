@@ -182,10 +182,21 @@ def main():
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
     ap.add_argument("--end", default="2022-12-31")
+    ap.add_argument(
+        "--output-dir",
+        default="data",
+        help="project-relative output directory (default: data)",
+    )
     args = ap.parse_args()
     start = dt(args.start)
     end = dt(args.end).replace(hour=23, minute=59, second=59)
-    out = OUT / f"{args.id}_1d.csv"
+    out_dir = (BASE / args.output_dir).resolve()
+    try:
+        out_dir.relative_to(BASE.resolve())
+    except ValueError as exc:
+        raise RuntimeError("output directory must remain inside project root") from exc
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{args.id}_1d.csv"
     if args.source == "binance":
         prepare_binance(args.symbol, start, end, out)
     else:
