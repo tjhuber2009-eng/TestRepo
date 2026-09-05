@@ -17,9 +17,19 @@ from .strategy_examples import cross_sectional_momentum_rotation
 
 
 def read_market_csv(path: Path) -> pd.DataFrame:
-    x = pd.read_csv(path, parse_dates=["Date"]).set_index("Date").sort_index()
-    if x.index.tz is not None:
-        x.index = x.index.tz_convert("UTC").tz_localize(None)
+    x = pd.read_csv(path)
+    if "Date" not in x:
+        raise ValueError(f"{path}: Date column required")
+    # This loader is daily-only. Normalize provider-specific timestamps
+    # (Yahoo session timestamps vs Binance midnight UTC) onto the same causal
+    # calendar date before cross-asset alignment. Intraday data uses the
+    # separate intraday protocol and is never normalized this way.
+    idx = pd.DatetimeIndex(pd.to_datetime(x.pop("Date"), utc=True)).normalize().tz_localize(None)
+    x.index = idx
+    x.index.name = "Date"
+    if x.index.has_duplicates:
+        raise ValueError(f"{path}: duplicate daily dates after normalization")
+    x = x.sort_index()
     return x[[c for c in ["Open","High","Low","Close","Volume"] if c in x.columns]]
 
 
