@@ -31,8 +31,11 @@ fi
 chmod 600 "$KEY"
 chmod 644 "$KEY.pub"
 
-if ! ssh-keygen -F github.com >/dev/null 2>&1; then
-  ssh-keyscan -t ed25519 github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+# Pin GitHub's currently published ED25519 host key rather than trusting
+# unauthenticated ssh-keyscan output.
+GITHUB_ED25519='github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl'
+if ! grep -Fqx "$GITHUB_ED25519" "$HOME/.ssh/known_hosts" 2>/dev/null; then
+  printf '%s\n' "$GITHUB_ED25519" >> "$HOME/.ssh/known_hosts"
 fi
 chmod 600 "$HOME/.ssh/known_hosts"
 
@@ -74,6 +77,11 @@ After adding it, rerun this same bootstrap command.
 PMT-FROZEN-V1 has NOT been started.
 EOF
   exit 20
+fi
+
+if [[ -f "$ROOT/data/forward_start_v1.json" ]]; then
+  echo "Persisted V1 start marker detected; entering recovery path."
+  exec bash "$ROOT/deploy/recover_oracle_a1.sh"
 fi
 
 exec bash "$ROOT/deploy/setup_oracle_a1.sh"
