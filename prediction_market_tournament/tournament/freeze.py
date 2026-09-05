@@ -68,15 +68,18 @@ def runtime_hash() -> str:
 
 
 def implementation_hash(root: str | Path) -> str:
-    """Hash PMT executable/runtime/deployment files, independent of Git."""
+    """Hash files that can affect live V1 observations/accounting.
+
+    Pre-start bootstrap/recovery helpers are intentionally excluded: changing a
+    helper after launch must not terminate an otherwise unchanged collector.
+    Git history still records those files for deployment auditability.
+    """
     base = Path(root)
     labeled_files: list[tuple[str, Path]] = []
 
-    for relative in ("tournament", "scripts", "deploy"):
-        directory = base / relative
-        if not directory.exists():
-            continue
-        for path in directory.rglob("*"):
+    tournament_dir = base / "tournament"
+    if tournament_dir.exists():
+        for path in tournament_dir.rglob("*"):
             if (
                 path.is_file()
                 and "__pycache__" not in path.parts
@@ -86,10 +89,28 @@ def implementation_hash(root: str | Path) -> str:
                     (path.relative_to(base).as_posix(), path)
                 )
 
-    for root_file in ("pyproject.toml", ".gitignore"):
-        path = base / root_file
+    live_scripts = (
+        "run_forward_service.py",
+        "scan_crypto_live.py",
+        "scan_weather_all.py",
+        "settle_signals.py",
+        "scan_complete_sets.py",
+        "build_leaderboard.py",
+        "persist_forward_git.py",
+    )
+    for name in live_scripts:
+        path = base / "scripts" / name
         if path.exists():
-            labeled_files.append((root_file, path))
+            labeled_files.append((path.relative_to(base).as_posix(), path))
+
+    for relative in (
+        "deploy/pmt-forward.service",
+        "pyproject.toml",
+        ".gitignore",
+    ):
+        path = base / relative
+        if path.exists():
+            labeled_files.append((relative, path))
 
     digest = hashlib.sha256()
     for label, path in sorted(labeled_files):
