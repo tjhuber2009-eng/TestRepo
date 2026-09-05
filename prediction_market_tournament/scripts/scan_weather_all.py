@@ -140,7 +140,7 @@ def main() -> int:
                     target_date=target,
                     observed_at=now,
                     min_edge=float(lane_cfg["min_edge"]),
-                    size_usd=paper_stake_usd,
+                    cash_budget_usd=paper_stake_usd,
                 )
             except Exception as exc:
                 errors.append(
