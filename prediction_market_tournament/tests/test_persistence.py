@@ -3,7 +3,7 @@ import pytest
 from tournament.persistence_guard import verify_append_only_forward_data
 
 
-def test_forward_jsonl_append_is_allowed(monkeypatch, tmp_path):
+def test_forward_jsonl_append_is_allowed():
     path = "prediction_market_tournament/data/signals.jsonl"
     verify_append_only_forward_data(
         [path],
@@ -12,7 +12,7 @@ def test_forward_jsonl_append_is_allowed(monkeypatch, tmp_path):
     )
 
 
-def test_new_forward_jsonl_is_allowed(monkeypatch, tmp_path):
+def test_new_forward_jsonl_is_allowed():
     path = "prediction_market_tournament/data/signals.jsonl"
     verify_append_only_forward_data(
         [path],
@@ -21,7 +21,7 @@ def test_new_forward_jsonl_is_allowed(monkeypatch, tmp_path):
     )
 
 
-def test_forward_jsonl_history_rewrite_is_rejected(monkeypatch, tmp_path):
+def test_forward_jsonl_history_rewrite_is_rejected():
     path = "prediction_market_tournament/data/signals.jsonl"
     with pytest.raises(RuntimeError, match="append-only"):
         verify_append_only_forward_data(
@@ -31,7 +31,7 @@ def test_forward_jsonl_history_rewrite_is_rejected(monkeypatch, tmp_path):
         )
 
 
-def test_forward_jsonl_deletion_is_rejected(monkeypatch, tmp_path):
+def test_forward_jsonl_deletion_is_rejected():
     path = "prediction_market_tournament/data/signals.jsonl"
     with pytest.raises(RuntimeError, match="append-only"):
         verify_append_only_forward_data(
