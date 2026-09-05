@@ -37,6 +37,21 @@ def _get_json(url: str, timeout: float = 15.0):
         return json.loads(response.read().decode("utf-8"))
 
 
+def _post_json(url: str, payload, timeout: float = 15.0):
+    body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    req = Request(
+        url,
+        data=body,
+        headers={
+            "User-Agent": "prediction-market-tournament/0.1",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urlopen(req, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
 def list_events(
     *,
     active: bool = True,
@@ -83,6 +98,19 @@ def get_market_by_id(market_id: str):
 def get_book(token_id: str):
     query = urlencode({"token_id": token_id})
     return _get_json(f"{CLOB}/book?{query}")
+
+
+def get_books(token_ids: list[str]):
+    clean = [str(token_id).strip() for token_id in token_ids]
+    if not clean or any(not token_id for token_id in clean):
+        raise ValueError("token_ids must contain non-empty token IDs")
+    rows = _post_json(
+        f"{CLOB}/books",
+        [{"token_id": token_id} for token_id in clean],
+    )
+    if not isinstance(rows, list):
+        raise LookupError("CLOB batch book response must be a list")
+    return rows
 
 
 def get_clob_market_info(condition_id: str):
