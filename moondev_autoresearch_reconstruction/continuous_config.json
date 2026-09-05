@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "profiles": {
     "prop": {
       "max_dd_pct": 10,
@@ -215,6 +215,18 @@
   "protocol": {
     "development_validation_split": "target-specific pre-2023 nested chronology",
     "final_oos_start": "2023-01-01",
-    "cost_stress_multiplier": 2
+    "cost_stress_multiplier": 2,
+    "name": "nested_chronological_v3",
+    "extreme_cost_stress_multiplier": 3,
+    "bootstrap_reps": 500,
+    "score_definition": "annualized_log_growth_x_sharpe_robust_v3",
+    "notes": [
+      "Adaptive search sees development data only.",
+      "Hidden pre-OOS validation opens only after all adaptive search is frozen.",
+      "2023+ final OOS remains absent until explicit authorization.",
+      "Return scoring is duration-normalized using annualized log growth.",
+      "Candidates must remain profitable under 2x and 3x transaction-cost stress.",
+      "Probabilistic Sharpe and block-bootstrap significance are soft penalties, not hard small-sample exclusions."
+    ]
   }
 }
