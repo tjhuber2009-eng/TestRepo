@@ -1,0 +1,9 @@
+FROM node:24-alpine
+RUN apk add --no-cache openssl
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY prisma ./prisma
+COPY scripts/inspect-prod-db.mjs ./scripts/inspect-prod-db.mjs
+RUN npx prisma generate
+CMD ["node", "scripts/inspect-prod-db.mjs"]
