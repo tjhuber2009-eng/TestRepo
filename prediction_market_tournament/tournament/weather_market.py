@@ -12,7 +12,7 @@ from .adapters.open_meteo import (
     member_daily_extremes,
 )
 from .adapters.polymarket import (
-    get_book,
+    get_books,
     market_buy_quote,
     market_execution_rules,
     parse_jsonish_list,
@@ -112,15 +112,18 @@ def parse_temperature_bracket(question: str) -> TemperatureBracket:
     raise ValueError(f"could not parse temperature bracket: {question}")
 
 
-def yes_token_id(market: dict) -> str:
+def binary_outcome_tokens(market: dict) -> dict[str, str]:
     outcomes = parse_jsonish_list(market.get("outcomes"))
     tokens = parse_jsonish_list(market.get("clobTokenIds"))
     if len(outcomes) != len(tokens):
         raise ValueError("outcomes and clobTokenIds length mismatch")
-    for outcome, token in zip(outcomes, tokens):
-        if str(outcome).strip().upper() == "YES":
-            return str(token)
-    raise ValueError("YES token not found")
+    mapping = {
+        str(outcome).strip().upper(): str(token)
+        for outcome, token in zip(outcomes, tokens)
+    }
+    if set(mapping) != {"YES", "NO"}:
+        raise ValueError("weather market must have exactly YES/NO outcomes")
+    return mapping
 
 
 def weather_signal_from_market(
@@ -161,7 +164,7 @@ def weather_signal_from_market(
         upper=bracket.upper,
     )
 
-    token = yes_token_id(market)
+    tokens = binary_outcome_tokens(market)
     condition_id = str(market.get("conditionId") or "").strip()
     if not condition_id:
         raise ValueError(
@@ -169,45 +172,69 @@ def weather_signal_from_market(
         )
 
     execution = market_execution_rules(condition_id)
-    book = get_book(token)
-    validate_book_identity(
-        book,
-        token_id=token,
-        condition_id=condition_id,
-    )
-    quote = market_buy_quote(
-        book,
-        cash_budget_usd,
-        fee_rate=execution.fee_rate,
-        fee_exponent=execution.fee_exponent,
-        min_order_shares=execution.min_order_shares,
-    )
-    if quote is None:
+    requested_tokens = [tokens["YES"], tokens["NO"]]
+    batch = get_books(requested_tokens)
+    by_asset = {
+        str(book.get("asset_id") or ""): book
+        for book in batch
+        if isinstance(book, dict)
+    }
+    if set(by_asset) != set(requested_tokens):
+        raise LookupError(
+            "batch weather books did not return exactly the requested YES/NO assets"
+        )
+
+    candidates: list[tuple[float, str, float, object, dict]] = []
+    for side, side_fair in (
+        ("YES", fair),
+        ("NO", 1.0 - fair),
+    ):
+        token = tokens[side]
+        book = by_asset[token]
+        validate_book_identity(
+            book,
+            token_id=token,
+            condition_id=condition_id,
+        )
+        quote = market_buy_quote(
+            book,
+            cash_budget_usd,
+            fee_rate=execution.fee_rate,
+            fee_exponent=execution.fee_exponent,
+            min_order_shares=execution.min_order_shares,
+        )
+        if quote is None:
+            continue
+        edge = exact_execution_edge_per_share(
+            side_fair,
+            shares=quote.shares,
+            spent_usd=quote.spent_usd,
+            fee_usd=quote.fee_usd,
+        )
+        candidates.append((edge, side, side_fair, quote, book))
+
+    if not candidates:
         return None
 
-    edge = exact_execution_edge_per_share(
-        fair,
-        shares=quote.shares,
-        spent_usd=quote.spent_usd,
-        fee_usd=quote.fee_usd,
+    edge, side, side_fair, quote, book = max(
+        candidates,
+        key=lambda row: (row[0], row[1] == "YES"),
     )
     if edge < min_edge:
         return None
 
-    market_id = str(market.get("id") or condition_id or token)
-    raw = (
-        f"weather|{market_id}|"
-        f"{observed_at.astimezone(timezone.utc).isoformat()}"
-    )
-    signal_id = hashlib.sha256(raw.encode()).hexdigest()[:24]
+    market_id = str(market.get("id") or condition_id)
+    signal_id = hashlib.sha256(
+        f"weather_ensemble_taker|{market_id}".encode()
+    ).hexdigest()[:24]
     return Signal(
         signal_id=signal_id,
         lane="weather_ensemble_taker",
         market_id=market_id,
         observed_at=observed_at,
-        side="YES",
+        side=side,
         market_price=quote.average_price,
-        fair_probability=fair,
+        fair_probability=side_fair,
         order_mode="taker",
         size_usd=quote.spent_usd,
         fee_rate=execution.fee_rate,
@@ -217,17 +244,22 @@ def weather_signal_from_market(
         notes=(
             f"station={station}; model={model}; {bracket.kind} "
             f"{bracket.lower}..{bracket.upper}{bracket.unit}; "
-            f"n={len(values)}; exact_edge={edge:.6f}"
+            f"n={len(values)}; p_yes={fair:.6f}; side={side}; "
+            f"exact_edge={edge:.6f}"
         ),
         metadata={
             "condition_id": condition_id,
-            "yes_token_id": token,
+            "yes_token_id": tokens["YES"],
+            "no_token_id": tokens["NO"],
+            "chosen_token_id": tokens[side],
             "station": station,
             "fee_source": "clob-market-info.fd",
-            "ask_source": "full-size-book-level-fill",
+            "ask_source": "batch-full-size-book-level-fill",
             "min_order_shares": execution.min_order_shares,
+            "fair_yes_probability": fair,
             "all_in_cost_per_share": quote.all_in_cost_per_share,
             "exact_edge_per_share": edge,
-            "book_timestamp": str(book.get("timestamp") or ""),
+            "chosen_book_timestamp": str(book.get("timestamp") or ""),
+            "chosen_book_hash": str(book.get("hash") or ""),
         },
     )
