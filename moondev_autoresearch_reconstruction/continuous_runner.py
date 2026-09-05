@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -307,16 +307,40 @@ def target_env(track):
     return env
 
 
-def prepare_data(track):
+def development_end(track):
+    """Last bar adaptive research may physically possess for this track."""
+    t = track["target"]
+    validation_start = datetime.strptime(
+        t.get("validation_start", "2021-01-01"), "%Y-%m-%d"
+    )
+    return (validation_start - timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def prepare_data(track, include_validation=False):
+    """Prepare only the chronology the current stage is allowed to possess.
+
+    Adaptive research and model tournaments get a physically development-only
+    CSV. Hidden pre-OOS validation is downloaded/extended only after the global
+    elite set is frozen and validate_track explicitly opens it.
+    """
     t = track["target"]
     path = HERE / "data" / f"{t['id']}_1d.csv"
     manifest = HERE / "data" / f"{t['id']}_1d.manifest.json"
     wanted_start = t.get("start", "2017-08-17")
-    wanted_end = t.get("validation_end", "2022-12-31")
+    wanted_end = (
+        t.get("validation_end", "2022-12-31")
+        if include_validation
+        else development_end(track)
+    )
+    if wanted_end >= "2023-01-01":
+        raise RuntimeError("refusing to prepare 2023+ final OOS data")
     if path.exists() and path.stat().st_size > 1000 and manifest.exists():
         try:
             m = load_json(manifest)
-            if m.get("requested_start") == wanted_start and m.get("requested_end") == wanted_end:
+            if (
+                m.get("requested_start") == wanted_start
+                and m.get("requested_end") == wanted_end
+            ):
                 return
         except Exception:
             pass
@@ -677,7 +701,10 @@ def validate_track(track):
     if is_terminal_block(track) or validation_state(track):
         return
     clean_runtime()
-    prepare_data(track)
+    # This is the only normal continuous-runner path allowed to extend the
+    # physical dataset into hidden pre-OOS validation, and it is reachable only
+    # after breadth/depth/elite adaptive search is globally frozen.
+    prepare_data(track, include_validation=True)
     if not restore_state(track_dir):
         raise RuntimeError("cannot restore frozen champion for hidden validation")
     env = safe_harness_env(target_env(track))
