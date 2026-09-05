@@ -432,9 +432,12 @@ FORBIDDEN_CALL_NAMES = {
 }
 FORBIDDEN_ATTR_CALLS = {
     "read_csv", "read_json", "read_pickle", "read_parquet", "read_excel",
-    "read_html", "read_xml", "read_sql", "to_csv", "to_json", "to_pickle",
-    "to_parquet", "to_excel", "to_sql", "load", "save", "loadtxt",
-    "savetxt", "genfromtxt", "fromfile", "tofile",
+    "read_html", "read_xml", "read_sql", "read_fwf", "read_sas",
+    "read_stata", "read_feather", "read_clipboard",
+    "to_csv", "to_json", "to_pickle", "to_parquet", "to_excel", "to_sql",
+    "load", "save", "loadtxt", "savetxt", "genfromtxt", "fromfile", "tofile",
+    "memmap", "open_memmap", "DataSource", "HDFStore", "ExcelFile",
+    "TextFileReader", "urlopen", "urlretrieve", "get_handle",
 }
 
 
@@ -457,6 +460,10 @@ def validate_source_safety(tree):
 
     allow_calendar = os.environ.get("AUTORESEARCH_ALLOW_CALENDAR") == "1"
     for node in nodes:
+        if isinstance(node, ast.Name) and node.id.startswith("__"):
+            raise ValueError(
+                f"dunder/introspection name access is forbidden: {node.id}"
+            )
         if isinstance(node, ast.Attribute):
             if node.attr.startswith("__"):
                 raise ValueError("dunder/introspection attribute access is forbidden")
@@ -494,12 +501,18 @@ def validate_source_safety(tree):
                 )
 
         if isinstance(node, ast.Call):
+            # Calls resolved through subscriptions/lambdas can bypass simple
+            # name-based safety checks (e.g. __builtins__["open"](...)).
+            # Strategy code has no legitimate need for dynamic call targets.
+            if not isinstance(node.func, (ast.Name, ast.Attribute)):
+                raise ValueError("dynamic call targets are forbidden in strategy.py")
             if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_CALL_NAMES:
                 raise ValueError(f"forbidden call in strategy.py: {node.func.id}")
-            if isinstance(node.func, ast.Attribute) and node.func.attr in FORBIDDEN_ATTR_CALLS:
-                raise ValueError(
-                    f"forbidden I/O-style call in strategy.py: {node.func.attr}"
-                )
+            if isinstance(node.func, ast.Attribute):
+                if node.func.attr in FORBIDDEN_ATTR_CALLS or node.func.attr.startswith("read_"):
+                    raise ValueError(
+                        f"forbidden I/O-style call in strategy.py: {node.func.attr}"
+                    )
 
 
 def validate_payload(proposal, source):
