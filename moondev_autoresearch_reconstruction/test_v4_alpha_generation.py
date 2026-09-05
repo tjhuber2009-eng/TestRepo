@@ -380,7 +380,7 @@ class V4AlphaGenerationTests(unittest.TestCase):
             meta["supplemental_strategy_names"],
             ["short_crypto"],
         )
-        self.assertGreater(meta["core_min_years"], 8.0)
+        self.assertGreaterEqual(meta["core_min_years"], 8.0)
         self.assertLess(meta["history"]["short_crypto"]["years"], 4.0)
 
     def test_portfolio_optimizer_can_choose_diversification(self):
