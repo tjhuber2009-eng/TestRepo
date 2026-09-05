@@ -4,10 +4,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 import continuous_runner
 import loop
+import research_metrics
 import seed_factory
 
 HERE = Path(__file__).resolve().parent
@@ -22,7 +24,7 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             (HERE / "continuous_config.json").read_text(encoding="utf-8")
         )
 
-    def test_protocol_is_nested_v2(self):
+    def test_protocol_is_nested_v3(self):
         self.assertEqual(continuous_runner.PROTOCOL, "nested_chronological_v3")
         text = (HERE / "robust_harness.py").read_text(encoding="utf-8")
         self.assertIn('PROTOCOL = "nested_chronological_v3"', text)
@@ -225,6 +227,54 @@ class MoonStrategy:
                     os.environ.pop(k, None)
                 else:
                     os.environ[k] = v
+
+
+    def test_protocol_v3_has_extreme_cost_stress(self):
+        p = self.config["protocol"]
+        self.assertEqual(p["name"], "nested_chronological_v3")
+        self.assertEqual(p["cost_stress_multiplier"], 2.0)
+        self.assertEqual(p["extreme_cost_stress_multiplier"], 3.0)
+        self.assertGreaterEqual(p["bootstrap_reps"], 200)
+
+    def test_annualized_k_is_duration_normalized(self):
+        # 20% CAGR for one year and the same 20% CAGR compounded for five
+        # years must produce the same K when Sharpe is equal.
+        one_total = 1.20 - 1.0
+        five_total = (1.20 ** 5) - 1.0
+        a = research_metrics.annualized_k(one_total, 1.0, 1.25)
+        b = research_metrics.annualized_k(five_total, 5.0, 1.25)
+        self.assertAlmostEqual(a, b, places=10)
+
+    def test_probabilistic_sharpe_prefers_positive_edge(self):
+        positive = np.array([0.003, -0.001, 0.002, 0.001, -0.0005] * 80)
+        flat = np.array([0.001, -0.001] * 200)
+        self.assertGreater(
+            research_metrics.probabilistic_sharpe_ratio(positive),
+            research_metrics.probabilistic_sharpe_ratio(flat),
+        )
+
+    def test_block_bootstrap_is_deterministic_given_rng_seed(self):
+        r = np.array([0.002, -0.001, 0.0015, -0.0005] * 100)
+        a = research_metrics.deterministic_block_bootstrap_diagnostics(
+            r, bars_per_year=252, rng=np.random.default_rng(42), reps=100, block=10
+        )
+        b = research_metrics.deterministic_block_bootstrap_diagnostics(
+            r, bars_per_year=252, rng=np.random.default_rng(42), reps=100, block=10
+        )
+        self.assertEqual(a, b)
+
+    def test_auto_model_router_falls_back_without_tournament(self):
+        old = continuous_runner.TOURNAMENT_STATE
+        try:
+            continuous_runner.TOURNAMENT_STATE = Path("__missing_tournament__.json")
+            track = continuous_runner.build_tracks()[0]
+            self.assertEqual(
+                continuous_runner.select_research_model(track, "auto", 0),
+                continuous_runner.DEFAULT_MODEL,
+            )
+        finally:
+            continuous_runner.TOURNAMENT_STATE = old
+
 
 
 if __name__ == "__main__":
