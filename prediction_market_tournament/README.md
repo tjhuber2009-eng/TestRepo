@@ -48,7 +48,8 @@ weight merely because they expose more perturbations.
 
 Execution rules:
 
-- Use the exact resolution-station coordinates.
+- Use the exact resolution-station coordinates and AviationWeather station
+  elevation when available; pass that elevation explicitly to Open-Meteo.
 - Aggregate the station-local calendar day with Open-Meteo
   `timezone=auto`.
 - Current whole-degree market resolution is modeled with half-degree bin
@@ -56,6 +57,9 @@ Execution rules:
 - Retrieve YES and NO books together.
 - Integrate the live CLOB fee curve at every consumed price level.
 - Enforce the published minimum order size.
+- Reject markets with CLOB taker-order delay enabled.
+- Floor V2 market-BUY share notional to cents, then recompute the exact
+  level-by-level fee and shares without exceeding the $5 all-in cap.
 - Compare both executable sides and choose only the higher exact after-fee
   edge.
 - Require at least **5 percentage points** of exact after-fee edge.
@@ -141,6 +145,8 @@ Counted active-lane signals require:
 - a causal observation timestamp after the execution books/rules were
   retrieved;
 - no midpoint or spot-price substitution;
+- no delayed-taker market treated as an immediate fill;
+- V2 cent-rounded BUY notional;
 - no rescued missed checkpoint.
 
 BTC UP/DOWN books and weather YES/NO books are retrieved through the CLOB batch
@@ -191,6 +197,8 @@ Persistence rules:
 - only derived `leaderboard.json` may be replaced;
 - Git persistence stages only `prediction_market_tournament/data`;
 - runtime lock/temp files are excluded;
+- malformed/non-object source rows fail closed rather than disappearing;
+- each append is fsynced before the file descriptor closes;
 - failed pushes are retried even if no new signal arrives in the next hour.
 
 ## Equal-window ranking
@@ -230,19 +238,28 @@ The persistent supervisor runs:
 - remote data-only Git persistence hourly.
 
 The supervisor is protected by a singleton process lock and refuses to run
-before the deliberate start marker exists.
+before the deliberate start marker exists. After launch it re-verifies the
+specification, implementation, and runtime hashes every 30 seconds; a mismatch
+terminates the collector so systemd cannot silently continue a changed V1.
 
 ## Pre-start host checks
 
 `scripts/preflight_forward.py` must pass before V1 starts. It verifies:
 
 - data directory is uncontaminated;
+- Git working tree is clean;
+- local branch is exactly `prediction-market-tournament`;
+- local HEAD exactly equals the freshly fetched remote branch;
 - Polymarket Gamma is reachable;
 - CLOB server-time round-trip <= 2 seconds;
 - absolute host/CLOB clock offset <= 1.5 seconds;
 - actual fresh BTC raw Chainlink updates arrive;
 - actual fresh BTC 60-second TWAP updates arrive;
 - RTDS source-to-host lag <= 5 seconds;
+- all frozen weather ensemble models return at least 20 members through the
+  exact station-coordinate/elevation path;
+- a current BTC 5-minute event exposes valid live fee/tick/minimum rules,
+  taker delay disabled, and exactly identified UP/DOWN books;
 - current spec, implementation, and runtime hashes can be computed.
 
 A connection that receives no usable TWAP updates does **not** pass.
@@ -280,6 +297,8 @@ Once the host is fully ready, the two separate launch actions are:
 systemctl --user enable --now pmt-forward.service
 ```
 
-Do not run the first command until the final repository review and live
-preflight are complete. Once the marker exists, runtime-changing edits
-intentionally invalidate PMT-FROZEN-V1.
+`start_forward.py` itself reruns the complete live preflight and has no
+backdate/override option; the marker time is the actual current UTC launch
+time. Do not run it until the final repository review and host setup are
+complete. Once the marker exists, runtime-changing edits intentionally
+invalidate PMT-FROZEN-V1.
