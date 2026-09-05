@@ -29,10 +29,10 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Compile v4 sources
-        run: python -m compileall -q v4 test_v4_alpha_generation.py
+        run: python -m compileall -q v4 test_v4_alpha_generation.py test_evidence_data.py
 
       - name: Run v4 integrity suite
-        run: python -m unittest -v test_v4_alpha_generation.py
+        run: python -m unittest -v test_v4_alpha_generation.py test_evidence_data.py
 
       - name: Run end-to-end synthetic architecture demo
         run: python -m v4.campaign --demo --output v4_state/integration-demo.json
@@ -49,6 +49,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: autoresearch-v4-smoke-${{ github.run_id }}
+          name: autoresearch-v4-smoke-\${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/v4_state/integration-demo.json
           retention-days: 14

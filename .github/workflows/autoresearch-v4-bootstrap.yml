@@ -14,6 +14,8 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      TIINGO_API_TOKEN: \${{ secrets.TIINGO_API_TOKEN }}
     defaults:
       run:
         working-directory: moondev_autoresearch_reconstruction
@@ -34,29 +36,37 @@ jobs:
 
       - name: Compile and run v4 integrity suite
         run: |
-          python -m compileall -q v4 test_v4_alpha_generation.py
-          python -m unittest -v test_v4_alpha_generation.py
+          python -m compileall -q v4 test_v4_alpha_generation.py test_evidence_data.py
+          python -m unittest -v test_v4_alpha_generation.py test_evidence_data.py
 
-      - name: Prepare QQQ development data
-        run: python prepare_market_data.py --source yahoo --symbol QQQ --id qqq --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+      - name: Require Tiingo evidence token
+        shell: bash
+        run: |
+          if test -z "$TIINGO_API_TOKEN"; then
+            echo "::error::TIINGO_API_TOKEN repository secret is required for the evidence-bearing private bootstrap."
+            exit 1
+          fi
 
-      - name: Prepare TQQQ development data
-        run: python prepare_market_data.py --source yahoo --symbol TQQQ --id tqqq --start 2010-02-11 --end 2020-12-31 --output-dir v4_data
+      - name: Prepare QQQ primary development data
+        run: python -m v4.prepare_evidence_data --source tiingo --symbol QQQ --id qqq --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
-      - name: Prepare SPY development data
-        run: python prepare_market_data.py --source yahoo --symbol SPY --id spy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+      - name: Prepare TQQQ primary development data
+        run: python -m v4.prepare_evidence_data --source tiingo --symbol TQQQ --id tqqq --start 2010-02-11 --end 2020-12-31 --output-dir v4_data
 
-      - name: Prepare IEF development data
-        run: python prepare_market_data.py --source yahoo --symbol IEF --id ief --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+      - name: Prepare SPY primary development data
+        run: python -m v4.prepare_evidence_data --source tiingo --symbol SPY --id spy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
-      - name: Prepare GLD development data
-        run: python prepare_market_data.py --source yahoo --symbol GLD --id gld --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+      - name: Prepare IEF primary development data
+        run: python -m v4.prepare_evidence_data --source tiingo --symbol IEF --id ief --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
-      - name: Prepare SHY development data
-        run: python prepare_market_data.py --source yahoo --symbol SHY --id shy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+      - name: Prepare GLD primary development data
+        run: python -m v4.prepare_evidence_data --source tiingo --symbol GLD --id gld --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
-      - name: Prepare VIX development context
-        run: python prepare_market_data.py --source yahoo --symbol ^VIX --id vix --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+      - name: Prepare SHY primary development data
+        run: python -m v4.prepare_evidence_data --source tiingo --symbol SHY --id shy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+
+      - name: Prepare official Cboe VIX development context
+        run: python -m v4.prepare_evidence_data --source cboe_vix --symbol VIX --id vix --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
 
       - name: Prepare BTC development data
         run: python prepare_market_data.py --source binance --symbol BTCUSDT --id btc --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
@@ -64,8 +74,57 @@ jobs:
       - name: Prepare ETH development data
         run: python prepare_market_data.py --source binance --symbol ETHUSDT --id eth --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
 
+      - name: Prepare Yahoo shadow data for independent reconciliation
+        shell: bash
+        run: |
+          python prepare_market_data.py --source yahoo --symbol QQQ  --id qqq  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
+          python prepare_market_data.py --source yahoo --symbol TQQQ --id tqqq --start 2010-02-11 --end 2020-12-31 --output-dir v4_data_yahoo
+          python prepare_market_data.py --source yahoo --symbol SPY  --id spy  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
+          python prepare_market_data.py --source yahoo --symbol IEF  --id ief  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
+          python prepare_market_data.py --source yahoo --symbol GLD  --id gld  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
+          python prepare_market_data.py --source yahoo --symbol SHY  --id shy  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
+
+      - name: Reconcile primary data against Yahoo shadow
+        run: |
+          python -m v4.reconcile_evidence_data \
+            --primary-dir v4_data \
+            --reference-dir v4_data_yahoo \
+            --ids qqq,tqqq,spy,ief,gld,shy \
+            --output v4_state/data-reconciliation.json
+
       - name: Run real-data v4 development bootstrap
         run: python -m v4.live_bootstrap --data-dir v4_data --output v4_state/development-bootstrap.json
+
+      - name: Attach data provenance and reconciliation status
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          state_path=Path("v4_state/development-bootstrap.json")
+          state=json.loads(state_path.read_text())
+          audit=json.loads(Path("v4_state/data-reconciliation.json").read_text())
+          provenance={}
+          for path in sorted(Path("v4_data").glob("*.manifest.json")):
+              row=json.loads(path.read_text())
+              provenance[row["id"]]={
+                  "source": row["source"],
+                  "symbol": row["symbol"],
+                  "csv_sha256": row["csv_sha256"],
+                  "adjustment_method": row.get("adjustment_method"),
+                  "dividends_explicit": row.get("dividends_explicit"),
+                  "provider_adjusted_return_diagnostic": row.get("provider_adjusted_return_diagnostic"),
+              }
+          state["data_provider_policy"]="tiingo_equity_etf+cboe_vix+binance_crypto"
+          state["data_provenance"]=provenance
+          state["data_reconciliation"]=audit
+          state["promotion_blocked"]=bool(audit["promotion_blocked"])
+          state["evidence_status"]=(
+              "data_reconciled"
+              if audit["reconciliation_pass"]
+              else "provisional_data_reconciliation_failed"
+          )
+          state_path.write_text(json.dumps(state,indent=2,sort_keys=True,allow_nan=False)+"\n")
 
       - name: Enforce development-only boundary
         shell: python
@@ -78,6 +137,8 @@ jobs:
           assert x["data_end"] <= "2020-12-31"
           assert x["hidden_validation_opened"] is False
           assert x["final_oos_opened"] is False
+          assert x["data_reconciliation"]["hidden_validation_opened"] is False
+          assert x["data_reconciliation"]["final_oos_opened"] is False
 
       - name: Persist v4 development state
         shell: bash
@@ -88,19 +149,23 @@ jobs:
           git worktree add -B autoresearch-v4-state ../v4-state-wt refs/remotes/origin/autoresearch-v4-state
           mkdir -p ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state
           cp moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
+          cp moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
           cd ../v4-state-wt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
+          git add -f moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
           if ! git diff --cached --quiet; then
-            git commit -m "V4 development bootstrap run $GITHUB_RUN_ID"
+            git commit -m "V4 Tiingo development bootstrap run $GITHUB_RUN_ID"
             git push origin HEAD:autoresearch-v4-state
           fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: autoresearch-v4-development-${{ github.run_id }}
+          name: autoresearch-v4-development-\${{ github.run_id }}
           path: |
             moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
+            moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
             moondev_autoresearch_reconstruction/v4_data/*.manifest.json
+            moondev_autoresearch_reconstruction/v4_data_yahoo/*.manifest.json
           retention-days: 30
