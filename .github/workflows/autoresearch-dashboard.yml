@@ -63,6 +63,7 @@ jobs:
         working-directory: moondev_autoresearch_reconstruction
         run: |
           python -m py_compile build_dashboard.py build_live_dashboard.py
+          node --check dashboard_src/app.js
           python build_dashboard.py --state-dir continuous_state --tournament-state-dir tournament_state --runtime-dir dashboard_runtime --output-dir dashboard_output
           python build_live_dashboard.py
           test -s live-dashboard.md
