@@ -247,6 +247,7 @@ jobs:
             moondev_autoresearch_reconstruction/continuous_state/cycles.jsonl
             moondev_autoresearch_reconstruction/cycle-report.md
             moondev_autoresearch_reconstruction/continuous_state/dashboard/index.html
+            moondev_autoresearch_reconstruction/continuous_state/dashboard/dashboard.html
             moondev_autoresearch_reconstruction/continuous_state/dashboard/styles.css
             moondev_autoresearch_reconstruction/continuous_state/dashboard/app.js
             moondev_autoresearch_reconstruction/continuous_state/dashboard/data.json
