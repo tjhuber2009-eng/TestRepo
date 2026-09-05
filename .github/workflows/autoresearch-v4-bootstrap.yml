@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      TIINGO_API_TOKEN: \${{ secrets.TIINGO_API_TOKEN }}
+      TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
     defaults:
       run:
         working-directory: moondev_autoresearch_reconstruction
@@ -162,7 +162,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: autoresearch-v4-development-\${{ github.run_id }}
+          name: autoresearch-v4-development-${{ github.run_id }}
           path: |
             moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
             moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
