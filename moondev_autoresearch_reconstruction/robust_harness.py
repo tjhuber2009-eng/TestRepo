@@ -179,6 +179,18 @@ def run_bt(df, commission):
     ).run()
 
 
+def calendar_elapsed_years(index):
+    """Actual elapsed calendar years covered by an equity/price index."""
+    idx = pd.DatetimeIndex(pd.to_datetime(index, utc=True))
+    if len(idx) < 2:
+        return 1.0 / 365.2425
+    seconds = max(
+        0.0,
+        float((idx[-1] - idx[0]).total_seconds()),
+    )
+    return max(seconds / (365.2425 * 86400.0), 1.0 / 365.2425)
+
+
 def slice_equity(stats, start, end):
     eq = stats["_equity_curve"]["Equity"].astype(float).copy()
     idx = pd.to_datetime(eq.index, utc=True)
@@ -310,7 +322,7 @@ def benchmark_metrics(price_df, start, end):
         }
     r = close.pct_change().replace([np.inf, -np.inf], np.nan).dropna()
     total = float(close.iloc[-1] / close.iloc[0] - 1.0)
-    years = max(len(r) / float(BARS_PER_YEAR), 1.0 / float(BARS_PER_YEAR))
+    years = calendar_elapsed_years(close.index)
     cagr = geometric_cagr(total, years)
     vol = float(r.std(ddof=0) * math.sqrt(BARS_PER_YEAR)) if len(r) else 0.0
     sharpe = (
@@ -339,7 +351,7 @@ def metrics_from_stats(stats, start, end, price_df=None):
 
     rets = eq.pct_change().replace([np.inf, -np.inf], np.nan).dropna()
     total = float(eq.iloc[-1] / eq.iloc[0] - 1.0)
-    years = max(len(rets) / float(BARS_PER_YEAR), 1.0 / float(BARS_PER_YEAR))
+    years = calendar_elapsed_years(eq.index)
     cagr = geometric_cagr(total, years)
     vol = float(rets.std(ddof=0) * math.sqrt(BARS_PER_YEAR)) if len(rets) else 0.0
     sharpe = (
@@ -389,6 +401,7 @@ def metrics_from_stats(stats, start, end, price_df=None):
         "return_pct": round(total * 100.0, 3),
         "cagr_pct": round(float(cagr * 100.0), 3) if np.isfinite(cagr) else -100.0,
         "development_years": round(float(years), 4),
+        "annualization_basis": "calendar_elapsed_years",
         "sharpe": round(sharpe, 4),
         "ann_vol_pct": round(vol * 100.0, 3),
         "max_dd_pct": round(max_dd, 3),
