@@ -77,6 +77,10 @@
               <option value="private">Private ≤32% DD</option>
             </select>
             <select id="marketFilter"><option value="all">All markets</option></select>
+            <select id="eligibilityFilter">
+              <option value="eligible">Eligible champions</option>
+              <option value="all">Include weak seeds</option>
+            </select>
             <select id="evidenceFilter">
               <option value="all">All evidence</option>
               <option value="A">Evidence A</option>
@@ -102,8 +106,8 @@
                 <th class="num">Robust K</th><th class="num">CAGR</th><th class="num">Excess CAGR</th>
                 <th class="num">B&H CAGR</th><th class="num">Years</th><th class="num">Sharpe</th>
                 <th class="num">PF</th><th class="num">DD</th><th class="num">PSR</th>
-                <th class="num">FDR q</th><th class="num">PBO</th><th>Evidence</th>
-                <th class="num">3× cost ret</th><th class="num">Valid</th>
+                <th class="num">FDR q</th><th class="num">PBO</th><th>Evidence</th><th>Data</th>
+                <th class="num">Trades/yr</th><th class="num">3× cost ret</th><th class="num">Valid</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -153,6 +157,28 @@
             </div>
           </div>
           <div id="activityList" class="activity-list"></div>
+        </article>
+      </section>
+
+      <section class="two-col">
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">MODEL OPERATIONS</span>
+              <h2>Actual research-agent performance</h2>
+            </div>
+          </div>
+          <div id="modelPerformancePanel"></div>
+        </article>
+
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">DATA QUALITY</span>
+              <h2>Evidence fidelity</h2>
+            </div>
+          </div>
+          <div id="dataQualityPanel"></div>
         </article>
       </section>
 
