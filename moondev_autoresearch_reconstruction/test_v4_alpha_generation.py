@@ -726,6 +726,54 @@ class V4AlphaGenerationTests(unittest.TestCase):
                     0.0,
                 )
 
+    def test_prop_intraday_prague_reset_persists_until_rebalance(self):
+        idx = pd.date_range(
+            "2020-01-01T20:00:00Z",
+            periods=10,
+            freq="h",
+            tz="UTC",
+        )
+        close = 100.0 * (1.01 ** np.arange(len(idx)))
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+                "Volume": 1.0,
+            },
+            index=idx,
+        )
+        params = {
+            "lookback": 2,
+            "trend": 2,
+            "top_k": 1,
+            "execution_session": "all",
+            "rebalance_hours": 4,
+        }
+        target = hourly_rotation_strategy(
+            params,
+            ("BTCUSDT",),
+        )({"BTCUSDT": frame})
+        exec_w = target.shift(1).fillna(0.0)
+        prague_dates = pd.Series(
+            idx.tz_convert(PRAGUE).date,
+            index=idx,
+        )
+        first_new_day = prague_dates.ne(prague_dates.shift(1))
+        reset_exec_positions = np.flatnonzero(first_new_day.to_numpy())
+        # Ignore the very first sample row; inspect the actual midnight reset.
+        reset_exec_positions = reset_exec_positions[reset_exec_positions > 0]
+        self.assertGreater(len(reset_exec_positions), 0)
+        p = int(reset_exec_positions[0])
+        self.assertAlmostEqual(float(exec_w.iloc[p].abs().sum()), 0.0)
+        # No carried pre-midnight position may reappear before an eligible
+        # rebalance explicitly establishes a fresh target.
+        for q in range(p + 1, len(idx)):
+            if idx[q].hour % 4 == 0:
+                break
+            self.assertAlmostEqual(float(exec_w.iloc[q].abs().sum()), 0.0)
+
     def test_prop_intraday_rebalance_carries_target_causally(self):
         idx = pd.date_range(
             "2020-01-01T01:00:00Z",

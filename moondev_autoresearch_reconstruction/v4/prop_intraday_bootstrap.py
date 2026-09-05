@@ -97,68 +97,66 @@ def hourly_rotation_strategy(params, symbols):
     ):
         raise ValueError("unsupported execution_session")
 
-    def execution_allowed(ts) -> bool:
-        hour = int(ts.tz_convert("UTC").hour)
-        if execution_session == "all":
-            return True
-        if execution_session == "avoid_funding_hours":
-            # Peer-reviewed crypto microstructure evidence identifies
-            # recurring volatility/volume bursts around 00, 08 and 16 UTC.
-            return hour not in {0, 8, 16}
-        # Predeclared liquid core spanning Europe and US hours.
-        return 7 <= hour < 22
-
     def strategy(data, features=None):
         index = next(iter(data.values())).index
         columns = sorted(data)
-        desired = pd.DataFrame(0.0, index=index, columns=columns)
         momentum = pd.DataFrame({
             s: data[s]["Close"] / data[s]["Close"].shift(lookback) - 1.0
             for s in symbols
-        })
+        }, index=index).reindex(columns=columns)
         healthy = pd.DataFrame({
             s: data[s]["Close"] > data[s]["Close"].rolling(
                 trend, min_periods=trend
             ).mean()
             for s in symbols
-        })
+        }, index=index).reindex(columns=columns).fillna(False)
 
-        for ts in index:
-            row = momentum.loc[ts].where(healthy.loc[ts]).dropna()
-            row = row[row > 0.0].sort_values(ascending=False).head(top_k)
-            if len(row):
-                desired.loc[ts, row.index] = 1.0 / len(row)
+        eligible = momentum.where(healthy & momentum.gt(0.0))
+        ranks = eligible.rank(axis=1, method="first", ascending=False)
+        selected = ranks.le(float(top_k)) & eligible.notna()
+        count = selected.sum(axis=1).replace(0, np.nan)
+        desired = selected.astype(float).div(count, axis=0).fillna(0.0)
 
         # Target[t] executes no earlier than open[t+1]. Session and rebalance
-        # decisions therefore use the known clock of the next execution bar,
-        # while alpha inputs remain restricted to information through t.
-        out = pd.DataFrame(0.0, index=index, columns=columns)
-        prior_target = pd.Series(0.0, index=columns)
-        for i, ts in enumerate(index):
-            if i + 1 >= len(index):
-                out.loc[ts] = 0.0
-                continue
-            next_ts = index[i + 1]
-            if not execution_allowed(next_ts):
-                prior_target = pd.Series(0.0, index=columns)
-            elif int(next_ts.tz_convert("UTC").hour) % rebalance_hours == 0:
-                prior_target = desired.loc[ts].copy()
-            out.loc[ts] = prior_target
-
-        # Force exposure to zero for execution at the first hourly bar of each
-        # new Prague day. The next eligible rebalance may reopen. This makes
-        # the midnight balance/equity reset explicit and realizes daily P/L.
-        local_dates = pd.Series(
-            index.tz_convert(PRAGUE).date,
+        # decisions therefore use the known clock of that next execution bar.
+        utc_hours = pd.Series(
+            index.tz_convert("UTC").hour,
             index=index,
+            dtype=int,
         )
+        next_hours = utc_hours.shift(-1)
+        if execution_session == "all":
+            allowed = pd.Series(True, index=index)
+        elif execution_session == "avoid_funding_hours":
+            allowed = ~next_hours.isin([0, 8, 16])
+        else:
+            allowed = (next_hours >= 7) & (next_hours < 22)
+        allowed = allowed.fillna(False)
+
+        rebalance = (
+            next_hours.notna()
+            & (next_hours.astype("Int64") % rebalance_hours == 0)
+        )
+
+        # Prague midnight is an explicit state reset, not merely one flat bar:
+        # after flattening, exposure stays at zero until the next eligible
+        # scheduled rebalance.
+        local_dates = pd.Series(index.tz_convert(PRAGUE).date, index=index)
         next_dates = local_dates.shift(-1)
-        reset_target_rows = next_dates.notna() & (next_dates != local_dates)
-        out.loc[reset_target_rows] = 0.0
+        reset = next_dates.notna() & (next_dates != local_dates)
+
+        update = (~allowed) | rebalance | reset
+        out = pd.DataFrame(np.nan, index=index, columns=columns)
+        zero_update = update & (~allowed | reset | ~rebalance)
+        signal_update = update & allowed & rebalance & ~reset
+        out.loc[zero_update] = 0.0
+        out.loc[signal_update] = desired.loc[signal_update]
+        out = out.ffill().fillna(0.0)
+        if len(out):
+            out.iloc[-1] = 0.0
         return out
 
     return strategy
-
 
 def intraday_bar_adverse(
     data: dict[str, pd.DataFrame],
@@ -234,47 +232,56 @@ def aggregate_prague_days_scaled(
     local_date = pd.Index(idx.tz_convert(PRAGUE).date, name="PragueDate")
     groups = pd.Series(np.arange(len(idx)), index=idx).groupby(local_date)
     opened_bar = active_day_proxy(weights).reindex(idx).fillna(False)
-    scales = tuple(float(x) for x in scales)
+    scale_arr = np.asarray(tuple(float(x) for x in scales), dtype=float)
+    raw_r = bar_returns.to_numpy(dtype=float)
+    raw_a = bar_adverse.to_numpy(dtype=float)
 
-    daily_r = {scale: {} for scale in scales}
-    daily_a = {scale: {} for scale in scales}
-    opened_day = {}
-
+    days = []
+    return_rows = []
+    adverse_rows = []
+    opened_values = []
     for day, positions in groups:
         pos = positions.to_numpy(dtype=int)
-        opened_day[day] = bool(opened_bar.iloc[pos].any())
-        for scale in scales:
-            eq = 1.0
-            worst = 1.0
-            for i in pos:
-                worst = min(
-                    worst,
-                    eq * (1.0 + scale * float(bar_adverse.iloc[i])),
-                )
-                eq *= 1.0 + scale * float(bar_returns.iloc[i])
-            daily_r[scale][day] = eq - 1.0
-            daily_a[scale][day] = worst - 1.0
+        rr = raw_r[pos]
+        aa = raw_a[pos]
+        factors = 1.0 + scale_arr[:, None] * rr[None, :]
+        eq_path = np.cumprod(factors, axis=1)
+        before = np.concatenate(
+            [np.ones((len(scale_arr), 1)), eq_path[:, :-1]],
+            axis=1,
+        )
+        adverse_path = before * (
+            1.0 + scale_arr[:, None] * aa[None, :]
+        )
+        ending = eq_path[:, -1] if len(pos) else np.ones(len(scale_arr))
+        worst = np.minimum(1.0, adverse_path.min(axis=1))
+        days.append(day)
+        return_rows.append(ending - 1.0)
+        adverse_rows.append(worst - 1.0)
+        opened_values.append(bool(opened_bar.iloc[pos].any()))
 
-    days = pd.to_datetime(list(opened_day.keys()))
+    day_index = pd.to_datetime(days)
+    ret_matrix = np.vstack(return_rows).T
+    adv_matrix = np.vstack(adverse_rows).T
     returns = {
-        scale: pd.Series(
-            [daily_r[scale][day] for day in opened_day],
-            index=days,
+        float(scale): pd.Series(
+            ret_matrix[i],
+            index=day_index,
             name="return",
         )
-        for scale in scales
+        for i, scale in enumerate(scale_arr)
     }
     adverse = {
-        scale: pd.Series(
-            [daily_a[scale][day] for day in opened_day],
-            index=days,
+        float(scale): pd.Series(
+            adv_matrix[i],
+            index=day_index,
             name="adverse",
         )
-        for scale in scales
+        for i, scale in enumerate(scale_arr)
     }
     opened = pd.Series(
-        list(opened_day.values()),
-        index=days,
+        opened_values,
+        index=day_index,
         name="opened",
     ).astype(bool)
     return returns, adverse, opened
