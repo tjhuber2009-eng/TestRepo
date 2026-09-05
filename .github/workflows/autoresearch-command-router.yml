@@ -45,6 +45,15 @@ jobs:
             /continuous-autoresearch-canary)
               gh workflow run continuous-autoresearch-canary.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /v4-smoke)
+              gh workflow run autoresearch-v4-smoke.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /v4-bootstrap)
+              gh workflow run autoresearch-v4-bootstrap.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /v4-harvest)
+              gh workflow run autoresearch-v4-harvest.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             *)
               echo "Not an AUTORESEARCH command; ignoring."
               ;;
