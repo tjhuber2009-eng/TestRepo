@@ -173,14 +173,19 @@ The marker binds:
 
 - frozen spec SHA-256;
 - implementation SHA-256;
-- exact runtime fingerprint;
-- Python implementation/version;
+- runtime semantics fingerprint;
+- Python implementation + **3.12 major/minor**;
 - OS family and machine architecture;
 - installed `websockets` version.
 
-The implementation hash covers runtime code, executable scripts, deployment
-files, `pyproject.toml`, data-persistence ignore rules, and the PMT CI
-workflow.
+The exact Python patch release is still recorded in the marker for audit but is
+not freeze-enforced, so a normal Python 3.12.x security update does not create
+a different strategy version.
+
+The implementation hash covers the live tournament package, live forward
+service scripts, systemd service unit, `pyproject.toml`, and data-persistence
+ignore rules. Pre-start/recovery helpers and the CI-only workflow are kept in
+Git history but are intentionally not allowed to terminate a healthy V1.
 
 After start, a code/spec/runtime mismatch fails closed. Parameter changes
 require a new tournament version and a new clock.
@@ -276,19 +281,30 @@ pytest -q
 
 Runtime dependency is pinned to `websockets==17.1`.
 
-## Google e2-micro deployment path
+## Oracle Always Free A1 deployment path
 
-A persistent Ubuntu host setup helper is included:
+The selected V1 persistent host is an Oracle OCI
+`VM.Standard.A1.Flex` running Ubuntu 24.04 ARM64:
 
-```bash
-deploy/setup_google_e2_micro.sh
-```
+- 1 OCPU;
+- 1 GB RAM;
+- 2 GB swap only for install/recovery headroom;
+- public subnet/public IPv4;
+- no application inbound port required;
+- SSH is the only administrative inbound port.
 
-It installs the environment, runs the complete unit suite, performs the live
-preflight, verifies GitHub write access for audit persistence, and installs the
-systemd user service.
+The exact console/bootstrap/recovery instructions are in
+`docs/ORACLE_A1_DEPLOY.md`.
+
+The Oracle bootstrap clones this public repository, generates a dedicated
+repo-specific GitHub deploy key for hourly audit-data pushes, runs the complete
+tests/live preflight, and installs the systemd service.
 
 **It deliberately does not start V1.**
+
+Oracle may reclaim Always Free instances it classifies as idle. Replacement
+hosts use the persisted marker/data and exact frozen runtime semantics; an
+outage remains an outage and missed checkpoints are never reconstructed.
 
 Once the host is fully ready, the two separate launch actions are:
 
