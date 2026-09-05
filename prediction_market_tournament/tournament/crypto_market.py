@@ -177,6 +177,10 @@ def crypto_signal_from_market(
         )
     requested_tokens = [tokens["UP"], tokens["DOWN"]]
     batch = get_books(requested_tokens)
+    if len(batch) != len(requested_tokens):
+        raise LookupError(
+            "batch order books returned duplicate/extra BTC rows"
+        )
     by_asset = {
         str(book.get("asset_id") or ""): book
         for book in batch
