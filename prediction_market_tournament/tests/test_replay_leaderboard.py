@@ -113,7 +113,7 @@ def test_concurrency_cap_skips_sixth_simultaneous_trade():
     )
 
 
-def test_replay_reserves_taker_fee_as_cash():
+def test_replay_risk_fraction_caps_all_in_cash_including_fee():
     start = datetime(
         2026,
         9,
@@ -145,11 +145,8 @@ def test_replay_reserves_taker_fee_as_cash():
         risk_fraction=1.0,
         initial_equity=1.0,
     )
-    # A 100% stake leaves no room for a positive taker fee.
-    assert (
-        replay.admitted_signal_ids == ()
-    )
-    assert (
-        replay.skipped_concurrency_signal_ids
-        == ("fee",)
-    )
+    assert replay.admitted_signal_ids == ("fee",)
+    assert replay.skipped_concurrency_signal_ids == ()
+    assert replay.peak_committed == 1.0
+    assert replay.net_return > 0
+    assert replay.max_drawdown > 0
