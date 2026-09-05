@@ -8,13 +8,13 @@ from .fees import polymarket_taker_fee_usd, shares_for_stake
 from .models import Signal, ResolvedTrade
 
 
-def settle_binary_signal(signal: Signal, won: bool, fill_price: float | None = None) -> ResolvedTrade:
+def settle_binary_signal(signal: Signal, won: bool, fill_price: float | None = None, resolved_at=None) -> ResolvedTrade:
     p = signal.market_price if fill_price is None else fill_price
     if not 0 < p <= 1:
         raise ValueError("fill_price must be in (0,1]")
     shares = shares_for_stake(signal.size_usd, p)
     fee = 0.0 if signal.order_mode == "maker" else polymarket_taker_fee_usd(
-        shares, p, signal.fee_rate
+        shares, p, signal.fee_rate, signal.fee_exponent
     )
     payout = shares if won else 0.0
     pnl = payout - signal.size_usd - fee
@@ -26,6 +26,7 @@ def settle_binary_signal(signal: Signal, won: bool, fill_price: float | None = N
         payout_usd=payout,
         pnl_usd=pnl,
         return_on_stake=pnl / signal.size_usd,
+        resolved_at=resolved_at,
     )
 
 
@@ -80,6 +81,8 @@ def summarize(
     brier = sum(
         (t.signal.fair_probability - (1.0 if t.won else 0.0)) ** 2 for t in rows
     ) / len(rows)
+
+    # Approximate capital efficiency: net PnL / max single-event capital committed.
     peak_capital = max(t.signal.size_usd for t in rows)
     cap_eff = net / peak_capital if peak_capital else 0.0
 
@@ -99,6 +102,13 @@ def summarize(
 
 
 def fixed_window_score(metrics: TournamentMetrics) -> float:
+    """
+    Ranking score, not an optimizer objective.
+
+    Small samples are never discarded. Profit factor and capital efficiency are
+    rewarded, while drawdown and forecast error are penalized. The sample-size
+    term saturates instead of imposing a hard minimum.
+    """
     if metrics.trades == 0:
         return float("-inf")
     sample_conf = min(1.0, (metrics.trades / 100.0) ** 0.5)
