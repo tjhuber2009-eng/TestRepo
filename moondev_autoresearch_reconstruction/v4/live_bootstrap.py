@@ -94,6 +94,24 @@ def fold_cagr_scores(returns: pd.Series, periods_per_year: float, dd_cap_pct: fl
     return out
 
 
+def build_cash_rotation_strategy(params):
+    base = leveraged_regime_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbol=None,
+        sma_window=int(params["sma"]),
+        momentum_window=int(params["mom"]),
+    )
+    return volatility_target_overlay(
+        base,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
+
 def build_rotation_strategy(params):
     base = leveraged_regime_rotation(
         signal_symbol="QQQ",
