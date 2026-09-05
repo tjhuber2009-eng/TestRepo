@@ -372,6 +372,70 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     # ------------------------------------------------------------------
+    # Family A3: TQQQ-or-cash plus causal VIX stress regime
+    # ------------------------------------------------------------------
+    vix_param = None
+    vix_pbo = None
+    vix_family_ok = False
+    vix_optimized = None
+    if cash_param.chosen is not None and "VIX" in data:
+        base_cash = cash_param.chosen.params
+        target0 = float(base_cash["target_vol"])
+        vix_targets = tuple(sorted(set([
+            round(target0, 4),
+            round(min(target0 + 0.04, 0.40), 4),
+            round(min(target0 + 0.08, 0.40), 4),
+        ])))
+        vix_specs = [
+            ParameterSpec("stress_q", (0.75, 0.80, 0.85, 0.90)),
+            ParameterSpec("severe_q", (0.95, 0.97)),
+            ParameterSpec("stress_scale", (0.25, 0.50, 0.75)),
+            ParameterSpec("severe_scale", (0.0,)),
+            ParameterSpec("target_vol", vix_targets),
+        ]
+        vix_trial_count = int(np.prod([len(s.values) for s in vix_specs]))
+        vix_close = data["VIX"]["Close"]
+
+        def evaluate_vix(params):
+            res = eng.run(
+                build_vix_cash_strategy(params, base_cash, vix_close),
+                risk_policy=private,
+                num_trials=vix_trial_count,
+                cost_stress_multiplier=cost_stress,
+            )
+            return {
+                "fold_scores": fold_cagr_scores(
+                    res.returns, 252.0, private.max_dd_pct
+                ),
+                "primary_score": float(res.metrics.cost_stress_cagr_pct),
+                "gate_ok": bool(res.gate_ok),
+                "structural_fingerprint": "cash_rotation_vix_stress_v1",
+            }
+
+        vix_param = StableParameterOptimizer(
+            vix_specs,
+            max_trials=100,
+            plateau_neighbors=5,
+            dispersion_penalty=0.20,
+            multiple_test_penalty=0.16,
+        ).optimize(
+            evaluate_vix,
+            frozen_structure="cash_rotation_vix_stress_v1",
+        )
+        vix_pbo = optimizer_pbo(vix_param)
+        vix_family_ok = pbo_gate(vix_pbo, private.max_pbo)
+        if vix_param.chosen is not None:
+            vix_optimized = eng.run(
+                build_vix_cash_strategy(
+                    vix_param.chosen.params, base_cash, vix_close
+                ),
+                risk_policy=private,
+                num_trials=vix_trial_count,
+                pbo=None if vix_pbo is None else vix_pbo["pbo"],
+                cost_stress_multiplier=cost_stress,
+            )
+
+    # ------------------------------------------------------------------
     # Family B: QQQ -> TQQQ, else rotate IEF/GLD/SHY or cash
     # ------------------------------------------------------------------
     defensive_required = {"QQQ", "TQQQ", "IEF", "GLD", "SHY"}
@@ -613,6 +677,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     ):
         eligible_returns["cash_rotation_risk_budgeted"] = cash_optimized.returns
     if (
+        vix_optimized is not None
+        and vix_optimized.gate_ok
+        and vix_family_ok
+    ):
+        eligible_returns["cash_rotation_vix_stress"] = vix_optimized.returns
+    if (
         defensive_optimized is not None
         and defensive_optimized.gate_ok
         and defensive_family_ok
@@ -661,6 +731,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
     if cash_optimized is not None:
         strategies["cash_rotation_risk_budgeted"] = cash_optimized.summary()
+    if vix_optimized is not None:
+        strategies["cash_rotation_vix_stress"] = vix_optimized.summary()
     if defensive_raw is not None:
         strategies["defensive_rotation_raw_diagnostic"] = defensive_raw.summary()
     if defensive_optimized is not None:
@@ -700,6 +772,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "rotation_family_ok": rotation_family_ok,
             "cash_pbo": cash_pbo,
             "cash_family_ok": cash_family_ok,
+            "vix_pbo": vix_pbo,
+            "vix_family_ok": vix_family_ok,
             "defensive_pbo": defensive_pbo,
             "defensive_family_ok": defensive_family_ok,
             "brake_pbo": brake_pbo,
@@ -709,6 +783,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         },
         "rotation_parameter_optimizer": rotation_param.to_dict(),
         "cash_parameter_optimizer": cash_param.to_dict(),
+        "vix_parameter_optimizer": (
+            None if vix_param is None else vix_param.to_dict()
+        ),
         "defensive_parameter_optimizer": (
             None if defensive_param is None else defensive_param.to_dict()
         ),
