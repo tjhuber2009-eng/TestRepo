@@ -748,9 +748,24 @@ def validation_guard(summary):
     return ok, ("ok" if ok else "hidden chronological validation failed"), details
 
 
+def json_safe(value):
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [json_safe(v) for v in value]
+    if isinstance(value, tuple):
+        return [json_safe(v) for v in value]
+    return value
+
+
 def write_json(path, obj):
     tmp = Path(str(path) + ".tmp")
-    tmp.write_text(json.dumps(obj, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.write_text(
+        json.dumps(json_safe(obj), indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
     os.replace(tmp, path)
 
 
