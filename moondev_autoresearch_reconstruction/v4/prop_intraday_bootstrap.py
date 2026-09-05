@@ -696,6 +696,7 @@ def _frontier_day_brake_mutations(
     leaders_by_program: dict,
     view_names: Sequence[str] = (
         "max_payout_efficiency",
+        "max_repeat_payout_efficiency",
         "max_evaluation_pass",
         "safest_funded",
         "balanced",
@@ -772,6 +773,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     programs = [FTMO_2STEP, FTMO_1STEP]
     view_names = (
         "max_payout_efficiency",
+        "max_repeat_payout_efficiency",
         "max_evaluation_pass",
         "safest_funded",
         "balanced",
