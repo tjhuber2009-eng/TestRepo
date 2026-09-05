@@ -78,6 +78,8 @@ jobs:
           AUTORESEARCH_MIN_FOLD_BARS: "100"
           AUTORESEARCH_VOL_BAND: "0.25"
           AUTORESEARCH_COST_STRESS_MULT: "2.0"
+          AUTORESEARCH_EXTREME_COST_STRESS_MULT: "3.0"
+          AUTORESEARCH_BOOTSTRAP_REPS: "200"
           AUTORESEARCH_IS_START: "2017-08-17"
           AUTORESEARCH_VALIDATION_START: "2021-01-01"
           AUTORESEARCH_VALIDATION_END: "2022-12-31"
@@ -88,7 +90,7 @@ jobs:
           python - <<'PY'
           import json
           x=json.load(open("last_run.json"))
-          assert x["protocol"]=="nested_chronological_v2"
+          assert x["protocol"]=="nested_chronological_v3"
           assert x["stage"]=="adaptive_development"
           assert x["oos_opened"] is False
           assert x["end"]=="2020-12-31"
