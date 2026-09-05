@@ -2,7 +2,7 @@
   "project": "prediction-market-tournament",
   "version": "PMT-FROZEN-V1",
   "frozen_at": "2026-09-05T01:40:00-07:00",
-  "pre_forward_refreeze_reason": "Final execution-realism review completed before any forward signal/trade ledger or start marker existed: exact book-level fee integration, deterministic BTC 5m discovery, causal data sufficiency gates, post-book checkpoint timing, and spec+implementation freeze binding were added.",
+  "pre_forward_refreeze_reason": "Final execution-realism review completed before any forward signal/trade ledger or start marker existed: exact book-level fee integration, deterministic BTC 5m discovery, causal data sufficiency gates, post-book checkpoint timing, spec+implementation freeze binding, and persistent-host collection cadences were added.",
   "principles": {
     "paper_only": true,
     "real_money_execution_enabled": false,
@@ -20,7 +20,7 @@
     "new_parameters_require_new_version_after_forward_start": true
   },
   "risk": {
-    "paper_account_usd": 50.0,
+    "paper_account_usd": 50,
     "risk_fraction_per_trade": 0.1,
     "max_concurrent_positions": 5,
     "max_lane_drawdown": 0.2
@@ -124,5 +124,14 @@
       "status": "PAPER_CONTROL",
       "reason": "historical anomaly strong; post-freeze behavior concerning"
     }
+  },
+  "service": {
+    "continuous_host_required": true,
+    "github_actions_forward_collection": false,
+    "crypto_restart_delay_seconds": 5,
+    "weather_scan_interval_seconds": 900,
+    "settlement_interval_seconds": 300,
+    "complete_set_scan_interval_seconds": 3600,
+    "leaderboard_interval_seconds": 300
   }
 }
