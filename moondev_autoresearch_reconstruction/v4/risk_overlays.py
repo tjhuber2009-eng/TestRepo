@@ -157,3 +157,34 @@ def vix_stress_overlay(
         return base.mul(scale, axis=0)
 
     return strategy
+
+
+def probability_filter_overlay(
+    base_strategy: StrategyFn,
+    probabilities: pd.Series,
+    *,
+    threshold: float = 0.55,
+    below_scale: float = 0.0,
+) -> StrategyFn:
+    """Scale an existing strategy using precomputed causal walk-forward odds."""
+    if not (0.0 <= threshold <= 1.0):
+        raise ValueError("threshold must be in [0,1]")
+    if not (0.0 <= below_scale <= 1.0):
+        raise ValueError("below_scale must be in [0,1]")
+    probs = pd.to_numeric(probabilities, errors="coerce").sort_index()
+
+    def strategy(
+        data: Mapping[str, pd.DataFrame],
+        features: Mapping[str, pd.DataFrame] | None = None,
+    ) -> pd.DataFrame:
+        base = base_strategy(data, features).copy()
+        p = probs.reindex(base.index)
+        # Before enough walk-forward training history exists, leave the
+        # underlying strategy untouched rather than creating an artificial
+        # warm-up cash regime.
+        scale = pd.Series(1.0, index=base.index)
+        known = p.notna()
+        scale.loc[known & (p < float(threshold))] = float(below_scale)
+        return base.mul(scale, axis=0)
+
+    return strategy
