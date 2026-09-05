@@ -1,0 +1,10 @@
+node_modules
+build
+.react-router
+.env
+.env.*
+*.log
+coverage
+.git
+.github
+.DS_Store
