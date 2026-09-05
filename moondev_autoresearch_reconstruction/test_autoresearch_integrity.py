@@ -354,5 +354,25 @@ class MoonStrategy:
 
 
 
+    def test_paired_fold_improvement_requires_matching_chronology(self):
+        base = {"folds": [
+            {"name":"Y1","raw_k":0.1},
+            {"name":"Y2","raw_k":0.2},
+            {"name":"Y3","raw_k":0.3},
+            {"name":"Y4","raw_k":0.4},
+        ]}
+        candidate = {"folds": [
+            {"name":"Y1","raw_k":0.2},
+            {"name":"Y2","raw_k":0.3},
+            {"name":"Y3","raw_k":0.1},
+            {"name":"Y4","raw_k":0.5},
+        ]}
+        d = loop.paired_fold_improvement(base, candidate)
+        self.assertEqual(d["comparable_folds"], 4)
+        self.assertEqual(d["improved_fold_fraction"], 0.75)
+        self.assertGreater(d["median_fold_delta_k"], 0)
+
+
+
 if __name__ == "__main__":
     unittest.main()
