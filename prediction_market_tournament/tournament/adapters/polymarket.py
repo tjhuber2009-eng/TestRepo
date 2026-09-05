@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
@@ -211,15 +212,14 @@ def market_buy_quote(
 ) -> MarketBuyQuote | None:
     """Executable BUY quote under a hard all-in cash budget.
 
-    Ask sizes are outcome shares. Each consumed level uses its own fee curve,
-    so the cash cost per share is::
+    Ask sizes are outcome shares. Fees are integrated at every consumed book
+    level. V2 BUY market-order USDC notional is rounded down to cents before
+    signing, so the final quote mirrors that constraint rather than spending
+    impossible fractional cents.
 
-        price + fee_rate * (price * (1-price)) ** fee_exponent
-
-    The quote is rejected if displayed depth cannot absorb the entire cash
-    budget or if the resulting share count is below either published minimum
-    order size. This mirrors the V2 SDK principle that BUY notional must be
-    reduced when fees would otherwise exceed available USDC.
+    The book must first be deep enough for the entire pre-rounding all-in cash
+    budget; a smaller fill caused by insufficient displayed depth is rejected.
+    Venue rounding may leave less than one cent of otherwise usable budget.
     """
     if cash_budget_usd <= 0:
         raise ValueError("cash_budget_usd must be > 0")
@@ -240,11 +240,10 @@ def market_buy_quote(
             levels.append((price, size))
     levels.sort()
 
+    # Pass 1: solve the maximum shares under the exact fee-inclusive cash
+    # budget. This also proves displayed depth can absorb the full allocation.
     remaining_cash = cash_budget_usd
-    shares = 0.0
-    spent = 0.0
-    fee = 0.0
-
+    raw_spent = 0.0
     for price, available_shares in levels:
         fee_per_share = (
             fee_rate
@@ -257,25 +256,47 @@ def market_buy_quote(
         max_all_in = available_shares * all_in_per_share
         use_all_in = min(remaining_cash, max_all_in)
         use_shares = use_all_in / all_in_per_share
-
-        shares += use_shares
-        spent += use_shares * price
-        fee += use_shares * fee_per_share
+        raw_spent += use_shares * price
         remaining_cash -= use_all_in
-
         if remaining_cash <= 1e-9:
             break
 
+    if remaining_cash > 1e-7 or raw_spent <= 0:
+        return None
+
+    # Official V2 market BUY construction rounds the cash notional down to two
+    # decimals. Re-walk the same book for that rounded notional and recompute
+    # level-specific fees rather than approximating the fee at final VWAP.
+    spend_target = math.floor((raw_spent + 1e-12) * 100.0) / 100.0
+    if spend_target <= 0:
+        return None
+
+    remaining_notional = spend_target
+    shares = 0.0
+    spent = 0.0
+    fee = 0.0
+    for price, available_shares in levels:
+        max_cost = price * available_shares
+        use_cost = min(remaining_notional, max_cost)
+        use_shares = use_cost / price
+        shares += use_shares
+        spent += use_cost
+        fee += (
+            use_shares
+            * fee_rate
+            * ((price * (1.0 - price)) ** fee_exponent)
+        )
+        remaining_notional -= use_cost
+        if remaining_notional <= 1e-9:
+            break
+
     if (
-        remaining_cash > 1e-7
+        remaining_notional > 1e-7
         or shares <= 0
         or shares + 1e-12 < effective_min_shares
     ):
         return None
 
-    # Keep internal economics precise. USDC settlement itself is six-decimal,
-    # but premature rounding here can create a paper account that spends more
-    # than the frozen cash budget by a few micro-dollars.
     if spent + fee > cash_budget_usd + 1e-8:
         raise ArithmeticError("all-in BUY quote exceeded cash budget")
 
