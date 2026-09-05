@@ -22,7 +22,13 @@ from v4.multi_asset_engine import (
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
-from v4.prop_intraday_bootstrap import aggregate_prague_days, aggregate_prague_days_scaled, hourly_rotation_strategy, read_hourly
+from v4.prop_intraday_bootstrap import (
+    _frontier_structural_mutations,
+    aggregate_prague_days,
+    aggregate_prague_days_scaled,
+    hourly_rotation_strategy,
+    read_hourly,
+)
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
@@ -646,6 +652,42 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreaterEqual(len(dr), 1)
         self.assertLessEqual(float(da.min()), -0.02)
         self.assertTrue(bool(opened.iloc[0]))
+
+    def test_prop_frontier_mutations_are_small_and_nonduplicative(self):
+        seeds = [
+            {
+                "lookback": 168,
+                "trend": 336,
+                "top_k": 1,
+                "vol_target": 0.6,
+                "vol_lookback": 168,
+            },
+            {
+                "lookback": 168,
+                "trend": 336,
+                "top_k": 1,
+                "vol_target": 0.6,
+                "vol_lookback": 168,
+            },
+        ]
+        rows = _frontier_structural_mutations(seeds)
+        self.assertEqual(len(rows), 7)
+        keys = {tuple(sorted(row.items())) for row in rows}
+        self.assertEqual(len(keys), len(rows))
+        self.assertFalse(
+            any(
+                row["execution_session"] == "avoid_funding_hours"
+                and row["rebalance_hours"] == 8
+                for row in rows
+            )
+        )
+        self.assertFalse(
+            any(
+                row["execution_session"] == "all"
+                and row["rebalance_hours"] == 1
+                for row in rows
+            )
+        )
 
     def test_prop_intraday_session_filter_uses_next_execution_hour(self):
         idx = pd.date_range(

@@ -400,6 +400,39 @@ def _frontier_rank(view_name, candidate):
     )
 
 
+
+def _frontier_structural_mutations(
+    seed_params: list[dict],
+) -> list[dict]:
+    """Small evidence-led mutation set around coarse frontier leaders."""
+    seen = set()
+    out = []
+    structures = (
+        ("all", 4),
+        ("all", 8),
+        ("avoid_funding_hours", 1),
+        ("avoid_funding_hours", 4),
+        ("europe_us", 1),
+        ("europe_us", 4),
+        ("europe_us", 8),
+    )
+    for base in seed_params:
+        base_key = {
+            key: value
+            for key, value in base.items()
+            if key not in {"execution_session", "rebalance_hours"}
+        }
+        for session, rebalance in structures:
+            candidate = dict(base_key)
+            candidate["execution_session"] = session
+            candidate["rebalance_hours"] = int(rebalance)
+            key = tuple(sorted(candidate.items()))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(candidate)
+    return out
+
 def run(data_dir: str | Path, output: str | Path) -> dict:
     data = load_data(Path(data_dir))
 
@@ -465,12 +498,80 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             sel = prop.selected
             rows_by_program[program.id].append({
                 "params": params,
+                "search_phase": "broad_base",
                 "hourly_base_cagr_pct": base.metrics.cagr_pct,
                 "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
                 "daily_worst_adverse_pct": float(dadv.min() * 100.0),
                 "selected": None if sel is None else sel.to_dict(),
             })
 
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
+
+    # Mutate only coarse frontier leaders, not the full parameter grid.
+    # This adds session/rebalance structure where the broad search already
+    # found promise while avoiding a 9x Cartesian expansion of every trial.
+    seed_params = []
+    seed_seen = set()
+    for program in programs:
+        for view_name in view_names:
+            leader = leaders[program.id][view_name]
+            if leader is None:
+                continue
+            params = dict(leader["params"])
+            key = tuple(sorted(params.items()))
+            if key not in seed_seen:
+                seed_seen.add(key)
+                seed_params.append(params)
+
+    structural_params = _frontier_structural_mutations(seed_params)
+    for params in structural_params:
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
+                program,
+                exposure_scales=PROP_SCALES,
+                paths=400,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                    "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
+                ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
+            )
+            sel = prop.selected
+            rows_by_program[program.id].append({
+                "params": params,
+                "search_phase": "frontier_structural_mutation",
+                "hourly_base_cagr_pct": base.metrics.cagr_pct,
+                "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
+                "daily_worst_adverse_pct": float(dadv.min() * 100.0),
+                "selected": None if sel is None else sel.to_dict(),
+            })
             for view_name in view_names:
                 candidate = prop.views.get(view_name)
                 if candidate is None:
@@ -599,6 +700,23 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "stage exposure applied to each hourly portfolio return/adverse "
             "before Prague-day compounding"
         ),
+        "search_policy": {
+            "broad_base_candidates": len(params_grid),
+            "frontier_seed_parameter_sets": len(seed_params),
+            "frontier_structural_mutations": len(structural_params),
+            "structural_dimensions": {
+                "execution_session": [
+                    "all",
+                    "avoid_funding_hours",
+                    "europe_us",
+                ],
+                "rebalance_hours": [1, 4, 8],
+            },
+            "policy": (
+                "broad alpha/risk search first; mutate only coarse frontier "
+                "leaders for session/rebalance structure"
+            ),
+        },
         "data_end": max(
             frame.index.max().tz_convert("UTC").strftime("%Y-%m-%d")
             for frame in data.values()
