@@ -3,7 +3,7 @@
 client_id = ""
 name = "CatalogMirror"
 handle = "catalogmirror"
-application_url = "https://CHANGE-ME.example"
+application_url = "https://web-production-0f33a.up.railway.app"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "read_products,read_inventory"
 
 [auth]
 redirect_urls = [
-  "https://CHANGE-ME.example/auth/callback",
-  "https://CHANGE-ME.example/auth/shopify/callback",
-  "https://CHANGE-ME.example/api/auth/callback"
+  "https://web-production-0f33a.up.railway.app/auth/callback",
+  "https://web-production-0f33a.up.railway.app/auth/shopify/callback",
+  "https://web-production-0f33a.up.railway.app/api/auth/callback"
 ]
 
 [webhooks]
