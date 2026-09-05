@@ -130,7 +130,7 @@ def test_twap_checkpoint_selects_up_from_exact_executable_books(monkeypatch):
             tz=timezone.utc,
         ),
         lane_cfg=_cfg(120),
-        size_usd=5.0,
+        cash_budget_usd=5.0,
     )
     assert signal is not None
     assert signal.side == "UP"
@@ -162,7 +162,7 @@ def test_twap_checkpoint_rejects_stale_raw_spot(monkeypatch):
             tz=timezone.utc,
         ),
         lane_cfg=_cfg(120),
-        size_usd=5.0,
+        cash_budget_usd=5.0,
     )
     assert signal is None
 
@@ -190,7 +190,7 @@ def test_late_resolution_requires_observed_final_window_segment(monkeypatch):
             tz=timezone.utc,
         ),
         lane_cfg=_cfg(30, min_edge=0.025),
-        size_usd=5.0,
+        cash_budget_usd=5.0,
     )
     assert signal is not None
     assert signal.side == "UP"
@@ -219,6 +219,6 @@ def test_checkpoint_is_missed_after_frozen_lag(monkeypatch):
             tz=timezone.utc,
         ),
         lane_cfg=_cfg(120),
-        size_usd=5.0,
+        cash_budget_usd=5.0,
     )
     assert signal is None
