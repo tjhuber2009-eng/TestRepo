@@ -1,4 +1,10 @@
 import db from "../db.server";
+import {
+  autoAuditDebounceMs,
+  inventoryItemGidFromPayload,
+  productGidFromPayload,
+  type AutoAuditResourceType,
+} from "./auto-audit-core";
 
 type WebhookContext = {
   webhookId: string;
@@ -71,31 +77,80 @@ export async function processWebhookDelivery(
   }
 }
 
-export async function markShopChanged(shop: string, topic: string) {
-  const now = new Date();
+export async function syncPendingAuditCount(
+  shop: string,
+  metadata?: { topic?: string; webhookAt?: Date },
+) {
+  const pending = await db.auditTask.count({ where: { shop } });
+  const webhookAt = metadata?.webhookAt ?? new Date();
   await db.shopAuditState.upsert({
     where: { shop },
     create: {
       shop,
-      pendingChanges: 1,
-      lastWebhookTopic: topic,
-      lastWebhookAt: now,
+      pendingChanges: pending,
+      lastWebhookTopic: metadata?.topic,
+      lastWebhookAt: metadata?.topic ? webhookAt : undefined,
     },
     update: {
-      pendingChanges: { increment: 1 },
-      lastWebhookTopic: topic,
-      lastWebhookAt: now,
+      pendingChanges: pending,
+      ...(metadata?.topic ? { lastWebhookTopic: metadata.topic, lastWebhookAt: webhookAt } : {}),
     },
+  });
+  return pending;
+}
+
+export async function enqueueAutoAuditTask(args: {
+  shop: string;
+  topic: string;
+  resourceType: AutoAuditResourceType;
+  resourceId: string;
+}) {
+  const now = new Date();
+  const availableAt = new Date(now.getTime() + autoAuditDebounceMs());
+
+  await db.auditTask.upsert({
+    where: {
+      shop_resourceType_resourceId: {
+        shop: args.shop,
+        resourceType: args.resourceType,
+        resourceId: args.resourceId,
+      },
+    },
+    create: {
+      shop: args.shop,
+      resourceType: args.resourceType,
+      resourceId: args.resourceId,
+      reason: args.topic,
+      availableAt,
+    },
+    update: {
+      reason: args.topic,
+      generation: { increment: 1 },
+      attempts: 0,
+      availableAt,
+      lastError: null,
+    },
+  });
+
+  await syncPendingAuditCount(args.shop, { topic: args.topic, webhookAt: now });
+}
+
+export async function cancelAutoAuditTask(
+  shop: string,
+  resourceType: AutoAuditResourceType,
+  resourceId: string,
+) {
+  await db.auditTask.deleteMany({ where: { shop, resourceType, resourceId } });
+  await syncPendingAuditCount(shop);
+}
+
+export async function markShopChanged(shop: string, topic: string) {
+  await enqueueAutoAuditTask({
+    shop,
+    topic,
+    resourceType: "SHOP",
+    resourceId: shop,
   });
 }
 
-export function productGidFromPayload(payload: Record<string, unknown>) {
-  const adminGid = payload.admin_graphql_api_id;
-  if (typeof adminGid === "string" && adminGid.startsWith("gid://shopify/Product/")) return adminGid;
-
-  const id = payload.id;
-  if (typeof id === "number" || (typeof id === "string" && /^\d+$/.test(id))) {
-    return `gid://shopify/Product/${id}`;
-  }
-  return null;
-}
+export { inventoryItemGidFromPayload, productGidFromPayload };
