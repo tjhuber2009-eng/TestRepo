@@ -1,0 +1,84 @@
+{
+  "frozen_at": "2026-09-04T18:37:00-07:00",
+  "lanes": {
+    "complete_set": {
+      "enabled": true,
+      "min_gross_edge": 0.01,
+      "order_mode": "shadow",
+      "rule": "only exhaustive mutually-exclusive events; all legs executable"
+    },
+    "crypto_late_resolution": {
+      "enabled": true,
+      "fee_rate": 0.07,
+      "max_seconds_remaining": 60,
+      "min_edge": 0.025,
+      "min_fair_probability": 0.92,
+      "order_mode": "taker",
+      "resolution": "Chainlink 60s TWAP"
+    },
+    "crypto_twap_taker": {
+      "enabled": true,
+      "fee_rate": 0.07,
+      "min_edge": 0.04,
+      "model": "frozen diffusion benchmark",
+      "order_mode": "taker",
+      "resolution": "Chainlink 60s TWAP"
+    },
+    "favorite_longshot": {
+      "enabled": true,
+      "order_mode": "shadow",
+      "rule": "point-in-time calibration only; never train on future resolutions"
+    },
+    "maker_rebate": {
+      "enabled": true,
+      "order_mode": "shadow",
+      "rule": "promote only after fill reconstruction from order-book/trade sequence"
+    },
+    "trade_halts_control": {
+      "enabled": true,
+      "order_mode": "shadow",
+      "rule": "paper-only external control; no live promotion until full post-freeze census"
+    },
+    "weather_ensemble_taker": {
+      "data_sources": [
+        "Open-Meteo ensemble",
+        "NOAA/NWS resolution station"
+      ],
+      "enabled": true,
+      "fee_rate": 0.05,
+      "min_edge": 0.05,
+      "order_mode": "taker"
+    }
+  },
+  "mode": "paper-forward-only",
+  "principles": {
+    "actual_bid_ask_required": true,
+    "fees_required": true,
+    "missed_fills_counted": true,
+    "no_post_signal_parameter_changes": true,
+    "no_small_sample_elimination": true,
+    "point_in_time_only": true,
+    "real_money_disabled": true,
+    "same_time_window_comparison": true
+  },
+  "project": "prediction-market-tournament",
+  "ranking": {
+    "minimum_calendar_days_for_nonprovisional_label": 30,
+    "minimum_trades_for_nonprovisional_label": 100,
+    "primary_metrics": [
+      "30d_net_return",
+      "profit_factor",
+      "capital_efficiency",
+      "max_drawdown",
+      "brier_score"
+    ],
+    "primary_window_days": 30,
+    "show_provisional_before_full_window": true
+  },
+  "risk": {
+    "max_concurrent_positions": 5,
+    "max_lane_drawdown_for_promotion": 0.2,
+    "risk_fraction_per_trade": 0.1
+  },
+  "version": "PMT-FROZEN-V1"
+}
