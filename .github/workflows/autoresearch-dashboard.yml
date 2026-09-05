@@ -1,0 +1,93 @@
+name: AUTORESEARCH dashboard snapshot
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  dashboard:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.issue.pull_request &&
+        github.event.issue.number == 13 &&
+        github.event.comment.body == '/dashboard' &&
+        github.event.comment.user.login == 'tjhuber2009-eng'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - name: Restore current research state
+        shell: bash
+        run: |
+          git fetch origin continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state
+          git checkout refs/remotes/origin/continuous-autoresearch-state -- moondev_autoresearch_reconstruction/continuous_state
+
+      - name: Restore tournament state if available
+        shell: bash
+        run: |
+          git fetch origin model-tournament-state:refs/remotes/origin/model-tournament-state || true
+          if git rev-parse --verify refs/remotes/origin/model-tournament-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/model-tournament-state -- moondev_autoresearch_reconstruction/tournament_state || true
+          fi
+
+      - name: Capture workflow runtime metadata
+        shell: bash
+        working-directory: moondev_autoresearch_reconstruction
+        run: |
+          mkdir -p dashboard_runtime
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/continuous-autoresearch.yml/runs?per_page=8" > dashboard_runtime/continuous_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/continuous_runs.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/model-tournament.yml/runs?per_page=8" > dashboard_runtime/tournament_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/tournament_runs.json
+          tournament_run_id="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          try:
+              rows=json.loads(Path("dashboard_runtime/tournament_runs.json").read_text()).get("workflow_runs",[])
+              print(rows[0]["id"] if rows else "")
+          except Exception:
+              print("")
+          PY
+          )"
+          if test -n "$tournament_run_id"; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$tournament_run_id/jobs?per_page=100" > dashboard_runtime/tournament_jobs.json || echo '{"jobs":[]}' > dashboard_runtime/tournament_jobs.json
+          else
+            echo '{"jobs":[]}' > dashboard_runtime/tournament_jobs.json
+          fi
+
+      - name: Build dashboard
+        working-directory: moondev_autoresearch_reconstruction
+        run: |
+          python -m py_compile build_dashboard.py
+          python build_dashboard.py             --state-dir continuous_state             --tournament-state-dir tournament_state             --runtime-dir dashboard_runtime             --output-dir dashboard_output
+          test -s dashboard_output/index.html
+          test -s dashboard_output/data.json
+          test -s dashboard_output/app.js
+          test -s dashboard_output/styles.css
+
+      - name: Upload private dashboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-dashboard-${{ github.run_id }}
+          path: moondev_autoresearch_reconstruction/dashboard_output
+          retention-days: 30
+
+      - name: Comment dashboard location
+        if: github.event_name == 'issue_comment'
+        shell: bash
+        run: |
+          gh pr comment 13 --repo "$GITHUB_REPOSITORY" --body "Dashboard snapshot built successfully. Open this Actions run and download the **autoresearch-dashboard-${GITHUB_RUN_ID}** artifact: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
