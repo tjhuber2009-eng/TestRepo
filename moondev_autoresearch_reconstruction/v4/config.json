@@ -13,22 +13,22 @@
   },
   "risk_profiles": {
     "prop": {
-      "max_dd_pct": 10.0,
+      "max_dd_pct": 10,
       "min_trades": 20,
-      "min_psr": 0.80,
-      "min_dsr": 0.60,
-      "max_pbo": 0.50,
-      "min_cost_stress_cagr_pct": 0.0,
-      "max_gross_exposure": 1.0
+      "min_psr": 0.8,
+      "min_dsr": 0.6,
+      "max_pbo": 0.5,
+      "min_cost_stress_cagr_pct": 0,
+      "max_gross_exposure": 1
     },
     "private": {
-      "max_dd_pct": 32.0,
+      "max_dd_pct": 32,
       "min_trades": 20,
       "min_psr": 0.75,
       "min_dsr": 0.55,
       "max_pbo": 0.55,
-      "min_cost_stress_cagr_pct": 0.0,
-      "max_gross_exposure": 2.0
+      "min_cost_stress_cagr_pct": 0,
+      "max_gross_exposure": 2
     }
   },
   "objective": {
@@ -50,14 +50,30 @@
     "portfolio_universes": [
       {
         "id": "leveraged_equity_rotation",
-        "signal_assets": ["QQQ", "SPY"],
-        "trade_assets": ["TQQQ", "SPY"],
+        "signal_assets": [
+          "QQQ",
+          "SPY"
+        ],
+        "trade_assets": [
+          "TQQQ",
+          "SPY"
+        ],
         "cash_allowed": true
       },
       {
         "id": "cross_asset_rotation",
-        "signal_assets": ["SPY", "QQQ", "BTCUSDT", "ETHUSDT"],
-        "trade_assets": ["SPY", "QQQ", "BTCUSDT", "ETHUSDT"],
+        "signal_assets": [
+          "SPY",
+          "QQQ",
+          "BTCUSDT",
+          "ETHUSDT"
+        ],
+        "trade_assets": [
+          "SPY",
+          "QQQ",
+          "BTCUSDT",
+          "ETHUSDT"
+        ],
         "cash_allowed": true
       }
     ]
@@ -98,7 +114,11 @@
   },
   "regimes": {
     "enabled": true,
-    "dimensions": ["trend", "volatility", "liquidity"],
+    "dimensions": [
+      "trend",
+      "volatility",
+      "liquidity"
+    ],
     "quantiles": "past_only_expanding"
   },
   "meta_filter": {
@@ -138,14 +158,58 @@
     "enabled": true,
     "separate_protocol": true,
     "initial_protocols": [
-      {"id": "btc_1h", "bar_minutes": 60, "timezone": "UTC", "bars_per_day": 24, "days_per_year": 365},
-      {"id": "eth_1h", "bar_minutes": 60, "timezone": "UTC", "bars_per_day": 24, "days_per_year": 365},
-      {"id": "index_15m", "bar_minutes": 15, "timezone": "America/New_York", "bars_per_day": 26, "days_per_year": 252}
+      {
+        "id": "btc_1h",
+        "bar_minutes": 60,
+        "timezone": "UTC",
+        "bars_per_day": 24,
+        "days_per_year": 365
+      },
+      {
+        "id": "eth_1h",
+        "bar_minutes": 60,
+        "timezone": "UTC",
+        "bars_per_day": 24,
+        "days_per_year": 365
+      },
+      {
+        "id": "index_15m",
+        "bar_minutes": 15,
+        "timezone": "America/New_York",
+        "bars_per_day": 26,
+        "days_per_year": 252
+      }
     ]
   },
   "external_strategy_intake": {
     "enabled": true,
-    "sources": ["academic", "github", "reddit", "quant_blogs", "published_bot_results"],
+    "sources": [
+      "academic",
+      "github",
+      "reddit",
+      "quant_blogs",
+      "published_bot_results"
+    ],
     "policy": "source_claims_are_hypotheses_only_until_exact_causal_reconstruction_and_backtest"
+  },
+  "account_optimization": {
+    "private": {
+      "profile": "private_growth",
+      "objective": "maximize_sustainable_cagr",
+      "max_drawdown_pct": 32,
+      "cost_stress_multiplier": 3
+    },
+    "prop": {
+      "objective": "maximize_evaluation_pass_probability_and_survival_adjusted_payout_rate",
+      "presets": [
+        "ftmo_2step_2026",
+        "ftmo_1step_2026"
+      ],
+      "stage_specific_risk": true,
+      "daily_loss_path_required": true,
+      "daily_ohlc_allowed_for_development_screening_only": true,
+      "exact_intraday_path_required_before_deployment": true,
+      "venue_symbol_mapping_required_before_deployment": true
+    }
   }
 }
