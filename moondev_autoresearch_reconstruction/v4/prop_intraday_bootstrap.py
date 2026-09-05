@@ -358,15 +358,39 @@ def aggregate_prague_days_scaled(
     return returns, adverse, opened
 
 
+
+def _resolve_prop_symbols(data, universe: str) -> tuple[str, ...]:
+    """Resolve a compact robustness universe without changing data alignment."""
+    label = str(universe or "all_available")
+    available = set(data)
+    if label == "all_available":
+        wanted = available
+    elif label == "no_bnb":
+        wanted = {"BTCUSDT", "ETHUSDT", "LTCUSDT"}
+    elif label == "btc_eth":
+        wanted = {"BTCUSDT", "ETHUSDT"}
+    else:
+        raise ValueError(f"unsupported prop universe: {label}")
+    symbols = tuple(sorted(available.intersection(wanted)))
+    if not {"BTCUSDT", "ETHUSDT"}.issubset(symbols):
+        raise RuntimeError(
+            f"prop universe {label} must retain BTCUSDT and ETHUSDT"
+        )
+    return symbols
+
 def evaluate_strategy(data, params):
     """Build one causal hourly strategy path, reusable across prop programs."""
-    symbols = tuple(sorted(data))
+    all_symbols = tuple(sorted(data))
+    symbols = _resolve_prop_symbols(
+        data,
+        str(params.get("universe", "all_available")),
+    )
     costs = {
         s: AssetCost(
             commission_bps=FTMO_CRYPTO_COMMISSION_BPS,
             slippage_bps=RESEARCH_SLIPPAGE_BPS,
         )
-        for s in symbols
+        for s in all_symbols
     }
     family = str(params.get("family", "cross_sectional_long"))
     if family == "cross_sectional_long":
@@ -518,6 +542,32 @@ def _frontier_structural_mutations(
                 continue
             seen.add(key)
             out.append(candidate)
+    return out
+
+
+def _frontier_universe_mutations(
+    leaders_by_program: dict,
+    view_names: tuple[str, ...],
+) -> list[dict]:
+    """Test whether frontier quality depends on the BNB proxy or broad basket."""
+    seen = set()
+    out = []
+    for program_leaders in leaders_by_program.values():
+        for view_name in view_names:
+            leader = program_leaders.get(view_name)
+            if leader is None:
+                continue
+            base = dict(leader["params"])
+            if str(base.get("family", "cross_sectional_long")) != "cross_sectional_long":
+                continue
+            for universe in ("no_bnb", "btc_eth"):
+                candidate = dict(base)
+                candidate["universe"] = universe
+                key = tuple(sorted(candidate.items()))
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.append(candidate)
     return out
 
 def program_with_analysis_horizon(
@@ -700,6 +750,61 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         "candidate": candidate,
                     }
 
+
+
+    # Robustness mutation: re-evaluate current long-only frontier leaders
+    # without BNB and on BTC/ETH only. This directly tests whether the edge
+    # depends on the historically non-FTMO BNB proxy.
+    universe_params = _frontier_universe_mutations(leaders, view_names)
+    for params in universe_params:
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
+                program,
+                exposure_scales=PROP_SCALES,
+                paths=400,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_"
+                    "prague_midnight_reset_exact_scale_compounding_daily_flat_policy"
+                ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
+            )
+            sel = prop.selected
+            rows_by_program[program.id].append({
+                "params": params,
+                "search_phase": "frontier_universe_mutation",
+                "hourly_base_cagr_pct": base.metrics.cagr_pct,
+                "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
+                "daily_worst_adverse_pct": float(dadv.min() * 100.0),
+                "selected": None if sel is None else sel.to_dict(),
+            })
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
 
     # Independent compact family: volatility-normalized long/short
     # time-series momentum. This is not a mutation of the long-only rotation.
@@ -952,6 +1057,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "broad_base_candidates": len(params_grid),
             "frontier_seed_parameter_sets": len(seed_params),
             "frontier_structural_mutations": len(structural_params),
+            "frontier_universe_mutations": len(universe_params),
             "independent_tsmom_candidates": len(tsmom_params),
             "candidate_families": [
                 "cross_sectional_long",
@@ -964,11 +1070,17 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     "europe_us",
                 ],
                 "rebalance_hours": [1, 4, 8],
+                "universe": [
+                    "all_available",
+                    "no_bnb",
+                    "btc_eth",
+                ],
             },
             "policy": (
                 "broad long-only alpha/risk search first; mutate only coarse "
-                "frontier leaders for session/rebalance structure; evaluate "
-                "time-series momentum as an independent compact family"
+                "frontier leaders for session/rebalance structure and asset-"
+                "universe robustness; evaluate time-series momentum as an "
+                "independent compact family"
             ),
         },
         "data_end": max(
