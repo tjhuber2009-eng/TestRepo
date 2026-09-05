@@ -723,6 +723,10 @@ def ranked_viable(tracks, min_valid):
             continue
         if track_counts(track)["valid"] < min_valid:
             continue
+        m = track_meta(track) or {}
+        baseline = m.get("baseline") or {}
+        if not baseline.get("guard_ok"):
+            continue
         score = development_score(track)
         selection = development_selection_score(track)
         if math.isfinite(score) and math.isfinite(selection):
@@ -740,7 +744,7 @@ def freeze_depth_selection(tracks, breadth_target, depth_fraction):
     grouped = {}
     for selection_score, score, track in ranked_viable(tracks, breadth_target):
         key = (track["target"]["id"], track["profile_name"])
-        grouped.setdefault(key, []).append((score, track))
+        grouped.setdefault(key, []).append((selection_score, score, track))
 
     depth_ids = []
     for key, rows in sorted(grouped.items()):
@@ -820,11 +824,15 @@ def next_search_track(tracks, plan, start):
 
 
 def next_validation_track(tracks, start):
+    selections = load_json(SELECTIONS) if SELECTIONS.exists() else {}
+    elite_ids = set(selections.get("elite_ids", []))
+    if not elite_ids:
+        return None
     n = len(tracks)
     for offset in range(n):
         idx = (start + offset) % n
         track = tracks[idx]
-        if is_terminal_block(track):
+        if track["id"] not in elite_ids or is_terminal_block(track):
             continue
         if validation_state(track) is None:
             return idx, track
@@ -859,6 +867,8 @@ def write_progress(
     rows = []
     counts = {
         "data_insufficient": 0, "seed_blocked": 0,
+        "breadth_eliminated": 0, "depth_eliminated": 0,
+        "validation_pending": 0,
         "validation_pass": 0, "validation_fail": 0,
         "searching": 0,
     }
@@ -886,6 +896,12 @@ def write_progress(
             status = "seed_blocked"
         elif val is not None:
             status = "validation_pass" if val.get("guard_ok") else "validation_fail"
+        elif elite_ids:
+            status = "validation_pending" if track["id"] in elite_ids else (
+                "depth_eliminated" if track["id"] in depth_ids else "breadth_eliminated"
+            )
+        elif depth_ids and phase in {"depth", "elite", "validation"}:
+            status = "searching" if track["id"] in depth_ids else "breadth_eliminated"
         else:
             status = "searching"
         counts[status] += 1
@@ -918,6 +934,7 @@ def write_progress(
 
     terminal = (
         counts["data_insufficient"] + counts["seed_blocked"]
+        + counts["breadth_eliminated"] + counts["depth_eliminated"]
         + counts["validation_pass"] + counts["validation_fail"]
     )
     payload = {
@@ -933,6 +950,9 @@ def write_progress(
         "validation_fail_count": counts["validation_fail"],
         "data_insufficient_count": counts["data_insufficient"],
         "seed_blocked_count": counts["seed_blocked"],
+        "breadth_eliminated_count": counts["breadth_eliminated"],
+        "depth_eliminated_count": counts["depth_eliminated"],
+        "validation_pending_count": counts["validation_pending"],
         "searching_count": counts["searching"],
         "total_valid_candidates": total_valid,
         "total_model_attempt_rows": total_attempts,
@@ -969,6 +989,7 @@ def rebuild_leaderboard(tracks):
             "market": m.get("market"),
             "profile": m.get("profile"),
             "valid_attempts": m.get("valid", m.get("valid_attempts", 0)),
+            "development_guard_ok": bool(b.get("guard_ok")),
             "development_score": b.get("score"),
             "selection_score": development_selection_score(track),
             "pbo": pbo.get("pbo"),
@@ -981,6 +1002,8 @@ def rebuild_leaderboard(tracks):
             "development_sharpe": b.get("sharpe"),
             "development_max_dd_pct": b.get("max_dd_pct"),
             "development_pf": b.get("pf"),
+            "development_trades": b.get("trades"),
+            "development_trades_per_year": b.get("trades_per_year"),
             "development_calmar": b.get("calmar"),
             "development_ulcer_index_pct": b.get("ulcer_index_pct"),
             "development_psr_zero": b.get("psr_zero"),
@@ -1022,6 +1045,10 @@ def rebuild_leaderboard(tracks):
     rows.sort(
         key=lambda x: (
             1 if x["hidden_validation_pass"] is True else 0,
+            1 if x.get("development_guard_ok") else 0,
+            float(x["selection_score"])
+            if x.get("selection_score") is not None and math.isfinite(float(x["selection_score"]))
+            else -1e99,
             float(x["development_score"])
             if x["development_score"] is not None and math.isfinite(float(x["development_score"]))
             else -1e99,
