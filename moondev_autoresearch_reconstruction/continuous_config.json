@@ -264,14 +264,15 @@
     "name": "nested_chronological_v3",
     "extreme_cost_stress_multiplier": 3,
     "bootstrap_reps": 500,
-    "score_definition": "annualized_log_growth_x_sharpe_robust_v3",
+    "score_definition": "sign_safe_annualized_log_growth_x_sharpe_robust_v3",
     "notes": [
       "Adaptive search sees development data only.",
       "Hidden pre-OOS validation opens only after all adaptive search is frozen.",
       "2023+ final OOS remains absent until explicit authorization.",
       "Return scoring is duration-normalized using annualized log growth.",
       "Candidates must remain profitable under 2x and 3x transaction-cost stress.",
-      "Probabilistic Sharpe and block-bootstrap significance are soft penalties, not hard small-sample exclusions."
+      "Probabilistic Sharpe and block-bootstrap significance are soft penalties, not hard small-sample exclusions.",
+      "CSCV PBO uses fixed even development slices and selection-eligible backtested candidates only."
     ]
   }
 }
