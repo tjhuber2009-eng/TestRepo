@@ -252,7 +252,10 @@ class MoonStrategy:
         winning = research_metrics.annualized_k(0.25, 2.0, 1.1)
         self.assertLess(losing, 0.0)
         self.assertGreater(winning, 0.0)
-        self.assertAlmostEqual(abs(losing), abs(winning), places=10)
+        expected = abs(
+            research_metrics.annualized_log_growth(-0.25, 2.0) * -1.1
+        )
+        self.assertAlmostEqual(abs(losing), expected, places=10)
 
     def test_annualized_k_requires_positive_growth_and_positive_sharpe(self):
         self.assertLess(research_metrics.annualized_k(0.20, 1.0, -0.5), 0.0)
