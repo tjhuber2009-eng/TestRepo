@@ -454,7 +454,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         for lb in (72, 168, 336)
         for tr in (168, 336)
         for k in (1, 2)
-        for vt in (0.40, 0.60, 0.80)
+        for vt in (0.20, 0.30, 0.40, 0.60, 0.80)
         for vl in (72, 168)
     ]
 
