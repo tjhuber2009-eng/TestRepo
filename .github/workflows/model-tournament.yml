@@ -1,8 +1,6 @@
 name: Zero-fee AI strategy model tournament
 
 on:
-  issue_comment:
-    types: [created]
   workflow_dispatch:
 
 permissions:
@@ -13,17 +11,10 @@ permissions:
 concurrency:
   group: zero-fee-model-tournament
   cancel-in-progress: false
+  queue: max
 
 jobs:
   freeze:
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.issue.pull_request &&
-        github.event.issue.number == 13 &&
-        github.event.comment.body == '/model-tournament' &&
-        github.event.comment.user.login == 'tjhuber2009-eng'
-      )
     runs-on: ubuntu-latest
     outputs:
       state_sha: ${{ steps.state.outputs.state_sha }}
