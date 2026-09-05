@@ -60,48 +60,90 @@ class TournamentMetrics:
         return self.__dict__.copy()
 
 
-def _max_drawdown(returns: list[float], risk_fraction: float) -> float:
+def _max_drawdown(
+    returns: list[float],
+    risk_fraction: float,
+) -> float:
     equity = 1.0
     peak = 1.0
     max_dd = 0.0
-    for r in returns:
-        equity *= max(0.0, 1.0 + risk_fraction * r)
+    for trade_return in returns:
+        equity *= max(
+            0.0,
+            1.0
+            + risk_fraction * trade_return,
+        )
         peak = max(peak, equity)
-        dd = 1.0 - equity / peak if peak > 0 else 1.0
+        dd = (
+            1.0 - equity / peak
+            if peak > 0
+            else 1.0
+        )
         max_dd = max(max_dd, dd)
     return max_dd
 
 
-def _peak_committed_capital(rows: list[ResolvedTrade]) -> float:
-    """Peak overlapping signal notional using entry and resolution timestamps.
+def _peak_committed_capital(
+    rows: list[ResolvedTrade],
+) -> float:
+    """Peak overlapping cash committed, including entry fees.
 
-    When a resolution timestamp is unavailable, conservatively reserve the sum
-    of all stakes instead of pretending that the trades did not overlap.
-    At identical timestamps, a resolving trade releases capital before a new
+    If a resolution timestamp is unavailable, reserve the sum of all entry
+    costs conservatively instead of pretending trades did not overlap.
+    At identical timestamps a resolving trade releases capital before a new
     entry is counted.
     """
     if not rows:
         return 0.0
-    if any(t.resolved_at is None for t in rows):
-        return sum(t.signal.size_usd for t in rows)
 
-    events: list[tuple[object, int, float]] = []
+    if any(
+        trade.resolved_at is None
+        for trade in rows
+    ):
+        return sum(
+            trade.signal.size_usd
+            + trade.fee_usd
+            for trade in rows
+        )
+
+    events: list[
+        tuple[object, int, float]
+    ] = []
     for trade in rows:
-        events.append(
-            (trade.signal.observed_at, 1, trade.signal.size_usd)
+        entry_cost = (
+            trade.signal.size_usd
+            + trade.fee_usd
         )
         events.append(
-            (trade.resolved_at, 0, trade.signal.size_usd)
+            (
+                trade.signal.observed_at,
+                1,
+                entry_cost,
+            )
         )
-    events.sort(key=lambda x: (x[0], x[1]))
+        events.append(
+            (
+                trade.resolved_at,
+                0,
+                entry_cost,
+            )
+        )
+    events.sort(
+        key=lambda item: (
+            item[0], item[1]
+        )
+    )
 
     committed = 0.0
     peak = 0.0
-    for _, kind, stake in events:
+    for _, kind, entry_cost in events:
         if kind == 0:
-            committed = max(0.0, committed - stake)
+            committed = max(
+                0.0,
+                committed - entry_cost,
+            )
         else:
-            committed += stake
+            committed += entry_cost
             peak = max(peak, committed)
     return peak
 
@@ -114,69 +156,132 @@ def summarize(
     rows = list(trades)
     if not rows:
         return TournamentMetrics(
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,
         )
 
     rows.sort(
-        key=lambda t: (
-            t.resolved_at or t.signal.observed_at,
-            t.signal.signal_id,
+        key=lambda trade: (
+            trade.resolved_at
+            or trade.signal.observed_at,
+            trade.signal.signal_id,
         )
     )
-    returns = [t.return_on_stake for t in rows]
-    pnls = [t.pnl_usd for t in rows]
-    gross_profit = sum(x for x in pnls if x > 0)
-    gross_loss = -sum(x for x in pnls if x < 0)
-    pf = (
-        float("inf")
-        if gross_loss == 0 and gross_profit > 0
-        else (gross_profit / gross_loss if gross_loss else 0.0)
+    returns = [
+        trade.return_on_stake
+        for trade in rows
+    ]
+    pnls = [
+        trade.pnl_usd
+        for trade in rows
+    ]
+    gross_profit = sum(
+        value for value in pnls
+        if value > 0
     )
-    total_staked = sum(t.signal.size_usd for t in rows)
+    gross_loss = -sum(
+        value for value in pnls
+        if value < 0
+    )
+    profit_factor = (
+        float("inf")
+        if (
+            gross_loss == 0
+            and gross_profit > 0
+        )
+        else (
+            gross_profit / gross_loss
+            if gross_loss
+            else 0.0
+        )
+    )
+    total_staked = sum(
+        trade.signal.size_usd
+        for trade in rows
+    )
     net = sum(pnls)
     brier = (
         sum(
             (
-                t.signal.fair_probability
-                - (1.0 if t.won else 0.0)
+                trade.signal.fair_probability
+                - (
+                    1.0
+                    if trade.won
+                    else 0.0
+                )
             )
             ** 2
-            for t in rows
+            for trade in rows
         )
         / len(rows)
     )
 
-    peak_capital = _peak_committed_capital(rows)
-    cap_eff = net / peak_capital if peak_capital else 0.0
+    peak_capital = (
+        _peak_committed_capital(rows)
+    )
+    capital_efficiency = (
+        net / peak_capital
+        if peak_capital
+        else 0.0
+    )
 
     return TournamentMetrics(
         trades=len(rows),
-        wins=sum(t.won for t in rows),
-        win_rate=sum(t.won for t in rows) / len(rows),
+        wins=sum(
+            trade.won for trade in rows
+        ),
+        win_rate=(
+            sum(
+                trade.won for trade in rows
+            )
+            / len(rows)
+        ),
         net_pnl_usd=net,
         return_on_staked_capital=(
-            net / total_staked if total_staked else 0.0
+            net / total_staked
+            if total_staked
+            else 0.0
         ),
-        profit_factor=pf,
-        mean_trade_return=sum(returns) / len(returns),
-        median_trade_return=median(returns),
-        max_drawdown=_max_drawdown(returns, risk_fraction),
+        profit_factor=profit_factor,
+        mean_trade_return=(
+            sum(returns) / len(returns)
+        ),
+        median_trade_return=median(
+            returns
+        ),
+        max_drawdown=_max_drawdown(
+            returns, risk_fraction
+        ),
         brier_score=brier,
-        capital_efficiency=cap_eff,
+        capital_efficiency=(
+            capital_efficiency
+        ),
     )
 
 
-def fixed_window_score(metrics: TournamentMetrics) -> float:
+def fixed_window_score(
+    metrics: TournamentMetrics,
+) -> float:
     """Ranking score only; never a parameter-optimization objective."""
     if metrics.trades == 0:
         return float("-inf")
+
     sample_conf = min(
-        1.0, (metrics.trades / 100.0) ** 0.5
+        1.0,
+        (
+            metrics.trades / 100.0
+        )
+        ** 0.5,
     )
-    pf_term = min(metrics.profit_factor, 5.0) / 5.0
+    pf_term = (
+        min(metrics.profit_factor, 5.0)
+        / 5.0
+    )
     return (
-        0.35 * metrics.return_on_staked_capital
-        + 0.25 * metrics.capital_efficiency
+        0.35
+        * metrics.return_on_staked_capital
+        + 0.25
+        * metrics.capital_efficiency
         + 0.20 * pf_term
         - 0.15 * metrics.max_drawdown
         - 0.05 * metrics.brier_score
