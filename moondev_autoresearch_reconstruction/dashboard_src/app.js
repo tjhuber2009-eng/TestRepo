@@ -195,7 +195,9 @@ function renderTournament(){
 function renderOutcomes(){
   const p=DATA.progress||{};
   const rows=[
-    ["Valid backtests",p.total_valid_candidates],
+    ["Backtested candidates",p.total_valid_candidates],
+    ["Guard-passing",p.total_guard_passed_candidates],
+    ["Keepers",p.total_kept_candidates],
     ["Model crashes",p.total_crashes],
     ["Parameter-only",p.total_parameter_only],
     ["Too broad",p.total_too_broad],
