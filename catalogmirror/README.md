@@ -60,7 +60,7 @@ A successful full manual catalog audit removes only queue work that existed befo
 
 Webhook delivery is not guaranteed, so CatalogMirror also runs periodic reconciliation. The scheduler uses Shopify's `updated_at` product search filter and persists a watermark only after successful discovery ingestion.
 
-For large discovery windows, reconciliation uses Shopify GraphQL Bulk Operations. The bulk result is streamed line-by-line from JSONL, and discovered product IDs are placed into low-priority targeted audit tasks. Live product and inventory webhook tasks have higher queue priority, so background reconciliation cannot starve recent merchant changes.
+For large discovery windows, reconciliation uses Shopify GraphQL Bulk Operations. CatalogMirror subscribes to `bulk_operations/finish` to wake completed operations immediately while retaining status polling as a missed-webhook fallback. The bulk result is streamed line-by-line from JSONL, and discovered product IDs are placed into low-priority targeted audit tasks. Live product and inventory webhook tasks have higher queue priority, so background reconciliation cannot starve recent merchant changes.
 
 The first reconciliation discovers all products up to a one-minute safety cutoff. Later runs use an overlapping updated-at window to tolerate delayed updates and clock-boundary effects. Failed runs do not advance the watermark.
 
