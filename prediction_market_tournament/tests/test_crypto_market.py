@@ -87,7 +87,11 @@ def _patch_books(monkeypatch, *, up=0.50, down=0.50, fee_rate=0.0):
             "asks": [{"price": str(down), "size": "1000"}],
         },
     }
-    monkeypatch.setattr(crypto, "get_book", lambda token: books[token])
+    monkeypatch.setattr(
+        crypto,
+        "get_books",
+        lambda tokens: [books[token] for token in tokens],
+    )
 
 
 def test_btc_slug_requires_exact_five_minute_alignment():
