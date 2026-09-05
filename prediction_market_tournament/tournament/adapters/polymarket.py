@@ -15,6 +15,9 @@ class MarketExecutionRules:
     fee_rate: float
     fee_exponent: float
     min_order_shares: float
+    taker_order_delay_enabled: bool = False
+    min_order_age_seconds: float = 0.0
+    tick_size: float = 0.01
 
 
 @dataclass(frozen=True)
@@ -141,15 +144,30 @@ def market_execution_rules(condition_id: str) -> MarketExecutionRules:
         rate = float(fee_details["r"])
         exponent = float(fee_details["e"])
         min_order_shares = float(info["mos"])
+        min_order_age_seconds = float(info.get("oas", 0))
+        tick_size = float(info["mts"])
     except (KeyError, TypeError, ValueError) as exc:
         raise LookupError("CLOB execution rules are incomplete") from exc
 
-    if rate < 0 or exponent < 0 or min_order_shares < 0:
-        raise ValueError("CLOB execution parameters must be non-negative")
+    raw_delay = info.get("itode", False)
+    if not isinstance(raw_delay, bool):
+        raise LookupError("CLOB itode must be boolean")
+
+    if (
+        rate < 0
+        or exponent < 0
+        or min_order_shares < 0
+        or min_order_age_seconds < 0
+        or tick_size <= 0
+    ):
+        raise ValueError("CLOB execution parameters are invalid")
     return MarketExecutionRules(
         fee_rate=rate,
         fee_exponent=exponent,
         min_order_shares=min_order_shares,
+        taker_order_delay_enabled=raw_delay,
+        min_order_age_seconds=min_order_age_seconds,
+        tick_size=tick_size,
     )
 
 
