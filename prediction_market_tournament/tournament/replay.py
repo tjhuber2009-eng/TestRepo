@@ -35,8 +35,9 @@ def replay_resolved_trades(
     if initial_equity <= 0:
         raise ValueError("initial_equity must be > 0")
 
-    # No favorable mark-to-market is assumed. At identical timestamps,
-    # capital is released before a new entry is considered.
+    # No favorable mark-to-market is assumed. Taker fees consume cash
+    # immediately at entry. At identical timestamps, capital is released
+    # before a new entry is considered.
     events: list[
         tuple[datetime, int, str, ResolvedTrade]
     ] = []
@@ -67,21 +68,35 @@ def replay_resolved_trades(
     equity = float(initial_equity)
     peak_equity = equity
     max_dd = 0.0
-    open_stakes: dict[str, float] = {}
+    # signal_id -> (normalized stake, normalized entry fee)
+    open_positions: dict[
+        str, tuple[float, float]
+    ] = {}
     admitted: list[str] = []
     skipped: list[str] = []
     peak_committed = 0.0
 
     for _, kind, signal_id, trade in events:
         if kind == 0:
-            stake = open_stakes.pop(signal_id, None)
-            if stake is None:
-                continue
-            cash += stake * (
-                1.0 + trade.return_on_stake
+            position = open_positions.pop(
+                signal_id, None
             )
-            equity += (
-                stake * trade.return_on_stake
+            if position is None:
+                continue
+            stake, _entry_fee = position
+            original_stake = (
+                trade.signal.size_usd
+            )
+            payout_ratio = (
+                trade.payout_usd
+                / original_stake
+            )
+            cash += stake * payout_ratio
+            # Entry fee already reduced equity. Resolution changes equity
+            # only by payout minus principal; together this equals the
+            # fee-inclusive trade PnL.
+            equity += stake * (
+                payout_ratio - 1.0
             )
             peak_equity = max(
                 peak_equity, equity
@@ -95,22 +110,47 @@ def replay_resolved_trades(
             continue
 
         if (
-            len(open_stakes)
+            len(open_positions)
             >= max_concurrent_positions
         ):
             skipped.append(signal_id)
             continue
+
         stake = risk_fraction * equity
-        if stake <= 0 or stake > cash + 1e-12:
+        original_stake = trade.signal.size_usd
+        fee_ratio = (
+            trade.fee_usd / original_stake
+        )
+        entry_fee = stake * fee_ratio
+        entry_cost = stake + entry_fee
+        if (
+            stake <= 0
+            or entry_cost > cash + 1e-12
+        ):
             skipped.append(signal_id)
             continue
-        cash -= stake
-        open_stakes[signal_id] = stake
-        admitted.append(signal_id)
-        peak_committed = max(
-            peak_committed,
-            sum(open_stakes.values()),
+
+        cash -= entry_cost
+        equity -= entry_fee
+        open_positions[signal_id] = (
+            stake, entry_fee
         )
+        admitted.append(signal_id)
+        committed = sum(
+            s + fee
+            for s, fee
+            in open_positions.values()
+        )
+        peak_committed = max(
+            peak_committed, committed
+        )
+
+        dd = (
+            1.0 - equity / peak_equity
+            if peak_equity > 0
+            else 1.0
+        )
+        max_dd = max(max_dd, dd)
 
     return ReplayResult(
         initial_equity=initial_equity,
