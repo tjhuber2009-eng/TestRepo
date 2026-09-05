@@ -28,24 +28,41 @@ def load_frozen_spec(path: str | Path) -> tuple[dict, str]:
 
 
 def implementation_hash(root: str | Path) -> str:
-    """Hash all executable PMT Python code, independent of Git metadata."""
+    """Hash PMT code plus runtime/scheduling files, independent of Git."""
     base = Path(root)
-    files: list[Path] = []
+    labeled_files: list[tuple[str, Path]] = []
+
     for relative in ("tournament", "scripts"):
         directory = base / relative
         if directory.exists():
-            files.extend(
-                path
-                for path in directory.rglob("*.py")
-                if "__pycache__" not in path.parts
-            )
+            for path in directory.rglob("*.py"):
+                if "__pycache__" in path.parts:
+                    continue
+                labeled_files.append(
+                    (path.relative_to(base).as_posix(), path)
+                )
+
+    pyproject = base / "pyproject.toml"
+    if pyproject.exists():
+        labeled_files.append(("pyproject.toml", pyproject))
+
+    workflow = (
+        base.parent
+        / ".github"
+        / "workflows"
+        / "prediction-market-tournament.yml"
+    )
+    if workflow.exists():
+        labeled_files.append(
+            (".github/workflows/prediction-market-tournament.yml", workflow)
+        )
 
     digest = hashlib.sha256()
-    for path in sorted(files, key=lambda item: item.relative_to(base).as_posix()):
-        relative = path.relative_to(base).as_posix().encode("utf-8")
+    for label, path in sorted(labeled_files):
+        label_bytes = label.encode("utf-8")
         payload = path.read_bytes()
-        digest.update(len(relative).to_bytes(4, "big"))
-        digest.update(relative)
+        digest.update(len(label_bytes).to_bytes(4, "big"))
+        digest.update(label_bytes)
         digest.update(len(payload).to_bytes(8, "big"))
         digest.update(payload)
     return digest.hexdigest()
