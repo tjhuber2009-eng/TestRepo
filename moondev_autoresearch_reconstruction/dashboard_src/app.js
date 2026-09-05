@@ -95,24 +95,37 @@ function setupFilters(){
     o.value=m;o.textContent=m;
     mf.appendChild(o);
   });
-  ["profileFilter","marketFilter","championSearch"].forEach(id=>$("#"+id).oninput=renderChampions);
+  ["profileFilter","marketFilter","evidenceFilter","rankMetric","championSearch"].forEach(id=>$("#"+id).oninput=renderChampions);
   ["trackProfileFilter","trackSearch"].forEach(id=>$("#"+id).oninput=renderTracks);
 }
 
 function renderChampions(){
   const profile=$("#profileFilter").value;
   const market=$("#marketFilter").value;
+  const evidence=$("#evidenceFilter").value;
+  const metric=$("#rankMetric").value;
   const q=$("#championSearch").value.trim().toLowerCase();
+  const gradeRank={A:1,B:2,C:3,D:4};
   let rows=[...(DATA.leaderboard||[])];
   rows=rows.filter(r=>
     (profile==="all"||r.profile===profile)&&
     (market==="all"||r.market===market)&&
+    (evidence==="all"||(gradeRank[r.evidence_grade]||99)<=(gradeRank[evidence]||99))&&
     (!q||`${r.family} ${r.target} ${r.track_id}`.toLowerCase().includes(q))
   );
+  rows.sort((a,b)=>{
+    const av=Number(a[metric]),bv=Number(b[metric]);
+    const aa=Number.isFinite(av)?av:-1e99;
+    const bb=Number.isFinite(bv)?bv:-1e99;
+    return bb-aa;
+  });
   const body=$("#championsTable tbody");
-  body.innerHTML=rows.slice(0,80).map((r,i)=>{
+  body.innerHTML=rows.slice(0,100).map((r,i)=>{
     const score=Number(r.development_score);
     const scoreClass=Number.isFinite(score)&&score>=0?"score-pos":"score-neg";
+    const psr=r.development_psr_zero==null?"—":`${(100*Number(r.development_psr_zero)).toFixed(1)}%`;
+    const qv=r.multiple_test_qvalue==null?"—":`${(100*Number(r.multiple_test_qvalue)).toFixed(1)}%`;
+    const pbo=r.pbo==null?"—":`${(100*Number(r.pbo)).toFixed(1)}%`;
     return `<tr>
       <td>${i+1}</td>
       <td><b>${esc(r.family)}</b><div class="muted">${esc(r.exactness||"")}</div></td>
@@ -120,11 +133,17 @@ function renderChampions(){
       <td><span class="profile-chip ${esc(r.profile)}">${esc(r.profile)}</span></td>
       <td class="num ${scoreClass}">${fmt(r.development_score,6)}</td>
       <td class="num score-pos">${pct(r.development_cagr_pct,1)}</td>
-      <td class="num">${pct(r.development_return_pct,1)}</td>
+      <td class="num">${pct(r.excess_cagr_vs_buyhold_pct,1)}</td>
+      <td class="num">${pct(r.benchmark_cagr_pct,1)}</td>
       <td class="num">${fmt(r.development_years,1)}</td>
       <td class="num">${fmt(r.development_sharpe,3)}</td>
       <td class="num">${fmt(r.development_pf,2)}</td>
       <td class="num">${pct(r.development_max_dd_pct,2)}</td>
+      <td class="num">${psr}</td>
+      <td class="num">${qv}</td>
+      <td class="num">${pbo}</td>
+      <td><span class="status-chip">${esc(r.evidence_grade||"—")}</span></td>
+      <td class="num">${pct(r.extreme_stress_return_pct,1)}</td>
       <td class="num">${num(r.valid_attempts)}</td>
     </tr>`;
   }).join("");
@@ -141,11 +160,11 @@ function renderTournament(){
     state.textContent="round complete";
     state.className="pill good";
     panel.innerHTML=`<div class="table-wrap tournament-table"><table>
-      <thead><tr><th>#</th><th>Model</th><th class="num">Keep</th><th class="num">Wins</th><th class="num">Guard</th><th class="num">Median ΔK</th></tr></thead>
+      <thead><tr><th>#</th><th>Model</th><th class="num">Keep rate</th><th class="num">Wins</th><th class="num">Guard</th><th class="num">Paired ΔK</th><th class="num">Ideas</th></tr></thead>
       <tbody>${summary.ranking.map((r,i)=>`<tr>
         <td>${i+1}</td><td><b>${esc(r.model)}</b><div class="muted">${esc(r.provider||"")}</div></td>
-        <td class="num">${num(r.would_keep)}</td><td class="num">${num(r.matched_case_wins)}</td>
-        <td class="num">${num(r.guard_pass)}</td><td class="num">${fmt(r.median_delta_k,6)}</td>
+        <td class="num">${r.keep_rate==null?"—":(100*Number(r.keep_rate)).toFixed(1)+"%"}</td><td class="num">${fmt(r.matched_case_wins,1)}</td>
+        <td class="num">${num(r.guard_pass)}/${num(r.attempts)}</td><td class="num">${fmt(r.paired_guard_median_delta_k??r.median_delta_k,6)}</td><td class="num">${num(r.unique_proposals)}</td>
       </tr>`).join("")}</tbody></table></div>`;
     return;
   }
