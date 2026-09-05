@@ -47,12 +47,26 @@ export async function processWebhookDelivery(
       where: { id: context.webhookId },
       data: { processedAt: new Date() },
     });
-    await pruneReceipts();
+    try {
+      await pruneReceipts();
+    } catch (pruneError) {
+      console.warn("CatalogMirror webhook receipt pruning failed", {
+        webhookId: context.webhookId,
+        error: pruneError instanceof Error ? pruneError.message : String(pruneError),
+      });
+    }
     return true;
   } catch (error) {
-    await db.webhookReceipt.deleteMany({
-      where: { id: context.webhookId, processedAt: null },
-    });
+    try {
+      await db.webhookReceipt.deleteMany({
+        where: { id: context.webhookId, processedAt: null },
+      });
+    } catch (cleanupError) {
+      console.error("CatalogMirror could not release failed webhook receipt", {
+        webhookId: context.webhookId,
+        error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+      });
+    }
     throw error;
   }
 }
