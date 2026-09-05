@@ -1282,6 +1282,22 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "any funded deployment"
             ),
         },
+        "repeat_payout_projection": {
+            "cycles": 12,
+            "reward_cycle_days": int(FTMO_2STEP.first_reward_eligible_days),
+            "method": (
+                "sum identical first-reward expected value across up to 12 "
+                "cycles, discounting cycle k by funded survival_probability^k"
+            ),
+            "profit_rollover_or_compounding": False,
+            "challenge_retries_included": False,
+            "challenge_fees_included": False,
+            "scaling_plan_upgrades_included": False,
+            "interpretation": (
+                "conservative repeat-payout research proxy; not a literal "
+                "withdrawal-path simulation"
+            ),
+        },
         "search_policy": {
             "broad_base_candidates": len(params_grid),
             "frontier_seed_parameter_sets": len(seed_params),
