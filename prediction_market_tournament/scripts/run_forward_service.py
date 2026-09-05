@@ -14,6 +14,10 @@ from tournament.freeze import load_frozen_spec, require_forward_started
 from tournament.ledger import append_jsonl
 
 
+class FrozenStateChanged(RuntimeError):
+    """Frozen spec/code/runtime no longer matches the immutable marker."""
+
+
 class ServiceLock(AbstractContextManager):
     """Cross-platform non-blocking singleton lock held for process lifetime."""
 
@@ -207,7 +211,7 @@ async def _freeze_guard_loop(
                     "error": f"{type(exc).__name__}:{exc}",
                 },
             )
-            raise
+            raise FrozenStateChanged(str(exc)) from exc
 
 
 async def _crypto_supervisor(
@@ -358,13 +362,24 @@ async def run_service(root: Path) -> None:
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     # Verify the deliberate start before creating any service artifact.
-    require_forward_started(root)
+    try:
+        require_forward_started(root)
+    except Exception as exc:
+        print(
+            f"PMT frozen-state verification failed: {type(exc).__name__}:{exc}",
+            file=sys.stderr,
+        )
+        return 78
+
     lock_path = root / "data" / "forward_service.lock"
     with ServiceLock(lock_path):
         try:
             asyncio.run(run_service(root))
         except KeyboardInterrupt:
-            pass
+            return 0
+        except FrozenStateChanged as exc:
+            print(f"PMT frozen state changed: {exc}", file=sys.stderr)
+            return 78
     return 0
 
 
