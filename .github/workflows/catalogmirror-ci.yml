@@ -6,7 +6,7 @@ on:
     paths: ["catalogmirror/**", ".github/workflows/catalogmirror-ci.yml"]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Generate lockfile
-        run: npm install --package-lock-only
+          cache: npm
+          cache-dependency-path: catalogmirror/package-lock.json
       - run: npm ci
       - name: Dependency audit
         run: npm audit --audit-level=moderate
@@ -43,13 +43,3 @@ jobs:
           SHOPIFY_API_KEY: test
           SHOPIFY_API_SECRET: test
           SHOPIFY_APP_URL: https://example.com
-      - name: Commit dependency lockfile
-        if: github.event_name == 'push' && github.ref_name == 'catalogmirror-dependency-fix'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Lock CatalogMirror dependency fixes"
-            git push
-          fi
