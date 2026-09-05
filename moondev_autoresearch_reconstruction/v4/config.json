@@ -1,0 +1,151 @@
+{
+  "protocol": "alpha_generation_v4",
+  "status": "architecture_frozen_before_v4_outcomes",
+  "source_v3_branch": "moondev-nvidia-autoresearch",
+  "source_v3_sha": "412452f846a5858e23b8ac0869c8ae754dd1f6a2",
+  "boundaries": {
+    "development_end": "2020-12-31",
+    "hidden_validation_start": "2021-01-01",
+    "hidden_validation_end": "2022-12-31",
+    "final_oos_start": "2023-01-01",
+    "hidden_validation_sealed_during_search": true,
+    "final_oos_sealed": true
+  },
+  "risk_profiles": {
+    "prop": {
+      "max_dd_pct": 10.0,
+      "min_trades": 20,
+      "min_psr": 0.80,
+      "min_dsr": 0.60,
+      "max_pbo": 0.50,
+      "min_cost_stress_cagr_pct": 0.0,
+      "max_gross_exposure": 1.0
+    },
+    "private": {
+      "max_dd_pct": 32.0,
+      "min_trades": 20,
+      "min_psr": 0.75,
+      "min_dsr": 0.55,
+      "max_pbo": 0.55,
+      "min_cost_stress_cagr_pct": 0.0,
+      "max_gross_exposure": 2.0
+    }
+  },
+  "objective": {
+    "primary": "maximize_sustainable_cagr_subject_to_hard_risk_and_evidence_gates",
+    "leaderboard": "pareto_frontier_then_sustainable_cagr",
+    "evidence_metrics": [
+      "DSR",
+      "PSR",
+      "PBO_CSCV",
+      "cost_stress",
+      "drawdown",
+      "turnover",
+      "gross_exposure"
+    ]
+  },
+  "multi_asset": {
+    "enabled": true,
+    "execution": "signals_through_close_t_execute_open_t_plus_1",
+    "portfolio_universes": [
+      {
+        "id": "leveraged_equity_rotation",
+        "signal_assets": ["QQQ", "SPY"],
+        "trade_assets": ["TQQQ", "SPY"],
+        "cash_allowed": true
+      },
+      {
+        "id": "cross_asset_rotation",
+        "signal_assets": ["SPY", "QQQ", "BTCUSDT", "ETHUSDT"],
+        "trade_assets": ["SPY", "QQQ", "BTCUSDT", "ETHUSDT"],
+        "cash_allowed": true
+      }
+    ]
+  },
+  "feature_store": {
+    "enabled": true,
+    "base_features": [
+      "returns",
+      "realized_volatility",
+      "ATR",
+      "gap",
+      "intraday_return",
+      "distance_to_moving_averages",
+      "distance_to_high_low",
+      "RSI",
+      "volume",
+      "dollar_volume",
+      "liquidity",
+      "cross_sectional_ranks"
+    ],
+    "optional_contexts": [
+      "VIX",
+      "rates_yield_curve",
+      "market_breadth",
+      "earnings_surprise",
+      "funding",
+      "basis",
+      "open_interest",
+      "futures_term_structure"
+    ],
+    "context_join": "backward_asof_with_explicit_lag"
+  },
+  "parameter_optimizer": {
+    "enabled": true,
+    "structure_frozen": true,
+    "max_grid_trials": 256,
+    "selection": "broad_plateau_plus_worst_fold_plus_multiple_testing_penalty"
+  },
+  "regimes": {
+    "enabled": true,
+    "dimensions": ["trend", "volatility", "liquidity"],
+    "quantiles": "past_only_expanding"
+  },
+  "meta_filter": {
+    "enabled": true,
+    "model": "deterministic_boosted_decision_stumps",
+    "evaluation": "walk_forward_only",
+    "role": "filter_existing_signals_not_replace_strategy"
+  },
+  "motif_transfer": {
+    "enabled": true,
+    "motifs": [
+      "long_term_trend_gate",
+      "atr_trailing_exit",
+      "volume_expansion_gate",
+      "volatility_contraction_gate",
+      "relative_strength_gate",
+      "breadth_confirmation",
+      "time_stop",
+      "drawdown_recovery_gate",
+      "volatility_regime_gate"
+    ]
+  },
+  "research_allocator": {
+    "enabled": true,
+    "method": "contextual_thompson_sampling",
+    "mandatory_min_visits_per_cell": 2,
+    "reward": "robust_keeper_probability_times_positive_selection_utility"
+  },
+  "portfolio_optimizer": {
+    "enabled": true,
+    "objective": "portfolio_cagr_under_portfolio_drawdown_cap",
+    "bootstrap": "paired_moving_block",
+    "bootstrap_reps": 200,
+    "candidate_weights": 3000
+  },
+  "intraday": {
+    "enabled": true,
+    "separate_protocol": true,
+    "initial_protocols": [
+      {"id": "btc_1h", "bar_minutes": 60, "timezone": "UTC", "bars_per_day": 24, "days_per_year": 365},
+      {"id": "eth_1h", "bar_minutes": 60, "timezone": "UTC", "bars_per_day": 24, "days_per_year": 365},
+      {"id": "index_15m", "bar_minutes": 15, "timezone": "America/New_York", "bars_per_day": 26, "days_per_year": 252}
+    ]
+  },
+  "external_strategy_intake": {
+    "enabled": true,
+    "sources": ["academic", "github", "reddit", "quant_blogs", "published_bot_results"],
+    "policy": "source_claims_are_hypotheses_only_until_exact_causal_reconstruction_and_backtest"
+  }
+}
