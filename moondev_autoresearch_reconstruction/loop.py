@@ -35,6 +35,7 @@ KEEPERS = "keepers"
 LOGS = "logs"
 SEEN_HASHES = "seen_hashes.json"
 EXPERIMENTS = "experiments.jsonl"
+LOOKAHEAD_AUDIT = "lookahead_audit.json"
 
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b"
@@ -265,6 +266,9 @@ def append_experiment_record(
             x.get("return_pct") for x in (result.get("folds") or [])
         ]
         paired = result.get("paired_vs_baseline") or {}
+        audit = result.get("lookahead_audit") or {}
+        record["lookahead_audit_pass"] = audit.get("passed")
+        record["lookahead_audit_reason"] = audit.get("reason")
         record["comparable_folds"] = paired.get("comparable_folds")
         record["median_fold_delta_k"] = paired.get("median_fold_delta_k")
         record["improved_fold_fraction"] = paired.get("improved_fold_fraction")
@@ -717,6 +721,33 @@ def paired_fold_improvement(base, candidate):
     }
 
 
+def run_lookahead_audit(iteration):
+    if os.path.exists(LOOKAHEAD_AUDIT):
+        os.remove(LOOKAHEAD_AUDIT)
+    log_path = os.path.join(LOGS, f"lookahead_{iteration}.txt")
+    with open(log_path, "w", encoding="utf-8") as f:
+        proc = subprocess.run(
+            [PY, HARNESS, "--lookahead-audit"],
+            stdout=f,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=safe_backtest_env(),
+        )
+    if not os.path.exists(LOOKAHEAD_AUDIT):
+        return {
+            "passed": False,
+            "reason": f"lookahead audit exited {proc.returncode} without result",
+        }
+    try:
+        out = load_json(LOOKAHEAD_AUDIT)
+    except Exception as exc:
+        return {"passed": False, "reason": f"lookahead audit JSON error: {exc}"}
+    if proc.returncode != 0:
+        out["passed"] = False
+        out.setdefault("reason", f"lookahead audit exited {proc.returncode}")
+    return out
+
+
 def append_result(
     ts, iteration, verdict, score, base, ret, sharpe, vol,
     trades, dd, reason, desc, result=None,
@@ -942,12 +973,22 @@ def main():
                                     and float(paired.get("median_fold_delta_k") or -1e9) >= 0.0
                                 )
                             if float(score) > base_score + min_delta and fold_ok:
-                                verdict = "KEPT"
-                                reason = (
-                                    f"K {base_score} -> {score}; paired folds "
-                                    f"{paired.get('improved_fold_fraction')} improved "
-                                    f"(required delta {min_delta:.4f})"
-                                )
+                                lookahead = run_lookahead_audit(iteration)
+                                result["lookahead_audit"] = lookahead
+                                if lookahead.get("passed"):
+                                    verdict = "KEPT"
+                                    reason = (
+                                        f"K {base_score} -> {score}; paired folds "
+                                        f"{paired.get('improved_fold_fraction')} improved; "
+                                        f"prefix lookahead audit PASS "
+                                        f"(required delta {min_delta:.4f})"
+                                    )
+                                else:
+                                    verdict = "REJECTED"
+                                    reason = (
+                                        "prefix-invariance lookahead audit failed: "
+                                        f"{lookahead.get('reason')}"
+                                    )
                             elif not fold_ok:
                                 verdict = "REJECTED"
                                 reason = (
