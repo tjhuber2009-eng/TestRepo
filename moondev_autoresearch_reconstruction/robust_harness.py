@@ -43,6 +43,9 @@ LOOKAHEAD_AUDIT = HERE / "lookahead_audit.json"
 STRATEGY_FILE = HERE / "strategy.py"
 HARNESS_FILE = HERE / "robust_harness.py"
 PROGRAM_FILE = HERE / os.environ.get("AUTORESEARCH_PROGRAM", "program_robust.md")
+CONFIG_FILE = HERE / "continuous_config.json"
+REGISTRY_FILE = HERE / "strategy_library" / "registry.json"
+SEED_FACTORY_FILE = HERE / "seed_factory.py"
 
 SYMBOL = os.environ["AUTORESEARCH_SYMBOL"]
 MARKET = os.environ["AUTORESEARCH_MARKET"]
