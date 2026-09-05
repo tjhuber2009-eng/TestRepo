@@ -29,7 +29,13 @@ CatalogMirror is a read-only Shopify catalog integrity monitor. It compares Shop
 - Variant matching treats Shopify variant IDs as authoritative; legacy/fallback matching is only used when an ID cannot be parsed.
 - Shopify `availableForSale` drives availability parity instead of hand-derived inventory heuristics.
 - Storefront fetches require HTTPS, standard HTTPS ports, public network targets, bounded redirects, timeouts, and response-size limits.
-- Product/create, product/update, product/delete, and inventory-level webhooks mark the catalog as changed.
+- Product/create and product/update webhooks queue exact-product verification after a short debounce.
+- Inventory-level webhooks queue the inventory item and resolve its associated product through Shopify Admin before auditing.
+- Unknown-resource webhook payloads safely fall back to a coalesced shop-level verification task.
+- Automatic audit work is persisted in PostgreSQL, so deploys/restarts do not lose queued checks.
+- Multiple Railway replicas claim tasks atomically with `FOR UPDATE SKIP LOCKED`; generation checks prevent a newer webhook from being consumed by an older in-flight audit.
+- Queue and audit locks use renewable short leases, giving long healthy audits exclusivity while allowing crashed workers to recover automatically.
+- Failed automatic audits retry with bounded exponential backoff and surface the latest error in the dashboard.
 - Shopify webhook delivery IDs are persisted and deduplicated. Failed processing releases the receipt for a Shopify retry; stale in-flight receipts can be reclaimed.
 - Shop deletion removes CatalogMirror data.
 - Shopify App Pricing uses the Partner API with bounded retry and cache behavior.
@@ -39,6 +45,16 @@ CatalogMirror is a read-only Shopify catalog integrity monitor. It compares Shop
 - Docker build context excludes local environment files and development artifacts.
 - Dependabot maintains npm and GitHub Actions dependencies weekly.
 - CodeQL scans only the CatalogMirror JavaScript/TypeScript source with security-extended queries.
+
+## Automatic monitoring
+
+Automatic monitoring is enabled by default in production. Shopify webhooks are acknowledged only after their durable queue mutation succeeds; the web process then consumes queued work independently.
+
+Product changes normally audit one exact product rather than rescanning the catalog. Inventory changes resolve their inventory item back to the associated product first. Bursts for the same resource are debounced and coalesced into one task.
+
+The queue is deliberately generation-aware. If another webhook updates the same resource while an audit is running, the worker cannot delete the newer generation when the older audit finishes. If a process dies, renewable queue/audit leases expire and another healthy process can reclaim the work.
+
+A successful full manual catalog audit removes only queue work that existed before that audit started. Webhooks arriving during the manual scan remain queued.
 
 ## Audit behavior
 
@@ -60,11 +76,12 @@ Every CatalogMirror code change runs against Node 24 and a clean PostgreSQL 16 s
 4. Native Node unit tests
 5. `prisma validate`
 6. `prisma migrate deploy` against a fresh database
-7. Prisma client generation
-8. React Router type generation + TypeScript
-9. Production build
-10. Production server smoke test for `/health` and `/ready`
-11. Production Docker image build
+7. PostgreSQL-backed automatic-audit queue regression test
+8. Prisma client generation
+9. React Router type generation + TypeScript
+10. Production build
+11. Production server smoke test for `/health` and `/ready`
+12. Production Docker image build
 
 GitHub Actions used by the security/build workflows are pinned to commit SHAs rather than floating action tags.
 
@@ -84,6 +101,10 @@ GitHub Actions used by the security/build workflows are pinned to commit SHAs ra
 - `AUDIT_CONCURRENCY`: concurrent product checks, 1–8.
 - `STOREFRONT_TIMEOUT_MS`: per-storefront request timeout, clamped to 3–20 seconds.
 - `WEBHOOK_RECEIPT_TTL_DAYS`: deduplication receipt retention, clamped to 7–90 days.
+- `AUTO_AUDIT_ENABLED`: automatic webhook-driven verification; defaults on in production.
+- `AUTO_AUDIT_DEBOUNCE_SECONDS`: resource debounce window, clamped to 5–300 seconds.
+- `AUTO_AUDIT_POLL_MS`: idle queue polling interval, clamped to 1–60 seconds.
+- `AUTO_AUDIT_PRODUCT_LIMIT`: safety cap for fallback shop-level automatic audits; never exceeds the manual audit cap.
 
 ## App Store / Built for Shopify readiness checklist
 
