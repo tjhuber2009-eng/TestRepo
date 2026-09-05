@@ -1,0 +1,199 @@
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
+
+from tournament.leaderboard import (
+    build_equal_window_leaderboard,
+)
+from tournament.models import Signal
+from tournament.replay import (
+    replay_forward_account,
+    replay_resolved_trades,
+)
+from tournament.scoring import (
+    settle_binary_signal,
+)
+
+
+def _trade(
+    i,
+    start,
+    retwin=True,
+    resolve_minutes=10,
+    lane="x",
+):
+    signal = Signal(
+        f"s{i}",
+        lane,
+        f"m{i}",
+        start,
+        "YES",
+        0.5,
+        0.6,
+        "taker",
+        1.0,
+        0.0,
+    )
+    trade = settle_binary_signal(
+        signal,
+        retwin,
+        resolved_at=(
+            start
+            + timedelta(
+                minutes=resolve_minutes
+            )
+        ),
+    )
+    return signal, trade
+
+
+def test_equal_window_marks_short_sample_provisional():
+    start = datetime(
+        2026,
+        9,
+        1,
+        tzinfo=timezone.utc,
+    )
+    signal, trade = _trade(
+        1,
+        start + timedelta(hours=1),
+        True,
+    )
+    rows = (
+        build_equal_window_leaderboard(
+            [signal],
+            [trade],
+            window_start=start,
+            as_of=(
+                start
+                + timedelta(days=5)
+            ),
+        )
+    )
+    assert len(rows) == 1
+    assert rows[0].calendar_days == 5
+    assert rows[0].provisional is True
+    assert rows[0].net_return > 0
+
+
+def test_concurrency_cap_skips_sixth_simultaneous_trade():
+    start = datetime(
+        2026,
+        9,
+        1,
+        tzinfo=timezone.utc,
+    )
+    pairs = [
+        _trade(
+            i,
+            start
+            + timedelta(seconds=i),
+            True,
+            resolve_minutes=60,
+        )
+        for i in range(6)
+    ]
+    rows = (
+        build_equal_window_leaderboard(
+            [s for s, _ in pairs],
+            [t for _, t in pairs],
+            window_start=start,
+            as_of=(
+                start
+                + timedelta(days=1)
+            ),
+            max_concurrent_positions=5,
+        )
+    )
+    assert rows[0].admitted_trades == 5
+    assert (
+        rows[0].skipped_concurrency
+        == 1
+    )
+
+
+def test_replay_risk_fraction_caps_all_in_cash_including_fee():
+    start = datetime(
+        2026,
+        9,
+        1,
+        tzinfo=timezone.utc,
+    )
+    signal = Signal(
+        "fee",
+        "x",
+        "m",
+        start,
+        "YES",
+        0.5,
+        0.6,
+        "taker",
+        1.0,
+        0.07,
+    )
+    trade = settle_binary_signal(
+        signal,
+        True,
+        resolved_at=(
+            start
+            + timedelta(minutes=1)
+        ),
+    )
+
+    too_small = replay_resolved_trades(
+        [trade],
+        risk_fraction=1.0,
+        initial_equity=1.0,
+    )
+    assert too_small.admitted_signal_ids == ()
+    assert too_small.skipped_concurrency_signal_ids == ("fee",)
+
+    exact_cash = signal.size_usd + trade.fee_usd
+    admitted = replay_resolved_trades(
+        [trade],
+        risk_fraction=1.0,
+        initial_equity=exact_cash,
+    )
+    assert admitted.admitted_signal_ids == ("fee",)
+    assert admitted.skipped_concurrency_signal_ids == ()
+    assert admitted.peak_committed == exact_cash
+    assert admitted.net_return > 0
+    assert admitted.max_drawdown > 0
+
+
+def test_unresolved_positions_consume_concurrency_slots():
+    start = datetime(
+        2026,
+        9,
+        1,
+        tzinfo=timezone.utc,
+    )
+    signals = [
+        Signal(
+            f"u{i}",
+            "x",
+            f"m{i}",
+            start + timedelta(seconds=i),
+            "YES",
+            0.5,
+            0.6,
+            "taker",
+            1.0,
+            0.0,
+        )
+        for i in range(6)
+    ]
+    replay = replay_forward_account(
+        signals,
+        [],
+        risk_fraction=0.10,
+        max_concurrent_positions=5,
+        initial_equity=50.0,
+        as_of=start + timedelta(minutes=10),
+    )
+    assert replay.admitted_signal_ids == tuple(f"u{i}" for i in range(5))
+    assert replay.skipped_concurrency_signal_ids == ("u5",)
+    assert replay.open_signal_ids == tuple(f"u{i}" for i in range(5))
+    assert replay.peak_committed == 5.0
