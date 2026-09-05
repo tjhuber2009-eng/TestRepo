@@ -80,6 +80,14 @@ jobs:
           test -s dashboard_output/app.js
           test -s dashboard_output/styles.css
 
+      - name: Update stable live dashboard issue
+        shell: bash
+        working-directory: moondev_autoresearch_reconstruction
+        run: |
+          gh issue edit 20 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file live-dashboard.md
+
       - name: Upload private dashboard artifact
         uses: actions/upload-artifact@v4
         with:
@@ -91,4 +99,4 @@ jobs:
         if: github.event_name == 'issue_comment'
         shell: bash
         run: |
-          gh pr comment 13 --repo "$GITHUB_REPOSITORY" --body "Dashboard snapshot built successfully. Open this Actions run and download the **autoresearch-dashboard-${GITHUB_RUN_ID}** artifact: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          gh pr comment 13 --repo "$GITHUB_REPOSITORY" --body "Live dashboard refreshed: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/issues/20\n\nStandalone snapshot artifact: **autoresearch-dashboard-${GITHUB_RUN_ID}** in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
