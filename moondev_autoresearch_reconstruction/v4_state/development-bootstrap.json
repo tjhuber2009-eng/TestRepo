@@ -3787,6 +3787,221 @@
       }
     ]
   },
+  "continuous_private_transfer": {
+    "available": true,
+    "candidate_count": 5,
+    "candidates": [
+      {
+        "base": {
+          "cagr_pct": 73.57054116495034,
+          "max_dd_pct": -24.473296022775237,
+          "sharpe": 1.9952576956710981,
+          "trades": 13
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 73.712,
+          "development_max_dd_pct": -24.473,
+          "development_pf": 22.224,
+          "development_sharpe": 1.9969,
+          "development_trades": 13,
+          "development_years": 3.3731,
+          "evidence_grade": "B",
+          "exactness": "reconstructed",
+          "extreme_stress_return_pct": 537.601,
+          "family": "donchian_20_10",
+          "market": "crypto",
+          "multiple_test_qvalue": 0.022782,
+          "pbo": null,
+          "profile": "private",
+          "selection_score": 0.785482,
+          "symbol": "BTCUSDT",
+          "target": "btc",
+          "track_id": "donchian_20_10__btc__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 73.04830659198085,
+          "max_dd_pct": -24.836774120047668,
+          "sharpe": 1.9835175024089864,
+          "trades": 13
+        },
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "portfolio_eligible": false,
+        "portfolio_gate_reason": "pbo_missing_or_above_limit",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
+      },
+      {
+        "base": {
+          "cagr_pct": 42.846487582745226,
+          "max_dd_pct": -25.55384861649482,
+          "sharpe": 1.3571832090323437,
+          "trades": 16
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 42.922,
+          "development_max_dd_pct": -25.554,
+          "development_pf": 8.745,
+          "development_sharpe": 1.3583,
+          "development_trades": 16,
+          "development_years": 3.3731,
+          "evidence_grade": "B",
+          "exactness": "proxy",
+          "extreme_stress_return_pct": 230.019,
+          "family": "swing_terminal_pullback_proxy",
+          "market": "crypto",
+          "multiple_test_qvalue": 0.042171,
+          "pbo": null,
+          "profile": "private",
+          "selection_score": 0.347313,
+          "symbol": "ETHUSDT",
+          "target": "eth",
+          "track_id": "swing_terminal_pullback_proxy__eth__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 42.39710733286064,
+          "max_dd_pct": -25.73509510136338,
+          "sharpe": 1.3458278264546344,
+          "trades": 16
+        },
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "portfolio_eligible": false,
+        "portfolio_gate_reason": "pbo_missing_or_above_limit",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
+      },
+      {
+        "base": {
+          "cagr_pct": 15.195409083194056,
+          "max_dd_pct": -17.40327340675486,
+          "sharpe": 1.050138440614575,
+          "trades": 142
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 15.002,
+          "development_max_dd_pct": -17.403,
+          "development_pf": 2.524,
+          "development_sharpe": 1.0398,
+          "development_trades": 141,
+          "development_years": 10.8859,
+          "evidence_grade": "A",
+          "exactness": "frozen_exact",
+          "extreme_stress_return_pct": 345.325,
+          "family": "ibs_deep_pullback",
+          "market": "etf",
+          "multiple_test_qvalue": 0.022782,
+          "pbo": null,
+          "profile": "private",
+          "selection_score": 0.040563,
+          "symbol": "TQQQ",
+          "target": "tqqq",
+          "track_id": "ibs_deep_pullback__tqqq__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 14.8981336034945,
+          "max_dd_pct": -17.424549741419813,
+          "sharpe": 1.0322299186090813,
+          "trades": 142
+        },
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "portfolio_eligible": false,
+        "portfolio_gate_reason": "pbo_missing_or_above_limit",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
+      },
+      {
+        "base": {
+          "cagr_pct": 7.42537670445973,
+          "max_dd_pct": -15.054337780573768,
+          "sharpe": 0.9007042751978679,
+          "trades": 45
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 8.16,
+          "development_max_dd_pct": -15.018,
+          "development_pf": 8.668,
+          "development_sharpe": 0.9915,
+          "development_trades": 45,
+          "development_years": 10.99,
+          "evidence_grade": "A",
+          "exactness": "frozen_exact",
+          "extreme_stress_return_pct": 97.397,
+          "family": "ibs_deep_pullback",
+          "market": "etf",
+          "multiple_test_qvalue": 0.022782,
+          "pbo": null,
+          "profile": "private",
+          "selection_score": 0.033798,
+          "symbol": "SPY",
+          "target": "spy",
+          "track_id": "ibs_deep_pullback__spy__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 5.676938201045556,
+          "max_dd_pct": -15.133318235902781,
+          "sharpe": 0.7189622394877007,
+          "trades": 40
+        },
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "portfolio_eligible": false,
+        "portfolio_gate_reason": "pbo_missing_or_above_limit",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
+      },
+      {
+        "base": {
+          "cagr_pct": 12.506651829211247,
+          "max_dd_pct": -14.60639112642247,
+          "sharpe": 0.909559922312799,
+          "trades": 118
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 13.109,
+          "development_max_dd_pct": -14.472,
+          "development_pf": 2.541,
+          "development_sharpe": 0.9468,
+          "development_trades": 119,
+          "development_years": 10.99,
+          "evidence_grade": "A",
+          "exactness": "frozen_exact",
+          "extreme_stress_return_pct": 242.417,
+          "family": "ibs_deep_pullback",
+          "market": "etf",
+          "multiple_test_qvalue": 0.022782,
+          "pbo": null,
+          "profile": "private",
+          "selection_score": 0.01665,
+          "symbol": "QQQ",
+          "target": "qqq",
+          "track_id": "ibs_deep_pullback__qqq__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 11.570820305110786,
+          "max_dd_pct": -14.769484230487329,
+          "sharpe": 0.8497179983851797,
+          "trades": 117
+        },
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "portfolio_eligible": false,
+        "portfolio_gate_reason": "pbo_missing_or_above_limit",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
+      }
+    ],
+    "final_oos_opened": false,
+    "hidden_validation_opened": false,
+    "policy": "replay top diversified continuous private champions on v4 development data; require positive 3x-cost replay plus actual PBO <= 0.55 before portfolio eligibility",
+    "portfolio_eligible_count": 0
+  },
   "data_end": "2020-12-31",
   "data_provenance": {
     "btc": {
@@ -12403,7 +12618,7 @@
         "worst_score": -3.636685761722702
       },
       {
-        "adjusted_score": 9.806508163307882,
+        "adjusted_score": 9.837967942446195,
         "fold_scores": [
           21.54530486501569,
           5.646336571268851,
@@ -12424,7 +12639,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 16.049751101867095,
+        "plateau_score": 16.15461703232814,
         "primary_score": 14.799434469041728,
         "score_std": 15.1483133876243,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -12683,7 +12898,7 @@
         "worst_score": -2.685224606061154
       },
       {
-        "adjusted_score": 8.526787877264377,
+        "adjusted_score": 8.622433618566433,
         "fold_scores": [
           13.230842854895819,
           7.143423026575024,
@@ -12704,7 +12919,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 14.05116199365029,
+        "plateau_score": 14.369981131323804,
         "primary_score": 14.277582400344047,
         "score_std": 14.863326870309434,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -21037,7 +21252,7 @@
       "gross_exposure": 0.9024925363279448,
       "max_dd_pct": -17.292203507758387,
       "score": 16.18178187710505,
-      "sharpe": 1.0805640230289828,
+      "sharpe": 1.0805640230289826,
       "weights": {
         "cash_rotation_risk_budgeted": 0.0022245923798104284,
         "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21066,7 +21281,7 @@
         "gross_exposure": 0.7775924788539519,
         "max_dd_pct": -16.346811898542658,
         "score": 15.864395423773308,
-        "sharpe": 1.0702085019086347,
+        "sharpe": 1.070208501908635,
         "weights": {
           "cash_rotation_risk_budgeted": 0.009315446914387892,
           "cash_rotation_vix_stress": 0.0411487227259109,
@@ -21093,7 +21308,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289828,
+        "sharpe": 1.0805640230289826,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21120,7 +21335,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289828,
+        "sharpe": 1.0805640230289826,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21147,7 +21362,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289828,
+        "sharpe": 1.0805640230289826,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
