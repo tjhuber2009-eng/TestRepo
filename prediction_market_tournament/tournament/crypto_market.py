@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime, timezone
 
 from .adapters.polymarket import (
-    get_book,
+    get_books,
     get_event_by_slug,
     market_buy_quote,
     market_execution_rules,
@@ -153,8 +153,19 @@ def crypto_signal_from_market(
 
     tokens = outcome_token_map(market)
     execution = market_execution_rules(condition_id)
+    requested_tokens = [tokens["UP"], tokens["DOWN"]]
+    batch = get_books(requested_tokens)
+    by_asset = {
+        str(book.get("asset_id") or ""): book
+        for book in batch
+        if isinstance(book, dict)
+    }
+    if set(by_asset) != set(requested_tokens):
+        raise LookupError(
+            "batch order books did not return exactly the requested UP/DOWN assets"
+        )
     books = {
-        side: get_book(tokens[side])
+        side: by_asset[tokens[side]]
         for side in ("UP", "DOWN")
     }
     for side in ("UP", "DOWN"):
@@ -309,8 +320,14 @@ def crypto_signal_from_market(
             "chosen_book_timestamp": str(
                 books[side].get("timestamp") or ""
             ),
+            "chosen_book_hash": str(
+                books[side].get("hash") or ""
+            ),
             "opposing_book_timestamp": str(
                 books["DOWN" if side == "UP" else "UP"].get("timestamp") or ""
+            ),
+            "opposing_book_hash": str(
+                books["DOWN" if side == "UP" else "UP"].get("hash") or ""
             ),
         },
     )
