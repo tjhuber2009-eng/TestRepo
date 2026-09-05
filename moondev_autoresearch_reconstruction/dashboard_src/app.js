@@ -63,6 +63,8 @@ function render(){
   renderOutcomes();
   renderCoverage();
   renderActivity();
+  renderModelPerformance();
+  renderDataQuality();
   renderTracks();
 }
 
@@ -95,13 +97,14 @@ function setupFilters(){
     o.value=m;o.textContent=m;
     mf.appendChild(o);
   });
-  ["profileFilter","marketFilter","evidenceFilter","rankMetric","championSearch"].forEach(id=>$("#"+id).oninput=renderChampions);
+  ["profileFilter","marketFilter","eligibilityFilter","evidenceFilter","rankMetric","championSearch"].forEach(id=>$("#"+id).oninput=renderChampions);
   ["trackProfileFilter","trackSearch"].forEach(id=>$("#"+id).oninput=renderTracks);
 }
 
 function renderChampions(){
   const profile=$("#profileFilter").value;
   const market=$("#marketFilter").value;
+  const eligibility=$("#eligibilityFilter").value;
   const evidence=$("#evidenceFilter").value;
   const metric=$("#rankMetric").value;
   const q=$("#championSearch").value.trim().toLowerCase();
@@ -110,6 +113,7 @@ function renderChampions(){
   rows=rows.filter(r=>
     (profile==="all"||r.profile===profile)&&
     (market==="all"||r.market===market)&&
+    (eligibility==="all"||r.development_guard_ok!==false)&&
     (evidence==="all"||(gradeRank[r.evidence_grade]||99)<=(gradeRank[evidence]||99))&&
     (!q||`${r.family} ${r.target} ${r.track_id}`.toLowerCase().includes(q))
   );
@@ -143,6 +147,8 @@ function renderChampions(){
       <td class="num">${qv}</td>
       <td class="num">${pbo}</td>
       <td><span class="status-chip">${esc(r.evidence_grade||"—")}</span></td>
+      <td><span class="status-chip">${esc(r.data_quality_grade||"—")}</span></td>
+      <td class="num">${fmt(r.development_trades_per_year,1)}</td>
       <td class="num">${pct(r.extreme_stress_return_pct,1)}</td>
       <td class="num">${num(r.valid_attempts)}</td>
     </tr>`;
@@ -227,6 +233,44 @@ function renderActivity(){
     <div><b>${esc(r.track_id||r.status||"cycle")}</b><span>${esc(r.status||"")}</span></div>
     <span>${r.score!==undefined&&r.score!==null?`K ${fmt(r.score,4)}`:""}</span>
   </div>`).join("");
+}
+
+function renderModelPerformance(){
+  const rows=DATA.progress?.model_performance||[];
+  const panel=$("#modelPerformancePanel");
+  if(!rows.length){
+    panel.innerHTML='<div class="empty">No protocol-v3 model attempts recorded yet.</div>';
+    return;
+  }
+  panel.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th class="num">Attempts</th><th class="num">Admission</th><th class="num">Keeper</th><th class="num">Crash</th><th class="num">Mean ΔK</th><th class="num">Ideas</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><b>${esc(r.model)}</b></td>
+      <td class="num">${num(r.attempts)}</td>
+      <td class="num">${pct(100*Number(r.admission_rate||0),1)}</td>
+      <td class="num">${pct(100*Number(r.keeper_rate||0),1)}</td>
+      <td class="num">${pct(100*Number(r.crash_rate||0),1)}</td>
+      <td class="num">${fmt(r.mean_delta_k,6)}</td>
+      <td class="num">${num(r.unique_ideas)}</td>
+    </tr>`).join("")}</tbody>
+  </table></div>`;
+}
+
+function renderDataQuality(){
+  const rows=DATA.tracks||[];
+  const by={};
+  rows.forEach(r=>{
+    const key=`${r.data_quality_grade||"—"}|${r.instrument_fidelity||"—"}`;
+    by[key]=(by[key]||0)+1;
+  });
+  const entries=Object.entries(by).sort();
+  $("#dataQualityPanel").innerHTML=entries.length
+    ? `<div class="coverage-grid">${entries.map(([key,count])=>{
+        const [grade,fidelity]=key.split("|");
+        return `<div class="coverage-cell"><span>Grade ${esc(grade)}</span><strong>${num(count)}</strong><small>${esc(fidelity)}</small></div>`;
+      }).join("")}</div>
+      <p>A = checksum-verified archive; B = adjusted daily provider snapshot; C = non-contract-exact futures proxy.</p>`
+    : '<div class="empty">Data-quality metadata unavailable.</div>';
 }
 
 function renderTracks(){
