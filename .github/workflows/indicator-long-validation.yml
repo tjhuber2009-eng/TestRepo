@@ -1,4 +1,4 @@
-name: Indicator Union Robustness
+name: Indicator TQQQ IBS Core
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run corrected union robustness
-        run: python indicator_validation/run_union_robustness.py
+      - name: Run transparent TQQQ IBS core audit
+        run: python indicator_validation/run_tqqq_ibs_core.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_union_robustness.py indicator_validation/output_union_robustness/* > indicator_validation/SHA256SUMS_UNION_ROBUSTNESS.txt
+        run: sha256sum indicator_validation/run_tqqq_ibs_core.py indicator_validation/output_tqqq_ibs_core/* > indicator_validation/SHA256SUMS_TQQQ_IBS_CORE.txt
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-union-robustness
+          name: indicator-tqqq-ibs-core
           path: |
-            indicator_validation/output_union_robustness/
-            indicator_validation/SHA256SUMS_UNION_ROBUSTNESS.txt
+            indicator_validation/output_tqqq_ibs_core/
+            indicator_validation/SHA256SUMS_TQQQ_IBS_CORE.txt
           if-no-files-found: error
           retention-days: 7
