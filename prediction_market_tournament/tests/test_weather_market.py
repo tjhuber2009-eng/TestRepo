@@ -85,8 +85,8 @@ def _weather_market_fixture():
 def _patch_weather_dependencies(monkeypatch, values):
     monkeypatch.setattr(
         weather,
-        "station_coordinates",
-        lambda _: (33.94, -118.40),
+        "station_location",
+        lambda _: (33.94, -118.40, 38.0),
     )
     monkeypatch.setattr(
         weather,
