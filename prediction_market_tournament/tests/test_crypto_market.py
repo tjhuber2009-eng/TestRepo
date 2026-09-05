@@ -94,6 +94,21 @@ def _patch_books(monkeypatch, *, up=0.50, down=0.50, fee_rate=0.0):
     )
 
 
+def test_opening_twap_requires_both_source_and_receive_on_time():
+    assert crypto.strike_tick_is_on_time(
+        source_timestamp_ms=START_MS + 500,
+        receive_timestamp_ms=START_MS + 1500,
+        window_start_ms=START_MS,
+        max_lag_seconds=3,
+    )
+    assert not crypto.strike_tick_is_on_time(
+        source_timestamp_ms=START_MS + 500,
+        receive_timestamp_ms=START_MS + 3500,
+        window_start_ms=START_MS,
+        max_lag_seconds=3,
+    )
+
+
 def test_btc_slug_requires_exact_five_minute_alignment():
     assert crypto.btc_5m_slug(START_S) == f"btc-updown-5m-{START_S}"
     with pytest.raises(ValueError):
