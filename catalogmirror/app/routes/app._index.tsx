@@ -18,7 +18,7 @@ function durationLabel(durationMs: number | null) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
-  const [lastRun, openCritical, openWarnings, recent, state, recentRuns] = await Promise.all([
+  const [lastRun, openCritical, openWarnings, recent, state, recentRuns, queuedTasks] = await Promise.all([
     db.auditRun.findFirst({ where: { shop: session.shop }, orderBy: { startedAt: "desc" } }),
     db.incident.count({ where: { shop: session.shop, status: "OPEN", severity: "CRITICAL" } }),
     db.incident.count({ where: { shop: session.shop, status: "OPEN", severity: "WARNING" } }),
@@ -33,6 +33,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       orderBy: { startedAt: "desc" },
       take: 5,
     }),
+    db.auditTask.count({ where: { shop: session.shop } }),
   ]);
 
   return {
@@ -40,7 +41,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     openCritical,
     openWarnings,
     recent,
-    pendingChanges: state?.pendingChanges ?? 0,
+    pendingChanges: queuedTasks,
     lastWebhookAt: state?.lastWebhookAt ?? null,
     maxProducts: getAuditMaxProducts(),
     recentRuns,
