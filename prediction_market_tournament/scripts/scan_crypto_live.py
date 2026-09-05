@@ -97,7 +97,10 @@ async def run(duration_seconds: float) -> int:
 
         if tick.topic == TOPIC_TWAP60:
             start_ms = _window_start_ms(float(tick.source_timestamp_ms))
-            strike_lag_ms = float(tick.source_timestamp_ms) - start_ms
+            strike_source_lag_ms = (
+                float(tick.source_timestamp_ms) - start_ms
+            )
+            strike_receive_lag_ms = receive_ms - start_ms
             max_strike_lag_ms = (
                 float(
                     lane_configs["crypto_twap_taker"][
@@ -106,10 +109,11 @@ async def run(duration_seconds: float) -> int:
                 )
                 * 1000.0
             )
-            if (
-                0.0 <= strike_lag_ms <= max_strike_lag_ms
-                and start_ms not in states
-            ):
+            strike_on_time = (
+                0.0 <= strike_source_lag_ms <= max_strike_lag_ms
+                and 0.0 <= strike_receive_lag_ms <= max_strike_lag_ms
+            )
+            if strike_on_time and start_ms not in states:
                 states[start_ms] = {
                     "strike": float(tick.value),
                     "strike_source_timestamp_ms": float(
@@ -132,14 +136,21 @@ async def run(duration_seconds: float) -> int:
                         "strike_source_timestamp_ms": float(
                             tick.source_timestamp_ms
                         ),
-                        "strike_source_lag_seconds": strike_lag_ms / 1000.0,
+                        "strike_source_lag_seconds":
+                            strike_source_lag_ms / 1000.0,
+                        "strike_receive_lag_seconds":
+                            strike_receive_lag_ms / 1000.0,
                     },
                 )
             elif (
                 start_ms not in states
                 and start_ms not in missed_strike_windows
-                and strike_lag_ms > max_strike_lag_ms
-                and strike_lag_ms <= 10_000.0
+                and (
+                    strike_source_lag_ms > max_strike_lag_ms
+                    or strike_receive_lag_ms > max_strike_lag_ms
+                )
+                and strike_source_lag_ms <= 10_000.0
+                and strike_receive_lag_ms <= 60_000.0
             ):
                 missed_strike_windows.add(start_ms)
                 append_jsonl(
@@ -150,7 +161,10 @@ async def run(duration_seconds: float) -> int:
                         "spec_sha256": spec_sha,
                         "implementation_sha256": impl_sha,
                         "window_start_ms": start_ms,
-                        "first_seen_twap_lag_seconds": strike_lag_ms / 1000.0,
+                        "first_seen_twap_source_lag_seconds":
+                            strike_source_lag_ms / 1000.0,
+                        "first_seen_twap_receive_lag_seconds":
+                            strike_receive_lag_ms / 1000.0,
                     },
                 )
 
