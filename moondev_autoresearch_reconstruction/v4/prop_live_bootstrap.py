@@ -94,7 +94,7 @@ def evaluate_strategy(
         adverse.to_numpy(dtype=float),
         active.to_numpy(dtype=bool),
         program,
-        exposure_scales=tuple(np.round(np.arange(0.10, 1.01, 0.05), 2)),
+        exposure_scales=tuple(np.round(np.arange(0.05, 1.01, 0.05), 2)),
         paths=paths,
         block=10,
         seed=seed,
@@ -217,7 +217,9 @@ if __name__ == "__main__":
         sel = None if winner is None else winner["optimization"]["selected"]
         summary[key] = None if sel is None else {
             "params": winner["params"],
-            "exposure_scale": sel["exposure_scale"],
+            "challenge_exposure_scale": sel["challenge_exposure_scale"],
+            "verification_exposure_scale": sel["verification_exposure_scale"],
+            "funded_exposure_scale": sel["funded_exposure_scale"],
             "combined_evaluation_pass_probability": sel["combined_evaluation_pass_probability"],
             "expected_reward_pct": sel["funded"]["expected_reward_pct"],
             "payout_efficiency_score": sel["payout_efficiency_score"],
