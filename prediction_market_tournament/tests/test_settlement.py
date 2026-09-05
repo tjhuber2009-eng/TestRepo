@@ -42,15 +42,40 @@ def test_terminal_outcome_requires_closed_one_hot():
     )
 
 
+def test_proposed_or_disputed_market_is_not_final():
+    market = {
+        "closed": True,
+        "umaResolutionStatus": "proposed",
+        "outcomes": '["Yes","No"]',
+        "outcomePrices": '["1","0"]',
+    }
+    assert terminal_outcome(market) is None
+    assert (
+        terminal_outcome(
+            {**market, "umaResolutionStatus": "disputed"}
+        )
+        is None
+    )
+    assert (
+        terminal_outcome(
+            {**market, "umaResolutionStatus": "resolved"}
+        )
+        == "Yes"
+    )
+
+
 def test_resolve_signal_matches_side_case_insensitive():
     market = {
         "closed": True,
         "outcomes": '["Up","Down"]',
         "outcomePrices": '["0","1"]',
         "closedTime": "2026-09-05T00:05:00Z",
+        "updatedAt": "2026-09-05T00:07:00Z",
+        "umaResolutionStatus": "resolved",
     }
     trade = resolve_signal(_signal("DOWN"), market)
     assert trade is not None and trade.won and trade.resolved_at is not None
+    assert trade.resolved_at.minute == 7
 
 
 def test_signal_from_json_round_trip():
