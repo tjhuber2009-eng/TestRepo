@@ -666,6 +666,9 @@ class V4AlphaGenerationTests(unittest.TestCase):
             FTMO_2STEP.challenge.max_loss_pct,
         )
         self.assertEqual(longer.reward_share, FTMO_2STEP.reward_share)
+        self.assertTrue(FTMO_2STEP.challenge_fee_refundable_with_first_reward)
+        self.assertTrue(longer.challenge_fee_refundable_with_first_reward)
+        self.assertFalse(FTMO_1STEP.challenge_fee_refundable_with_first_reward)
         self.assertEqual(
             FTMO_2STEP.challenge.analysis_horizon_days,
             252,
