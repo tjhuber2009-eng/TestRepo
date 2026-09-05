@@ -16,6 +16,7 @@ from .adapters.polymarket import (
     market_buy_quote,
     market_execution_rules,
     parse_jsonish_list,
+    validate_book_identity,
 )
 from .fees import exact_execution_edge_per_share
 from .models import Signal
@@ -168,8 +169,14 @@ def weather_signal_from_market(
         )
 
     execution = market_execution_rules(condition_id)
+    book = get_book(token)
+    validate_book_identity(
+        book,
+        token_id=token,
+        condition_id=condition_id,
+    )
     quote = market_buy_quote(
-        get_book(token),
+        book,
         size_usd,
         fee_rate=execution.fee_rate,
         fee_exponent=execution.fee_exponent,
@@ -221,5 +228,6 @@ def weather_signal_from_market(
             "min_order_shares": execution.min_order_shares,
             "all_in_cost_per_share": quote.all_in_cost_per_share,
             "exact_edge_per_share": edge,
+            "book_timestamp": str(book.get("timestamp") or ""),
         },
     )
