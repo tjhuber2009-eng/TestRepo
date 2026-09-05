@@ -1,4 +1,4 @@
-name: Indicator Cash Enhanced Frontier
+name: Indicator Cash Robustness V2
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run cash-enhanced frontier
-        run: python indicator_validation/run_cash_enhanced.py
+      - name: Run cash robustness v2
+        run: python indicator_validation/run_cash_robustness_v2.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_cash_enhanced.py indicator_validation/output_cash_enhanced/* > indicator_validation/SHA256SUMS_CASH_ENHANCED.txt
+        run: sha256sum indicator_validation/run_cash_robustness_v2.py indicator_validation/output_cash_robustness_v2/* > indicator_validation/SHA256SUMS_CASH_ROBUSTNESS_V2.txt
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-cash-enhanced-frontier
+          name: indicator-cash-robustness-v2
           path: |
-            indicator_validation/output_cash_enhanced/
-            indicator_validation/SHA256SUMS_CASH_ENHANCED.txt
+            indicator_validation/output_cash_robustness_v2/
+            indicator_validation/SHA256SUMS_CASH_ROBUSTNESS_V2.txt
           if-no-files-found: error
           retention-days: 7
