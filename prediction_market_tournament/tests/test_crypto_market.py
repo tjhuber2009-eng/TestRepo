@@ -125,7 +125,7 @@ def test_twap_checkpoint_selects_up_from_exact_executable_books(monkeypatch):
         strike=100.0,
         raw_points=_raw_points(
             observed_ms,
-            center=99.5,
+            center=100.5,
             direction=0.02,
         ),
         window_start_ms=START_MS,
@@ -141,6 +141,35 @@ def test_twap_checkpoint_selects_up_from_exact_executable_books(monkeypatch):
     assert signal.executed_shares is not None
     assert signal.entry_fee_usd is not None
     assert signal.metadata["event_slug"] == f"btc-updown-5m-{START_S}"
+
+
+def test_twap_checkpoint_selects_down_when_path_is_below_strike(monkeypatch):
+    event, market = _event_market()
+    _patch_books(monkeypatch, up=0.45, down=0.55, fee_rate=0.07)
+
+    checkpoint_ms = START_MS + 180_000.0
+    observed_ms = checkpoint_ms + 1_000.0
+    signal = crypto.crypto_signal_from_market(
+        market,
+        event=event,
+        lane="crypto_twap_taker",
+        strike=100.0,
+        raw_points=_raw_points(
+            observed_ms,
+            center=99.5,
+            direction=0.02,
+        ),
+        window_start_ms=START_MS,
+        observed_at=datetime.fromtimestamp(
+            observed_ms / 1000.0,
+            tz=timezone.utc,
+        ),
+        lane_cfg=_cfg(120),
+        cash_budget_usd=5.0,
+    )
+    assert signal is not None
+    assert signal.side == "DOWN"
+    assert signal.metadata["probability_up"] < 0.5
 
 
 def test_twap_checkpoint_rejects_stale_raw_spot(monkeypatch):
