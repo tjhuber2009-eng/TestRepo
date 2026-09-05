@@ -190,6 +190,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     private = risk_policy("private")
     cost_stress = 3.0
 
+    # ------------------------------------------------------------------
+    # Family A: QQQ signal -> TQQQ/SPY rotation
+    # ------------------------------------------------------------------
     core = {s: data[s] for s in ("QQQ", "TQQQ", "SPY")}
     eng = MultiAssetBacktester(
         core,
@@ -201,10 +204,6 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         ),
         periods_per_year=252.0,
     )
-
-    # Diagnostic only: deliberately evaluate the raw full-weight structure
-    # under the real private risk gate. It must not be treated as eligible if
-    # it exceeds the 32% drawdown cap.
     raw_rotation_strategy = leveraged_regime_rotation(
         signal_symbol="QQQ",
         risk_symbol="TQQQ",
@@ -218,7 +217,6 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         num_trials=1,
         cost_stress_multiplier=cost_stress,
     )
-
     rotation_specs = [
         ParameterSpec("sma", (150, 175, 200, 225)),
         ParameterSpec("mom", (60, 126, 200)),
@@ -250,6 +248,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         evaluate_rotation,
         frozen_structure="leveraged_regime_rotation_voltarget_v1",
     )
+    rotation_pbo = optimizer_pbo(rotation_param)
+    rotation_family_ok = pbo_gate(rotation_pbo, private.max_pbo)
 
     rotation_optimized = None
     if rotation_param.chosen is not None:
@@ -257,9 +257,160 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             build_rotation_strategy(rotation_param.chosen.params),
             risk_policy=private,
             num_trials=rotation_trial_count,
+            pbo=None if rotation_pbo is None else rotation_pbo["pbo"],
             cost_stress_multiplier=cost_stress,
         )
 
+    # ------------------------------------------------------------------
+    # Family B: QQQ -> TQQQ, else rotate IEF/GLD/SHY or cash
+    # ------------------------------------------------------------------
+    defensive_required = {"QQQ", "TQQQ", "IEF", "GLD", "SHY"}
+    defensive_raw = None
+    defensive_param = None
+    defensive_pbo = None
+    defensive_family_ok = False
+    defensive_optimized = None
+    brake_param = None
+    brake_pbo = None
+    brake_family_ok = False
+    defensive_braked = None
+
+    if defensive_required.issubset(data):
+        defensive_assets = {s: data[s] for s in sorted(defensive_required)}
+        def_eng = MultiAssetBacktester(
+            defensive_assets,
+            limits=PortfolioLimits(
+                gross_leverage=1.5,
+                net_min=0.0,
+                net_max=1.5,
+                per_asset_abs_weight=1.5,
+            ),
+            periods_per_year=252.0,
+        )
+        defensive_raw_strategy = leveraged_defensive_rotation(
+            signal_symbol="QQQ",
+            risk_symbol="TQQQ",
+            defensive_symbols=("IEF", "GLD", "SHY"),
+            risk_sma_window=175,
+            risk_momentum_window=126,
+            defensive_momentum_window=126,
+            defensive_trend_window=200,
+        )
+        defensive_raw = def_eng.run(
+            defensive_raw_strategy,
+            risk_policy=private,
+            num_trials=1,
+            cost_stress_multiplier=cost_stress,
+        )
+
+        defensive_specs = [
+            ParameterSpec("risk_sma", (150, 175, 200)),
+            ParameterSpec("risk_mom", (60, 126, 200)),
+            ParameterSpec("def_mom", (60, 126)),
+            ParameterSpec("def_trend", (100, 200)),
+            ParameterSpec("target_vol", (0.16, 0.20, 0.24, 0.28, 0.32)),
+            ParameterSpec("vol_lookback", (20, 60)),
+        ]
+        defensive_trial_count = int(np.prod([len(s.values) for s in defensive_specs]))
+
+        def evaluate_defensive(params):
+            res = def_eng.run(
+                build_defensive_strategy(params),
+                risk_policy=private,
+                num_trials=defensive_trial_count,
+                cost_stress_multiplier=cost_stress,
+            )
+            return {
+                "fold_scores": fold_cagr_scores(
+                    res.returns, 252.0, private.max_dd_pct
+                ),
+                "gate_ok": bool(res.gate_ok),
+                "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
+            }
+
+        defensive_param = StableParameterOptimizer(
+            defensive_specs,
+            max_trials=400,
+            plateau_neighbors=8,
+            dispersion_penalty=0.20,
+            multiple_test_penalty=0.18,
+        ).optimize(
+            evaluate_defensive,
+            frozen_structure="leveraged_defensive_rotation_voltarget_v1",
+        )
+        defensive_pbo = optimizer_pbo(defensive_param)
+        defensive_family_ok = pbo_gate(defensive_pbo, private.max_pbo)
+
+        if defensive_param.chosen is not None:
+            defensive_optimized = def_eng.run(
+                build_defensive_strategy(defensive_param.chosen.params),
+                risk_policy=private,
+                num_trials=defensive_trial_count,
+                pbo=None if defensive_pbo is None else defensive_pbo["pbo"],
+                cost_stress_multiplier=cost_stress,
+            )
+
+            # A separate structural variant asks whether a causal drawdown
+            # brake lets us deploy a higher volatility target without breaking
+            # the 32% private drawdown ceiling.
+            chosen = defensive_param.chosen.params
+            target0 = float(chosen["target_vol"])
+            target_grid = tuple(sorted(set([
+                round(target0, 4),
+                round(min(target0 + 0.04, 0.36), 4),
+                round(min(target0 + 0.08, 0.36), 4),
+            ])))
+            brake_specs = [
+                ParameterSpec("soft_dd", (0.05, 0.08, 0.10)),
+                ParameterSpec("hard_dd", (0.12, 0.16, 0.20)),
+                ParameterSpec("soft_scale", (0.65, 0.80)),
+                ParameterSpec("hard_scale", (0.35, 0.50)),
+                ParameterSpec("target_vol", target_grid),
+            ]
+            brake_trial_count = int(np.prod([len(s.values) for s in brake_specs]))
+
+            def evaluate_brake(params):
+                res = def_eng.run(
+                    build_defensive_brake_strategy(params, chosen),
+                    risk_policy=private,
+                    num_trials=brake_trial_count,
+                    cost_stress_multiplier=cost_stress,
+                )
+                return {
+                    "fold_scores": fold_cagr_scores(
+                        res.returns, 252.0, private.max_dd_pct
+                    ),
+                    "gate_ok": bool(res.gate_ok),
+                    "structural_fingerprint": "defensive_rotation_drawdown_brake_v1",
+                }
+
+            brake_param = StableParameterOptimizer(
+                brake_specs,
+                max_trials=160,
+                plateau_neighbors=6,
+                dispersion_penalty=0.20,
+                multiple_test_penalty=0.18,
+            ).optimize(
+                evaluate_brake,
+                frozen_structure="defensive_rotation_drawdown_brake_v1",
+            )
+            brake_pbo = optimizer_pbo(brake_param)
+            brake_family_ok = pbo_gate(brake_pbo, private.max_pbo)
+
+            if brake_param.chosen is not None:
+                defensive_braked = def_eng.run(
+                    build_defensive_brake_strategy(
+                        brake_param.chosen.params, chosen
+                    ),
+                    risk_policy=private,
+                    num_trials=brake_trial_count,
+                    pbo=None if brake_pbo is None else brake_pbo["pbo"],
+                    cost_stress_multiplier=cost_stress,
+                )
+
+    # ------------------------------------------------------------------
+    # Family C: cross-asset momentum
+    # ------------------------------------------------------------------
     momentum_assets = {
         s: data[s]
         for s in data
@@ -288,7 +439,6 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         num_trials=1,
         cost_stress_multiplier=cost_stress,
     )
-
     momentum_specs = [
         ParameterSpec("target_vol", (0.10, 0.14, 0.18, 0.22, 0.26)),
         ParameterSpec("vol_lookback", (20, 60)),
@@ -303,7 +453,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             cost_stress_multiplier=cost_stress,
         )
         return {
-            "fold_scores": fold_cagr_scores(res.returns, 252.0, private.max_dd_pct),
+            "fold_scores": fold_cagr_scores(
+                res.returns, 252.0, private.max_dd_pct
+            ),
             "gate_ok": bool(res.gate_ok),
             "structural_fingerprint": "cross_asset_momentum_voltarget_v1",
         }
@@ -318,6 +470,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         evaluate_momentum,
         frozen_structure="cross_asset_momentum_voltarget_v1",
     )
+    momentum_pbo = optimizer_pbo(momentum_param)
+    momentum_family_ok = pbo_gate(momentum_pbo, private.max_pbo)
 
     momentum_optimized = None
     if momentum_param.chosen is not None:
@@ -325,14 +479,44 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             build_momentum_strategy(momentum_param.chosen.params, momentum_symbols),
             risk_policy=private,
             num_trials=momentum_trial_count,
+            pbo=None if momentum_pbo is None else momentum_pbo["pbo"],
             cost_stress_multiplier=cost_stress,
         )
 
+    # ------------------------------------------------------------------
+    # Portfolio-level optimization only uses fully eligible families.
+    # ------------------------------------------------------------------
     eligible_returns = {}
-    if rotation_optimized is not None and rotation_optimized.gate_ok:
+    if (
+        rotation_optimized is not None
+        and rotation_optimized.gate_ok
+        and rotation_family_ok
+    ):
         eligible_returns["rotation_risk_budgeted"] = rotation_optimized.returns
-    if momentum_optimized is not None and momentum_optimized.gate_ok:
-        eligible_returns["cross_asset_momentum_risk_budgeted"] = momentum_optimized.returns
+    if (
+        defensive_optimized is not None
+        and defensive_optimized.gate_ok
+        and defensive_family_ok
+    ):
+        eligible_returns["defensive_rotation_risk_budgeted"] = (
+            defensive_optimized.returns
+        )
+    if (
+        defensive_braked is not None
+        and defensive_braked.gate_ok
+        and brake_family_ok
+    ):
+        eligible_returns["defensive_rotation_drawdown_brake"] = (
+            defensive_braked.returns
+        )
+    if (
+        momentum_optimized is not None
+        and momentum_optimized.gate_ok
+        and momentum_family_ok
+    ):
+        eligible_returns["cross_asset_momentum_risk_budgeted"] = (
+            momentum_optimized.returns
+        )
 
     portfolio = None
     if eligible_returns:
@@ -343,10 +527,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         if len(returns) >= 50:
             portfolio = RobustPortfolioOptimizer(
                 dd_cap_pct=private.max_dd_pct,
-                n_candidates=1600,
-                bootstrap_reps=150,
+                n_candidates=2400,
+                bootstrap_reps=200,
                 block=20,
-                max_weight=1.0 if len(eligible_returns) == 1 else 0.85,
+                max_weight=1.0 if len(eligible_returns) == 1 else 0.90,
             ).optimize(returns)
 
     strategies = {
@@ -355,13 +539,27 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     }
     if rotation_optimized is not None:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
+    if defensive_raw is not None:
+        strategies["defensive_rotation_raw_diagnostic"] = defensive_raw.summary()
+    if defensive_optimized is not None:
+        strategies["defensive_rotation_risk_budgeted"] = (
+            defensive_optimized.summary()
+        )
+    if defensive_braked is not None:
+        strategies["defensive_rotation_drawdown_brake"] = (
+            defensive_braked.summary()
+        )
     if momentum_optimized is not None:
-        strategies["cross_asset_momentum_risk_budgeted"] = momentum_optimized.summary()
+        strategies["cross_asset_momentum_risk_budgeted"] = (
+            momentum_optimized.summary()
+        )
 
     payload = {
         "protocol": "alpha_generation_v4",
         "stage": "development_only",
-        "data_end": max(frame.index.max().strftime("%Y-%m-%d") for frame in data.values()),
+        "data_end": max(
+            frame.index.max().strftime("%Y-%m-%d") for frame in data.values()
+        ),
         "hidden_validation_opened": False,
         "final_oos_opened": False,
         "assets": sorted(data),
@@ -370,11 +568,28 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "max_dd_pct": private.max_dd_pct,
             "min_psr": private.min_psr,
             "min_dsr": private.min_dsr,
+            "max_pbo": private.max_pbo,
             "cost_stress_multiplier": cost_stress,
         },
         "feature_manifest": store.manifest,
         "strategies": strategies,
+        "selection_diagnostics": {
+            "rotation_pbo": rotation_pbo,
+            "rotation_family_ok": rotation_family_ok,
+            "defensive_pbo": defensive_pbo,
+            "defensive_family_ok": defensive_family_ok,
+            "brake_pbo": brake_pbo,
+            "brake_family_ok": brake_family_ok,
+            "momentum_pbo": momentum_pbo,
+            "momentum_family_ok": momentum_family_ok,
+        },
         "rotation_parameter_optimizer": rotation_param.to_dict(),
+        "defensive_parameter_optimizer": (
+            None if defensive_param is None else defensive_param.to_dict()
+        ),
+        "defensive_brake_parameter_optimizer": (
+            None if brake_param is None else brake_param.to_dict()
+        ),
         "momentum_parameter_optimizer": momentum_param.to_dict(),
         "portfolio": None if portfolio is None else portfolio.to_dict(),
         "eligible_strategy_names": sorted(eligible_returns),
