@@ -26,6 +26,15 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             (HERE / "continuous_config.json").read_text(encoding="utf-8")
         )
 
+    def test_all_project_python_sources_compile(self):
+        for path in HERE.glob("*.py"):
+            source = path.read_text(encoding="utf-8")
+            compile(source, str(path), "exec")
+
+    def test_hidden_validation_directory_is_git_ignored(self):
+        text = (HERE / ".gitignore").read_text(encoding="utf-8")
+        self.assertIn("validation_data/", text)
+
     def test_protocol_is_nested_v3(self):
         self.assertEqual(continuous_runner.PROTOCOL, "nested_chronological_v3")
         text = (HERE / "robust_harness.py").read_text(encoding="utf-8")
@@ -446,7 +455,11 @@ class MoonStrategy:
             finally:
                 continuous_runner.HERE = old_here
         self.assertEqual(calls[0][calls[0].index("--end") + 1], "2020-12-31")
+        self.assertEqual(calls[0][calls[0].index("--output-dir") + 1], "data")
         self.assertEqual(calls[1][calls[1].index("--end") + 1], "2022-12-31")
+        self.assertEqual(
+            calls[1][calls[1].index("--output-dir") + 1], "validation_data"
+        )
 
     def test_validation_track_is_only_path_requesting_hidden_rows(self):
         track = continuous_runner.build_tracks()[0]
