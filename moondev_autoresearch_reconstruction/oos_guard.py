@@ -12,19 +12,23 @@ def main():
     violations = []
 
     for path in sorted((HERE / "data").glob("*.csv")):
-        with path.open(encoding="utf-8", newline="") as f:
-            rows = csv.DictReader(f)
-            last = None
-            for row in rows:
-                stamp = row.get("Date") or row.get("Datetime") or row.get("timestamp")
-                if stamp:
-                    last = stamp
-                    if stamp[:10] >= "2023-01-01":
-                        violations.append(f"{path.name}: contains {stamp}")
-                        break
-        if last is None:
-            violations.append(f"{path.name}: no timestamped rows")
+    for root_name in ("data", "validation_data"):
+        root = HERE / root_name
+        for path in sorted(root.glob("*.csv")):
+            with path.open(encoding="utf-8", newline="") as f:
+                rows = csv.DictReader(f)
+                last = None
+                for row in rows:
+                    stamp = row.get("Date") or row.get("Datetime") or row.get("timestamp")
+                    if stamp:
+                        last = stamp
+                        if stamp[:10] >= "2023-01-01":
+                            violations.append(f"{root_name}/{path.name}: contains {stamp}")
+                            break
+            if last is None:
+                violations.append(f"{root_name}/{path.name}: no timestamped rows")
 
+    # State metadata is also fail-closed against explicit final-OOS flags.
     state = HERE / "continuous_state"
     if state.exists():
         for path in state.glob("tracks/*/*.json"):
