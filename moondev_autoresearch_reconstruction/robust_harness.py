@@ -375,7 +375,12 @@ def metrics_from_stats(stats, start, end, price_df=None):
 
     raw_k = annualized_k(total, years, sharpe)
     intrabar_proxy = intrabar_drawdown_proxy(stats, price_df, start, end)
-    tail = tail_metrics(\n        eq.to_numpy(dtype=float), rets.to_numpy(dtype=float), cagr, BARS_PER_YEAR\n    )
+    tail = tail_metrics(
+        eq.to_numpy(dtype=float),
+        rets.to_numpy(dtype=float),
+        cagr,
+        BARS_PER_YEAR,
+    )
     psr = probabilistic_sharpe_ratio(rets.to_numpy(dtype=float), 0.0)
     bench = benchmark_metrics(price_df, start, end)
 
@@ -405,6 +410,7 @@ def metrics_from_stats(stats, start, end, price_df=None):
         "ulcer_index_pct": round(float(tail["ulcer_index_pct"]), 3),
         "daily_cvar_5_pct": round(float(tail["daily_cvar_5_pct"]), 4),
         "sortino_per_bar": round(float(tail["sortino_per_bar"]), 6),
+        "sortino_annualized": round(float(tail["sortino_annualized"]), 4),
         "calmar": round(float(tail["calmar"]), 4),
         "excess_cagr_vs_buyhold_pct": round(
             float(cagr * 100.0 - bench["benchmark_cagr_pct"]), 3
