@@ -1244,6 +1244,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     portfolio = None
+    portfolio_concentration_sensitivity = {}
     portfolio_core_returns, portfolio_history_policy = (
         select_portfolio_history_cohort(eligible_returns)
     )
@@ -1268,15 +1269,28 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             None if returns.empty else returns.index.max().strftime("%Y-%m-%d")
         )
         if len(returns) >= 50:
-            portfolio = RobustPortfolioOptimizer(
-                dd_cap_pct=private.max_dd_pct,
-                n_candidates=1000,
-                bootstrap_reps=120,
-                block=20,
-                max_weight=(
-                    1.0 if len(portfolio_core_returns) == 1 else 0.90
-                ),
-            ).optimize(returns)
+            weight_caps = (
+                (1.0,)
+                if len(portfolio_core_returns) == 1
+                else (0.50, 0.65, 0.90)
+            )
+            for weight_cap in weight_caps:
+                sensitivity_result = RobustPortfolioOptimizer(
+                    dd_cap_pct=private.max_dd_pct,
+                    n_candidates=1000,
+                    bootstrap_reps=120,
+                    block=20,
+                    max_weight=weight_cap,
+                ).optimize(returns)
+                portfolio_concentration_sensitivity[
+                    f"{weight_cap:.2f}"
+                ] = sensitivity_result
+            authoritative_cap = (
+                "1.00" if len(portfolio_core_returns) == 1 else "0.90"
+            )
+            portfolio = portfolio_concentration_sensitivity[
+                authoritative_cap
+            ]
 
     strategies = {
         "rotation_raw_diagnostic": rotation_raw.summary(),
@@ -1375,6 +1389,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "momentum_parameter_optimizer": momentum_param.to_dict(),
         "trend_parameter_optimizer": trend_param.to_dict(),
         "portfolio": None if portfolio is None else portfolio.to_dict(),
+        "portfolio_concentration_sensitivity": {
+            cap: result.to_dict()
+            for cap, result in portfolio_concentration_sensitivity.items()
+        },
         "portfolio_history_policy": portfolio_history_policy,
         "eligible_strategy_names": sorted(eligible_returns),
     }
