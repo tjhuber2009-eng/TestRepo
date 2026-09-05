@@ -61,7 +61,8 @@
       ],
       "model_blend": "equal weight per model probability; all listed models required",
       "binary_side_selection": "compare executable YES and NO after fees; choose higher edge",
-      "forecast_day_boundary": "Open-Meteo timezone=auto at the resolution station coordinates, matching the station-local calendar day"
+      "forecast_day_boundary": "Open-Meteo timezone=auto at the resolution station coordinates, matching the station-local calendar day",
+      "resolution_precision": "whole degree; continuous ensemble values use half-degree bin boundaries before bracket scoring"
     },
     "crypto_twap_taker": {
       "mode": "taker",
