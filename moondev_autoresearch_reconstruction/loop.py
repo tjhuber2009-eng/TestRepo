@@ -159,6 +159,13 @@ def local_change_guard(candidate, baseline):
 
 
 def risk_control_fingerprint(source):
+    """Fingerprint the complete host-owned sizing dataflow.
+
+    Freezing only _units/vol_target/f_max is insufficient: generated code could
+    otherwise change the realized-volatility feed, alter the local rv/units
+    expressions, or multiply the size passed to buy/sell without touching those
+    class attributes.
+    """
     tree = ast.parse(source, filename=STRATEGY)
     cls = next(
         (x for x in tree.body if isinstance(x, ast.ClassDef) and x.name == "MoonStrategy"),
@@ -166,25 +173,99 @@ def risk_control_fingerprint(source):
     )
     if cls is None:
         return None
+
     frozen_assignments = {}
     units_dump = None
-    for node in cls.body:
+    realized_vol_dump = None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == "_realized_vol":
+            realized_vol_dump = ast.dump(
+                node, annotate_fields=True, include_attributes=False
+            )
+
+    risk_flow = []
+    for node in ast.walk(cls):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
             targets = node.targets if isinstance(node, ast.Assign) else [node.target]
             for target in targets:
                 if isinstance(target, ast.Name) and target.id in {
                     "vol_target", "f_max", "vol_lookback",
                 }:
-                    value = node.value
                     frozen_assignments[target.id] = ast.dump(
-                        value, annotate_fields=True, include_attributes=False
+                        node.value, annotate_fields=True, include_attributes=False
                     )
+                if isinstance(target, ast.Name) and target.id in {"rv", "units"}:
+                    risk_flow.append(
+                        "assign:"
+                        + target.id
+                        + ":"
+                        + ast.dump(node, annotate_fields=True, include_attributes=False)
+                    )
+                if (
+                    isinstance(target, ast.Attribute)
+                    and isinstance(target.value, ast.Name)
+                    and target.value.id == "self"
+                    and target.attr == "rv"
+                ):
+                    risk_flow.append(
+                        "assign:self.rv:"
+                        + ast.dump(node, annotate_fields=True, include_attributes=False)
+                    )
+        elif isinstance(node, ast.AugAssign):
+            target = node.target
+            if isinstance(target, ast.Name) and target.id in {"rv", "units"}:
+                risk_flow.append(
+                    "augassign:"
+                    + target.id
+                    + ":"
+                    + ast.dump(node, annotate_fields=True, include_attributes=False)
+                )
+            if (
+                isinstance(target, ast.Attribute)
+                and isinstance(target.value, ast.Name)
+                and target.value.id == "self"
+                and target.attr == "rv"
+            ):
+                risk_flow.append(
+                    "augassign:self.rv:"
+                    + ast.dump(node, annotate_fields=True, include_attributes=False)
+                )
         elif isinstance(node, ast.FunctionDef) and node.name == "_units":
             units_dump = ast.dump(
                 node, annotate_fields=True, include_attributes=False
             )
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            owner = node.func.value
+            is_self = isinstance(owner, ast.Name) and owner.id == "self"
+            if is_self and node.func.attr == "_units":
+                risk_flow.append(
+                    "call:_units:"
+                    + ast.dump(node, annotate_fields=True, include_attributes=False)
+                )
+            if is_self and node.func.attr in {"buy", "sell"}:
+                size_kw = next((kw for kw in node.keywords if kw.arg == "size"), None)
+                risk_flow.append(
+                    "order_size:"
+                    + node.func.attr
+                    + ":"
+                    + (
+                        ast.dump(
+                            size_kw.value,
+                            annotate_fields=True,
+                            include_attributes=False,
+                        )
+                        if size_kw is not None
+                        else "MISSING"
+                    )
+                )
+
     payload = json.dumps(
-        {"assignments": frozen_assignments, "units": units_dump},
+        {
+            "assignments": frozen_assignments,
+            "units": units_dump,
+            "realized_vol": realized_vol_dump,
+            "risk_flow": sorted(risk_flow),
+        },
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
