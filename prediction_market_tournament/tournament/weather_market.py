@@ -159,8 +159,8 @@ def weather_signal_from_market(
     min_edge: float = 0.05,
     cash_budget_usd: float = 5.0,
 ) -> Signal | None:
-    observed_at = observed_at or datetime.now(timezone.utc)
-    if observed_at.tzinfo is None:
+    explicit_observed_at = observed_at
+    if explicit_observed_at is not None and explicit_observed_at.tzinfo is None:
         raise ValueError("observed_at must be timezone-aware")
 
     bracket = parse_temperature_bracket(str(market.get("question") or ""))
@@ -218,6 +218,11 @@ def weather_signal_from_market(
         raise LookupError(
             "batch weather books did not return exactly the requested YES/NO assets"
         )
+
+    # Live observation time is captured only after both forecast inputs and
+    # executable CLOB books/rules have been retrieved. Tests may inject an
+    # explicit timestamp for deterministic assertions.
+    observed_at = explicit_observed_at or datetime.now(timezone.utc)
 
     candidates: list[tuple[float, str, float, object, dict]] = []
     for side, side_fair in (
