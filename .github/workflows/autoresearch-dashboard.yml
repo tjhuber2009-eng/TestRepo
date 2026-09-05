@@ -1,8 +1,6 @@
 name: AUTORESEARCH dashboard snapshot
 
 on:
-  issue_comment:
-    types: [created]
   workflow_dispatch:
 
 permissions:
@@ -13,14 +11,6 @@ permissions:
 
 jobs:
   dashboard:
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.issue.pull_request &&
-        github.event.issue.number == 13 &&
-        github.event.comment.body == '/dashboard' &&
-        github.event.comment.user.login == 'tjhuber2009-eng'
-      )
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -97,8 +87,3 @@ jobs:
           path: moondev_autoresearch_reconstruction/dashboard_output
           retention-days: 30
 
-      - name: Comment dashboard location
-        if: github.event_name == 'issue_comment'
-        shell: bash
-        run: |
-          gh pr comment 13 --repo "$GITHUB_REPOSITORY" --body "Live dashboard refreshed: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/issues/20\n\nStandalone snapshot artifact: **autoresearch-dashboard-${GITHUB_RUN_ID}** in ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
