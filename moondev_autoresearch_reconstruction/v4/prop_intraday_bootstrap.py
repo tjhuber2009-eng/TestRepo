@@ -694,12 +694,19 @@ def _frontier_universe_mutations(
 
 def _frontier_day_brake_mutations(
     leaders_by_program: dict,
+    view_names: Sequence[str] = (
+        "max_payout_efficiency",
+        "max_evaluation_pass",
+        "safest_funded",
+        "balanced",
+        "conservative",
+    ),
 ) -> list[dict]:
     """Compact risk/payout smoothing mutations around strict frontier leaders."""
     seen = set()
     out = []
     for program_leaders in leaders_by_program.values():
-        for view_name in ("balanced", "conservative", "max_evaluation_pass"):
+        for view_name in view_names:
             leader = program_leaders.get(view_name)
             if leader is None:
                 continue
@@ -957,7 +964,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
 
     # Causal Prague-day risk/profit smoothing around the strict frontier.
     # This directly targets daily-loss risk and the 1-Step Best Day rule.
-    brake_params = _frontier_day_brake_mutations(leaders)
+    brake_params = _frontier_day_brake_mutations(leaders, view_names)
     for params in brake_params:
         (
             base,
