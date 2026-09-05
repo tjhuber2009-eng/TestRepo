@@ -251,7 +251,7 @@ def append_experiment_record(
             "max_dd_pct", "intrabar_dd_proxy_pct", "trades", "pf",
             "psr_zero", "bootstrap_sharpe_p10",
             "bootstrap_mean_positive_pvalue", "evidence_grade",
-            "calmar", "ulcer_index_pct", "benchmark_cagr_pct",
+            "calmar", "sortino_annualized", "ulcer_index_pct", "benchmark_cagr_pct",
             "excess_cagr_vs_buyhold_pct", "sharpe_minus_buyhold",
             "risk_cap_utilization", "positive_fold_fraction",
         ]:
@@ -259,6 +259,10 @@ def append_experiment_record(
         record["extreme_stress_return_pct"] = (
             (result.get("extreme_stress") or {}).get("return_pct")
         )
+        record["guard_ok"] = bool(result.get("guard_ok"))
+        record["cscv_slice_k"] = [
+            x.get("raw_k") for x in (result.get("cscv_slices") or [])
+        ]
         record["fold_raw_k"] = [
             x.get("raw_k") for x in (result.get("folds") or [])
         ]
@@ -269,6 +273,9 @@ def append_experiment_record(
         audit = result.get("lookahead_audit") or {}
         record["lookahead_audit_pass"] = audit.get("passed")
         record["lookahead_audit_reason"] = audit.get("reason")
+        record["selection_eligible"] = bool(result.get("guard_ok")) and (
+            audit.get("passed") is not False
+        )
         record["comparable_folds"] = paired.get("comparable_folds")
         record["median_fold_delta_k"] = paired.get("median_fold_delta_k")
         record["improved_fold_fraction"] = paired.get("improved_fold_fraction")
