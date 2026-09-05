@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from tournament.adapters.polymarket import list_events
@@ -79,7 +79,13 @@ def main() -> int:
             errors.append(f"date:{event.get('id')}:{exc}")
             continue
 
-        if target < now.date() or (target - now.date()).days > 7:
+        # Event dates are station-local calendar dates, not UTC dates.
+        # Allow one UTC-day of backward overlap and eight forward days so
+        # worldwide timezone offsets cannot drop a still-live local "today".
+        if (
+            target < now.date() - timedelta(days=1)
+            or target > now.date() + timedelta(days=8)
+        ):
             continue
 
         for market in event.get("markets") or []:
