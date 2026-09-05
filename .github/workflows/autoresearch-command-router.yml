@@ -1,0 +1,48 @@
+name: AUTORESEARCH command router
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  route:
+    if: >
+      github.event.issue.pull_request &&
+      github.event.issue.number == 13 &&
+      github.event.comment.user.login == 'tjhuber2009-eng'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Route owner command
+        shell: bash
+        env:
+          CMD: ${{ github.event.comment.body }}
+        run: |
+          case "$CMD" in
+            /continuous-autoresearch-cycle)
+              gh workflow run continuous-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /model-tournament)
+              gh workflow run model-tournament.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /dashboard)
+              gh workflow run autoresearch-dashboard.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /continuous-autoresearch-smoke)
+              gh workflow run continuous-autoresearch-smoke.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /continuous-autoresearch-canary)
+              gh workflow run continuous-autoresearch-canary.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            *)
+              echo "Not an AUTORESEARCH command; ignoring."
+              ;;
+          esac
