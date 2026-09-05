@@ -88,7 +88,11 @@ export async function markShopChanged(shop: string, topic: string) {
   });
 }
 
-export async function enqueueReconciliationProducts(shop: string, productIds: string[]) {
+export async function enqueueReconciliationProducts(
+  shop: string,
+  productIds: string[],
+  syncPending = true,
+) {
   const uniqueIds = Array.from(new Set(
     productIds.filter((id) => /^gid:\/\/shopify\/Product\/\d+$/.test(id)),
   ));
@@ -127,6 +131,6 @@ export async function enqueueReconciliationProducts(shop: string, productIds: st
     );
   }
 
-  await syncPendingAuditCount(shop);
+  if (syncPending) await syncPendingAuditCount(shop);
   return uniqueIds.length;
 }
