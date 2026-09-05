@@ -37,6 +37,7 @@ HERE = Path(__file__).resolve().parent
 BASELINE = HERE / "baseline.json"
 LAST_RUN = HERE / "last_run.json"
 VALIDATION_RUN = HERE / "validation_run.json"
+LOOKAHEAD_AUDIT = HERE / "lookahead_audit.json"
 STRATEGY_FILE = HERE / "strategy.py"
 HARNESS_FILE = HERE / "robust_harness.py"
 PROGRAM_FILE = HERE / os.environ.get("AUTORESEARCH_PROGRAM", "program_robust.md")
@@ -674,17 +675,119 @@ def common_metadata(summary, stage):
     return summary
 
 
+def _trade_entry_signature(stats, cutoff):
+    trades = stats["_trades"]
+    out = []
+    if trades is None or len(trades) == 0:
+        return out
+    for _, row in trades.iterrows():
+        try:
+            entry_bar = int(row["EntryBar"])
+            size = float(row["Size"])
+            entry_price = float(row["EntryPrice"])
+        except Exception:
+            continue
+        if entry_bar >= cutoff:
+            continue
+        out.append((
+            entry_bar,
+            1 if size > 0 else (-1 if size < 0 else 0),
+            round(entry_price, 8),
+        ))
+    return out
+
+
+def lookahead_prefix_audit(df):
+    """Detect future-data leakage by replaying identical history prefixes.
+
+    A causal strategy must produce the same equity path and entries through a
+    past cutoff whether or not later bars are present in the input supplied to
+    Strategy.init(). This specifically closes the common full-array indicator
+    lookahead loophole while allowing normal self.I rolling indicators.
+    """
+    a = to_utc_timestamp(SEARCH_START)
+    d = to_utc_timestamp(DEV_END, end=True)
+    work = df.loc[(df.index >= a) & (df.index <= d)]
+    if len(work) < 400:
+        return {
+            "passed": False,
+            "reason": "insufficient development bars for prefix-invariance audit",
+            "checks": [],
+        }
+
+    full_stats = run_bt(work, COMMISSION)
+    full_eq = full_stats["_equity_curve"]["Equity"].astype(float).to_numpy()
+    checks = []
+    passed = True
+    for fraction in (0.55, 0.70, 0.85):
+        cut = int(len(work) * fraction)
+        cut = max(250, min(cut, len(work) - 5))
+        prefix = work.iloc[:cut]
+        prefix_stats = run_bt(prefix, COMMISSION)
+        prefix_eq = prefix_stats["_equity_curve"]["Equity"].astype(float).to_numpy()
+        compare_n = min(len(prefix_eq), cut) - 2
+        if compare_n <= 10:
+            eq_equal = False
+            max_abs_diff = float("inf")
+        else:
+            diff = np.abs(full_eq[:compare_n] - prefix_eq[:compare_n])
+            max_abs_diff = float(np.nanmax(diff)) if len(diff) else 0.0
+            scale = max(1.0, float(np.nanmax(np.abs(full_eq[:compare_n]))))
+            eq_equal = bool(max_abs_diff <= max(1e-6, 1e-10 * scale))
+
+        sig_cut = max(0, cut - 2)
+        full_sig = _trade_entry_signature(full_stats, sig_cut)
+        prefix_sig = _trade_entry_signature(prefix_stats, sig_cut)
+        entries_equal = full_sig == prefix_sig
+        check_ok = bool(eq_equal and entries_equal)
+        passed = passed and check_ok
+        checks.append({
+            "fraction": fraction,
+            "bars": cut,
+            "equity_prefix_equal": eq_equal,
+            "entry_signature_equal": entries_equal,
+            "max_abs_equity_diff": round(max_abs_diff, 8)
+            if np.isfinite(max_abs_diff) else None,
+            "full_entries": len(full_sig),
+            "prefix_entries": len(prefix_sig),
+            "passed": check_ok,
+        })
+    return {
+        "passed": bool(passed),
+        "reason": "ok" if passed else "historical decisions changed when future bars were removed",
+        "checks": checks,
+        "protocol": PROTOCOL,
+        "oos_opened": False,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--is", dest="mode", action="store_const", const="search")
     mode.add_argument("--validation", dest="mode", action="store_const", const="validation")
     mode.add_argument("--check", dest="mode", action="store_const", const="check")
+    mode.add_argument(
+        "--lookahead-audit",
+        dest="mode",
+        action="store_const",
+        const="lookahead_audit",
+    )
     ap.add_argument("--set-baseline", action="store_true")
     args = ap.parse_args()
     selected = args.mode or "search"
 
     df = load_data()
+    if selected == "lookahead_audit":
+        out = lookahead_prefix_audit(df)
+        common_metadata(out, "development_lookahead_audit")
+        write_json(LOOKAHEAD_AUDIT, out)
+        print("LOOKAHEAD_AUDIT")
+        print(json.dumps(out, indent=2, sort_keys=True))
+        if not out.get("passed"):
+            raise SystemExit(2)
+        return
+
     if selected == "check":
         x = df.loc[df.index <= to_utc_timestamp(DEV_END, end=True)].tail(500)
         stats = run_bt(x, COMMISSION)
