@@ -220,12 +220,28 @@ def main():
     }
 
     payload = sanitize_json(payload)
-    (output / "data.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
+    data_text = json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    (output / "data.json").write_text(data_text, encoding="utf-8")
     for name in ["index.html", "styles.css", "app.js"]:
         shutil.copy2(SRC / name, output / name)
+
+    # Also emit one genuinely self-contained file for local use. Browsers may
+    # block fetch("data.json") and external sibling CSS/JS when opened via
+    # file://, so embed all three resources directly.
+    html = (SRC / "index.html").read_text(encoding="utf-8")
+    css = (SRC / "styles.css").read_text(encoding="utf-8")
+    js = (SRC / "app.js").read_text(encoding="utf-8")
+    html = html.replace(
+        '<link rel="stylesheet" href="styles.css">',
+        "<style>\n" + css + "\n</style>",
+    )
+    embedded = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    html = html.replace(
+        '<script src="app.js"></script>',
+        "<script>window.__AUTORESEARCH_DATA__=" + embedded + ";<\/script>\n"
+        "<script>\n" + js + "\n<\/script>",
+    )
+    (output / "dashboard.html").write_text(html, encoding="utf-8")
 
     print(f"dashboard -> {output}")
     print(
