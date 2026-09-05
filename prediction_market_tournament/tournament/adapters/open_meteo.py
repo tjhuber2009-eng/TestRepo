@@ -25,9 +25,10 @@ def fetch_temperature_ensemble(
     model: str = "ncep_gefs025",
     unit: str = "fahrenheit",
     timezone: str = "auto",
+    elevation: float | None = None,
 ):
     end_date = end_date or start_date
-    q = urlencode({
+    params = {
         "latitude": latitude,
         "longitude": longitude,
         "hourly": "temperature_2m",
@@ -36,7 +37,10 @@ def fetch_temperature_ensemble(
         "timezone": timezone,
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
-    })
+    }
+    if elevation is not None:
+        params["elevation"] = elevation
+    q = urlencode(params)
     return _get_json(f"{ENSEMBLE_API}?{q}")
 
 
