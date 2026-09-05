@@ -245,6 +245,26 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreater(result.chosen.cash_weight, 0.0)
         self.assertLessEqual(result.chosen.bootstrap_dd_q95_pct, 20)
 
+    def test_meta_filter_label_delay_blocks_unavailable_previous_outcome(self):
+        rng = np.random.default_rng(123)
+        idx = pd.RangeIndex(180)
+        x = pd.DataFrame({
+            "a": rng.normal(size=len(idx)),
+            "b": rng.normal(size=len(idx)),
+        }, index=idx)
+        y = ((x["a"].shift(-2).fillna(0.0)) > 0.0).astype(int)
+        p1 = walk_forward_probabilities(
+            x, y, min_train=50, retrain_every=1, n_estimators=4, label_delay=1
+        )
+        y2 = y.copy()
+        # At decision row 100, label row 99 is not yet observable and must not
+        # affect the fitted model.
+        y2.iloc[99] = 1 - int(y2.iloc[99])
+        p2 = walk_forward_probabilities(
+            x, y2, min_train=50, retrain_every=1, n_estimators=4, label_delay=1
+        )
+        self.assertAlmostEqual(float(p1.iloc[100]), float(p2.iloc[100]), places=12)
+
     def test_motif_transfer_reuses_successful_knowledge(self):
         planner = MotifTransferPlanner([
             MotifEvidence("long_term_trend_gate","sentinel63","crypto","private",True,0.1),
