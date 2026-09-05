@@ -1,5 +1,5 @@
 {
-  "frozen_at": "2026-09-04T18:37:00-07:00",
+  "frozen_at": "2026-09-04T18:57:12-07:00",
   "lanes": {
     "complete_set": {
       "enabled": true,
@@ -8,21 +8,41 @@
       "rule": "only exhaustive mutually-exclusive events; all legs executable"
     },
     "crypto_late_resolution": {
+      "asset": "BTC/USD",
+      "checkpoint_max_lag_seconds": 3,
       "enabled": true,
+      "entry_seconds_remaining": 30,
       "fee_rate": 0.07,
-      "max_seconds_remaining": 60,
+      "max_signals_per_market": 1,
       "min_edge": 0.025,
       "min_fair_probability": 0.92,
+      "model": "causal partial-final-TWAP diffusion benchmark using observed raw Chainlink portion plus future conditional variance",
       "order_mode": "taker",
-      "resolution": "Chainlink 60s TWAP"
+      "resolution": "Chainlink 60s TWAP",
+      "rtds_stall_timeout_seconds": 30,
+      "rtds_symbol": "btc/usd",
+      "skip_on_missing_strike": true,
+      "strike_capture_max_lag_seconds": 3,
+      "twap_window_seconds": 60,
+      "volatility_lookback_seconds": 120
     },
     "crypto_twap_taker": {
+      "asset": "BTC/USD",
+      "checkpoint_max_lag_seconds": 3,
       "enabled": true,
+      "entry_seconds_remaining": 120,
       "fee_rate": 0.07,
+      "max_signals_per_market": 1,
       "min_edge": 0.04,
-      "model": "frozen diffusion benchmark",
+      "model": "causal final-TWAP diffusion benchmark using raw Chainlink realized path and official 60s TWAP strike",
       "order_mode": "taker",
-      "resolution": "Chainlink 60s TWAP"
+      "resolution": "Chainlink 60s TWAP",
+      "rtds_stall_timeout_seconds": 30,
+      "rtds_symbol": "btc/usd",
+      "skip_on_missing_strike": true,
+      "strike_capture_max_lag_seconds": 3,
+      "twap_window_seconds": 60,
+      "volatility_lookback_seconds": 120
     },
     "favorite_longshot": {
       "enabled": true,
