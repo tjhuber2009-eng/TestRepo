@@ -274,7 +274,7 @@ async def run(duration_seconds: float) -> int:
                         raw_points=list(raw_points),
                         window_start_ms=start_ms,
                         lane_cfg=cfg,
-                        size_usd=paper_stake_usd,
+                        cash_budget_usd=paper_stake_usd,
                     )
                 except Exception as exc:
                     append_jsonl(
