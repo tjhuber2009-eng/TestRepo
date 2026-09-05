@@ -21,12 +21,7 @@ def polymarket_taker_fee_usd(
     fee_rate: float,
     fee_exponent: float = 1.0,
 ) -> float:
-    """Platform fee from Polymarket's market fee schedule.
-
-    Official SDK effective rate:
-      rate * (p * (1-p)) ** exponent
-    Platform fee for a BUY is shares * effective_rate.
-    """
+    """Platform fee from Polymarket's market fee schedule."""
     if shares < 0:
         raise ValueError("shares must be >= 0")
     if not 0 <= price <= 1:
@@ -65,7 +60,25 @@ def expected_value_per_share(
 ) -> float:
     if not 0 <= fair_probability <= 1:
         raise ValueError("fair_probability must be in [0,1]")
-    effective = price if maker else effective_taker_cost_per_share(
-        price, fee_rate, fee_exponent
+    effective = (
+        price
+        if maker
+        else effective_taker_cost_per_share(price, fee_rate, fee_exponent)
     )
     return fair_probability - effective
+
+
+def exact_execution_edge_per_share(
+    fair_probability: float,
+    *,
+    shares: float,
+    spent_usd: float,
+    fee_usd: float,
+) -> float:
+    """EV edge per outcome share from the exact executable fill economics."""
+    if not 0 <= fair_probability <= 1:
+        raise ValueError("fair_probability must be in [0,1]")
+    if shares <= 0 or spent_usd <= 0 or fee_usd < 0:
+        raise ValueError("invalid execution economics")
+    all_in_cost_per_share = (spent_usd + fee_usd) / shares
+    return fair_probability - all_in_cost_per_share
