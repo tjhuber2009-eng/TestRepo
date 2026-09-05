@@ -113,4 +113,46 @@ class BoostedStumpMetaFilter:
         return dict(sorted(imp.items(), key=lambda kv: kv[1], reverse=True))
 
 
-def walk_forward_probabilities(\n    x: pd.DataFrame,\n    y: pd.Series,\n    *,\n    min_train: int = 100,\n    retrain_every: int = 25,\n    n_estimators: int = 12,\n    label_delay: int = 1,\n) -> pd.Series:\n    """Out-of-sample probabilities with an outcome-availability embargo.\n\n    label_delay=1 means the label immediately preceding decision row i is\n    not yet available for training. This matches next-open portfolio decisions\n    whose realized open-to-next-open outcome becomes known one session later.\n    """\n    if not x.index.equals(y.index):\n        raise ValueError("x/y indexes must match")\n    if label_delay < 0:\n        raise ValueError("label_delay must be nonnegative")\n    out = pd.Series(np.nan, index=x.index, dtype=float)\n    model: BoostedStumpMetaFilter | None = None\n    last_fit_end = -10**9\n    for i in range(len(x)):\n        train_end = i - int(label_delay)\n        if train_end < min_train:\n            continue\n        if model is None or train_end - last_fit_end >= retrain_every:\n            train_x = x.iloc[:train_end]\n            train_y = y.iloc[:train_end]\n            good = train_y.notna()\n            train_x = train_x.loc[good]\n            train_y = train_y.loc[good]\n            if len(train_x) < min_train or train_y.nunique(dropna=True) < 2:\n                continue\n            model = BoostedStumpMetaFilter(n_estimators=n_estimators).fit(\n                train_x, train_y.astype(int)\n            )\n            last_fit_end = train_end\n        out.iloc[i] = float(model.predict_proba(x.iloc[[i]])[0, 1])\n    return out\n
+def walk_forward_probabilities(
+    x: pd.DataFrame,
+    y: pd.Series,
+    *,
+    min_train: int = 100,
+    retrain_every: int = 25,
+    n_estimators: int = 12,
+    label_delay: int = 1,
+) -> pd.Series:
+    """Out-of-sample probabilities with an outcome-availability embargo.
+
+    label_delay=1 means the label immediately preceding decision row i is
+    not yet available for training. This matches next-open portfolio decisions
+    whose realized open-to-next-open outcome becomes known one session later.
+    """
+    if not x.index.equals(y.index):
+        raise ValueError("x/y indexes must match")
+    if label_delay < 0:
+        raise ValueError("label_delay must be nonnegative")
+
+    out = pd.Series(np.nan, index=x.index, dtype=float)
+    model: BoostedStumpMetaFilter | None = None
+    last_fit_end = -10**9
+
+    for i in range(len(x)):
+        train_end = i - int(label_delay)
+        if train_end < min_train:
+            continue
+        if model is None or train_end - last_fit_end >= retrain_every:
+            train_x = x.iloc[:train_end]
+            train_y = y.iloc[:train_end]
+            good = train_y.notna()
+            train_x = train_x.loc[good]
+            train_y = train_y.loc[good]
+            if len(train_x) < min_train or train_y.nunique(dropna=True) < 2:
+                continue
+            model = BoostedStumpMetaFilter(n_estimators=n_estimators).fit(
+                train_x, train_y.astype(int)
+            )
+            last_fit_end = train_end
+        out.iloc[i] = float(model.predict_proba(x.iloc[[i]])[0, 1])
+
+    return out
