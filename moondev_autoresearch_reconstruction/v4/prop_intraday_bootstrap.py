@@ -18,6 +18,7 @@ from .account_profiles import FTMO_1STEP, FTMO_2STEP
 from .live_bootstrap import json_safe
 from .multi_asset_engine import AssetCost, MultiAssetBacktester, PortfolioLimits
 from .prop_firm_engine import active_day_proxy, optimize_prop_exposure
+from .risk_overlays import volatility_target_overlay
 
 
 PRAGUE = "Europe/Prague"
@@ -180,8 +181,17 @@ def evaluate_family(data, params, program, *, paths, seed):
         ),
         periods_per_year=365.0 * 24.0,
     )
+    base_strategy = hourly_rotation_strategy(params, symbols)
+    strategy = volatility_target_overlay(
+        base_strategy,
+        target_vol=float(params["vol_target"]),
+        periods_per_year=365.0 * 24.0,
+        lookback=int(params["vol_lookback"]),
+        max_gross=1.0,
+        max_scale=1.0,
+    )
     result = engine.run(
-        hourly_rotation_strategy(params, symbols),
+        strategy,
         cost_multiplier=3.0,
     )
     bar_adverse = intraday_bar_adverse(
@@ -215,10 +225,18 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     data = load_data(Path(data_dir))
 
     params_grid = [
-        {"lookback": lb, "trend": tr, "top_k": k}
-        for lb in (24, 72, 168, 336)
-        for tr in (168, 336, 720)
-        for k in (1, 2, 3)
+        {
+            "lookback": lb,
+            "trend": tr,
+            "top_k": k,
+            "vol_target": vt,
+            "vol_lookback": vl,
+        }
+        for lb in (72, 168, 336)
+        for tr in (168, 336)
+        for k in (1, 2)
+        for vt in (0.40, 0.60, 0.80)
+        for vl in (72, 168)
     ]
 
     programs = [FTMO_2STEP, FTMO_1STEP]
