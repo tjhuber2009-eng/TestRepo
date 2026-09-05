@@ -52,6 +52,17 @@ def _post_json(url: str, payload, timeout: float = 15.0):
         return json.loads(response.read().decode("utf-8"))
 
 
+def get_server_time() -> float:
+    value = _get_json(f"{CLOB}/time")
+    try:
+        timestamp = float(value)
+    except (TypeError, ValueError) as exc:
+        raise LookupError("invalid CLOB server time response") from exc
+    if timestamp <= 0:
+        raise LookupError("invalid CLOB server timestamp")
+    return timestamp
+
+
 def list_events(
     *,
     active: bool = True,
