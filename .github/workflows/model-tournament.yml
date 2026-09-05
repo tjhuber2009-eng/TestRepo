@@ -133,7 +133,7 @@ jobs:
           mv model_tournament_result.json "tournament_${{ matrix.tag }}.json"
 
       - name: Upload model result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tournament-${{ matrix.tag }}
           path: moondev_autoresearch_reconstruction/tournament_${{ matrix.tag }}.json
@@ -201,7 +201,7 @@ jobs:
           git push --force-with-lease origin model-tournament-state
 
       - name: Upload aggregate report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tournament-round1-summary
           path: |
