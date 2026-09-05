@@ -18,6 +18,7 @@ from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
+from v4.prop_intraday_bootstrap import aggregate_prague_days, hourly_rotation_strategy
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
@@ -474,6 +475,50 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertAlmostEqual(adverse.iloc[0], -0.05)
         self.assertAlmostEqual(adverse.iloc[2], -0.015)
         self.assertAlmostEqual(adverse.iloc[3], 0.0)
+
+    def test_prop_intraday_strategy_flattens_for_prague_midnight(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=80,
+            freq="h",
+            tz="UTC",
+        )
+        close = np.linspace(100.0, 140.0, len(idx))
+        def frame(mult):
+            x = close * mult
+            return pd.DataFrame({
+                "Open": x,
+                "High": x * 1.001,
+                "Low": x * 0.999,
+                "Close": x,
+                "Volume": 1.0,
+            }, index=idx)
+        data = {"BTCUSDT": frame(1.0), "ETHUSDT": frame(0.5)}
+        strat = hourly_rotation_strategy(
+            {"lookback": 2, "trend": 3, "top_k": 1},
+            tuple(sorted(data)),
+        )
+        weights = strat(data)
+        local_dates = pd.Series(idx.tz_convert("Europe/Prague").date, index=idx)
+        reset_rows = local_dates.shift(-1).notna() & (
+            local_dates.shift(-1) != local_dates
+        )
+        self.assertTrue((weights.loc[reset_rows].abs().sum(axis=1) == 0.0).all())
+
+    def test_prop_intraday_aggregation_tracks_worst_equity_within_prague_day(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=6,
+            freq="h",
+            tz="UTC",
+        )
+        returns = pd.Series([0.01, -0.005, 0.002, 0.0, 0.0, 0.0], index=idx)
+        adverse = pd.Series([-0.02, -0.01, -0.005, 0.0, 0.0, 0.0], index=idx)
+        weights = pd.DataFrame({"A": [1, 1, 1, 0, 0, 0]}, index=idx)
+        dr, da, opened = aggregate_prague_days(returns, adverse, weights)
+        self.assertGreaterEqual(len(dr), 1)
+        self.assertLessEqual(float(da.min()), -0.02)
+        self.assertTrue(bool(opened.iloc[0]))
 
     def test_full_v4_integration_demo(self):
         out=run_integration_demo()
