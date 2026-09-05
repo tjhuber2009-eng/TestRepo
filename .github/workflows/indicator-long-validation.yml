@@ -1,4 +1,4 @@
-name: Indicator Bootstrap DD Frontier
+name: Indicator Unbiased DD Frontier
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run block-bootstrap DD frontier
-        run: python indicator_validation/run_bootstrap_dd_frontier.py
+      - name: Run all-tested-universe DD frontier
+        run: python indicator_validation/run_unbiased_frontier.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_bootstrap_dd_frontier.py indicator_validation/output_bootstrap_dd_frontier/* > indicator_validation/SHA256SUMS_BOOTSTRAP_DD.txt
-      - name: Upload bootstrap frontier artifact
+        run: sha256sum indicator_validation/run_unbiased_frontier.py indicator_validation/output_unbiased_frontier/* > indicator_validation/SHA256SUMS_UNBIASED_FRONTIER.txt
+      - name: Upload unbiased frontier artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-bootstrap-dd-frontier
+          name: indicator-unbiased-frontier
           path: |
-            indicator_validation/output_bootstrap_dd_frontier/
-            indicator_validation/SHA256SUMS_BOOTSTRAP_DD.txt
+            indicator_validation/output_unbiased_frontier/
+            indicator_validation/SHA256SUMS_UNBIASED_FRONTIER.txt
           if-no-files-found: error
           retention-days: 7
