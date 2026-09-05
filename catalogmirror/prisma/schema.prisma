@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+
+  @@index([shop])
+}
+
+model AuditRun {
+  id             String   @id @default(cuid())
+  shop           String
+  status         String
+  productsSeen   Int      @default(0)
+  productsAudited Int     @default(0)
+  findings       Int      @default(0)
+  critical       Int      @default(0)
+  expected       Int      @default(0)
+  errorMessage   String?
+  startedAt      DateTime @default(now())
+  finishedAt     DateTime?
+
+  incidents Incident[]
+  @@index([shop, startedAt])
+}
+
+model Incident {
+  id            String   @id @default(cuid())
+  shop          String
+  auditRunId    String
+  productId     String?
+  productTitle  String?
+  handle        String?
+  variantId     String?
+  variantTitle  String?
+  sku           String?
+  kind          String
+  severity      String
+  status        String   @default("OPEN")
+  expectedValue String?
+  observedValue String?
+  detail        String?
+  fingerprint   String
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  resolvedAt    DateTime?
+
+  auditRun AuditRun @relation(fields: [auditRunId], references: [id], onDelete: Cascade)
+
+  @@index([shop, status, severity])
+  @@index([shop, fingerprint])
+}
