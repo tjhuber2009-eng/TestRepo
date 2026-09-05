@@ -58,6 +58,12 @@ type ProductAuditResult = {
   audited: boolean;
 };
 
+type PageInfo = { hasNextPage: boolean; endCursor: string | null };
+type ProductConnectionData = { nodes: AdminProduct[]; pageInfo: PageInfo };
+type VariantConnectionData = { nodes: AdminVariant[]; pageInfo: PageInfo };
+type ProductsQueryData = { products: ProductConnectionData };
+type VariantsQueryData = { product: { variants: VariantConnectionData } | null };
+
 type GraphqlError = { message?: string; extensions?: { code?: string } };
 type GraphqlEnvelope<T> = {
   data?: T;
@@ -193,12 +199,11 @@ async function loadProducts(admin: AdminClient, limit: number) {
 
   while (products.length < limit) {
     const first = Math.min(100, limit - products.length);
-    const data = await adminQuery<{
-      products: {
-        nodes: AdminProduct[];
-        pageInfo: { hasNextPage: boolean; endCursor: string | null };
-      };
-    }>(admin, PRODUCTS_QUERY, { first, after });
+    const data: ProductsQueryData = await adminQuery<ProductsQueryData>(
+      admin,
+      PRODUCTS_QUERY,
+      { first, after },
+    );
 
     products.push(...(data.products?.nodes ?? []));
     hasMore = Boolean(data.products?.pageInfo?.hasNextPage);
@@ -216,18 +221,15 @@ async function loadVariants(admin: AdminClient, productId: string) {
 
   while (variants.length < 250) {
     const first = Math.min(100, 250 - variants.length);
-    const data = await adminQuery<{
-      product: {
-        variants: {
-          nodes: AdminVariant[];
-          pageInfo: { hasNextPage: boolean; endCursor: string | null };
-        };
-      } | null;
-    }>(admin, VARIANTS_QUERY, { id: productId, first, after });
+    const data: VariantsQueryData = await adminQuery<VariantsQueryData>(
+      admin,
+      VARIANTS_QUERY,
+      { id: productId, first, after },
+    );
 
     if (!data.product) return { variants: [], coverageLimited: false, productMissing: true };
 
-    const connection = data.product.variants;
+    const connection: VariantConnectionData = data.product.variants;
     variants.push(...(connection.nodes ?? []));
     if (!connection.pageInfo.hasNextPage || !connection.pageInfo.endCursor) break;
     if (variants.length >= 250) {
