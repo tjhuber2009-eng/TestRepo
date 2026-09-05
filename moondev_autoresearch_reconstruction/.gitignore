@@ -10,3 +10,4 @@ data/*.csv
 keepers/*.py
 logs/*.txt
 logs/*.json
+validation_data/\n
