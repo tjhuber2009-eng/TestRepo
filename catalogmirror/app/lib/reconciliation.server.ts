@@ -379,6 +379,7 @@ async function schedulerTick() {
       topic: "PERIODIC_RECONCILIATION",
       resourceType: "RECONCILE",
       resourceId: shop,
+      recordWebhook: false,
     });
   }
 }
