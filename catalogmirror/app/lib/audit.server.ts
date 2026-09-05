@@ -760,11 +760,13 @@ export async function runCatalogAudit(args: {
 
   await acquireAuditLease(args.shop, owner);
 
-  const run = await db.auditRun.create({
-    data: { shop: args.shop, status: "RUNNING", trigger: args.trigger || "MANUAL" },
-  });
+  let run: { id: string } | null = null;
 
   try {
+    run = await db.auditRun.create({
+      data: { shop: args.shop, status: "RUNNING", trigger: args.trigger || "MANUAL" },
+      select: { id: true },
+    });
     const shopContext: ShopContextData = await adminQuery<ShopContextData>(
       args.admin,
       SHOP_CONTEXT_QUERY,
@@ -888,17 +890,34 @@ export async function runCatalogAudit(args: {
       },
     });
   } catch (error) {
-    await db.auditRun.update({
-      where: { id: run.id },
-      data: {
-        status: "FAILED",
-        errorMessage: truncate(error instanceof Error ? error.message : String(error)),
-        durationMs: Date.now() - started,
-        finishedAt: new Date(),
-      },
-    });
+    if (run) {
+      try {
+        await db.auditRun.update({
+          where: { id: run.id },
+          data: {
+            status: "FAILED",
+            errorMessage: truncate(error instanceof Error ? error.message : String(error)),
+            durationMs: Date.now() - started,
+            finishedAt: new Date(),
+          },
+        });
+      } catch (recordError) {
+        console.error("CatalogMirror could not persist failed audit state", {
+          shop: args.shop,
+          auditRunId: run.id,
+          error: recordError instanceof Error ? recordError.message : String(recordError),
+        });
+      }
+    }
     throw error;
   } finally {
-    await releaseAuditLease(args.shop, owner);
+    try {
+      await releaseAuditLease(args.shop, owner);
+    } catch (releaseError) {
+      console.error("CatalogMirror could not release audit lease", {
+        shop: args.shop,
+        error: releaseError instanceof Error ? releaseError.message : String(releaseError),
+      });
+    }
   }
 }
