@@ -62,7 +62,7 @@ async def run(duration_seconds: float) -> int:
     scan_log = root / "data" / "crypto_scan_log.jsonl"
     existing = existing_crypto_lane_markets(signals_path)
 
-    paper_stake_usd = (
+    paper_cash_budget_usd = (
         float(spec["risk"]["paper_account_usd"])
         * float(spec["risk"]["risk_fraction_per_trade"])
     )
@@ -274,7 +274,7 @@ async def run(duration_seconds: float) -> int:
                         raw_points=list(raw_points),
                         window_start_ms=start_ms,
                         lane_cfg=cfg,
-                        cash_budget_usd=paper_stake_usd,
+                        cash_budget_usd=paper_cash_budget_usd,
                     )
                 except Exception as exc:
                     append_jsonl(
