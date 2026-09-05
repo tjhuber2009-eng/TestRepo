@@ -28,8 +28,13 @@ def _make_root(tmp_path):
         "VALUE = 1\n",
         encoding="utf-8",
     )
-    (root / "scripts" / "scan.py").write_text(
+    (root / "scripts" / "scan_crypto_live.py").write_text(
         "print('scan')\n",
+        encoding="utf-8",
+    )
+    (root / "deploy").mkdir()
+    (root / "deploy" / "pmt-forward.service").write_text(
+        "[Service]\nExecStart=python\n",
         encoding="utf-8",
     )
     (root / "pyproject.toml").write_text(
@@ -74,3 +79,27 @@ def test_forward_marker_is_one_shot(tmp_path):
     create_forward_marker(root)
     with pytest.raises(FileExistsError):
         create_forward_marker(root)
+
+
+def test_implementation_hash_ignores_prestart_recovery_helpers(tmp_path):
+    root = _make_root(tmp_path)
+    before = implementation_hash(root)
+
+    helper = root / "deploy" / "recover_oracle_a1.sh"
+    helper.write_text("#!/bin/sh\necho one\n", encoding="utf-8")
+    after_add = implementation_hash(root)
+    helper.write_text("#!/bin/sh\necho two\n", encoding="utf-8")
+    after_edit = implementation_hash(root)
+
+    assert before == after_add == after_edit
+
+
+def test_implementation_hash_tracks_live_service_unit(tmp_path):
+    root = _make_root(tmp_path)
+    before = implementation_hash(root)
+    service = root / "deploy" / "pmt-forward.service"
+    service.write_text(
+        "[Service]\nExecStart=python changed.py\n",
+        encoding="utf-8",
+    )
+    assert implementation_hash(root) != before
