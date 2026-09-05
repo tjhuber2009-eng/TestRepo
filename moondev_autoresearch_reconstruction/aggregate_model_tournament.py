@@ -1,6 +1,7 @@
 """Aggregate matched model-tournament results with paired-case statistics."""
 
 import argparse
+import hashlib
 import json
 import math
 import statistics
@@ -106,7 +107,8 @@ def aggregate(folder, state_sha=""):
         deltas=[d for d in deltas if d is not None]
         per_case=[v.get("guard_mean_delta_k") for v in case_maps[x["model"]].values()]
         per_case=[v for v in per_case if v is not None]
-        ci=bootstrap_ci(per_case,seed=int(abs(hash(x["model"]))%(2**32)))
+        seed=int(hashlib.sha256(str(x["model"]).encode()).hexdigest()[:8],16)
+        ci=bootstrap_ci(per_case,seed=seed)
         keep_ci=wilson(keep,attempts)
         ranking.append({
             "provider":x.get("provider"),
