@@ -44,6 +44,10 @@ topics = ["inventory_levels/update"]
 uri = "/webhooks/inventory_levels/update"
 
 [[webhooks.subscriptions]]
+topics = ["bulk_operations/finish"]
+uri = "/webhooks/bulk_operations/finish"
+
+[[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request"]
 uri = "/webhooks/customers/data_request"
 
