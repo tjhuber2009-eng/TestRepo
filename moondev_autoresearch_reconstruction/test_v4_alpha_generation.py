@@ -107,13 +107,15 @@ class V4AlphaGenerationTests(unittest.TestCase):
         }
         rows = yahoo_rows_from_chart(
             result,
-            adjustment="split_dividend_v2",
+            adjustment="provider_split_adjusted_v3",
         )
-        self.assertAlmostEqual(rows[0][1], 50.0)
-        self.assertAlmostEqual(rows[1][4], 51.0)
+        # Yahoo quote OHLC are already split-adjusted. Never apply the split
+        # event a second time.
+        self.assertAlmostEqual(rows[0][1], 100.0)
+        self.assertAlmostEqual(rows[1][4], 102.0)
         self.assertAlmostEqual(rows[2][1], 51.0)
-        self.assertAlmostEqual(rows[0][5], 2000.0)
-        self.assertAlmostEqual(rows[1][6], 0.5)
+        self.assertAlmostEqual(rows[0][5], 1000.0)
+        self.assertAlmostEqual(rows[1][6], 1.0)
 
     def test_multi_asset_open_return_includes_next_day_dividend(self):
         idx = pd.date_range("2020-01-01", periods=3, freq="D")
