@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import AsyncIterator
 
-import websockets
+from websockets.asyncio.client import connect
 
 RTDS_URL = "wss://ws-live-data.polymarket.com"
 TOPIC_RAW = "crypto_prices_chainlink"
@@ -100,7 +100,7 @@ async def stream_ticks(
     attempt = 0
     while True:
         try:
-            async with websockets.connect(
+            async with connect(
                 RTDS_URL,
                 ping_interval=None,
                 open_timeout=15,
