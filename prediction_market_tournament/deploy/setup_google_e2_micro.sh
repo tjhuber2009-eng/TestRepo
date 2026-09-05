@@ -27,6 +27,13 @@ cd "$ROOT"
 "$ROOT/.venv/bin/python" -m pytest -q
 "$ROOT/.venv/bin/python" scripts/preflight_forward.py
 
+git -C "$HOME/TestRepo" config user.name "PMT Forward Bot"
+git -C "$HOME/TestRepo" config user.email "pmt-forward-bot@users.noreply.github.com"
+if ! git -C "$HOME/TestRepo" push --dry-run origin HEAD:prediction-market-tournament; then
+  echo "GitHub write access is required for hourly audit-ledger persistence." >&2
+  exit 4
+fi
+
 mkdir -p "$HOME/.config/systemd/user"
 cp "$ROOT/deploy/pmt-forward.service" "$HOME/.config/systemd/user/pmt-forward.service"
 systemctl --user daemon-reload
