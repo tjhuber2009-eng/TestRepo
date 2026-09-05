@@ -1,4 +1,4 @@
-name: Indicator All23 Bootstrap DD Frontier
+name: Indicator Cross Strategy DD Frontier
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run all23 bootstrap DD frontier
-        run: python indicator_validation/run_all23_bootstrap.py
+      - name: Run cross-strategy DD frontier
+        run: python indicator_validation/run_cross_strategy_frontier.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_all23_bootstrap.py indicator_validation/output_all23_bootstrap/* > indicator_validation/SHA256SUMS_ALL23_BOOTSTRAP.txt
-      - name: Upload all23 bootstrap artifact
+        run: sha256sum indicator_validation/run_cross_strategy_frontier.py indicator_validation/output_cross_strategy_frontier/* > indicator_validation/SHA256SUMS_CROSS_STRATEGY.txt
+      - name: Upload cross-strategy artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-all23-bootstrap-frontier
+          name: indicator-cross-strategy-frontier
           path: |
-            indicator_validation/output_all23_bootstrap/
-            indicator_validation/SHA256SUMS_ALL23_BOOTSTRAP.txt
+            indicator_validation/output_cross_strategy_frontier/
+            indicator_validation/SHA256SUMS_CROSS_STRATEGY.txt
           if-no-files-found: error
           retention-days: 7
