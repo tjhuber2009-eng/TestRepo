@@ -11,10 +11,11 @@ import pandas as pd
 
 from .campaign import assert_v4_data_boundary, risk_policy
 from .feature_store import FeatureStoreBuilder
+from .meta_filter import walk_forward_probabilities
 from .multi_asset_engine import MultiAssetBacktester, PortfolioLimits, leveraged_regime_rotation
 from .parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from .portfolio_optimizer import RobustPortfolioOptimizer
-from .risk_overlays import drawdown_brake_overlay, vix_stress_overlay, volatility_target_overlay
+from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, vix_stress_overlay, volatility_target_overlay
 from .selection_diagnostics import optimizer_pbo
 from .strategy_examples import cross_sectional_momentum_rotation, leveraged_defensive_rotation
 
@@ -108,6 +109,77 @@ def build_cash_rotation_strategy(params):
         target_vol=float(params["target_vol"]),
         periods_per_year=252.0,
         lookback=int(params["vol_lookback"]),
+        max_gross=1.5,
+        max_scale=1.5,
+    )
+
+
+def rotation_meta_probabilities(core, feature_store, base_params):
+    """Causal walk-forward odds that the base rotation's next holding pays."""
+    base = leveraged_regime_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbol="SPY",
+        sma_window=int(base_params["sma"]),
+        momentum_window=int(base_params["mom"]),
+    )
+    target = base(core, None)
+    future = pd.DataFrame(
+        {
+            symbol: frame["Open"].shift(-2) / frame["Open"].shift(-1) - 1.0
+            for symbol, frame in core.items()
+        },
+        index=target.index,
+    )
+    gross = target.abs().sum(axis=1)
+    normalized = target.div(gross.replace(0.0, np.nan), axis=0)
+    realized = (normalized * future).sum(axis=1, min_count=1)
+    label = (realized > 0.0).astype(float)
+    label.loc[gross <= 0.0] = np.nan
+    label.loc[realized.isna()] = np.nan
+
+    q = feature_store.by_asset["QQQ"]
+    cols = [
+        "ret_20", "ret_60", "rv_20", "atr_14_pct", "gap_1",
+        "dist_sma_200", "rsi_2", "rsi_14", "volume_ratio_5_20",
+    ]
+    x = q[[col for col in cols if col in q]].copy()
+    if "VIX" in feature_store.by_asset:
+        vx = feature_store.by_asset["VIX"]
+        for col in ("ret_20", "rv_20", "rsi_14", "dist_sma_20"):
+            if col in vx:
+                x[f"vix_{col}"] = vx[col]
+    x = x.reindex(target.index).replace([np.inf, -np.inf], np.nan)
+    label = label.reindex(x.index)
+    return walk_forward_probabilities(
+        x,
+        label,
+        min_train=252,
+        retrain_every=21,
+        n_estimators=10,
+        label_delay=1,
+    )
+
+
+def build_meta_rotation_strategy(params, base_params, probabilities):
+    base = leveraged_regime_rotation(
+        signal_symbol="QQQ",
+        risk_symbol="TQQQ",
+        defensive_symbol="SPY",
+        sma_window=int(base_params["sma"]),
+        momentum_window=int(base_params["mom"]),
+    )
+    filtered = probability_filter_overlay(
+        base,
+        probabilities,
+        threshold=float(params["threshold"]),
+        below_scale=float(params["below_scale"]),
+    )
+    return volatility_target_overlay(
+        filtered,
+        target_vol=float(params["target_vol"]),
+        periods_per_year=252.0,
+        lookback=int(base_params["vol_lookback"]),
         max_gross=1.5,
         max_scale=1.5,
     )
