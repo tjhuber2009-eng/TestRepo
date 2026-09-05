@@ -1272,7 +1272,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             weight_caps = (
                 (1.0,)
                 if len(portfolio_core_returns) == 1
-                else (0.50, 0.65, 0.90)
+                else (0.50, 0.55, 0.65, 0.90)
             )
             for weight_cap in weight_caps:
                 sensitivity_result = RobustPortfolioOptimizer(
@@ -1285,12 +1285,13 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 portfolio_concentration_sensitivity[
                     f"{weight_cap:.2f}"
                 ] = sensitivity_result
-            # 65% is the authoritative multi-strategy cap. On the
-            # current reconciled development sample it produces the exact same
-            # optimum as 90%, so the tighter limit adds concentration
-            # protection at zero measured opportunity cost.
+            # 55% is the authoritative multi-strategy cap. The prior
+            # paired 65% search selected a composition whose largest normalized
+            # strategy weight is ~54.73%, so that exact winner remains feasible
+            # at 55% on identical bootstrap paths. This tightens concentration
+            # without excluding the current measured optimum.
             authoritative_cap = (
-                "1.00" if len(portfolio_core_returns) == 1 else "0.65"
+                "1.00" if len(portfolio_core_returns) == 1 else "0.55"
             )
             portfolio = portfolio_concentration_sensitivity[
                 authoritative_cap
@@ -1396,7 +1397,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "portfolio_authoritative_concentration_cap": (
             None
             if not portfolio_concentration_sensitivity
-            else (1.0 if len(portfolio_core_returns) == 1 else 0.65)
+            else (1.0 if len(portfolio_core_returns) == 1 else 0.55)
         ),
         "portfolio_concentration_sensitivity": {
             cap: result.to_dict()
