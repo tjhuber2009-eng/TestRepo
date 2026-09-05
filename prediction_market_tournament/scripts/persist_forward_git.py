@@ -35,8 +35,6 @@ def _push_branch(repo_root: Path) -> tuple[bool, str]:
 
 
 def _ahead_of_remote(repo_root: Path) -> int:
-    # Fetch only the frozen forward branch so retry decisions are based on
-    # current remote state without merging or modifying the working tree.
     fetch = _git(
         repo_root,
         "fetch",
@@ -59,6 +57,89 @@ def _ahead_of_remote(repo_root: Path) -> int:
         return int(count.stdout.strip() or "0")
     except ValueError:
         return -1
+
+
+def _staged_status(repo_root: Path) -> dict[str, str]:
+    rows = _git(
+        repo_root,
+        "diff",
+        "--cached",
+        "--name-status",
+    ).stdout.splitlines()
+    out: dict[str, str] = {}
+    for row in rows:
+        if not row.strip():
+            continue
+        fields = row.split("\t")
+        if len(fields) >= 2:
+            out[fields[-1]] = fields[0]
+    return out
+
+
+def _staged_numstat(repo_root: Path) -> dict[str, tuple[int, int]]:
+    rows = _git(
+        repo_root,
+        "diff",
+        "--cached",
+        "--numstat",
+    ).stdout.splitlines()
+    out: dict[str, tuple[int, int]] = {}
+    for row in rows:
+        fields = row.split("\t")
+        if len(fields) != 3:
+            continue
+        added, deleted, path = fields
+        if added.isdigit() and deleted.isdigit():
+            out[path] = (int(added), int(deleted))
+    return out
+
+
+def _verify_append_only_forward_data(
+    repo_root: Path,
+    staged: list[str],
+) -> None:
+    """Prevent history rewrites in source forward ledgers.
+
+    JSONL audit/source files may only be newly created or append lines.
+    The one-shot start marker may only be added once and never modified.
+    leaderboard.json is explicitly derived and may be replaced.
+    """
+    statuses = _staged_status(repo_root)
+    stats = _staged_numstat(repo_root)
+    data_prefix = "prediction_market_tournament/data/"
+
+    for path in staged:
+        relative = path.removeprefix(data_prefix)
+        status = statuses.get(path, "")
+        added, deleted = stats.get(path, (0, 0))
+
+        if relative == "leaderboard.json":
+            if status.startswith("D"):
+                raise RuntimeError("derived leaderboard may not be deleted")
+            continue
+
+        if relative == "forward_start_v1.json":
+            if status != "A":
+                raise RuntimeError(
+                    "forward start marker is immutable after its first commit"
+                )
+            continue
+
+        if relative.endswith(".jsonl"):
+            if status.startswith(("D", "R")) or deleted != 0:
+                raise RuntimeError(
+                    f"forward JSONL must be append-only: {relative} "
+                    f"status={status!r} deleted_lines={deleted}"
+                )
+            if added <= 0:
+                raise RuntimeError(
+                    f"forward JSONL change added no lines: {relative}"
+                )
+            continue
+
+        raise RuntimeError(
+            f"unrecognized mutable forward-data artifact: {relative}"
+        )
 
 
 def main() -> int:
@@ -120,6 +201,12 @@ def main() -> int:
             "refusing non-forward-data staged paths: " + ", ".join(invalid)
         )
 
+    try:
+        _verify_append_only_forward_data(repo_root, staged)
+    except Exception:
+        _git(repo_root, "reset", "--", data_path, check=False)
+        raise
+
     committed = False
     if staged:
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -149,9 +236,6 @@ def main() -> int:
         )
         return 0
 
-    # If fetch failed, still attempt a normal push. If the prior hourly push
-    # failed only because of a transient network problem, this retries it even
-    # when no new JSONL rows were produced in the current interval.
     pushed, push_stderr = _push_branch(repo_root)
     result = {
         "changed": bool(staged),
