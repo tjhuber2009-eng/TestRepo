@@ -13,7 +13,8 @@ HERE = Path(__file__).resolve().parent
 STATE = HERE / "continuous_state"
 TOURNAMENT = HERE / "tournament_state"
 RUNTIME = HERE / "dashboard_runtime"
-OUT = HERE / "live-dashboard.md"\nACTIVE_PROTOCOL = "nested_chronological_v3"
+OUT = HERE / "live-dashboard.md"
+ACTIVE_PROTOCOL = "nested_chronological_v3"
 
 def load(path, default=None):
     p=Path(path)
