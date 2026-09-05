@@ -24,6 +24,9 @@ from .risk_overlays import volatility_target_overlay
 
 PRAGUE = "Europe/Prague"
 PROP_SCALES = tuple(np.round(np.arange(0.05, 1.01, 0.05), 2))
+FTMO_CRYPTO_COMMISSION_BPS = 3.25
+RESEARCH_SLIPPAGE_BPS = 2.0
+PROP_COST_STRESS_MULTIPLIER = 3.0
 
 
 def research_commit_sha() -> str | None:
@@ -243,7 +246,10 @@ def evaluate_strategy(data, params):
     """Build one causal hourly strategy path, reusable across prop programs."""
     symbols = tuple(sorted(data))
     costs = {
-        s: AssetCost(commission_bps=3.25, slippage_bps=2.0)
+        s: AssetCost(
+            commission_bps=FTMO_CRYPTO_COMMISSION_BPS,
+            slippage_bps=RESEARCH_SLIPPAGE_BPS,
+        )
         for s in symbols
     }
     engine = MultiAssetBacktester(
@@ -266,7 +272,10 @@ def evaluate_strategy(data, params):
         max_gross=1.0,
         max_scale=1.0,
     )
-    result = engine.run(strategy, cost_multiplier=3.0)
+    result = engine.run(
+        strategy,
+        cost_multiplier=PROP_COST_STRESS_MULTIPLIER,
+    )
     bar_adverse = intraday_bar_adverse(
         data,
         result.execution_weights,
@@ -572,11 +581,24 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     "LTCUSDT": "LTCUSD",
                 }[symbol],
                 "venue_execution_verified": False,
+                "current_ftmo_listing_effective": (
+                    "2025-07-28" if symbol == "BNBUSDT" else None
+                ),
             }
             for symbol in sorted(data)
         },
+        "ftmo_crypto_execution_assumptions": {
+            "current_fee_regime_effective": "2025-07-28",
+            "commission_per_side_pct": FTMO_CRYPTO_COMMISSION_BPS / 100.0,
+            "research_slippage_bps_per_side": RESEARCH_SLIPPAGE_BPS,
+            "development_cost_stress_multiplier": PROP_COST_STRESS_MULTIPLIER,
+            "weekend_hours_platform_dependent": True,
+        },
         "deployment_blockers": [
             "FTMO CFD tick/spread/slippage history still differs from Binance spot",
+            "current FTMO crypto fee/spread regime began after the sealed development sample",
+            "BNBUSD was not an FTMO instrument during the sealed development sample",
+            "weekend crypto trading hours can vary by FTMO platform/maintenance window",
             "FTMO-specific swap history not reconstructed",
             "exact platform execution must be forward-tested before funded deployment",
         ],
