@@ -1259,6 +1259,20 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "stage exposure applied to each hourly portfolio return/adverse "
             "before Prague-day compounding"
         ),
+        "prague_day_brake_execution": {
+            "trigger_resolution": "hourly_bar_close_proxy",
+            "trigger_bar_adverse_excursion_preserved": True,
+            "subsequent_same_prague_day_exposure_flattened": True,
+            "emergency_close_cost_stress_multiplier": (
+                PROP_COST_STRESS_MULTIPLIER
+            ),
+            "missing_next_day_reentry_cost_charged": True,
+            "limitation": (
+                "hourly reconstruction cannot prove tick-level floating-equity "
+                "rail enforcement; validate on MT5/FTMO forward execution before "
+                "any funded deployment"
+            ),
+        },
         "search_policy": {
             "broad_base_candidates": len(params_grid),
             "frontier_seed_parameter_sets": len(seed_params),
