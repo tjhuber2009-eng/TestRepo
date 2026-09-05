@@ -86,14 +86,20 @@ def create_forward_marker(
     if marker_path.exists():
         raise FileExistsError("forward start marker already exists")
 
-    for relative in (
-        Path("data") / "signals.jsonl",
-        Path("data") / "resolved_trades.jsonl",
-    ):
-        path = base / relative
-        if _nonempty(path):
+    data_dir = base / "data"
+    if data_dir.exists():
+        contaminated = [
+            path
+            for path in data_dir.iterdir()
+            if path.is_file()
+            and path.name != FORWARD_MARKER.name
+            and _nonempty(path)
+        ]
+        if contaminated:
+            names = ", ".join(sorted(path.name for path in contaminated))
             raise RuntimeError(
-                f"refusing to start with pre-existing forward ledger: {relative}"
+                "refusing to start with pre-existing forward data: "
+                f"{names}"
             )
 
     spec, spec_sha = load_frozen_spec(base / "config" / "frozen_v1.json")
