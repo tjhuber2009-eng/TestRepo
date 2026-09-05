@@ -606,6 +606,13 @@ def evaluate_family(data, params, program, *, paths, seed):
 def _frontier_rank(view_name, candidate):
     if candidate is None:
         return (-1e99,)
+    if view_name == "max_repeat_payout_efficiency":
+        return (
+            float(candidate.repeat_payout_efficiency_score),
+            float(candidate.funded.survival_probability),
+            float(candidate.combined_evaluation_pass_probability),
+            float(candidate.payout_efficiency_score),
+        )
     if view_name == "max_evaluation_pass":
         days = (
             1e99
