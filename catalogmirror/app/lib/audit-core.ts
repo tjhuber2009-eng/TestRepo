@@ -141,6 +141,18 @@ export function buildAjaxProductUrl(onlineStoreUrl: string) {
   return url;
 }
 
+export function buildAjaxCartUrl(onlineStoreUrl: string) {
+  const url = validateStorefrontUrl(onlineStoreUrl);
+  const marker = "/products/";
+  const markerIndex = url.pathname.lastIndexOf(marker);
+  if (markerIndex < 0) throw new Error("Online Store URL does not contain a product route");
+  const localeRoot = url.pathname.slice(0, markerIndex);
+  url.pathname = `${localeRoot}/cart.js`.replace(/\/+/g, "/");
+  url.search = "";
+  url.hash = "";
+  return url;
+}
+
 function comparableHost(hostname: string) {
   return hostname.toLowerCase().replace(/^www\./, "");
 }
