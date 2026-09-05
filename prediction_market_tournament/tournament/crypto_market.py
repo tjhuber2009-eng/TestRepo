@@ -171,6 +171,10 @@ def crypto_signal_from_market(
 
     tokens = outcome_token_map(market)
     execution = market_execution_rules(condition_id)
+    if execution.taker_order_delay_enabled:
+        raise ValueError(
+            "taker order delay enabled; immediate executable fill is invalid"
+        )
     requested_tokens = [tokens["UP"], tokens["DOWN"]]
     batch = get_books(requested_tokens)
     by_asset = {
