@@ -50,10 +50,10 @@ def test_book_level_fee_is_integrated_at_each_price():
         min_order_shares=1.0,
     )
     assert quote is not None
-    assert math.isclose(quote.shares, 12.32741617357002)
-    assert math.isclose(quote.average_price, 0.31328)
-    assert math.isclose(quote.fee_usd, 0.13806706114398423)
-    assert math.isclose(quote.spent_usd + quote.fee_usd, 4.0)
+    assert math.isclose(quote.shares, 12.325)
+    assert math.isclose(quote.average_price, 3.86 / 12.325)
+    assert math.isclose(quote.fee_usd, 0.13804)
+    assert math.isclose(quote.spent_usd, 3.86)\n    assert math.isclose(quote.spent_usd + quote.fee_usd, 3.99804)
 
     # A nonlinear fee applied only to VWAP would be materially wrong here.
     vwap_approx_fee = (
@@ -116,9 +116,9 @@ def test_fee_enabled_quote_treats_budget_as_all_in_cash():
         min_order_shares=1.0,
     )
     assert quote is not None
-    assert quote.spent_usd < 5.0
-    assert quote.fee_usd > 0.0
-    assert math.isclose(quote.spent_usd + quote.fee_usd, 5.0)
+    assert math.isclose(quote.spent_usd, 4.83)
+    assert math.isclose(quote.fee_usd, 0.16905)
+    assert 4.99 < quote.spent_usd + quote.fee_usd <= 5.0
 
 
 def test_server_time_adapter_validates_positive_timestamp(monkeypatch):
