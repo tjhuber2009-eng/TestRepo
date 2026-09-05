@@ -23,12 +23,12 @@ def json_safe(value):
         return {str(k): json_safe(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [json_safe(v) for v in value]
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
     if isinstance(value, (float, np.floating)):
         return float(value) if math.isfinite(float(value)) else None
     if isinstance(value, (int, np.integer)):
         return int(value)
-    if isinstance(value, (bool, np.bool_)):
-        return bool(value)
     return value
 
 
