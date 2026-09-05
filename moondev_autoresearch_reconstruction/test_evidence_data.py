@@ -113,5 +113,29 @@ class EvidenceDataTests(unittest.TestCase):
 
 
 
+    def test_material_gate_rejects_double_split_history(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            primary = root / "primary.csv"
+            reference = root / "reference.csv"
+            header = "Date,Open,High,Low,Close,Volume,Dividend"
+            a = [header]
+            b = [header]
+            for i in range(30):
+                day = i + 1
+                ref_px = 100.0 + i
+                # Mimic a provider that applies an extra 2:1 adjustment to all
+                # history before a split date, creating a false jump.
+                pri_px = ref_px / 2.0 if i < 15 else ref_px
+                a.append(f"2020-03-{day:02d},{pri_px},{pri_px},{pri_px},{pri_px},0,0")
+                b.append(f"2020-03-{day:02d},{ref_px},{ref_px},{ref_px},{ref_px},0,0")
+            primary.write_text("\n".join(a) + "\n", encoding="utf-8")
+            reference.write_text("\n".join(b) + "\n", encoding="utf-8")
+            comp = compare_return_files(primary, reference)
+            self.assertFalse(comp["cross_source_pass"])
+            self.assertGreater(comp["fraction_over_50bp"], 0.005)
+
+
+
 if __name__ == "__main__":
     unittest.main()
