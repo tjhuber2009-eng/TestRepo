@@ -299,6 +299,14 @@ async def run_service(root: Path) -> None:
                 float(service_cfg["leaderboard_interval_seconds"]),
             )
         ),
+        asyncio.create_task(
+            _periodic_script(
+                root,
+                log_path,
+                "persist_forward_git.py",
+                float(service_cfg["git_persist_interval_seconds"]),
+            )
+        ),
     ]
 
     try:
