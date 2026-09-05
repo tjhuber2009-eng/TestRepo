@@ -208,6 +208,18 @@ def save_seen_hashes(values):
     os.replace(tmp, SEEN_HASHES)
 
 
+def json_safe(value):
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [json_safe(v) for v in value]
+    if isinstance(value, tuple):
+        return [json_safe(v) for v in value]
+    return value
+
+
 def file_sha256(path):
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -280,7 +292,9 @@ def append_experiment_record(
         record["median_fold_delta_k"] = paired.get("median_fold_delta_k")
         record["improved_fold_fraction"] = paired.get("improved_fold_fraction")
     with open(EXPERIMENTS, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, sort_keys=True) + "\n")
+        f.write(
+            json.dumps(json_safe(record), sort_keys=True, allow_nan=False) + "\n"
+        )
 
 
 def ensure_seed():
