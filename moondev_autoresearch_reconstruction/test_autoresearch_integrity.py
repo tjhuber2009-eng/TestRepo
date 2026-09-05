@@ -431,6 +431,111 @@ class MoonStrategy:
             continuous_runner.TOURNAMENT_STATE = old
 
 
+    def test_thompson_prior_uses_matched_cases_not_repeated_trials(self):
+        old_state = continuous_runner.TOURNAMENT_STATE
+        old_ledger = continuous_runner.LEDGER
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                td = Path(td)
+                continuous_runner.TOURNAMENT_STATE = td / "tournament.json"
+                continuous_runner.LEDGER = td / "missing_cycles.jsonl"
+                continuous_runner.save_json(
+                    continuous_runner.TOURNAMENT_STATE,
+                    {
+                        "protocol": continuous_runner.PROTOCOL,
+                        "provisional": False,
+                        "ranking": [{
+                            "provider": "nvidia",
+                            "model": "model-a",
+                            "admitted": 3,
+                            "attempts": 6,
+                            "would_keep": 3,
+                            "case_aggregates": {
+                                "case-1": {"keep_rate": 0.5},
+                                "case-2": {"keep_rate": 0.0},
+                                "case-3": {"keep_rate": 1.0},
+                            },
+                        }],
+                    },
+                )
+                rows = continuous_runner.tournament_bandit_priors()
+                self.assertEqual(len(rows), 1)
+                self.assertEqual(rows[0]["tournament_cases"], 3)
+                self.assertEqual(rows[0]["tournament_successes"], 2)
+                self.assertEqual(rows[0]["prior_alpha"], 3.0)
+                self.assertEqual(rows[0]["prior_beta"], 2.0)
+        finally:
+            continuous_runner.TOURNAMENT_STATE = old_state
+            continuous_runner.LEDGER = old_ledger
+
+    def test_thompson_posterior_updates_one_reward_per_model_visit(self):
+        old_state = continuous_runner.TOURNAMENT_STATE
+        old_ledger = continuous_runner.LEDGER
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                td = Path(td)
+                continuous_runner.TOURNAMENT_STATE = td / "tournament.json"
+                continuous_runner.LEDGER = td / "cycles.jsonl"
+                continuous_runner.save_json(
+                    continuous_runner.TOURNAMENT_STATE,
+                    {
+                        "protocol": continuous_runner.PROTOCOL,
+                        "provisional": False,
+                        "ranking": [{
+                            "provider": "nvidia",
+                            "model": "model-a",
+                            "admitted": 2,
+                            "case_aggregates": {
+                                "case-1": {"keep_rate": 1.0},
+                                "case-2": {"keep_rate": 0.0},
+                            },
+                        }],
+                    },
+                )
+                continuous_runner.LEDGER.write_text(
+                    '{"model":"model-a","bandit_reward":1}\n'
+                    '{"model":"model-a","bandit_reward":0}\n',
+                    encoding="utf-8",
+                )
+                row = continuous_runner.model_bandit_snapshot()[0]
+                self.assertEqual(row["online_visits"], 2)
+                self.assertEqual(row["online_successes"], 1)
+                self.assertEqual(row["posterior_alpha"], 3.0)
+                self.assertEqual(row["posterior_beta"], 3.0)
+                self.assertAlmostEqual(row["posterior_keeper_probability"], 0.5)
+        finally:
+            continuous_runner.TOURNAMENT_STATE = old_state
+            continuous_runner.LEDGER = old_ledger
+
+    def test_thompson_router_is_reproducible_but_explores(self):
+        candidates = [
+            {
+                "model": "model-a",
+                "posterior_alpha": 2.0,
+                "posterior_beta": 2.0,
+                "posterior_keeper_probability": 0.5,
+            },
+            {
+                "model": "model-b",
+                "posterior_alpha": 2.0,
+                "posterior_beta": 2.0,
+                "posterior_keeper_probability": 0.5,
+            },
+        ]
+        tracks = continuous_runner.build_tracks()[:40]
+        with mock.patch.object(
+            continuous_runner, "model_bandit_snapshot", return_value=candidates
+        ):
+            first = continuous_runner.select_research_model(tracks[0], "auto", 0)
+            second = continuous_runner.select_research_model(tracks[0], "auto", 0)
+            self.assertEqual(first, second)
+            chosen = {
+                continuous_runner.select_research_model(track, "auto", i % 3)
+                for i, track in enumerate(tracks)
+            }
+            self.assertEqual(chosen, {"model-a", "model-b"})
+
+
 
     def test_pbo_diagnostic_stays_in_probability_bounds(self):
         # Strategies alternate between excellent and poor halves, a pattern
@@ -654,9 +759,31 @@ class MoonStrategy:
 
 
     def test_provisional_tournament_cannot_steer_model_selection(self):
-        src = (Path(__file__).resolve().parent / "continuous_runner.py").read_text(encoding="utf-8")
-        self.assertIn('if payload.get("provisional"):', src)
-        self.assertIn('return []', src[src.index('if payload.get("provisional"):'):])
+        old = continuous_runner.TOURNAMENT_STATE
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                p = Path(td) / "tournament.json"
+                continuous_runner.TOURNAMENT_STATE = p
+                continuous_runner.save_json(
+                    p,
+                    {
+                        "protocol": continuous_runner.PROTOCOL,
+                        "provisional": True,
+                        "ranking": [{
+                            "provider": "nvidia",
+                            "model": "should-not-run",
+                            "admitted": 99,
+                            "case_aggregates": {"x": {"keep_rate": 1.0}},
+                        }],
+                    },
+                )
+                track = continuous_runner.build_tracks()[0]
+                self.assertEqual(
+                    continuous_runner.select_research_model(track, "auto", 0),
+                    continuous_runner.DEFAULT_MODEL,
+                )
+        finally:
+            continuous_runner.TOURNAMENT_STATE = old
 
     def test_paired_fold_improvement_requires_matching_chronology(self):
         base = {"folds": [
