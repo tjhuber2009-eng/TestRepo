@@ -69,11 +69,12 @@ for pname,syms in PORTS.items():
         sim_eq=np.cumprod(sampled,axis=1)
         peaks=np.maximum.accumulate(sim_eq,axis=1)
         mdd=(sim_eq/peaks-1).min(axis=1)*100
+        loss=-mdd
         rows.append({"portfolio":pname,"scalar_pct":scalar_pct,"cagr_pct":cagr,"historical_dd_pct":hdd,
-                     "bootstrap_dd_p50_pct":-float(np.percentile(mdd,50)),
-                     "bootstrap_dd_p90_pct":-float(np.percentile(mdd,90)),
-                     "bootstrap_dd_p95_pct":-float(np.percentile(mdd,95)),
-                     "bootstrap_dd_p99_pct":-float(np.percentile(mdd,99))})
+                     "bootstrap_dd_p50_pct":float(np.percentile(loss,50)),
+                     "bootstrap_dd_p90_pct":float(np.percentile(loss,90)),
+                     "bootstrap_dd_p95_pct":float(np.percentile(loss,95)),
+                     "bootstrap_dd_p99_pct":float(np.percentile(loss,99))})
 g=pd.DataFrame(rows); g.to_csv(OUT/"bootstrap_candidate_grid.csv",index=False)
 front=[]
 for ceiling in range(3,61):
