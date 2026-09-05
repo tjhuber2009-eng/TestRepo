@@ -10,6 +10,7 @@ from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, paret
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
+from v4.live_bootstrap import read_market_csv
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
@@ -59,6 +60,22 @@ class V4AlphaGenerationTests(unittest.TestCase):
         feat = store.by_asset["QQQ"]
         self.assertTrue(np.isnan(feat.iloc[0]["ctx_risk__vix"]))
         self.assertEqual(feat.iloc[10]["ctx_risk__vix"], 9.0)
+
+    def test_daily_loader_normalizes_provider_timestamps_to_calendar_dates(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "daily.csv"
+            p.write_text(
+                "Date,Open,High,Low,Close,Volume\n"
+                "2020-01-02T14:30:00+00:00,100,102,99,101,1000\n"
+                "2020-01-03T00:00:00+00:00,101,103,100,102,1100\n",
+                encoding="utf-8",
+            )
+            x = read_market_csv(p)
+            self.assertEqual(list(x.index), [
+                pd.Timestamp("2020-01-02"),
+                pd.Timestamp("2020-01-03"),
+            ])
+            self.assertIsNone(x.index.tz)
 
     def test_feature_store_accepts_named_date_indexes(self):
         data = synthetic_daily_market(bars=300)
