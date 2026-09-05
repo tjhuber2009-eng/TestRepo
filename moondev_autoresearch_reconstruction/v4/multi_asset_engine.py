@@ -12,7 +12,7 @@ from typing import Callable, Mapping
 import numpy as np
 import pandas as pd
 
-from .alpha_objective import AlphaMetrics, RiskPolicy, hard_gate, metrics_from_equity
+from .alpha_objective import AlphaMetrics, RiskPolicy, cagr_pct_from_equity, hard_gate, metrics_from_equity
 
 
 @dataclass(frozen=True)
@@ -152,6 +152,7 @@ class MultiAssetBacktester:
         num_trials: int = 1,
         pbo: float | None = None,
         cost_multiplier: float = 1.0,
+        cost_stress_multiplier: float | None = None,
         trade_event_count: int | None = None,
     ) -> MultiAssetResult:
         raw = strategy(self.data, features)
@@ -165,20 +166,22 @@ class MultiAssetBacktester:
 
         delta = exec_w.diff().fillna(exec_w)
         turnover = delta.abs().sum(axis=1)
-        cost_series = pd.Series(0.0, index=self.index)
+        transaction_cost = pd.Series(0.0, index=self.index)
         for symbol in self.symbols:
-            cost_series += (
+            transaction_cost += (
                 delta[symbol].abs()
                 * self.costs[symbol].one_way_fraction
-                * float(cost_multiplier)
             )
         gross = exec_w.abs().sum(axis=1)
         borrowed = (gross - 1.0).clip(lower=0.0)
+        borrow_cost = pd.Series(0.0, index=self.index)
         if any(self.costs[s].borrow_bps_per_year for s in self.symbols):
             bps = max(self.costs[s].borrow_bps_per_year for s in self.symbols)
-            cost_series += borrowed * (bps / 10_000.0) / self.periods_per_year
+            borrow_cost += borrowed * (bps / 10_000.0) / self.periods_per_year
 
-        portfolio_ret = (exec_w * asset_ret).sum(axis=1) - cost_series
+        cost_series = transaction_cost * float(cost_multiplier) + borrow_cost
+        gross_pnl = (exec_w * asset_ret).sum(axis=1)
+        portfolio_ret = gross_pnl - cost_series
         portfolio_ret = portfolio_ret.iloc[:-1]
         exec_w = exec_w.loc[portfolio_ret.index]
         targets = targets.loc[portfolio_ret.index]
@@ -196,6 +199,16 @@ class MultiAssetBacktester:
         trades = int(trade_event_count if trade_event_count is not None else (delta.abs().sum(axis=1) > 1e-12).sum())
         turn_per_year = float(turnover.sum() / max(years, 1e-12)) if years > 0 else float("nan")
         mean_gross = float(gross.mean()) if len(gross) else 0.0
+        stress_cagr = None
+        if cost_stress_multiplier is not None:
+            stress_cost = (
+                transaction_cost.loc[portfolio_ret.index] * float(cost_stress_multiplier)
+                + borrow_cost.loc[portfolio_ret.index]
+            )
+            stress_ret = gross_pnl.loc[portfolio_ret.index] - stress_cost
+            stress_equity = self.starting_equity * (1.0 + stress_ret).cumprod()
+            stress_cagr = cagr_pct_from_equity(stress_equity.to_numpy(), years)
+
         metrics = metrics_from_equity(
             equity.to_numpy(),
             portfolio_ret.to_numpy(),
@@ -206,6 +219,7 @@ class MultiAssetBacktester:
             pbo=pbo,
             turnover_per_year=turn_per_year,
             gross_exposure=mean_gross,
+            cost_stress_cagr_pct=stress_cagr,
         )
         if risk_policy is None:
             gate_ok, reasons = True, []
