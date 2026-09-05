@@ -6,7 +6,7 @@ on:
     paths: ["catalogmirror/**", ".github/workflows/catalogmirror-ci.yml"]
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: catalogmirror-${{ github.ref }}
@@ -47,6 +47,8 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
+      - name: Refresh lockfile for SDK upgrade
+        run: npm install --package-lock-only --ignore-scripts
       - run: npm ci
       - name: Dependency audit
         run: npm audit --audit-level=low
@@ -82,3 +84,13 @@ jobs:
           trap - EXIT
       - name: Build production Docker image
         run: docker build -t catalogmirror-ci .
+      - name: Commit refreshed lockfile
+        if: github.event_name == 'push' && github.ref_name == 'catalogmirror-hardening-v2'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Lock patched Shopify SDK dependencies"
+            git push
+          fi
