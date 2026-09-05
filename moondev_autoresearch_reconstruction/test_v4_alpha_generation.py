@@ -728,6 +728,9 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(FTMO_2STEP.challenge_fee_refundable_with_first_reward)
         self.assertTrue(longer.challenge_fee_refundable_with_first_reward)
         self.assertFalse(FTMO_1STEP.challenge_fee_refundable_with_first_reward)
+        self.assertTrue(FTMO_2STEP.reward_rollover_supported)
+        self.assertTrue(longer.reward_rollover_supported)
+        self.assertFalse(FTMO_1STEP.reward_rollover_supported)
         self.assertEqual(
             FTMO_2STEP.challenge.analysis_horizon_days,
             252,
