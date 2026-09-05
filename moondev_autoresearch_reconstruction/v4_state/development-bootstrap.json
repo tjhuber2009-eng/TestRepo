@@ -12403,7 +12403,7 @@
         "worst_score": -3.636685761722702
       },
       {
-        "adjusted_score": 9.837967942446195,
+        "adjusted_score": 9.806508163307882,
         "fold_scores": [
           21.54530486501569,
           5.646336571268851,
@@ -12424,7 +12424,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 16.15461703232814,
+        "plateau_score": 16.049751101867095,
         "primary_score": 14.799434469041728,
         "score_std": 15.1483133876243,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -12683,7 +12683,7 @@
         "worst_score": -2.685224606061154
       },
       {
-        "adjusted_score": 8.622433618566433,
+        "adjusted_score": 8.526787877264377,
         "fold_scores": [
           13.230842854895819,
           7.143423026575024,
@@ -12704,7 +12704,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 14.369981131323804,
+        "plateau_score": 14.05116199365029,
         "primary_score": 14.277582400344047,
         "score_std": 14.863326870309434,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -21037,7 +21037,7 @@
       "gross_exposure": 0.9024925363279448,
       "max_dd_pct": -17.292203507758387,
       "score": 16.18178187710505,
-      "sharpe": 1.0805640230289826,
+      "sharpe": 1.0805640230289828,
       "weights": {
         "cash_rotation_risk_budgeted": 0.0022245923798104284,
         "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21053,7 +21053,7 @@
     "max_gross": 1.5,
     "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
   },
-  "portfolio_authoritative_concentration_cap": 0.65,
+  "portfolio_authoritative_concentration_cap": 0.55,
   "portfolio_concentration_sensitivity": {
     "0.50": {
       "candidates_evaluated": 1000,
@@ -21066,7 +21066,7 @@
         "gross_exposure": 0.7775924788539519,
         "max_dd_pct": -16.346811898542658,
         "score": 15.864395423773308,
-        "sharpe": 1.070208501908635,
+        "sharpe": 1.0702085019086347,
         "weights": {
           "cash_rotation_risk_budgeted": 0.009315446914387892,
           "cash_rotation_vix_stress": 0.0411487227259109,
@@ -21075,6 +21075,33 @@
           "rotation_risk_budgeted": 0.0010724573485939675,
           "rotation_sma_hysteresis": 0.2704508945458123,
           "rotation_walkforward_meta_filter": 0.08172747361544652
+        }
+      },
+      "dd_cap_pct": 32.0,
+      "feasible_count": 1000,
+      "max_gross": 1.5,
+      "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+    },
+    "0.55": {
+      "candidates_evaluated": 1000,
+      "chosen": {
+        "bootstrap_dd_q95_pct": 31.965032580552776,
+        "bootstrap_median_cagr_pct": 16.133215697842253,
+        "cagr_pct": 15.586973304768858,
+        "cash_weight": 0.0975074636720552,
+        "effective_n": 2.6954898802218303,
+        "gross_exposure": 0.9024925363279448,
+        "max_dd_pct": -17.292203507758387,
+        "score": 16.18178187710505,
+        "sharpe": 1.0805640230289828,
+        "weights": {
+          "cash_rotation_risk_budgeted": 0.0022245923798104284,
+          "cash_rotation_vix_stress": 0.03587022293645198,
+          "defensive_rotation_risk_budgeted": 0.0035049629817297226,
+          "long_history_cross_asset_trend": 0.4938928180002872,
+          "rotation_risk_budgeted": 0.1100566909488033,
+          "rotation_sma_hysteresis": 0.20532318608368244,
+          "rotation_walkforward_meta_filter": 0.0516200629971797
         }
       },
       "dd_cap_pct": 32.0,
@@ -21093,7 +21120,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289826,
+        "sharpe": 1.0805640230289828,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21120,7 +21147,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289826,
+        "sharpe": 1.0805640230289828,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
