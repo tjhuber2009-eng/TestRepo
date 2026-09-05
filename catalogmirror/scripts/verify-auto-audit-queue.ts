@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import db from "../app/db.server.ts";
-import { enqueueAutoAuditTask, syncPendingAuditCount } from "../app/lib/webhook.server.ts";
+import { enqueueAutoAuditTask, syncPendingAuditCount } from "../app/lib/auto-audit-queue.server.ts";
 
 const shop = "catalogmirror-ci-queue.myshopify.com";
 
