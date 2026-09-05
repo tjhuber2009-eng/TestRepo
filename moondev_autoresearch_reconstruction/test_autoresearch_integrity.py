@@ -653,6 +653,11 @@ class MoonStrategy:
                     os.environ[k] = v
 
 
+    def test_provisional_tournament_cannot_steer_model_selection(self):
+        src = (ROOT / "continuous_runner.py").read_text(encoding="utf-8")
+        self.assertIn('if payload.get("provisional"):', src)
+        self.assertIn('return []', src[src.index('if payload.get("provisional"):'):])
+
     def test_paired_fold_improvement_requires_matching_chronology(self):
         base = {"folds": [
             {"name":"Y1","raw_k":0.1},
