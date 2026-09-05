@@ -23,6 +23,12 @@ export default function About() {
         </s-paragraph>
       </s-section>
 
+      <s-section heading="Automatic monitoring">
+        <s-paragraph>
+          Product and inventory webhooks are stored as durable, debounced verification tasks. Product changes are rechecked directly; inventory changes are mapped back to their Shopify product before verification. Queue generation checks preserve newer webhooks that arrive while an older audit is running, and renewable leases let another process recover work after a crash.
+        </s-paragraph>
+      </s-section>
+
       <s-section heading="Data use">
         <s-paragraph>
           CatalogMirror requests read-only product and inventory access. It does not modify products, prices, inventory, orders, customers, themes, or storefront code. Customer privacy webhooks are authenticated; no customer records are stored by the app.
