@@ -12,7 +12,7 @@ from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, paret
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
-from v4.live_bootstrap import json_safe, read_market_csv
+from v4.live_bootstrap import json_safe, read_market_csv, select_portfolio_history_cohort
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import (
@@ -364,6 +364,24 @@ class V4AlphaGenerationTests(unittest.TestCase):
         result = opt.optimize(evaluator, frozen_structure="S")
         self.assertEqual(result.chosen.params["x"], 2)
         self.assertEqual(result.chosen.primary_score, 20.0)
+
+    def test_portfolio_history_cohort_excludes_short_history_from_core(self):
+        idx = pd.date_range("2010-01-01", periods=2600, freq="B")
+        long_a = pd.Series(0.001, index=idx)
+        long_b = pd.Series(0.0005, index=idx)
+        short = pd.Series(0.002, index=idx[-800:])
+        core, meta = select_portfolio_history_cohort({
+            "long_a": long_a,
+            "long_b": long_b,
+            "short_crypto": short,
+        })
+        self.assertEqual(set(core), {"long_a", "long_b"})
+        self.assertEqual(
+            meta["supplemental_strategy_names"],
+            ["short_crypto"],
+        )
+        self.assertGreater(meta["core_min_years"], 8.0)
+        self.assertLess(meta["history"]["short_crypto"]["years"], 4.0)
 
     def test_portfolio_optimizer_can_choose_diversification(self):
         rng = np.random.default_rng(4)
