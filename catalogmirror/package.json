@@ -1,6 +1,6 @@
 {
   "name": "catalogmirror",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "engines": {"node": ">=20.19 <22 || >=22.12"},
@@ -12,6 +12,7 @@
     "setup": "prisma generate && prisma migrate deploy",
     "docker-start": "npm run setup && npm run start",
     "typecheck": "react-router typegen && tsc --noEmit",
+    "audit": "npm audit",
     "prisma": "prisma",
     "shopify": "shopify"
   },
@@ -38,5 +39,9 @@
     "@types/react-dom": "^18.3.7",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.1",
+    "qs": "^6.16.0"
   }
 }
