@@ -65,7 +65,7 @@ def test_forward_marker_rejects_preexisting_signal_ledger(tmp_path):
         '{"kind":"signal"}\n',
         encoding="utf-8",
     )
-    with pytest.raises(RuntimeError, match="pre-existing forward ledger"):
+    with pytest.raises(RuntimeError, match="pre-existing forward data"):
         create_forward_marker(root)
 
 
