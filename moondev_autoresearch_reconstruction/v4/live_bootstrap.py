@@ -22,6 +22,7 @@ from .parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from .portfolio_optimizer import RobustPortfolioOptimizer
 from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, vix_stress_overlay, volatility_target_overlay
 from .selection_diagnostics import optimizer_pbo
+from .continuous_bridge import replay_private_promotions
 from .strategy_examples import (
     cross_sectional_momentum_rotation,
     independent_trend_basket,
@@ -1243,6 +1244,20 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             trend_optimized.returns
         )
 
+    # Continuous AUTORESEARCH is the breadth/depth idea generator. Re-evaluate
+    # its strongest diversified private champions on the v4 development data
+    # and fail closed on PBO before allowing any of them into the authoritative
+    # portfolio. This keeps discovery continuous without letting adaptive
+    # headline winners silently bypass v4 evidence gates.
+    continuous_eligible, continuous_private_transfer = (
+        replay_private_promotions(
+            data,
+            max_dd_pct=private.max_dd_pct,
+            cost_stress_multiplier=cost_stress,
+        )
+    )
+    eligible_returns.update(continuous_eligible)
+
     portfolio = None
     portfolio_concentration_sensitivity = {}
     portfolio_core_returns, portfolio_history_policy = (
@@ -1404,6 +1419,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             for cap, result in portfolio_concentration_sensitivity.items()
         },
         "portfolio_history_policy": portfolio_history_policy,
+        "continuous_private_transfer": continuous_private_transfer,
         "eligible_strategy_names": sorted(eligible_returns),
     }
     safe = json_safe(payload)
