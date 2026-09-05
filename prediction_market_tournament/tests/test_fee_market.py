@@ -14,6 +14,9 @@ def test_market_fee_curve_uses_fd(monkeypatch):
         "get_clob_market_info",
         lambda _: {
             "mos": 5,
+            "mts": 0.01,
+            "itode": False,
+            "oas": 0,
             "fd": {"r": 0.07, "e": 1, "to": True},
         },
     )
@@ -124,3 +127,21 @@ def test_fee_enabled_quote_treats_budget_as_all_in_cash():
 def test_server_time_adapter_validates_positive_timestamp(monkeypatch):
     monkeypatch.setattr(pm, "_get_json", lambda _: 1788620000)
     assert pm.get_server_time() == 1788620000.0
+
+
+def test_market_execution_rules_exposes_taker_delay(monkeypatch):
+    monkeypatch.setattr(
+        pm,
+        "get_clob_market_info",
+        lambda _: {
+            "mos": 5,
+            "mts": 0.01,
+            "itode": True,
+            "oas": 3,
+            "fd": {"r": 0.02, "e": 2, "to": True},
+        },
+    )
+    rules = pm.market_execution_rules("0xabc")
+    assert rules.taker_order_delay_enabled is True
+    assert rules.min_order_age_seconds == 3
+    assert rules.tick_size == 0.01
