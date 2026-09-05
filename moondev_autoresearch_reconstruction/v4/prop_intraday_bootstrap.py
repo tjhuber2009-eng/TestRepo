@@ -43,15 +43,24 @@ def read_hourly(path: Path) -> pd.DataFrame:
 
 
 def load_data(root: Path) -> dict[str, pd.DataFrame]:
-    mapping = {"BTCUSDT": "btc_1h.csv", "ETHUSDT": "eth_1h.csv"}
+    mapping = {
+        "BTCUSDT": "btc_1h.csv",
+        "ETHUSDT": "eth_1h.csv",
+        "BNBUSDT": "bnb_1h.csv",
+        "LTCUSDT": "ltc_1h.csv",
+    }
+    required = {"BTCUSDT", "ETHUSDT"}
     out = {}
     for symbol, name in mapping.items():
         p = root / name
-        if not p.exists():
+        if p.exists():
+            out[symbol] = read_hourly(p)
+        elif symbol in required:
             raise FileNotFoundError(p)
-        out[symbol] = read_hourly(p)
-    common = out["BTCUSDT"].index.intersection(out["ETHUSDT"].index)
-    if len(common) < 24 * 300:
+    common = None
+    for frame in out.values():
+        common = frame.index if common is None else common.intersection(frame.index)
+    if common is None or len(common) < 24 * 300:
         raise RuntimeError("insufficient common hourly history")
     return {s: x.loc[common].copy() for s, x in out.items()}
 
@@ -209,7 +218,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         {"lookback": lb, "trend": tr, "top_k": k}
         for lb in (24, 72, 168, 336)
         for tr in (168, 336, 720)
-        for k in (1, 2)
+        for k in (1, 2, 3)
     ]
 
     programs = [FTMO_2STEP, FTMO_1STEP]
@@ -277,16 +286,17 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "reset_timezone": PRAGUE,
         "policy": "force flat for execution at each Prague midnight reset",
         "market_mapping": {
-            "BTCUSDT": {
+            symbol: {
                 "research_source": "Binance spot 1h, monthly archive checksums verified",
-                "intended_prop_symbol": "BTCUSD",
+                "intended_prop_symbol": {
+                    "BTCUSDT": "BTCUSD",
+                    "ETHUSDT": "ETHUSD",
+                    "BNBUSDT": "BNBUSD",
+                    "LTCUSDT": "LTCUSD",
+                }[symbol],
                 "venue_execution_verified": False,
-            },
-            "ETHUSDT": {
-                "research_source": "Binance spot 1h, monthly archive checksums verified",
-                "intended_prop_symbol": "ETHUSD",
-                "venue_execution_verified": False,
-            },
+            }
+            for symbol in sorted(data)
         },
         "deployment_blockers": [
             "FTMO CFD tick/spread/slippage history still differs from Binance spot",
