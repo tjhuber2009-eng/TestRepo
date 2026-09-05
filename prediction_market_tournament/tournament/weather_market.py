@@ -5,10 +5,18 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
-from .adapters.open_meteo import bracket_probability, fetch_temperature_ensemble, member_daily_extremes
+from .adapters.open_meteo import (
+    bracket_probability,
+    fetch_temperature_ensemble,
+    member_daily_extremes,
+)
 from .adapters.aviation import station_coordinates
-from .adapters.polymarket import best_ask, get_book, parse_jsonish_list
-from .fees import FEE_RATES
+from .adapters.polymarket import (
+    best_ask,
+    get_book,
+    market_fee_curve,
+    parse_jsonish_list,
+)
 from .lanes import weather_ensemble_decision
 from .models import Signal
 
@@ -37,18 +45,41 @@ def parse_temperature_bracket(question: str) -> TemperatureBracket:
     if not kind:
         raise ValueError(f"could not infer max/min from: {question}")
 
-    m = re.search(r"(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\b", q, re.I)
+    m = re.search(
+        r"(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\b",
+        q,
+        re.I,
+    )
     if m:
-        return TemperatureBracket(kind, m.group(3).upper(), float(m.group(1)), float(m.group(2)))
+        return TemperatureBracket(
+            kind,
+            m.group(3).upper(),
+            float(m.group(1)),
+            float(m.group(2)),
+        )
 
-    m = re.search(r"(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\s+or\s+(below|lower|less)", q, re.I)
+    m = re.search(
+        r"(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\s+or\s+(below|lower|less)",
+        q,
+        re.I,
+    )
     if m:
-        return TemperatureBracket(kind, m.group(2).upper(), None, float(m.group(1)))
-    m = re.search(r"(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\s+or\s+(above|higher|more)", q, re.I)
+        return TemperatureBracket(
+            kind, m.group(2).upper(), None, float(m.group(1))
+        )
+    m = re.search(
+        r"(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\s+or\s+(above|higher|more)",
+        q,
+        re.I,
+    )
     if m:
-        return TemperatureBracket(kind, m.group(2).upper(), float(m.group(1)), None)
+        return TemperatureBracket(
+            kind, m.group(2).upper(), float(m.group(1)), None
+        )
 
-    m = re.search(r"\b(?:be|is)\s+(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\b", q, re.I)
+    m = re.search(
+        r"\b(?:be|is)\s+(-?\d+(?:\.\d+)?)\s*°?\s*([FC])\b", q, re.I
+    )
     if m:
         x = float(m.group(1))
         return TemperatureBracket(kind, m.group(2).upper(), x, x)
@@ -80,7 +111,9 @@ def weather_signal_from_market(
     if observed_at.tzinfo is None:
         raise ValueError("observed_at must be timezone-aware")
 
-    bracket = parse_temperature_bracket(str(market.get("question") or ""))
+    bracket = parse_temperature_bracket(
+        str(market.get("question") or "")
+    )
     station = extract_station_code(
         str(event.get("description") or ""),
         str(event.get("resolutionSource") or ""),
@@ -90,24 +123,44 @@ def weather_signal_from_market(
     lat, lon = station_coordinates(station)
     unit = "fahrenheit" if bracket.unit == "F" else "celsius"
     payload = fetch_temperature_ensemble(
-        lat, lon, target_date, model=model, unit=unit, timezone="auto"
+        lat,
+        lon,
+        target_date,
+        model=model,
+        unit=unit,
+        timezone="auto",
     )
     values = member_daily_extremes(payload, kind=bracket.kind)
-    fair = bracket_probability(values, lower=bracket.lower, upper=bracket.upper)
+    fair = bracket_probability(
+        values, lower=bracket.lower, upper=bracket.upper
+    )
 
     token = yes_token_id(market)
     ask = best_ask(get_book(token))
     if ask is None:
         return None
 
+    condition_id = str(market.get("conditionId") or "").strip()
+    if not condition_id:
+        raise ValueError(
+            "conditionId missing; cannot obtain authoritative market fee curve"
+        )
+    fee_rate, fee_exponent = market_fee_curve(condition_id)
     decision = weather_ensemble_decision(
-        fair, ask, fee_rate=FEE_RATES["weather"], min_edge=min_edge
+        fair,
+        ask,
+        fee_rate=fee_rate,
+        fee_exponent=fee_exponent,
+        min_edge=min_edge,
     )
     if not decision.trade:
         return None
 
-    market_id = str(market.get("id") or market.get("conditionId") or token)
-    raw = f"weather|{market_id}|{observed_at.astimezone(timezone.utc).isoformat()}"
+    market_id = str(market.get("id") or condition_id or token)
+    raw = (
+        f"weather|{market_id}|"
+        f"{observed_at.astimezone(timezone.utc).isoformat()}"
+    )
     signal_id = hashlib.sha256(raw.encode()).hexdigest()[:24]
     return Signal(
         signal_id=signal_id,
@@ -119,9 +172,16 @@ def weather_signal_from_market(
         fair_probability=fair,
         order_mode="taker",
         size_usd=1.0,
-        fee_rate=FEE_RATES["weather"],
+        fee_rate=fee_rate,
+        fee_exponent=fee_exponent,
         notes=(
             f"station={station}; model={model}; {bracket.kind} "
             f"{bracket.lower}..{bracket.upper}{bracket.unit}; n={len(values)}"
         ),
+        metadata={
+            "condition_id": condition_id,
+            "yes_token_id": token,
+            "station": station,
+            "fee_source": "clob-market-info.fd",
+        },
     )
