@@ -46,9 +46,18 @@ test("variant matching prefers the Shopify variant ID", () => {
   assert.equal(String(match.variant?.id), "123");
 });
 
-test("duplicate SKU fallback is treated as ambiguous", () => {
+test("known Shopify variant IDs never fall back to a different SKU match", () => {
+  const match = matchStorefrontVariant(baseVariant, [
+    { id: 999, title: "Large", sku: "SKU-L", price: 1999, available: true },
+  ]);
+  assert.equal(match.strategy, "ID");
+  assert.equal(match.variant, null);
+  assert.equal(match.ambiguous, false);
+});
+
+test("duplicate SKU fallback is treated as ambiguous when an ID cannot be parsed", () => {
   const match = matchStorefrontVariant(
-    { ...baseVariant, id: "gid://shopify/ProductVariant/999" },
+    { ...baseVariant, id: "not-a-shopify-gid" },
     [
       { id: 1, title: "One", sku: "SKU-L", price: 1999, available: true },
       { id: 2, title: "Two", sku: "SKU-L", price: 1999, available: true },
