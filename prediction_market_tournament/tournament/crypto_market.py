@@ -125,7 +125,7 @@ def crypto_signal_from_market(
     raw_points: list[tuple[float, float]],
     window_start_ms: float,
     lane_cfg: dict,
-    size_usd: float,
+    cash_budget_usd: float,
     observed_at: datetime | None = None,
 ) -> Signal | None:
     """Evaluate one frozen BTC 5m checkpoint from causal raw data.
@@ -230,7 +230,7 @@ def crypto_signal_from_market(
     ):
         quote = market_buy_quote(
             books[side],
-            size_usd,
+            cash_budget_usd,
             fee_rate=execution.fee_rate,
             fee_exponent=execution.fee_exponent,
             min_order_shares=execution.min_order_shares,
