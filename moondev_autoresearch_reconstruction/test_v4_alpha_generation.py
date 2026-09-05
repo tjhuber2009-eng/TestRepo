@@ -169,15 +169,58 @@ class V4AlphaGenerationTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             opt.optimize(lambda p:{"fold_scores":[1,1],"gate_ok":True,"structural_fingerprint":"CHANGED"}, frozen_structure="S")
 
+    def test_parameter_optimizer_prioritizes_primary_score_after_gate(self):
+        opt = StableParameterOptimizer(
+            [ParameterSpec("x", (1, 2, 3))],
+            max_trials=5,
+            plateau_neighbors=1,
+        )
+        def evaluator(p):
+            return {
+                "fold_scores": [100.0, 100.0, 100.0] if p["x"] == 1 else [10.0, 10.0, 10.0],
+                "primary_score": {1: 5.0, 2: 20.0, 3: 15.0}[p["x"]],
+                "gate_ok": True,
+                "structural_fingerprint": "S",
+            }
+        result = opt.optimize(evaluator, frozen_structure="S")
+        self.assertEqual(result.chosen.params["x"], 2)
+        self.assertEqual(result.chosen.primary_score, 20.0)
+
     def test_portfolio_optimizer_can_choose_diversification(self):
         rng = np.random.default_rng(4)
         a = rng.normal(0.0007,0.015,500)
         b = -0.5*a + rng.normal(0.0007,0.010,500)
         ret = pd.DataFrame({"A":a,"B":b})
-        result = RobustPortfolioOptimizer(dd_cap_pct=35, n_candidates=300, bootstrap_reps=30, max_weight=1.0, seed=2).optimize(ret)
+        result = RobustPortfolioOptimizer(
+            dd_cap_pct=35,
+            n_candidates=300,
+            bootstrap_reps=30,
+            max_weight=1.0,
+            max_gross=1.5,
+            seed=2,
+        ).optimize(ret)
         self.assertIsNotNone(result.chosen)
         self.assertLessEqual(result.chosen.bootstrap_dd_q95_pct, 35)
+        self.assertLessEqual(result.chosen.gross_exposure, 1.5 + 1e-12)
         self.assertGreaterEqual(result.chosen.effective_n, 1.0)
+
+    def test_portfolio_optimizer_uses_cash_when_full_investment_breaks_dd_cap(self):
+        rng = np.random.default_rng(12)
+        r = rng.normal(0.0010, 0.03, 600)
+        ret = pd.DataFrame({"volatile_alpha": r})
+        result = RobustPortfolioOptimizer(
+            dd_cap_pct=20,
+            n_candidates=1,
+            bootstrap_reps=40,
+            max_weight=1.0,
+            max_gross=1.0,
+            min_gross=0.05,
+            seed=9,
+        ).optimize(ret)
+        self.assertIsNotNone(result.chosen)
+        self.assertLess(result.chosen.gross_exposure, 1.0)
+        self.assertGreater(result.chosen.cash_weight, 0.0)
+        self.assertLessEqual(result.chosen.bootstrap_dd_q95_pct, 20)
 
     def test_motif_transfer_reuses_successful_knowledge(self):
         planner = MotifTransferPlanner([
