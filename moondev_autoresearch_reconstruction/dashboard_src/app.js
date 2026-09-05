@@ -17,13 +17,17 @@ const stateClass=(status,conclusion)=>{
 async function load(){
   const alert=$("#alertBar");
   try{
-    const r=await fetch("data.json",{cache:"no-store"});
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    DATA=await r.json();
+    if(window.__AUTORESEARCH_DATA__){
+      DATA=window.__AUTORESEARCH_DATA__;
+    }else{
+      const r=await fetch("data.json",{cache:"no-store"});
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      DATA=await r.json();
+    }
     render();
     alert.classList.add("hidden");
   }catch(e){
-    alert.textContent=`Dashboard data could not be loaded: ${e.message}. Open through a local web server rather than file:// if your browser blocks local fetch.`;
+    alert.textContent=`Dashboard data could not be loaded: ${e.message}. Use dashboard.html for a self-contained local copy.`;
     alert.classList.remove("hidden");
   }
 }
