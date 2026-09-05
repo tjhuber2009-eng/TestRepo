@@ -571,7 +571,9 @@ def save_track_state(track, track_dir, reason=""):
 def append_cycle(record):
     STATE.mkdir(parents=True, exist_ok=True)
     with LEDGER.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(record, sort_keys=True) + "\n")
+        f.write(
+            json.dumps(json_safe(record), sort_keys=True, allow_nan=False) + "\n"
+        )
 
 
 def discard_stale_track_state(track_dir):
@@ -633,6 +635,9 @@ def reset_stale_protocol_state():
         marker = STATE / "ALL_RUNNABLE_TRACKS_TERMINAL"
         if marker.exists():
             marker.unlink()
+        legacy_first_pass = STATE / "first_pass_progress.json"
+        if legacy_first_pass.exists():
+            legacy_first_pass.unlink()
         stale_dashboard = STATE / "dashboard"
         if stale_dashboard.exists():
             shutil.rmtree(stale_dashboard)
