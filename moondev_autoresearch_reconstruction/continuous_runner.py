@@ -150,26 +150,36 @@ def write_cursor(index, total):
 def result_counts_at(path):
     path = Path(path)
     counts = {
-        "attempts": 0, "valid": 0, "kept": 0, "rejected": 0,
+        "attempts": 0, "valid": 0, "backtested": 0,
+        "guard_passed": 0, "kept": 0, "rejected": 0,
         "crashes": 0, "duplicates": 0, "parameter_only": 0, "too_broad": 0,
         "risk_control_change": 0,
     }
     if not path.exists():
         return counts
     with path.open(encoding="utf-8") as f:
-        next(f, None)
+        header_line = next(f, "").rstrip("\n")
+        header = header_line.split("\t") if header_line else []
+        index = {name: i for i, name in enumerate(header)}
         for line in f:
             parts = line.rstrip("\n").split("\t")
             if len(parts) < 3:
                 continue
             counts["attempts"] += 1
-            verdict = parts[2]
+            verdict = parts[index.get("verdict", 2)]
             if verdict == "KEPT":
                 counts["kept"] += 1
                 counts["valid"] += 1
+                counts["backtested"] += 1
+                counts["guard_passed"] += 1
             elif verdict == "REJECTED":
                 counts["rejected"] += 1
                 counts["valid"] += 1
+                counts["backtested"] += 1
+                reason_i = index.get("guard")
+                reason = parts[reason_i] if reason_i is not None and reason_i < len(parts) else ""
+                if not str(reason).startswith("guard:"):
+                    counts["guard_passed"] += 1
             elif verdict == "CRASH":
                 counts["crashes"] += 1
             elif verdict == "DUPLICATE":
@@ -942,7 +952,8 @@ def write_progress(
         "validation_pass": 0, "validation_fail": 0,
         "searching": 0,
     }
-    total_valid = total_attempts = total_crashes = total_duplicates = total_parameter_only = total_too_broad = total_risk_changes = 0
+    total_valid = total_attempts = total_guard_passed = total_kept = 0
+    total_crashes = total_duplicates = total_parameter_only = total_too_broad = total_risk_changes = 0
 
     selections = load_json(SELECTIONS) if SELECTIONS.exists() else {}
     depth_ids = set(selections.get("depth_ids", []))
@@ -953,6 +964,8 @@ def write_progress(
         rc = track_counts(track)
         total_valid += rc["valid"]
         total_attempts += rc["attempts"]
+        total_guard_passed += rc.get("guard_passed", 0)
+        total_kept += rc.get("kept", 0)
         total_crashes += rc["crashes"]
         total_duplicates += rc["duplicates"]
         total_parameter_only += rc["parameter_only"]
@@ -1030,6 +1043,8 @@ def write_progress(
         "searching_count": counts["searching"],
         "total_valid_candidates": total_valid,
         "total_model_attempt_rows": total_attempts,
+        "total_guard_passed_candidates": total_guard_passed,
+        "total_kept_candidates": total_kept,
         "total_crashes": total_crashes,
         "total_duplicates": total_duplicates,
         "total_parameter_only": total_parameter_only,
