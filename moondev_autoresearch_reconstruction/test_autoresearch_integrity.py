@@ -272,6 +272,46 @@ class MoonStrategy:
             out["sortino_annualized"], expected_per_bar * 2.0, places=12
         )
 
+    def test_config_records_sign_safe_k_definition(self):
+        self.assertEqual(
+            self.config["protocol"]["score_definition"],
+            "sign_safe_annualized_log_growth_x_sharpe_robust_v3",
+        )
+
+    def test_cscv_loader_uses_only_selection_eligible_fixed_slices(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "experiments.jsonl"
+            rows = []
+            for i in range(7):
+                rows.append({
+                    "candidate_ast_sha256": f"c{i}",
+                    "selection_eligible": i < 5,
+                    "cscv_slice_k": [0.01 * (i + j) for j in range(8)],
+                    "fold_raw_k": [999.0] * 11,
+                })
+            p.write_text(
+                "".join(json.dumps(x) + "\n" for x in rows),
+                encoding="utf-8",
+            )
+            matrix, ids = overfit_diagnostics.load_experiment_fold_matrix(p)
+        self.assertEqual(matrix.shape, (5, 8))
+        self.assertEqual(len(ids), 5)
+
+    def test_cscv_requires_even_symmetric_partition(self):
+        self.assertIsNone(overfit_diagnostics.cscv_pbo(np.ones((6, 7))))
+        out = overfit_diagnostics.cscv_pbo(
+            np.asarray([
+                [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1],
+                [0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0],
+                [0.6,0.5,0.4,0.3,0.2,0.1,0.0,-0.1],
+                [0.5,0.4,0.3,0.2,0.1,0.0,-0.1,-0.2],
+                [0.4,0.3,0.2,0.1,0.0,-0.1,-0.2,-0.3],
+            ], dtype=float)
+        )
+        self.assertIsNotNone(out)
+        self.assertEqual(out["fold_count"], 8)
+        self.assertEqual(out["partition"], "fixed_even_development_slices")
+
     def test_probabilistic_sharpe_prefers_positive_edge(self):
         positive = np.array([0.003, -0.001, 0.002, 0.001, -0.0005] * 80)
         flat = np.array([0.001, -0.001] * 200)
