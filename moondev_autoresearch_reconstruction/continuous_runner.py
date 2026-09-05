@@ -572,6 +572,8 @@ def tournament_model_pool():
         payload = load_json(TOURNAMENT_STATE)
     except Exception:
         return []
+    if payload.get("protocol") != PROTOCOL:
+        return []
     rows = payload.get("ranking", [])
     pool = []
     for row in rows:
@@ -843,6 +845,70 @@ def next_validation_track(tracks, start):
     return None
 
 
+def aggregate_model_performance(tracks):
+    models = {}
+    for track in tracks:
+        path = TRACKS / track["id"] / "experiments.jsonl"
+        if not path.exists():
+            continue
+        with path.open(encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    row = json.loads(line)
+                except Exception:
+                    continue
+                model = row.get("model") or "unknown"
+                x = models.setdefault(model, {
+                    "attempts": 0, "backtested": 0, "kept": 0,
+                    "crashes": 0, "guard_pass": 0, "delta_k": [],
+                    "unique_ideas": set(),
+                })
+                x["attempts"] += 1
+                verdict = row.get("verdict")
+                if verdict == "CRASH":
+                    x["crashes"] += 1
+                candidate = row.get("candidate_score")
+                try:
+                    cand = float(candidate)
+                    base = float(row.get("base_score"))
+                    if math.isfinite(cand) and math.isfinite(base):
+                        x["backtested"] += 1
+                        x["delta_k"].append(cand - base)
+                except Exception:
+                    pass
+                if verdict == "KEPT":
+                    x["kept"] += 1
+                    x["guard_pass"] += 1
+                elif verdict == "REJECTED" and not str(row.get("reason","")).startswith("guard:"):
+                    x["guard_pass"] += 1
+                idea = row.get("idea_sha256")
+                if idea:
+                    x["unique_ideas"].add(idea)
+    out = []
+    for model, x in models.items():
+        deltas = x.pop("delta_k")
+        ideas = x.pop("unique_ideas")
+        attempts = max(x["attempts"], 1)
+        out.append({
+            "model": model,
+            **x,
+            "admission_rate": round(x["backtested"] / attempts, 4),
+            "keeper_rate": round(x["kept"] / attempts, 4),
+            "crash_rate": round(x["crashes"] / attempts, 4),
+            "unique_ideas": len(ideas),
+            "mean_delta_k": round(sum(deltas) / len(deltas), 6) if deltas else None,
+        })
+    out.sort(
+        key=lambda r: (
+            r["keeper_rate"],
+            r["guard_pass"] / max(r["attempts"], 1),
+            r["mean_delta_k"] if r["mean_delta_k"] is not None else -1e99,
+        ),
+        reverse=True,
+    )
+    return out
+
+
 def write_progress(
     tracks, phase, breadth_target, depth_target, elite_target,
 ):
@@ -917,6 +983,8 @@ def write_progress(
             "family": track["family"]["id"],
             "target": track["target"]["id"],
             "profile": track["profile_name"],
+            "data_quality_grade": track["target"].get("data_quality_grade"),
+            "instrument_fidelity": track["target"].get("instrument_fidelity"),
             "status": status,
             "valid_attempts": rc["valid"],
             "attempts": rc["attempts"],
@@ -972,6 +1040,7 @@ def write_progress(
         "blocked_families": blocked_families,
         "prior_terminal_family_count": len(prior_terminal_families),
         "prior_terminal_families": prior_terminal_families,
+        "model_performance": aggregate_model_performance(tracks),
         "rows": rows,
     }
     save_json(PROGRESS, payload)
@@ -994,6 +1063,9 @@ def rebuild_leaderboard(tracks):
             "target": m.get("target"),
             "market": m.get("market"),
             "profile": m.get("profile"),
+            "data_quality_grade": track["target"].get("data_quality_grade"),
+            "data_quality_note": track["target"].get("data_quality_note"),
+            "instrument_fidelity": track["target"].get("instrument_fidelity"),
             "valid_attempts": m.get("valid", m.get("valid_attempts", 0)),
             "development_guard_ok": bool(b.get("guard_ok")),
             "development_score": b.get("score"),
