@@ -20,7 +20,9 @@
     "new_parameters_require_new_version_after_forward_start": true,
     "risk_fraction_includes_entry_fees": true,
     "no_automatic_lane_elimination_for_drawdown": true,
-    "continuous_freeze_verification": true
+    "continuous_freeze_verification": true,
+    "immediate_taker_fill_requires_delay_disabled": true,
+    "market_buy_notional_rounding": "V2 BUY cash notional floored to 2 decimals before final book/fee recomputation"
   },
   "risk": {
     "paper_account_usd": 50,
@@ -63,7 +65,8 @@
       "model_blend": "equal weight per model probability; all listed models required",
       "binary_side_selection": "compare executable YES and NO after fees; choose higher edge",
       "forecast_day_boundary": "Open-Meteo timezone=auto at the resolution station coordinates, matching the station-local calendar day",
-      "resolution_precision": "whole degree; continuous ensemble values use half-degree bin boundaries before bracket scoring"
+      "resolution_precision": "whole degree; continuous ensemble values use half-degree bin boundaries before bracket scoring",
+      "taker_order_delay_required": false
     },
     "crypto_twap_taker": {
       "mode": "taker",
@@ -89,7 +92,8 @@
       "raw_spot_max_age_seconds": 3,
       "max_signals_per_market": 1,
       "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget",
-      "rtds_subscription_filter": "compact JSON string {\"symbol\":\"btc/usd\"}"
+      "rtds_subscription_filter": "compact JSON string {\"symbol\":\"btc/usd\"}",
+      "taker_order_delay_required": false
     },
     "crypto_late_resolution": {
       "mode": "taker",
@@ -115,7 +119,8 @@
       "known_final_window_segment_required": true,
       "max_signals_per_market": 1,
       "paper_allocation": "all-in cash budget; share notional is reduced so entry notional + taker fee <= budget",
-      "rtds_subscription_filter": "compact JSON string {\"symbol\":\"btc/usd\"}"
+      "rtds_subscription_filter": "compact JSON string {\"symbol\":\"btc/usd\"}",
+      "taker_order_delay_required": false
     },
     "favorite_longshot_shadow": {
       "mode": "shadow",
