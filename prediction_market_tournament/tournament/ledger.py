@@ -25,6 +25,7 @@ def append_jsonl(path: str | Path, row: dict) -> None:
             raise OSError(
                 f"short JSONL write: {written}/{len(payload)} bytes"
             )
+        os.fsync(fd)
     finally:
         os.close(fd)
 
