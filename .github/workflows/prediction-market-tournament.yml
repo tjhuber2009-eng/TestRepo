@@ -4,11 +4,21 @@ on:
   push:
     branches: [prediction-market-tournament]
     paths:
-      - "prediction_market_tournament/**"
+      - "prediction_market_tournament/tournament/**"
+      - "prediction_market_tournament/scripts/**"
+      - "prediction_market_tournament/config/**"
+      - "prediction_market_tournament/tests/**"
+      - "prediction_market_tournament/deploy/**"
+      - "prediction_market_tournament/pyproject.toml"
       - ".github/workflows/prediction-market-tournament.yml"
   pull_request:
     paths:
-      - "prediction_market_tournament/**"
+      - "prediction_market_tournament/tournament/**"
+      - "prediction_market_tournament/scripts/**"
+      - "prediction_market_tournament/config/**"
+      - "prediction_market_tournament/tests/**"
+      - "prediction_market_tournament/deploy/**"
+      - "prediction_market_tournament/pyproject.toml"
       - ".github/workflows/prediction-market-tournament.yml"
   workflow_dispatch:
 
@@ -30,6 +40,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install -e .
-      - run: python -m pip install pytest
+      - run: python -m pip install pip==26.2.1
+      - run: python -m pip install -e . pytest==9.1.1
       - run: pytest -q
