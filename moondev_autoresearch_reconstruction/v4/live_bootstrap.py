@@ -1285,8 +1285,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 portfolio_concentration_sensitivity[
                     f"{weight_cap:.2f}"
                 ] = sensitivity_result
+            # 65% is the authoritative multi-strategy cap. On the
+            # current reconciled development sample it produces the exact same
+            # optimum as 90%, so the tighter limit adds concentration
+            # protection at zero measured opportunity cost.
             authoritative_cap = (
-                "1.00" if len(portfolio_core_returns) == 1 else "0.90"
+                "1.00" if len(portfolio_core_returns) == 1 else "0.65"
             )
             portfolio = portfolio_concentration_sensitivity[
                 authoritative_cap
@@ -1389,6 +1393,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "momentum_parameter_optimizer": momentum_param.to_dict(),
         "trend_parameter_optimizer": trend_param.to_dict(),
         "portfolio": None if portfolio is None else portfolio.to_dict(),
+        "portfolio_authoritative_concentration_cap": (
+            None
+            if not portfolio_concentration_sensitivity
+            else (1.0 if len(portfolio_core_returns) == 1 else 0.65)
+        ),
         "portfolio_concentration_sensitivity": {
             cap: result.to_dict()
             for cap, result in portfolio_concentration_sensitivity.items()
