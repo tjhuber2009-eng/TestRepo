@@ -140,17 +140,30 @@ def resolve_signal(signal: Signal, market: dict) -> ResolvedTrade | None:
 
 
 def read_jsonl(path: str | Path) -> list[dict]:
+    """Strict reader for audit-grade source ledgers.
+
+    A malformed nonblank row is evidence of ledger corruption or an incomplete
+    concurrent write. Never silently drop it from settlement or ranking.
+    """
     file_path = Path(path)
     if not file_path.exists():
         return []
     out: list[dict] = []
-    for line in file_path.read_text(encoding="utf-8").splitlines():
+    for line_number, line in enumerate(
+        file_path.read_text(encoding="utf-8").splitlines(),
+        start=1,
+    ):
         if not line.strip():
             continue
         try:
             row = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(row, dict):
-            out.append(row)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"malformed JSONL at {file_path}:{line_number}"
+            ) from exc
+        if not isinstance(row, dict):
+            raise ValueError(
+                f"non-object JSONL row at {file_path}:{line_number}"
+            )
+        out.append(row)
     return out
