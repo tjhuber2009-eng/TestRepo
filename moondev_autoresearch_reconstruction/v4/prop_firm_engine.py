@@ -123,6 +123,27 @@ def _moving_block_sample(
     return np.asarray(out[:length], dtype=int)
 
 
+def _moving_block_sample_matrix(
+    n: int,
+    length: int,
+    block: int,
+    paths: int,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    if n < 1 or length < 1 or paths < 1:
+        raise ValueError("positive n, length, and paths required")
+    block = max(1, min(int(block), n))
+    n_blocks = int(np.ceil(length / block))
+    starts = rng.integers(
+        0,
+        max(n - block + 1, 1),
+        size=(int(paths), n_blocks),
+    )
+    offsets = np.arange(block, dtype=int)
+    idx = (starts[..., None] + offsets).reshape(int(paths), -1)
+    return idx[:, : int(length)]
+
+
 def _best_day_ok(
     daily_closed_profit: Sequence[float],
     rule_pct: float | None,
@@ -210,53 +231,129 @@ def simulate_stage(
     seed: int = 20260905,
 ) -> StageSimulation:
     scale = float(exposure_scale)
-    r = np.asarray(returns, dtype=float) * scale
-    a = np.asarray(adverse_returns, dtype=float) * scale
+    r = np.asarray(returns, dtype=float)
+    a = np.asarray(adverse_returns, dtype=float)
     opened = np.asarray(opened_trade_days, dtype=bool)
     good = np.isfinite(r) & np.isfinite(a)
     r, a, opened = r[good], a[good], opened[good]
     if len(r) < 50:
         raise ValueError("prop simulation requires >=50 aligned daily observations")
 
+    horizon = int(rule.analysis_horizon_days)
     rng = np.random.default_rng(seed)
-    passed = failed = timed = daily_breach = max_breach = 0
-    pass_days: list[int] = []
-    for _ in range(int(paths)):
-        idx = _moving_block_sample(
-            len(r), int(rule.analysis_horizon_days), int(block), rng
-        )
-        status, days, reason = _simulate_one_stage(
-            r[idx], a[idx], opened[idx], rule
-        )
-        if status == "pass":
-            passed += 1
-            pass_days.append(days)
-        elif status == "fail":
-            failed += 1
-            daily_breach += int(reason == "daily_loss")
-            max_breach += int(reason == "max_loss")
-        else:
-            timed += 1
+    idx = _moving_block_sample_matrix(
+        len(r), horizon, int(block), int(paths), rng
+    )
+    rr = r[idx] * scale
+    aa = a[idx] * scale
+    oo = opened[idx]
 
-    p = float(paths)
+    n = int(paths)
+    balance = np.ones(n, dtype=float)
+    highest_midnight = np.ones(n, dtype=float)
+    trade_days = np.zeros(n, dtype=int)
+    positive_sum = np.zeros(n, dtype=float)
+    best_positive_day = np.zeros(n, dtype=float)
+
+    # status: 0 active, 1 pass, 2 daily fail, 3 max-loss fail, 4 timeout
+    status = np.zeros(n, dtype=np.int8)
+    event_day = np.full(n, horizon, dtype=int)
+
+    target = (
+        None
+        if rule.profit_target_pct is None
+        else 1.0 + rule.profit_target_pct / 100.0
+    )
+
+    for day in range(horizon):
+        active = status == 0
+        if not np.any(active):
+            break
+        trade_days[active] += oo[active, day].astype(int)
+
+        start = balance.copy()
+        worst = start * (1.0 + aa[:, day])
+        daily_floor = start - rule.max_daily_loss_pct / 100.0
+        daily_fail = active & (worst <= daily_floor)
+        status[daily_fail] = 2
+        event_day[daily_fail] = day + 1
+
+        active = status == 0
+        if rule.trailing_max_loss:
+            overall_floor = (
+                np.maximum(1.0, highest_midnight)
+                - rule.max_loss_pct / 100.0
+            )
+        else:
+            overall_floor = np.full(
+                n, 1.0 - rule.max_loss_pct / 100.0, dtype=float
+            )
+        max_fail = active & (worst <= overall_floor)
+        status[max_fail] = 3
+        event_day[max_fail] = day + 1
+
+        active = status == 0
+        if not np.any(active):
+            continue
+        new_balance = start * (1.0 + rr[:, day])
+        profit = new_balance - start
+        pos = np.maximum(profit, 0.0)
+        positive_sum[active] += pos[active]
+        best_positive_day[active] = np.maximum(
+            best_positive_day[active], pos[active]
+        )
+        balance[active] = new_balance[active]
+        highest_midnight[active] = np.maximum(
+            highest_midnight[active], balance[active]
+        )
+
+        if target is not None:
+            best_day_ok = np.ones(n, dtype=bool)
+            if rule.best_day_rule_pct is not None:
+                allowed = (
+                    positive_sum * rule.best_day_rule_pct / 100.0
+                )
+                best_day_ok = (
+                    (positive_sum > 0.0)
+                    & (best_positive_day <= allowed + 1e-12)
+                )
+            passed = (
+                (status == 0)
+                & (balance >= target)
+                & (trade_days >= rule.min_trading_days)
+                & best_day_ok
+            )
+            status[passed] = 1
+            event_day[passed] = day + 1
+
+    status[status == 0] = 4
+
+    pass_mask = status == 1
+    daily_mask = status == 2
+    max_mask = status == 3
+    timeout_mask = status == 4
+    pass_days = event_day[pass_mask]
+
+    denom = float(n)
     return StageSimulation(
         stage_id=rule.id,
         exposure_scale=scale,
-        paths=int(paths),
-        analysis_horizon_days=int(rule.analysis_horizon_days),
-        pass_probability=passed / p,
-        fail_probability=failed / p,
-        timeout_probability=timed / p,
-        daily_loss_breach_probability=daily_breach / p,
-        max_loss_breach_probability=max_breach / p,
+        paths=n,
+        analysis_horizon_days=horizon,
+        pass_probability=float(pass_mask.sum() / denom),
+        fail_probability=float((daily_mask | max_mask).sum() / denom),
+        timeout_probability=float(timeout_mask.sum() / denom),
+        daily_loss_breach_probability=float(daily_mask.sum() / denom),
+        max_loss_breach_probability=float(max_mask.sum() / denom),
         median_days_to_pass=(
-            None if not pass_days else float(np.median(pass_days))
+            None if pass_days.size == 0 else float(np.median(pass_days))
         ),
         p75_days_to_pass=(
-            None if not pass_days else float(np.quantile(pass_days, 0.75))
+            None
+            if pass_days.size == 0
+            else float(np.quantile(pass_days, 0.75))
         ),
     )
-
 
 def simulate_funded_reward(
     returns: Sequence[float],
@@ -270,89 +367,108 @@ def simulate_funded_reward(
     seed: int = 20260906,
 ) -> FundedSimulation:
     scale = float(exposure_scale)
-    r = np.asarray(returns, dtype=float) * scale
-    a = np.asarray(adverse_returns, dtype=float) * scale
+    r = np.asarray(returns, dtype=float)
+    a = np.asarray(adverse_returns, dtype=float)
     opened = np.asarray(opened_trade_days, dtype=bool)
     good = np.isfinite(r) & np.isfinite(a)
     r, a, opened = r[good], a[good], opened[good]
+    if len(r) < 50:
+        raise ValueError("prop simulation requires >=50 aligned daily observations")
+
     days = int(program.first_reward_eligible_days)
+    n = int(paths)
     rng = np.random.default_rng(seed)
+    idx = _moving_block_sample_matrix(len(r), days, int(block), n, rng)
+    rr = r[idx] * scale
+    aa = a[idx] * scale
 
-    survived = eligible = positive = daily_breach = max_breach = best_day_block = 0
-    rewards_all_paths = np.zeros(int(paths), dtype=float)
-    positive_rewards: list[float] = []
+    balance = np.ones(n, dtype=float)
+    highest_midnight = np.ones(n, dtype=float)
+    positive_sum = np.zeros(n, dtype=float)
+    best_positive_day = np.zeros(n, dtype=float)
+    status = np.zeros(n, dtype=np.int8)  # 0 alive, 2 daily fail, 3 max fail
 
-    for path_i in range(int(paths)):
-        idx = _moving_block_sample(len(r), days, int(block), rng)
-        balance = 1.0
-        highest_midnight_balance = 1.0
-        closed_daily_profit: list[float] = []
-        failed_reason = None
-
-        for j in idx:
-            midnight_balance = balance
-            worst = midnight_balance * (1.0 + float(a[j]))
-            daily_floor = (
-                midnight_balance
-                - program.funded.max_daily_loss_pct / 100.0
-            )
-            if worst <= daily_floor:
-                failed_reason = "daily_loss"
-                break
-
-            if program.funded.trailing_max_loss:
-                floor = (
-                    max(1.0, highest_midnight_balance)
-                    - program.funded.max_loss_pct / 100.0
-                )
-            else:
-                floor = 1.0 - program.funded.max_loss_pct / 100.0
-            if worst <= floor:
-                failed_reason = "max_loss"
-                break
-
-            balance = midnight_balance * (1.0 + float(r[j]))
-            closed_daily_profit.append(balance - midnight_balance)
-            highest_midnight_balance = max(highest_midnight_balance, balance)
-
-        if failed_reason is not None:
-            daily_breach += int(failed_reason == "daily_loss")
-            max_breach += int(failed_reason == "max_loss")
-            continue
-
-        survived += 1
-        best_day_ok = _best_day_ok(
-            closed_daily_profit, program.funded.best_day_rule_pct
+    for day in range(days):
+        active = status == 0
+        if not np.any(active):
+            break
+        start = balance.copy()
+        worst = start * (1.0 + aa[:, day])
+        daily_floor = (
+            start - program.funded.max_daily_loss_pct / 100.0
         )
-        if not best_day_ok:
-            best_day_block += 1
+        daily_fail = active & (worst <= daily_floor)
+        status[daily_fail] = 2
+
+        active = status == 0
+        if program.funded.trailing_max_loss:
+            overall_floor = (
+                np.maximum(1.0, highest_midnight)
+                - program.funded.max_loss_pct / 100.0
+            )
+        else:
+            overall_floor = np.full(
+                n,
+                1.0 - program.funded.max_loss_pct / 100.0,
+                dtype=float,
+            )
+        max_fail = active & (worst <= overall_floor)
+        status[max_fail] = 3
+
+        active = status == 0
+        if not np.any(active):
             continue
+        new_balance = start * (1.0 + rr[:, day])
+        profit = new_balance - start
+        pos = np.maximum(profit, 0.0)
+        positive_sum[active] += pos[active]
+        best_positive_day[active] = np.maximum(
+            best_positive_day[active], pos[active]
+        )
+        balance[active] = new_balance[active]
+        highest_midnight[active] = np.maximum(
+            highest_midnight[active], balance[active]
+        )
 
-        eligible += 1
-        reward = max(balance - 1.0, 0.0) * program.reward_share * 100.0
-        rewards_all_paths[path_i] = float(reward)
-        if reward > 0.0:
-            positive += 1
-            positive_rewards.append(float(reward))
+    survived = status == 0
+    best_day_ok = np.ones(n, dtype=bool)
+    if program.funded.best_day_rule_pct is not None:
+        allowed = (
+            positive_sum * program.funded.best_day_rule_pct / 100.0
+        )
+        best_day_ok = (
+            (positive_sum > 0.0)
+            & (best_positive_day <= allowed + 1e-12)
+        )
+    eligible = survived & best_day_ok
+    reward = np.zeros(n, dtype=float)
+    reward[eligible] = (
+        np.maximum(balance[eligible] - 1.0, 0.0)
+        * program.reward_share
+        * 100.0
+    )
+    positive = reward > 0.0
 
+    denom = float(n)
     return FundedSimulation(
         exposure_scale=scale,
-        paths=int(paths),
+        paths=n,
         reward_window_days=days,
-        survival_probability=survived / float(paths),
-        reward_eligible_probability=eligible / float(paths),
-        positive_reward_probability=positive / float(paths),
-        expected_reward_pct=float(rewards_all_paths.mean()),
+        survival_probability=float(survived.sum() / denom),
+        reward_eligible_probability=float(eligible.sum() / denom),
+        positive_reward_probability=float(positive.sum() / denom),
+        expected_reward_pct=float(reward.mean()),
         median_positive_reward_pct=(
             None
-            if not positive_rewards
-            else float(np.median(np.asarray(positive_rewards)))
+            if not np.any(positive)
+            else float(np.median(reward[positive]))
         ),
-        daily_loss_breach_probability=daily_breach / float(paths),
-        max_loss_breach_probability=max_breach / float(paths),
-        best_day_ineligible_probability=best_day_block / float(paths),
+        daily_loss_breach_probability=float((status == 2).sum() / denom),
+        max_loss_breach_probability=float((status == 3).sum() / denom),
+        best_day_ineligible_probability=float(
+            (survived & ~best_day_ok).sum() / denom
+        ),
     )
-
 
 def _candidate_within_risk_tier(
     candidate: PropOptimizationCandidate,
