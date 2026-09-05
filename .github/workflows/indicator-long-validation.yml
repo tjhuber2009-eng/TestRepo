@@ -1,4 +1,4 @@
-name: Indicator Cross Strategy DD Frontier
+name: Indicator Sentinel RSI2 Bootstrap
 
 on:
   push:
@@ -20,16 +20,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: python -m pip install --disable-pip-version-check pandas numpy yfinance
-      - name: Run cross-strategy DD frontier
-        run: python indicator_validation/run_cross_strategy_frontier.py
+      - name: Run Sentinel plus RSI2 bootstrap frontier
+        run: python indicator_validation/run_sentinel_rsi2_bootstrap.py
       - name: Hash outputs
-        run: sha256sum indicator_validation/run_cross_strategy_frontier.py indicator_validation/output_cross_strategy_frontier/* > indicator_validation/SHA256SUMS_CROSS_STRATEGY.txt
-      - name: Upload cross-strategy artifact
+        run: sha256sum indicator_validation/run_sentinel_rsi2_bootstrap.py indicator_validation/output_sentinel_rsi2_bootstrap/* > indicator_validation/SHA256SUMS_SENTINEL_RSI2_BOOTSTRAP.txt
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: indicator-cross-strategy-frontier
+          name: indicator-sentinel-rsi2-bootstrap
           path: |
-            indicator_validation/output_cross_strategy_frontier/
-            indicator_validation/SHA256SUMS_CROSS_STRATEGY.txt
+            indicator_validation/output_sentinel_rsi2_bootstrap/
+            indicator_validation/SHA256SUMS_SENTINEL_RSI2_BOOTSTRAP.txt
           if-no-files-found: error
           retention-days: 7
