@@ -34,6 +34,45 @@ def cross_sectional_momentum_rotation(
     return strategy
 
 
+def independent_trend_basket(
+    *,
+    symbols: Sequence[str],
+    momentum_window: int = 252,
+    trend_window: int = 200,
+    gross_weight: float = 1.0,
+):
+    """Diversified long/cash time-series trend basket with no cross-sectional ranking.
+
+    Each asset independently earns an equal share of gross exposure only when
+    its close is above its own trend average and its trailing return is
+    positive. Signals use close[t] only; the engine executes at open[t+1].
+    """
+    symbols = tuple(symbols)
+
+    def strategy(data: Mapping[str, pd.DataFrame], features=None) -> pd.DataFrame:
+        missing = set(symbols).difference(data)
+        if missing:
+            raise KeyError(f"missing trend-basket assets: {sorted(missing)}")
+        index = data[symbols[0]].index
+        out = pd.DataFrame(0.0, index=index, columns=sorted(data))
+        healthy = pd.DataFrame(False, index=index, columns=list(symbols))
+        for symbol in symbols:
+            close = data[symbol]["Close"]
+            momentum = close / close.shift(momentum_window) - 1.0
+            trend = close.rolling(
+                trend_window, min_periods=trend_window
+            ).mean()
+            healthy[symbol] = (close > trend) & (momentum > 0.0)
+        for ts in index:
+            active = list(healthy.columns[healthy.loc[ts]])
+            if active:
+                weight = float(gross_weight) / float(len(active))
+                out.loc[ts, active] = weight
+        return out
+
+    return strategy
+
+
 def pead_event_weights(
     data: Mapping[str, pd.DataFrame],
     earnings: pd.DataFrame,
