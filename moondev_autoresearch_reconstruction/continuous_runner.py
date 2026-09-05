@@ -324,8 +324,10 @@ def prepare_data(track, include_validation=False):
     elite set is frozen and validate_track explicitly opens it.
     """
     t = track["target"]
-    path = HERE / "data" / f"{t['id']}_1d.csv"
-    manifest = HERE / "data" / f"{t['id']}_1d.manifest.json"
+    data_dir_name = "validation_data" if include_validation else "data"
+    data_dir = HERE / data_dir_name
+    path = data_dir / f"{t['id']}_1d.csv"
+    manifest = data_dir / f"{t['id']}_1d.manifest.json"
     wanted_start = t.get("start", "2017-08-17")
     wanted_end = (
         t.get("validation_end", "2022-12-31")
@@ -352,6 +354,7 @@ def prepare_data(track, include_validation=False):
         "--id", t["id"],
         "--start", wanted_start,
         "--end", wanted_end,
+        "--output-dir", data_dir_name,
     ])
 
 
@@ -706,10 +709,20 @@ def validate_track(track):
     # after breadth/depth/elite adaptive search is globally frozen.
     prepare_data(track, include_validation=True)
     if not restore_state(track_dir):
+        shutil.rmtree(HERE / "validation_data", ignore_errors=True)
         raise RuntimeError("cannot restore frozen champion for hidden validation")
-    env = safe_harness_env(target_env(track))
-    run([sys.executable, "robust_harness.py", "--validation"], env=env)
-    result = load_json(HERE / "validation_run.json")
+    env = target_env(track)
+    env["AUTORESEARCH_DATA_FILE"] = (
+        f"validation_data/{track['target']['id']}_1d.csv"
+    )
+    env = safe_harness_env(env)
+    try:
+        run([sys.executable, "robust_harness.py", "--validation"], env=env)
+        result = load_json(HERE / "validation_run.json")
+    finally:
+        # Hidden validation data is ephemeral: never cache or leave it in the
+        # working tree after the one frozen-champion validation call.
+        shutil.rmtree(HERE / "validation_data", ignore_errors=True)
     save_json(track_dir / "validation.json", result)
 
     meta = load_json(track_dir / "state_meta.json")
