@@ -1,8 +1,8 @@
 {
   "project": "prediction-market-tournament",
   "version": "PMT-FROZEN-V1",
-  "frozen_at": "2026-09-05T12:00:54-07:00",
-  "pre_forward_refreeze_reason": "Final PMT-FROZEN-V1 pre-start seal after executable and causality audit, completed before any forward marker or observation: current Wunderground station-rule parsing; station-local whole-degree AIFS/IFS/GEFS weather probabilities at exact station coordinates/elevation; two-sided batch-book execution; V2 cent-rounded BUY notional; exact per-level fees/minimums; taker-delay rejection; deterministic BTC 5m Chainlink TWAP markets; documented RTDS compact-string filters; source+receive strike causality; post-book timestamps; fixed $50 exact-size replay with unresolved exposure; oracle-final settlement; strict fsynced append-only ledgers; spec/code/runtime hash binding with continuous verification; exact-remote clean-tree, clock, fresh-feed, weather-model, and live-BTC preflight; no clock backdating; persistent-host collection and guarded remote persistence.",
+  "frozen_at": "2026-09-05T12:26:00-07:00",
+  "pre_forward_refreeze_reason": "Oracle A1 deployment seal before any forward marker/observation. The selected persistent host is Ubuntu 24.04 ARM64 on VM.Standard.A1.Flex, right-sized to 1 OCPU/1 GB with swap only for install/recovery headroom. Runtime enforcement binds CPython 3.12 minor, Linux/ARM64, and exact websockets transport version while recording the Python patch version informationally so normal 3.12.x security updates/replacement hosts do not invalidate V1. The enforced implementation hash covers only files that can affect live observations/accounting; bootstrap/recovery helpers and CI-only workflow changes cannot halt a healthy tournament. Frozen-state mismatch uses a permanent systemd exit status to prevent restart loops. Oracle bootstrap/recovery, repo-scoped write-key flow, exact-host preflight, and missed-checkpoint-no-replay semantics are finalized.",
   "principles": {
     "paper_only": true,
     "real_money_execution_enabled": false,
@@ -27,7 +27,11 @@
     "fsync_each_source_ledger_append": true,
     "launch_preflight_required": true,
     "launch_clock_backdating_disabled": true,
-    "clean_exact_remote_head_required_before_start": true
+    "clean_exact_remote_head_required_before_start": true,
+    "python_runtime_enforcement": "CPython major.minor 3.12; full patch version recorded but not freeze-enforced",
+    "implementation_hash_scope": "live tournament package, live forward scripts, systemd service unit, pyproject.toml, and persistence .gitignore only",
+    "prestart_and_recovery_helpers_not_live_hash_bound": true,
+    "freeze_mismatch_systemd_restart_prevent_status": 78
   },
   "risk": {
     "paper_account_usd": 50,
@@ -173,6 +177,13 @@
     "preflight_rtds_timeout_seconds": 20,
     "preflight_btc_market_timeout_seconds": 15,
     "preflight_exact_remote_head_required": true,
-    "preflight_clean_worktree_required": true
+    "preflight_clean_worktree_required": true,
+    "preferred_host": "oracle_oci_vm_standard_a1_flex",
+    "preferred_host_os": "Ubuntu 24.04 ARM64",
+    "preferred_host_ocpus": 1,
+    "preferred_host_memory_gb": 1,
+    "install_recovery_swap_gb": 2,
+    "oracle_always_free_reclaim_risk_acknowledged": true,
+    "recovery_missed_checkpoints_replayed": false
   }
 }
