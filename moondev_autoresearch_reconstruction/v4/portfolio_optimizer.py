@@ -145,12 +145,23 @@ class RobustPortfolioOptimizer:
         base_returns: np.ndarray,
         boot_base_returns: np.ndarray,
     ) -> tuple[float | None, float | None]:
-        """Binary-search the largest gross scale satisfying both DD caps."""
+        """Find the largest gross scale satisfying both DD caps efficiently.
+
+        Drawdown is not exactly linear in exposure because returns compound, but
+        it is close enough to use a one-pass risk estimate as a starting point.
+        We then bracket and refine locally, preserving the exact final gate
+        while avoiding a full binary search for every portfolio composition.
+        """
+        cache: dict[float, tuple[bool, float, float]] = {}
+
         def feasible(scale: float) -> tuple[bool, float, float]:
-            pr = base_returns * scale
+            key = round(float(scale), 10)
+            if key in cache:
+                return cache[key]
+            pr = base_returns * float(scale)
             dd = abs(min(max_drawdown_pct(_equity(pr)), 0.0))
             q = _bootstrap_dd_q95(
-                boot_base_returns, scale, self.dd_quantile
+                boot_base_returns, float(scale), self.dd_quantile
             )
             ok = (
                 np.isfinite(dd)
@@ -159,19 +170,38 @@ class RobustPortfolioOptimizer:
                 and q <= self.dd_cap_pct
                 and np.all(1.0 + pr > 0.0)
             )
-            return bool(ok), float(dd), float(q)
+            cache[key] = (bool(ok), float(dd), float(q))
+            return cache[key]
 
-        ok_min, _, q_min = feasible(self.min_gross)
+        ok_min, dd_min, q_min = feasible(self.min_gross)
         if not ok_min:
             return None, None
-        ok_max, _, q_max = feasible(self.max_gross)
-        if ok_max:
-            return self.max_gross, q_max
 
-        lo = self.min_gross
-        hi = self.max_gross
-        q_lo = q_min
-        for _ in range(self.scale_search_steps):
+        # One reference pass at unit gross provides a strong scale estimate.
+        ref = min(max(1.0, self.min_gross), self.max_gross)
+        ok_ref, dd_ref, q_ref = feasible(ref)
+        if ok_ref and ref >= self.max_gross - 1e-12:
+            return ref, q_ref
+
+        risk_ref = max(dd_ref, q_ref, 1e-9)
+        estimate = ref * self.dd_cap_pct / risk_ref
+        estimate = min(max(estimate, self.min_gross), self.max_gross)
+
+        ok_est, _, q_est = feasible(estimate)
+        if ok_est:
+            lo = estimate
+            q_lo = q_est
+            hi = self.max_gross
+            ok_hi, _, q_hi = feasible(hi)
+            if ok_hi:
+                return hi, q_hi
+        else:
+            lo = self.min_gross
+            q_lo = q_min
+            hi = estimate
+
+        # Only a short local refinement is needed after the risk-based estimate.
+        for _ in range(max(3, min(self.scale_search_steps, 6))):
             mid = 0.5 * (lo + hi)
             ok, _, q = feasible(mid)
             if ok:
