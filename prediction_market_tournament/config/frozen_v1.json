@@ -19,7 +19,8 @@
     "explicit_forward_start_marker_required": true,
     "new_parameters_require_new_version_after_forward_start": true,
     "risk_fraction_includes_entry_fees": true,
-    "no_automatic_lane_elimination_for_drawdown": true
+    "no_automatic_lane_elimination_for_drawdown": true,
+    "continuous_freeze_verification": true
   },
   "risk": {
     "paper_account_usd": 50,
@@ -154,6 +155,7 @@
     "git_persist_interval_seconds": 3600,
     "preflight_clock_max_abs_offset_seconds": 1.5,
     "preflight_clob_time_max_rtt_seconds": 2,
-    "preflight_rtds_max_source_to_host_lag_seconds": 5
+    "preflight_rtds_max_source_to_host_lag_seconds": 5,
+    "freeze_verify_interval_seconds": 30
   }
 }
