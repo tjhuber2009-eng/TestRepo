@@ -18,7 +18,7 @@ from v4.multi_asset_engine import MultiAssetBacktester, PortfolioLimits
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
 from v4.prop_firm_engine import _simulate_one_stage, active_day_proxy, daily_adverse_proxy, optimize_prop_exposure, simulate_stage
-from v4.prop_intraday_bootstrap import aggregate_prague_days, hourly_rotation_strategy
+from v4.prop_intraday_bootstrap import aggregate_prague_days, hourly_rotation_strategy, read_hourly
 from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
@@ -480,6 +480,20 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertAlmostEqual(adverse.iloc[0], -0.05)
         self.assertAlmostEqual(adverse.iloc[2], -0.015)
         self.assertAlmostEqual(adverse.iloc[3], 0.0)
+
+    def test_prop_intraday_loader_accepts_mixed_iso_timestamp_precision(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "hourly.csv"
+            p.write_text(
+                "Date,Open,High,Low,Close,Volume\n"
+                "2020-01-01T00:00:00+00:00,100,101,99,100.5,1\n"
+                "2020-01-01T01:00:00.123000+00:00,100.5,102,100,101,1\n",
+                encoding="utf-8",
+            )
+            x = read_hourly(p)
+            self.assertEqual(len(x), 2)
+            self.assertIsNotNone(x.index.tz)
+            self.assertEqual(x.index[1].microsecond, 123000)
 
     def test_prop_intraday_strategy_flattens_for_prague_midnight(self):
         idx = pd.date_range(
