@@ -105,6 +105,7 @@ const VARIANTS_QUERY = `#graphql
           title
           sku
           price
+          availableForSale
           inventoryQuantity
           inventoryPolicy
           inventoryItem { tracked }
