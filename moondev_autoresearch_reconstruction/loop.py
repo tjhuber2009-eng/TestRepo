@@ -730,6 +730,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--iters", type=int, default=0, help="0 = run until STOP")
     ap.add_argument("--model", default=DEFAULT_MODEL)
+    ap.add_argument("--fallback-model", default=DEFAULT_MODEL)
     args = ap.parse_args()
 
     print("MOON DEV AUTORESEARCH — NVIDIA NIM")
@@ -775,16 +776,36 @@ def main():
         print(f"\nITERATION {iteration} baseline K={base['score']}")
         print("[1/4] AGENT")
 
+        used_model = args.model
+        prompt = build_prompt(iteration, base)
         try:
-            desc = run_agent(iteration, build_prompt(iteration, base), args.model)
-        except Exception as exc:
-            verdict = "CRASH"
-            reason = str(exc)[:200]
-            score = ret = sharpe = vol = dd = "nan"
-            trades = 0
-            desc = "(agent failed)"
-            shutil.copy(BEST, STRATEGY)
+            desc = run_agent(iteration, prompt, used_model)
+        except Exception as primary_exc:
+            if args.fallback_model and args.fallback_model != used_model:
+                print(
+                    f"[agent fallback] {used_model} failed; trying "
+                    f"{args.fallback_model}"
+                )
+                used_model = args.fallback_model
+                try:
+                    desc = run_agent(iteration, prompt, used_model)
+                except Exception as fallback_exc:
+                    exc = fallback_exc
+                else:
+                    exc = None
+            else:
+                exc = primary_exc
+            if exc is not None:
+                verdict = "CRASH"
+                reason = str(exc)[:200]
+                score = ret = sharpe = vol = dd = "nan"
+                trades = 0
+                desc = "(agent failed)"
+                shutil.copy(BEST, STRATEGY)
         else:
+            exc = None
+
+        if exc is None:
             print(f"proposal: {desc}")
             with open(STRATEGY, encoding="utf-8") as f:
                 candidate_source = f.read()
@@ -893,7 +914,7 @@ def main():
         append_experiment_record(
             ts=ts,
             iteration=iteration,
-            model=args.model,
+            model=used_model,
             verdict=verdict,
             reason=reason,
             desc=desc,
