@@ -9,7 +9,11 @@ from pathlib import Path
 from tournament.freeze import require_forward_started
 
 
-def _git(repo_root: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess:
+def _git(
+    repo_root: Path,
+    *args: str,
+    check: bool = True,
+) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git", "-C", str(repo_root), *args],
         check=check,
@@ -17,6 +21,44 @@ def _git(repo_root: Path, *args: str, check: bool = True) -> subprocess.Complete
         stderr=subprocess.PIPE,
         text=True,
     )
+
+
+def _push_branch(repo_root: Path) -> tuple[bool, str]:
+    push = _git(
+        repo_root,
+        "push",
+        "origin",
+        "HEAD:prediction-market-tournament",
+        check=False,
+    )
+    return push.returncode == 0, push.stderr[-2000:]
+
+
+def _ahead_of_remote(repo_root: Path) -> int:
+    # Fetch only the frozen forward branch so retry decisions are based on
+    # current remote state without merging or modifying the working tree.
+    fetch = _git(
+        repo_root,
+        "fetch",
+        "origin",
+        "prediction-market-tournament",
+        check=False,
+    )
+    if fetch.returncode != 0:
+        return -1
+    count = _git(
+        repo_root,
+        "rev-list",
+        "--count",
+        "origin/prediction-market-tournament..HEAD",
+        check=False,
+    )
+    if count.returncode != 0:
+        return -1
+    try:
+        return int(count.stdout.strip() or "0")
+    except ValueError:
+        return -1
 
 
 def main() -> int:
@@ -64,9 +106,6 @@ def main() -> int:
         ).stdout.splitlines()
         if line.strip()
     ]
-    if not staged:
-        print(json.dumps({"changed": False, "pushed": False}))
-        return 0
 
     invalid = [
         path
@@ -81,32 +120,50 @@ def main() -> int:
             "refusing non-forward-data staged paths: " + ", ".join(invalid)
         )
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    message = (
-        f"PMT forward data {timestamp} "
-        f"spec={str(marker['spec_sha256'])[:12]} "
-        f"impl={str(marker['implementation_sha256'])[:12]}"
-    )
-    commit = _git(repo_root, "commit", "-m", message, check=False)
-    if commit.returncode != 0:
-        raise SystemExit(commit.stderr.strip() or commit.stdout.strip())
+    committed = False
+    if staged:
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        message = (
+            f"PMT forward data {timestamp} "
+            f"spec={str(marker['spec_sha256'])[:12]} "
+            f"impl={str(marker['implementation_sha256'])[:12]}"
+        )
+        commit = _git(repo_root, "commit", "-m", message, check=False)
+        if commit.returncode != 0:
+            raise SystemExit(commit.stderr.strip() or commit.stdout.strip())
+        committed = True
 
-    push = _git(
-        repo_root,
-        "push",
-        "origin",
-        "HEAD:prediction-market-tournament",
-        check=False,
-    )
+    ahead = _ahead_of_remote(repo_root)
+    if ahead == 0:
+        print(
+            json.dumps(
+                {
+                    "changed": bool(staged),
+                    "committed": committed,
+                    "pushed": False,
+                    "already_synced": True,
+                    "paths": staged,
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
+
+    # If fetch failed, still attempt a normal push. If the prior hourly push
+    # failed only because of a transient network problem, this retries it even
+    # when no new JSONL rows were produced in the current interval.
+    pushed, push_stderr = _push_branch(repo_root)
     result = {
-        "changed": True,
-        "committed": True,
-        "pushed": push.returncode == 0,
+        "changed": bool(staged),
+        "committed": committed,
+        "pushed": pushed,
+        "already_synced": False,
+        "ahead_before_push": ahead,
         "paths": staged,
-        "push_stderr": push.stderr[-2000:],
+        "push_stderr": push_stderr,
     }
     print(json.dumps(result, sort_keys=True))
-    return 0 if push.returncode == 0 else 4
+    return 0 if pushed else 4
 
 
 if __name__ == "__main__":
