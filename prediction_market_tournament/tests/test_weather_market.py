@@ -1,5 +1,7 @@
 from datetime import date, datetime, timezone
 
+import pytest
+
 import tournament.weather_market as weather
 from tournament.adapters.polymarket import MarketExecutionRules
 from tournament.weather_market import (
@@ -153,4 +155,4 @@ def test_weather_chooses_no_when_bracket_probability_is_low(monkeypatch):
     assert signal is not None
     assert signal.side == "NO"
     assert signal.fair_probability == 0.9
-    assert signal.metadata["fair_yes_probability"] == 0.1
+    assert signal.metadata["fair_yes_probability"] == pytest.approx(0.1)
