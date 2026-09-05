@@ -132,7 +132,11 @@ def weather_signal_from_market(
     event: dict,
     target_date: date,
     observed_at: datetime | None = None,
-    model: str = "ncep_gefs025",
+    models: tuple[str, ...] = (
+        "ecmwf_aifs025_ensemble",
+        "ecmwf_ifs025_ensemble",
+        "ncep_gefs025",
+    ),
     min_edge: float = 0.05,
     cash_budget_usd: float = 5.0,
 ) -> Signal | None:
@@ -149,20 +153,32 @@ def weather_signal_from_market(
     )
     lat, lon = station_coordinates(station)
     unit = "fahrenheit" if bracket.unit == "F" else "celsius"
-    payload = fetch_temperature_ensemble(
-        lat,
-        lon,
-        target_date,
-        model=model,
-        unit=unit,
-        timezone="auto",
-    )
-    values = member_daily_extremes(payload, kind=bracket.kind)
-    fair = bracket_probability(
-        values,
-        lower=bracket.lower,
-        upper=bracket.upper,
-    )
+    if not models:
+        raise ValueError("at least one weather ensemble model is required")
+
+    model_probabilities: dict[str, float] = {}
+    model_members: dict[str, int] = {}
+    for model in models:
+        payload = fetch_temperature_ensemble(
+            lat,
+            lon,
+            target_date,
+            model=model,
+            unit=unit,
+            timezone="auto",
+        )
+        values = member_daily_extremes(payload, kind=bracket.kind)
+        model_members[model] = len(values)
+        model_probabilities[model] = bracket_probability(
+            values,
+            lower=bracket.lower,
+            upper=bracket.upper,
+        )
+
+    # Equal weight per forecast MODEL, not per ensemble member. This prevents
+    # 51-member ECMWF systems from dominating 31-member GEFS merely because
+    # they expose more perturbations.
+    fair = sum(model_probabilities.values()) / len(model_probabilities)
 
     tokens = binary_outcome_tokens(market)
     condition_id = str(market.get("conditionId") or "").strip()
@@ -242,10 +258,9 @@ def weather_signal_from_market(
         executed_shares=quote.shares,
         entry_fee_usd=quote.fee_usd,
         notes=(
-            f"station={station}; model={model}; {bracket.kind} "
+            f"station={station}; models={','.join(models)}; {bracket.kind} "
             f"{bracket.lower}..{bracket.upper}{bracket.unit}; "
-            f"n={len(values)}; p_yes={fair:.6f}; side={side}; "
-            f"exact_edge={edge:.6f}"
+            f"p_yes={fair:.6f}; side={side}; exact_edge={edge:.6f}"
         ),
         metadata={
             "condition_id": condition_id,
@@ -257,6 +272,10 @@ def weather_signal_from_market(
             "ask_source": "batch-full-size-book-level-fill",
             "min_order_shares": execution.min_order_shares,
             "fair_yes_probability": fair,
+            "weather_models": list(models),
+            "model_probabilities": model_probabilities,
+            "model_member_counts": model_members,
+            "model_blend": "equal_weight_probability",
             "all_in_cost_per_share": quote.all_in_cost_per_share,
             "exact_edge_per_share": edge,
             "chosen_book_timestamp": str(book.get("timestamp") or ""),
