@@ -1,8 +1,10 @@
+import json
 from decimal import Decimal
 
 from tournament.adapters.rtds import (
     TOPIC_TWAP60,
     parse_frame,
+    server_error_message,
     subscribe_frame,
 )
 from tournament.twap_model import (
@@ -64,8 +66,20 @@ def test_parse_exact_e18_twap():
     assert tick.window_seconds == 60
 
 
-def test_subscribe_uses_current_topics():
-    subscription = subscribe_frame()
-    assert "crypto_prices_chainlink" in subscription
-    assert "crypto_prices_twap_sixty" in subscription
-    assert "twap_thirty" not in subscription
+def test_subscribe_uses_current_topics_and_compact_string_filters():
+    subscription = json.loads(subscribe_frame("btc/usd"))
+    rows = subscription["subscriptions"]
+    assert {row["topic"] for row in rows} == {
+        "crypto_prices_chainlink",
+        "crypto_prices_twap_sixty",
+    }
+    assert all(
+        row["filters"] == '{"symbol":"btc/usd"}'
+        and isinstance(row["filters"], str)
+        for row in rows
+    )
+
+
+def test_rtds_server_error_is_not_silently_dropped():
+    raw = '{"message":"Invalid request body","connectionId":"x"}'
+    assert server_error_message(raw) == "Invalid request body"
