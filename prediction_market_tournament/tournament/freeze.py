@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import json
+import platform
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -27,17 +29,38 @@ def load_frozen_spec(path: str | Path) -> tuple[dict, str]:
     return spec, spec_hash(spec)
 
 
+def runtime_fingerprint() -> dict[str, str]:
+    """Runtime properties that can change execution semantics."""
+    return {
+        "python_implementation": platform.python_implementation(),
+        "python_version": platform.python_version(),
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "websockets_version": importlib.metadata.version("websockets"),
+    }
+
+
+def runtime_hash() -> str:
+    return hashlib.sha256(
+        canonical_json_bytes(runtime_fingerprint())
+    ).hexdigest()
+
+
 def implementation_hash(root: str | Path) -> str:
-    """Hash PMT code plus runtime/scheduling files, independent of Git."""
+    """Hash PMT executable/runtime/deployment files, independent of Git."""
     base = Path(root)
     labeled_files: list[tuple[str, Path]] = []
 
-    for relative in ("tournament", "scripts"):
+    for relative in ("tournament", "scripts", "deploy"):
         directory = base / relative
-        if directory.exists():
-            for path in directory.rglob("*.py"):
-                if "__pycache__" in path.parts:
-                    continue
+        if not directory.exists():
+            continue
+        for path in directory.rglob("*"):
+            if (
+                path.is_file()
+                and "__pycache__" not in path.parts
+                and not path.name.endswith((".pyc", ".pyo"))
+            ):
                 labeled_files.append(
                     (path.relative_to(base).as_posix(), path)
                 )
@@ -79,7 +102,7 @@ def create_forward_marker(
 ) -> dict:
     """Deliberately start PMT-FROZEN-V1 exactly once.
 
-    Refuses to start if signal/trade ledgers already contain observations.
+    Refuses to start if any forward-data artifact already exists.
     """
     base = Path(root)
     marker_path = base / FORWARD_MARKER
@@ -113,6 +136,8 @@ def create_forward_marker(
         "started_at": when.astimezone(timezone.utc).isoformat(),
         "spec_sha256": spec_sha,
         "implementation_sha256": implementation_hash(base),
+        "runtime_sha256": runtime_hash(),
+        "runtime": runtime_fingerprint(),
     }
     marker_path.parent.mkdir(parents=True, exist_ok=True)
     with marker_path.open("x", encoding="utf-8") as handle:
@@ -136,17 +161,17 @@ def load_forward_marker(root: str | Path) -> dict:
 
 
 def require_forward_started(root: str | Path) -> dict:
-    """Verify the immutable start marker against current spec and code."""
+    """Verify the immutable start marker against current spec/code/runtime."""
     base = Path(root)
     marker = load_forward_marker(base)
     spec, spec_sha = load_frozen_spec(base / "config" / "frozen_v1.json")
-    impl_sha = implementation_hash(base)
 
     expected = {
         "project": spec["project"],
         "version": spec["version"],
         "spec_sha256": spec_sha,
-        "implementation_sha256": impl_sha,
+        "implementation_sha256": implementation_hash(base),
+        "runtime_sha256": runtime_hash(),
     }
     for key, value in expected.items():
         if marker.get(key) != value:
