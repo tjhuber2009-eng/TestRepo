@@ -454,6 +454,16 @@ class MoonStrategy:
         self.assertEqual(out["pbo"], 0.0)
         self.assertAlmostEqual(out["median_oos_logit"], 0.0, places=12)
 
+    def test_cscv_requires_five_distinct_strategies(self):
+        self.assertIsNone(
+            overfit_diagnostics.cscv_pbo(np.ones((4, 8), dtype=float))
+        )
+        out = overfit_diagnostics.cscv_pbo(
+            np.arange(40, dtype=float).reshape(5, 8)
+        )
+        self.assertIsNotNone(out)
+        self.assertEqual(out["candidate_count"], 5)
+
     def test_cscv_requires_even_symmetric_partition(self):
         self.assertIsNone(overfit_diagnostics.cscv_pbo(np.ones((6, 7))))
         out = overfit_diagnostics.cscv_pbo(
