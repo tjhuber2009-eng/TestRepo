@@ -275,6 +275,33 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             continuous_runner.configure_paths(*default)
         self.assertEqual(len(continuous_runner.build_tracks()), 514)
 
+    def test_stock_fx_scheduler_interleaves_markets_proportionally(self):
+        default = (
+            "stock_fx_config.json",
+            "stock_fx_state",
+            "strategy_library/stock_fx_universe_plan.json",
+        )
+        original = (
+            continuous_runner.CONFIG.name,
+            continuous_runner.STATE.name,
+            str(continuous_runner.UNIVERSE_PLAN.relative_to(HERE)),
+        )
+        try:
+            continuous_runner.configure_paths(*default)
+            tracks = continuous_runner.build_tracks()
+            first_cycle = tracks[:6]
+            first_block = tracks[:37]
+            cycle_markets = {t["target"]["market"] for t in first_cycle}
+            block_counts = {}
+            for track in first_block:
+                market = track["target"]["market"]
+                block_counts[market] = block_counts.get(market, 0) + 1
+            self.assertEqual(cycle_markets, {"stock", "forex"})
+            self.assertEqual(block_counts, {"stock": 30, "forex": 7})
+        finally:
+            continuous_runner.configure_paths(*original)
+
+
     def test_causal_monthly_seed_is_phase2_only_and_future_invariant(self):
         import phase2_prior_runner
         import phase2_seed_factory
