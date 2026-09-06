@@ -24,6 +24,7 @@ from .portfolio_optimizer import RobustPortfolioOptimizer
 from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, vix_stress_overlay, volatility_target_overlay
 from .selection_diagnostics import optimizer_pbo
 from .continuous_bridge import replay_private_promotions
+from .dynamic_portfolio import causal_dynamic_allocation
 from .phase2_bridge import replay_private_promotions as replay_phase2_private_promotions
 from .strategy_examples import (
     cross_sectional_momentum_rotation,
@@ -1285,6 +1286,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     eligible_returns.update(phase2_eligible)
 
     portfolio = None
+    static_portfolio = None
+    dynamic_portfolio = None
+    dynamic_portfolio_summary = None
+    portfolio_selection = {
+        "method": "static_vs_causal_dynamic_bootstrap_growth_v1",
+        "selected": None,
+        "reason": "insufficient_eligible_portfolio_history",
+    }
     portfolio_concentration_sensitivity = {}
     portfolio_core_returns, portfolio_history_policy = (
         select_portfolio_history_cohort(eligible_returns)
@@ -1334,9 +1343,86 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             authoritative_cap = (
                 "1.00" if len(portfolio_core_returns) == 1 else "0.55"
             )
-            portfolio = portfolio_concentration_sensitivity[
+            static_portfolio = portfolio_concentration_sensitivity[
                 authoritative_cap
             ]
+            portfolio = static_portfolio
+
+            # Causal strategy-level rotation is evaluated as one additional
+            # portfolio architecture, never as a bypass around individual
+            # strategy evidence gates. Its weights at t use only returns < t.
+            if len(portfolio_core_returns) >= 2 and len(returns) >= 254:
+                dynamic = causal_dynamic_allocation(
+                    returns,
+                    periods_per_year=252.0,
+                    min_history=252,
+                    growth_lookback=126,
+                    risk_lookback=63,
+                    rebalance_every=21,
+                    max_weight=0.55,
+                    correlation_penalty=1.0,
+                    downside_penalty=0.75,
+                    soft_drawdown=-0.12,
+                    hard_drawdown=-0.22,
+                    soft_scale=0.75,
+                    hard_scale=0.50,
+                )
+                dynamic_portfolio = RobustPortfolioOptimizer(
+                    dd_cap_pct=private.max_dd_pct,
+                    n_candidates=1,
+                    bootstrap_reps=120,
+                    block=20,
+                    max_weight=1.0,
+                    max_gross=1.5,
+                    min_gross=0.10,
+                    seed=20260906,
+                ).optimize(
+                    dynamic.returns.to_frame("causal_dynamic_allocator")
+                )
+                dynamic_portfolio_summary = dynamic.summary()
+
+                static_chosen = (
+                    None if static_portfolio is None else static_portfolio.chosen
+                )
+                dynamic_chosen = (
+                    None if dynamic_portfolio is None else dynamic_portfolio.chosen
+                )
+                choose_dynamic = False
+                if dynamic_chosen is not None:
+                    if static_chosen is None:
+                        choose_dynamic = True
+                    else:
+                        median_improves = (
+                            dynamic_chosen.bootstrap_median_cagr_pct
+                            > static_chosen.bootstrap_median_cagr_pct
+                        )
+                        downside_not_materially_worse = (
+                            dynamic_chosen.bootstrap_cagr_q10_pct
+                            >= static_chosen.bootstrap_cagr_q10_pct - 5.0
+                        )
+                        choose_dynamic = (
+                            median_improves and downside_not_materially_worse
+                        )
+
+                if choose_dynamic:
+                    portfolio = dynamic_portfolio
+                    portfolio_selection = {
+                        "method": "static_vs_causal_dynamic_bootstrap_growth_v1",
+                        "selected": "causal_dynamic",
+                        "reason": (
+                            "higher_bootstrap_median_cagr_with_q10_not_more_"
+                            "than_5pct_points_worse"
+                        ),
+                    }
+                elif static_chosen is not None:
+                    portfolio_selection = {
+                        "method": "static_vs_causal_dynamic_bootstrap_growth_v1",
+                        "selected": "static_robust",
+                        "reason": (
+                            "dynamic_did_not_clear_growth_and_downside_"
+                            "improvement_rule"
+                        ),
+                    }
 
     strategies = {
         "rotation_raw_diagnostic": rotation_raw.summary(),
@@ -1436,6 +1522,18 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "momentum_parameter_optimizer": momentum_param.to_dict(),
         "trend_parameter_optimizer": trend_param.to_dict(),
         "portfolio": None if portfolio is None else portfolio.to_dict(),
+        "portfolio_selection": portfolio_selection,
+        "portfolio_static": (
+            None if static_portfolio is None else static_portfolio.to_dict()
+        ),
+        "portfolio_dynamic": (
+            None
+            if dynamic_portfolio is None
+            else {
+                "risk_scaled_result": dynamic_portfolio.to_dict(),
+                "allocator": dynamic_portfolio_summary,
+            }
+        ),
         "portfolio_authoritative_concentration_cap": (
             None
             if not portfolio_concentration_sensitivity
