@@ -1299,6 +1299,19 @@ def opportunity_visit_indices(max_visits, fraction):
     return slots
 
 
+def next_cursor_after_visit(
+    selected_idx,
+    n_tracks,
+    *,
+    prefer_opportunity=False,
+    scheduled_cursor_next=None,
+):
+    """Keep exploitation from moving the persistent exploration sequence."""
+    if prefer_opportunity and scheduled_cursor_next is not None:
+        return int(scheduled_cursor_next) % int(n_tracks)
+    return (int(selected_idx) + 1) % int(n_tracks)
+
+
 def next_validation_track(tracks, start):
     selections = load_json(SELECTIONS) if SELECTIONS.exists() else {}
     elite_ids = set(selections.get("elite_ids", []))
@@ -1821,10 +1834,12 @@ def main():
                 "reason": f"{type(exc).__name__}: {str(exc)[:500]}",
             })
             print(f"[runner error] {track['id']}: {exc}", file=sys.stderr)
-        if prefer_opportunity and scheduled_cursor_next is not None:
-            cursor = scheduled_cursor_next
-        else:
-            cursor = (idx + 1) % len(tracks)
+        cursor = next_cursor_after_visit(
+            idx,
+            len(tracks),
+            prefer_opportunity=prefer_opportunity,
+            scheduled_cursor_next=scheduled_cursor_next,
+        )
         visits += 1
 
     write_cursor(cursor, len(tracks))
