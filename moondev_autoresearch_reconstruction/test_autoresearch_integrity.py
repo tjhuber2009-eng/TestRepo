@@ -334,6 +334,92 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         ]
         self.assertIsNone(phase2_followup_runner.cohort_cscv(rows))
 
+    def test_phase2_followup_builds_hashed_promotion_source(self):
+        import hashlib
+        import phase2_followup_runner as follow
+
+        source = (
+            'import numpy as np\n'
+            'import pandas as pd\n'
+            'from backtesting import Strategy\n'
+            'FAMILY = "bollinger_breakout_20_2"\n'
+            'class MoonStrategy(Strategy):\n'
+            '    def init(self): pass\n'
+            '    def next(self): pass\n'
+        )
+        source_sha = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        rows = []
+        for i in range(5):
+            rows.append({
+                "track_id": f"bollinger_breakout_20_2__btc__private_{i}",
+                "family": "bollinger_breakout_20_2",
+                "target": "btc",
+                "market": "crypto",
+                "profile": "private",
+                "score": 10.0 - i,
+                "cagr_pct": 50.0 - i,
+                "sharpe": 1.5,
+                "pf": 3.0,
+                "max_dd_pct": -10.0,
+                "trades": 40,
+                "evidence_grade": "A",
+                "strategy_sha256": source_sha,
+                "harness_sha256": "h",
+                "program_sha256": "p",
+                "extreme_stress_return_pct": 20.0,
+                "bootstrap_mean_positive_pvalue": 0.01,
+                "guard_ok": True,
+                "lookahead_pass": True,
+                "cscv_slice_k": (
+                    [10.0] * 8 if i == 0 else [float(4 - i)] * 8
+                ),
+            })
+        selection = {"selection_hash": "frozen"}
+        tracks = {
+            row["track_id"]: {
+                "id": row["track_id"],
+                "family": "bollinger_breakout_20_2",
+                "target": {
+                    "bars_per_year": 365,
+                    "commission": 0.001,
+                    "margin": 0.25,
+                },
+                "profile": {
+                    "starting_vol_target": 0.30,
+                    "f_max": 2.0,
+                },
+            }
+            for row in rows
+        }
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            sources = root / "promotion_sources"
+            promotion = root / "promotion_queue.json"
+
+            def fake_generate(family, output, bars_per_year, vol_target, f_max):
+                Path(output).write_text(source, encoding="utf-8")
+                return Path(output)
+
+            with mock.patch.object(follow, "PROMOTION_SOURCES", sources), \
+                 mock.patch.object(follow, "PROMOTION", promotion), \
+                 mock.patch.object(follow, "track_lookup", return_value=tracks), \
+                 mock.patch.object(follow.p2, "generate", side_effect=fake_generate):
+                payload = follow.build_promotion(rows, selection)
+
+            ready = [
+                row for row in payload["rows"]
+                if row["ready_for_v4_replay"]
+            ]
+            self.assertEqual(len(ready), 1)
+            self.assertEqual(ready[0]["track_id"], rows[0]["track_id"])
+            self.assertEqual(ready[0]["promotion_source_sha256"], source_sha)
+            self.assertEqual(ready[0]["strategy_sha256"], source_sha)
+            self.assertTrue((sources / f"{rows[0]['track_id']}.py").exists())
+            self.assertEqual(ready[0]["bars_per_year"], 365)
+            self.assertEqual(ready[0]["commission"], 0.001)
+            self.assertEqual(ready[0]["margin"], 0.25)
+
     def test_phase2_followup_never_parameter_rescues_or_opens_oos(self):
         import inspect
         import phase2_followup_runner
