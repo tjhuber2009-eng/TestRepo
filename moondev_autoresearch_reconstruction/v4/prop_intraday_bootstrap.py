@@ -22,6 +22,7 @@ from .multi_asset_engine import AssetCost, MultiAssetBacktester, PortfolioLimits
 from .prop_firm_engine import active_day_proxy, optimize_prop_exposure
 from .risk_overlays import volatility_target_overlay
 from .continuous_bridge import prop_transfer_candidates
+from .phase2_bridge import prop_transfer_candidates as phase2_prop_transfer_candidates
 
 
 PRAGUE = "Europe/Prague"
@@ -406,6 +407,112 @@ def _continuous_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
             long = False
         state.append(1.0 if long else 0.0)
     return pd.Series(state, index=daily.index, dtype=float)
+
+
+def _phase2_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
+    """Replay the exact signed Phase-2 daily signal state without source sizing."""
+    family = str(params["source_family"])
+    daily = _utc_daily_ohlc(frame)
+    close = daily["Close"].astype(float)
+
+    if family != "bollinger_breakout_20_2":
+        raise ValueError(f"unsupported Phase-2 daily signal family: {family}")
+
+    mid = close.rolling(20, min_periods=20).mean()
+    # Phase-2 uses pandas rolling.std() default ddof=1.
+    sd = close.rolling(20, min_periods=20).std()
+    upper = mid + 2.0 * sd
+    lower = mid - 2.0 * sd
+    long_entry = (close > upper) & (close.shift(1) <= upper.shift(1))
+    long_exit = close <= mid
+    short_entry = (close < lower) & (close.shift(1) >= lower.shift(1))
+    short_exit = close >= mid
+
+    raw = []
+    cur = 0.0
+    for le, lx, se, sx in zip(
+        long_entry.fillna(False),
+        long_exit.fillna(False),
+        short_entry.fillna(False),
+        short_exit.fillna(False),
+    ):
+        if cur == 1.0 and bool(lx):
+            cur = 0.0
+        elif cur == -1.0 and bool(sx):
+            cur = 0.0
+        if cur == 0.0:
+            if bool(le) and not bool(se):
+                cur = 1.0
+            elif bool(se) and not bool(le):
+                cur = -1.0
+        raw.append(cur)
+    source_state = pd.Series(raw, index=daily.index, dtype=float)
+
+    source_min_bars = int(params.get("source_min_bars", 40))
+    source_vol_lookback = int(params.get("source_vol_lookback", 30))
+    log_ret = np.log(close / close.shift(1))
+    source_rv = (
+        log_ret.rolling(source_vol_lookback)
+        .std(ddof=0)
+        .shift(1)
+        * np.sqrt(365.0)
+    )
+    bar_count = pd.Series(
+        np.arange(1, len(daily) + 1, dtype=int),
+        index=daily.index,
+    )
+    decision_ok = (
+        bar_count.ge(source_min_bars)
+        & source_rv.notna()
+        & source_rv.gt(0.0)
+    )
+
+    # The source Strategy returns immediately when the decision gate is invalid,
+    # preserving any already-open position rather than forcing it flat.
+    actual = []
+    current = 0.0
+    for desired, ok in zip(source_state, decision_ok):
+        if bool(ok):
+            current = float(desired)
+        actual.append(current)
+    return pd.Series(actual, index=daily.index, dtype=float)
+
+
+def hourly_phase2_daily_signal_strategy(params, all_symbols):
+    """Map a signed Phase-2 completed-day signal into causal hourly prop execution."""
+    target = str(params["source_target"])
+    if target not in all_symbols:
+        raise ValueError(f"Phase-2 prop target unavailable: {target}")
+
+    def strategy(data, features=None):
+        index = next(iter(data.values())).index
+        columns = sorted(data)
+        daily_state = _phase2_daily_state(data[target], params)
+
+        utc_dates = pd.Series(index.floor("1D"), index=index)
+        next_utc_dates = utc_dates.shift(-1)
+        utc_day_complete = (
+            next_utc_dates.notna()
+            & (next_utc_dates != utc_dates)
+        )
+        state_map = daily_state.to_dict()
+        desired_at_close = utc_dates.map(state_map).fillna(0.0)
+
+        local_dates = pd.Series(index.tz_convert(PRAGUE).date, index=index)
+        next_local_dates = local_dates.shift(-1)
+        reset = next_local_dates.notna() & (next_local_dates != local_dates)
+
+        out = pd.DataFrame(np.nan, index=index, columns=columns)
+        out.loc[reset] = 0.0
+        update = utc_day_complete & ~reset
+        out.loc[update] = 0.0
+        out.loc[update, target] = desired_at_close.loc[update].astype(float)
+        out = out.ffill().fillna(0.0)
+        if len(out):
+            out.iloc[-1] = 0.0
+        return out
+
+    return strategy
 
 
 def _donchian_daily_decisions(frame: pd.DataFrame, params: dict):
