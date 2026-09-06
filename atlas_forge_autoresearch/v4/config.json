@@ -207,7 +207,8 @@
       "cash_yield_credit": false,
       "selection_uses_base_financing_rate": true,
       "purpose": "prevent leverage from creating artificial CAGR under zero-cost borrowing assumptions",
-      "note": "Staggered sleeves and dynamic allocators pay financing only on gross exposure actually deployed each period."
+      "note": "Staggered sleeves and dynamic allocators pay financing only on gross exposure actually deployed each period.",
+      "leverage_scale_selection": "maximize_development_geometric_growth_after_financing_within_drawdown_feasible_range"
     }
   },
   "intraday": {
