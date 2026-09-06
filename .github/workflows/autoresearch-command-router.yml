@@ -72,6 +72,12 @@ jobs:
             /phase3-reconstruct)
               gh workflow run autoresearch-phase3-reconstruct.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /phase3-map)
+              gh workflow run autoresearch-phase3-engine-map.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /phase3-hydrate)
+              gh workflow run autoresearch-phase3-hydrate.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             *)
               echo "Not an AUTORESEARCH command; ignoring."
               ;;
