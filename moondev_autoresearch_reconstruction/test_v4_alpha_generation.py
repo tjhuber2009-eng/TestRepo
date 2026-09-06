@@ -28,7 +28,14 @@ from v4.hr_dual_locked import (
     mark_day as hr_dual_mark_day,
 )
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
-from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
+from v4.live_bootstrap import (
+    build_rsi2_pullback_strategy,
+    json_safe,
+    pbo_gate,
+    read_market_csv,
+    research_commit_sha as live_research_commit_sha,
+    select_portfolio_history_cohort,
+)
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.phase2_bridge import load_promotion_source as load_phase2_promotion_source
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
@@ -85,6 +92,18 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(cfg["boundaries"]["final_oos_sealed"])
         self.assertEqual(cfg["boundaries"]["final_oos_start"], "2023-01-01")
         self.assertEqual(cfg["objective"]["primary"], "maximize_sustainable_cagr_subject_to_hard_risk_and_evidence_gates")
+
+    def test_private_bootstrap_records_checked_out_research_commit(self):
+        with mock.patch(
+            "v4.live_bootstrap.subprocess.check_output",
+            return_value="abc123\\n",
+        ) as check:
+            self.assertEqual(live_research_commit_sha(), "abc123")
+        check.assert_called_once_with(
+            ["git", "rev-parse", "HEAD"],
+            text=True,
+            stderr=mock.ANY,
+        )
 
     def test_hr_dual_source_lock_is_exact_and_prior_result_is_not_reopened(self):
         self.assertEqual(
