@@ -1,0 +1,21 @@
+{
+  "admitted_complete_specs": 0,
+  "all_reconstructed": true,
+  "base_queue_reconstructed": true,
+  "completion_pct": 100.0,
+  "errors": 0,
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "hydrated_reconstruction_pending": 0,
+  "hydrated_source_count": 300,
+  "lane": "phase3_free_reconstruction",
+  "max_reconstruction_version": 3,
+  "next_stage": "development_engine_mapping",
+  "phase1_registry_mutated": false,
+  "processed_count": 300,
+  "protocol": "nested_chronological_v3",
+  "queue_count": 300,
+  "stage": "reconstruction_complete",
+  "unique_admitted_rule_hashes": 0,
+  "updated_at": "2026-09-06T15:22:42Z"
+}
