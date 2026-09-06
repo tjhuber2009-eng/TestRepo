@@ -134,6 +134,175 @@ hidden_fail=int(progress.get("validation_fail_count",0) or 0)
 hidden_open=(hidden_pass+hidden_fail)>0 or bool(v4_private.get("hidden_validation_opened")) or bool(v4_prop.get("hidden_validation_opened"))
 final_oos_open=bool(v4_private.get("final_oos_opened")) or bool(v4_prop.get("final_oos_opened"))
 
+V4_VIEWS=[
+    "max_payout_efficiency",
+    "max_repeat_payout_efficiency",
+    "max_evaluation_pass",
+    "safest_funded",
+    "balanced",
+    "conservative",
+]
+
+def probability_pct(v, digits=1):
+    if v is None:
+        return "—"
+    return pct(100*float(v), digits)
+
+def nonauthoritative_transfer(params):
+    params=params or {}
+    return (
+        params.get("transfer_exactness")=="signal_only_proxy"
+        or params.get("source_stop_transferred") is False
+    )
+
+def private_v4_lines():
+    lines=["","## AUTORESEARCH V4 — private account",""]
+    chosen=(v4_private.get("portfolio") or {}).get("chosen")
+    if not chosen:
+        return lines+["V4 private portfolio state is not available in this snapshot."]
+    cap=float(v4_private.get("portfolio_authoritative_concentration_cap",0.55))
+    lines += [
+        "| Metric | Current |",
+        "|---|---:|",
+        f"| Authoritative concentration cap | **{pct(100*cap,0)}** |",
+        f"| Portfolio CAGR | **{pct(chosen.get('cagr_pct'),2)}** |",
+        f"| Bootstrap median CAGR | **{pct(chosen.get('bootstrap_median_cagr_pct'),2)}** |",
+        f"| Observed max DD | **{pct(chosen.get('max_dd_pct'),2)}** |",
+        f"| Bootstrap q95 DD | **{pct(chosen.get('bootstrap_dd_q95_pct'),2)}** |",
+        f"| Sharpe | **{f(chosen.get('sharpe'),3)}** |",
+        f"| Gross exposure | **{pct(100*float(chosen.get('gross_exposure',0)),1)}** |",
+        f"| Cash | **{pct(100*float(chosen.get('cash_weight',0)),1)}** |",
+        "",
+        "### Private portfolio weights",
+        "",
+        "| Strategy | Weight |",
+        "|---|---:|",
+    ]
+    for name,weight in sorted(
+        (chosen.get("weights") or {}).items(),
+        key=lambda kv: float(kv[1]),
+        reverse=True,
+    ):
+        lines.append(f"| {name} | {pct(100*float(weight),2)} |")
+    lines += [
+        "",
+        "### Private concentration sensitivity",
+        "",
+        "| Cap | CAGR | Bootstrap median CAGR | q95 DD | Observed DD | Sharpe |",
+        "|---:|---:|---:|---:|---:|---:|",
+    ]
+    for cap_key,row in sorted(
+        (v4_private.get("portfolio_concentration_sensitivity") or {}).items(),
+        key=lambda kv: float(kv[0]),
+    ):
+        x=row.get("chosen") or row
+        auth=" **AUTH**" if abs(float(cap_key)-cap)<1e-9 else ""
+        lines.append(
+            f"| {pct(100*float(cap_key),0)}{auth} | "
+            f"{pct(x.get('cagr_pct'),2)} | "
+            f"{pct(x.get('bootstrap_median_cagr_pct'),2)} | "
+            f"{pct(x.get('bootstrap_dd_q95_pct'),2)} | "
+            f"{pct(x.get('max_dd_pct'),2)} | "
+            f"{f(x.get('sharpe'),3)} |"
+        )
+    lines += [
+        "",
+        "### Continuous private promotion queue",
+        "",
+        "| Track | V4 CAGR | 3× cost CAGR | DD | Sharpe | PBO | Gate |",
+        "|---|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in (v4_private.get("continuous_private_transfer") or {}).get("candidates",[]):
+        cand=row.get("candidate") or {}
+        pbo=cand.get("pbo")
+        lines.append(
+            f"| {cand.get('track_id','—')} | "
+            f"{pct((row.get('base') or {}).get('cagr_pct'),2)} | "
+            f"{pct((row.get('cost_stress') or {}).get('cagr_pct'),2)} | "
+            f"{pct((row.get('base') or {}).get('max_dd_pct'),2)} | "
+            f"{f((row.get('base') or {}).get('sharpe'),3)} | "
+            f"{'—' if pbo is None else probability_pct(pbo,1)} | "
+            f"{row.get('portfolio_gate_reason') or '—'} |"
+        )
+    return lines
+
+def prop_program_lines(program_id, label):
+    p=(v4_prop.get("programs") or {}).get(program_id) or {}
+    lines=[
+        f"### {label}",
+        "",
+        "| Frontier | Family / source | C/V/F | Eval pass | Eval days | First eff. | Repeat eff. | 12-cycle reward | Funded survival | Daily breach | Max breach |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for view in V4_VIEWS:
+        row=(p.get("refined_frontiers") or {}).get(view) or {}
+        params=row.get("params") or {}
+        x=row.get("view") or {}
+        funded=x.get("funded") or {}
+        source=params.get("continuous_track_id")
+        family=str(params.get("family") or "—")
+        if source:
+            family += f" / {source}"
+        if nonauthoritative_transfer(params):
+            family += " **NON-AUTH PROXY**"
+        lines.append(
+            f"| {view.replace('_',' ')} | {family} | "
+            f"{f(x.get('challenge_exposure_scale'),2)} / "
+            f"{f(x.get('verification_exposure_scale'),2)} / "
+            f"{f(x.get('funded_exposure_scale'),2)} | "
+            f"{probability_pct(x.get('combined_evaluation_pass_probability'),1)} | "
+            f"{f(x.get('expected_evaluation_days_if_passed'),1)} | "
+            f"{f(x.get('payout_efficiency_score'),6)} | "
+            f"{f(x.get('repeat_payout_efficiency_score'),6)} | "
+            f"{pct(x.get('repeat_expected_reward_pct'),2)} | "
+            f"{probability_pct(funded.get('survival_probability'),1)} | "
+            f"{probability_pct(funded.get('daily_loss_breach_probability'),1)} | "
+            f"{probability_pct(funded.get('max_loss_breach_probability'),1)} |"
+        )
+    lines += [
+        "",
+        "#### 252 / 365 / 504-day sensitivity",
+        "",
+        "| Frontier | 252 days | 365 days | 504 days |",
+        "|---|---|---|---|",
+    ]
+    for view in V4_VIEWS:
+        horizons=((p.get("horizon_sensitivity") or {}).get(view) or {}).get("horizons") or {}
+        cells=[]
+        for horizon in (252,365,504):
+            x=(horizons.get(str(horizon)) or {}).get("view") or {}
+            funded=x.get("funded") or {}
+            cells.append(
+                f"pass {probability_pct(x.get('combined_evaluation_pass_probability'),1)}; "
+                f"repeat {f(x.get('repeat_payout_efficiency_score'),5)}; "
+                f"reward {pct(x.get('repeat_expected_reward_pct'),1)}; "
+                f"survival {probability_pct(funded.get('survival_probability'),1)}"
+            )
+        lines.append(f"| {view.replace('_',' ')} | " + " | ".join(cells) + " |")
+    lines.append("")
+    return lines
+
+def prop_adapter_lines():
+    lines=[
+        "### Continuous → prop adapter audit",
+        "",
+        "| Track | Family | Adapter | Exactness | Source stop | Status |",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in (v4_prop.get("continuous_prop_transfer") or {}).get("candidates",[]):
+        params=row.get("transfer_params") or {}
+        status=row.get("transfer_status") or "—"
+        if nonauthoritative_transfer(params):
+            status="NON-AUTH PROXY"
+        lines.append(
+            f"| {row.get('track_id','—')} | {row.get('family','—')} | "
+            f"{row.get('adapter') or '—'} | "
+            f"{params.get('transfer_exactness') or row.get('exactness') or '—'} | "
+            f"{params.get('source_stop_transferred','—')} | {status} |"
+        )
+    lines.append("")
+    return lines
+
 stamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 out=[
@@ -143,20 +312,21 @@ f"> **Auto-updated:** {stamp}  ",
 f"> **Protocol:** `{ACTIVE_PROTOCOL}`  ",
 f"> **Phase:** **{str(progress.get('phase','—')).upper()}**",
 "",
-*(
-    [
+]
+if stale_state:
+    out += [
         "> ⚠️ **Protocol-stale persistent state detected.** The saved state is "
         f"`{stale_state.get('progress_protocol')}`; its {stale_state.get('leaderboard_count',0)} "
         "leaderboard rows are historical only and are intentionally hidden until a v3 cycle initializes fresh state.",
         "",
-    ] if stale_state else []
-),
+    ]
+out += [
 "| Live status | Value |",
 "|---|---|",
 f"| Research phase | **{str(progress.get('phase','—')).upper()}** |",
 f"| Breadth progress | **{breadth_pct:.2f}%** |",
-f"| Hidden validation | **{'SEALED' if not hidden_open else 'OPEN'}** |",
-"| 2023+ final OOS | **" + ("OPEN" if final_oos_open else "SEALED") + "** |",
+f"| Hidden validation | **{'OPEN' if hidden_open else 'SEALED'}** |",
+f"| 2023+ final OOS | **{'OPEN' if final_oos_open else 'SEALED'}** |",
 "",
 "## Search progress",
 "",
@@ -173,163 +343,18 @@ f"| Terminal tracks | **{int(progress.get('terminal_track_count',0) or 0):,}** |
 "",
 "## Research integrity",
 "",
-f"- {'🟢' if not hidden_open else '🟡'} Hidden pre-OOS validation: **{'SEALED' if not hidden_open else f'OPEN — {hidden_pass} pass / {hidden_fail} fail'}**",
+f"- {'🟡' if hidden_open else '🟢'} Hidden pre-OOS validation: **{'OPEN' if hidden_open else 'SEALED'}**",
 f"- {'🟡' if final_oos_open else '🟢'} Final 2023+ OOS: **{'OPEN' if final_oos_open else 'SEALED'}**",
-"- 🟢 Cost stress: **2×**",
+"- 🟢 Cost stress: **2× / 3×**",
 "- 🟢 Prop max DD: **10%**",
 "- 🟢 Private max DD: **32%**",
-"",
-"## AUTORESEARCH V4 — private account",
-"",
-*((
-    lambda chosen: [
-        "| Metric | Current |",
-        "|---|---:|",
-        f"| Authoritative concentration cap | **{pct(100*float(v4_private.get('portfolio_authoritative_concentration_cap',0.55)),0)}** |",
-        f"| Portfolio CAGR | **{pct(chosen.get('cagr_pct'),2)}** |",
-        f"| Bootstrap median CAGR | **{pct(chosen.get('bootstrap_median_cagr_pct'),2)}** |",
-        f"| Observed max DD | **{pct(chosen.get('max_dd_pct'),2)}** |",
-        f"| Bootstrap q95 DD | **{pct(chosen.get('bootstrap_dd_q95_pct'),2)}** |",
-        f"| Sharpe | **{f(chosen.get('sharpe'),3)}** |",
-        f"| Gross exposure | **{pct(100*float(chosen.get('gross_exposure',0)),1)}** |",
-        f"| Cash | **{pct(100*float(chosen.get('cash_weight',0)),1)}** |",
-        "",
-        "### Private portfolio weights",
-        "",
-        "| Strategy | Weight |",
-        "|---|---:|",
-        *[
-            f"| {name} | {pct(100*float(weight),2)} |"
-            for name,weight in sorted(
-                (chosen.get("weights") or {}).items(),
-                key=lambda kv: float(kv[1]),
-                reverse=True,
-            )
-        ],
-        "",
-        "### Private concentration sensitivity",
-        "",
-        "| Cap | CAGR | Bootstrap median CAGR | q95 DD | Observed DD | Sharpe |",
-        "|---:|---:|---:|---:|---:|---:|",
-        *[
-            f"| {pct(100*float(cap),0)}{' **AUTH**' if abs(float(cap)-float(v4_private.get('portfolio_authoritative_concentration_cap',0.55)))<1e-9 else ''} | "
-            f"{pct((row.get('chosen') or row).get('cagr_pct'),2)} | "
-            f"{pct((row.get('chosen') or row).get('bootstrap_median_cagr_pct'),2)} | "
-            f"{pct((row.get('chosen') or row).get('bootstrap_dd_q95_pct'),2)} | "
-            f"{pct((row.get('chosen') or row).get('max_dd_pct'),2)} | "
-            f"{f((row.get('chosen') or row).get('sharpe'),3)} |"
-            for cap,row in sorted(
-                (v4_private.get("portfolio_concentration_sensitivity") or {}).items(),
-                key=lambda kv: float(kv[0]),
-            )
-        ],
-    ]
-)( (v4_private.get("portfolio") or {}).get("chosen") )
-if (v4_private.get("portfolio") or {}).get("chosen")
-else ["V4 private portfolio state is not available in this snapshot."])),
-"",
-"### Continuous private promotion queue",
-"",
-"| Track | V4 CAGR | 3× cost CAGR | DD | Sharpe | PBO | Gate |",
-"|---|---:|---:|---:|---:|---:|---|",
-*[
-    f"| {(r.get('candidate') or {}).get('track_id','—')} | "
-    f"{pct((r.get('base') or {}).get('cagr_pct'),2)} | "
-    f"{pct((r.get('cost_stress') or {}).get('cagr_pct'),2)} | "
-    f"{pct((r.get('base') or {}).get('max_dd_pct'),2)} | "
-    f"{f((r.get('base') or {}).get('sharpe'),3)} | "
-    f"{pct(None if (r.get('candidate') or {}).get('pbo') is None else 100*float((r.get('candidate') or {}).get('pbo')),1)} | "
-    f"{r.get('portfolio_gate_reason') or '—'} |"
-    for r in (v4_private.get("continuous_private_transfer") or {}).get("candidates",[])
-],
-"",
-"## AUTORESEARCH V4 — prop-firm frontiers",
-"",
-*sum([
-    (
-        lambda pid,label,p: [
-            f"### {label}",
-            "",
-            "| Frontier | Family / source | C/V/F | Eval pass | Eval days | First eff. | Repeat eff. | 12-cycle reward | Funded survival | Daily breach | Max breach |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
-            *[
-                (
-                    lambda r,params,x,funded,nonauth: (
-                        f"| {view.replace('_',' ')} | "
-                        f"{params.get('family','—')}"
-                        f"{' / '+str(params.get('continuous_track_id')) if params.get('continuous_track_id') else ''}"
-                        f"{' **NON-AUTH PROXY**' if nonauth else ''} | "
-                        f"{f(x.get('challenge_exposure_scale'),2)} / {f(x.get('verification_exposure_scale'),2)} / {f(x.get('funded_exposure_scale'),2)} | "
-                        f"{pct(None if x.get('combined_evaluation_pass_probability') is None else 100*float(x.get('combined_evaluation_pass_probability')),1)} | "
-                        f"{f(x.get('expected_evaluation_days_if_passed'),1)} | "
-                        f"{f(x.get('payout_efficiency_score'),6)} | "
-                        f"{f(x.get('repeat_payout_efficiency_score'),6)} | "
-                        f"{pct(x.get('repeat_expected_reward_pct'),2)} | "
-                        f"{pct(None if funded.get('survival_probability') is None else 100*float(funded.get('survival_probability')),1)} | "
-                        f"{pct(None if funded.get('daily_loss_breach_probability') is None else 100*float(funded.get('daily_loss_breach_probability')),1)} | "
-                        f"{pct(None if funded.get('max_loss_breach_probability') is None else 100*float(funded.get('max_loss_breach_probability')),1)} |"
-                    )
-                )(
-                    (p.get("refined_frontiers") or {}).get(view) or {},
-                    ((p.get("refined_frontiers") or {}).get(view) or {}).get("params") or {},
-                    ((p.get("refined_frontiers") or {}).get(view) or {}).get("view") or {},
-                    ((((p.get("refined_frontiers") or {}).get(view) or {}).get("view") or {}).get("funded") or {}),
-                    (
-                        (((p.get("refined_frontiers") or {}).get(view) or {}).get("params") or {}).get("transfer_exactness")=="signal_only_proxy"
-                        or (((p.get("refined_frontiers") or {}).get(view) or {}).get("params") or {}).get("source_stop_transferred") is False
-                    ),
-                )
-                for view in ["max_payout_efficiency","max_repeat_payout_efficiency","max_evaluation_pass","safest_funded","balanced","conservative"]
-            ],
-            "",
-            "#### 252 / 365 / 504-day sensitivity",
-            "",
-            "| Frontier | 252 days | 365 days | 504 days |",
-            "|---|---|---|---|",
-            *[
-                (
-                    lambda hs: f"| {view.replace('_',' ')} | " + " | ".join(
-                        (
-                            lambda x,fd: (
-                                f"pass {pct(None if x.get('combined_evaluation_pass_probability') is None else 100*float(x.get('combined_evaluation_pass_probability')),1)}; "
-                                f"repeat {f(x.get('repeat_payout_efficiency_score'),5)}; "
-                                f"reward {pct(x.get('repeat_expected_reward_pct'),1)}; "
-                                f"survival {pct(None if fd.get('survival_probability') is None else 100*float(fd.get('survival_probability')),1)}"
-                            )
-                        )(
-                            (hs.get(str(h)) or {}).get("view") or {},
-                            (((hs.get(str(h)) or {}).get("view") or {}).get("funded") or {}),
-                        )
-                        for h in (252,365,504)
-                    ) + " |"
-                )((((p.get("horizon_sensitivity") or {}).get(view) or {}).get("horizons") or {}))
-                for view in ["max_payout_efficiency","max_repeat_payout_efficiency","max_evaluation_pass","safest_funded","balanced","conservative"]
-            ],
-            "",
-        ]
-    )(pid,label,(v4_prop.get("programs") or {}).get(pid) or {})
-    for pid,label in [("ftmo_1step_2026","FTMO 1-Step"),("ftmo_2step_2026","FTMO 2-Step")]
-],[]),
-"### Continuous → prop adapter audit",
-"",
-"| Track | Family | Adapter | Exactness | Source stop | Status |",
-"|---|---|---|---|---|---|",
-*[
-    (
-        lambda p,nonauth: f"| {r.get('track_id','—')} | {r.get('family','—')} | {r.get('adapter') or '—'} | "
-        f"{p.get('transfer_exactness') or r.get('exactness') or '—'} | "
-        f"{p.get('source_stop_transferred','—')} | "
-        f"{'NON-AUTH PROXY' if nonauth else r.get('transfer_status','—')} |"
-    )(
-        r.get("transfer_params") or {},
-        (
-            (r.get("transfer_params") or {}).get("transfer_exactness")=="signal_only_proxy"
-            or (r.get("transfer_params") or {}).get("source_stop_transferred") is False
-        ),
-    )
-    for r in (v4_prop.get("continuous_prop_transfer") or {}).get("candidates",[])
-],
-"",
+]
+out += private_v4_lines()
+out += ["","## AUTORESEARCH V4 — prop-firm frontiers",""]
+out += prop_program_lines("ftmo_1step_2026","FTMO 1-Step")
+out += prop_program_lines("ftmo_2step_2026","FTMO 2-Step")
+out += prop_adapter_lines()
+out += [
 "## Current development champions",
 "",
 "| # | Family | Target | Profile | Eligible | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence | Data | Trades/yr |",
