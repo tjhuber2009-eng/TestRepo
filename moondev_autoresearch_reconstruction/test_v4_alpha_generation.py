@@ -1725,8 +1725,8 @@ class MoonStrategy:
         board = {
             "protocol": "nested_chronological_v3",
             "rows": [
-                row("d1", "donchian_20_10", 10.0),
-                row("d2", "donchian_sma50", 9.0),
+                row("q1", "qqe_proxy", 10.0),
+                row("b1", "swing_terminal_breakout_proxy", 9.0),
                 row("rsi", "btc_rsi_adx", 8.0),
             ],
         }
@@ -1759,8 +1759,8 @@ class MoonStrategy:
         self.assertEqual(len(supported), 1)
         self.assertEqual(supported[0]["continuous_track_id"], "rsi")
         status = {r["track_id"]: r["transfer_status"] for r in audit["candidates"]}
-        self.assertEqual(status["d1"], "adapter_required")
-        self.assertEqual(status["d2"], "adapter_required")
+        self.assertEqual(status["q1"], "adapter_required")
+        self.assertEqual(status["b1"], "adapter_required")
         self.assertEqual(status["rsi"], "supported")
 
     def test_all_exact_same_target_adapters_reach_v4_evaluation(self):
@@ -1899,7 +1899,7 @@ class MoonStrategy:
         with self.assertRaises(ValueError):
             _continuous_daily_state(frame, partial)
 
-    def test_continuous_daily_signal_proxy_adapters_are_causal(self):
+    def test_continuous_daily_signal_adapters_are_causal(self):
         idx = pd.date_range(
             "2020-01-01T00:00:00Z",
             periods=24 * 80,
@@ -1929,8 +1929,13 @@ class MoonStrategy:
                 "entry_lookback": 5,
                 "exit_lookback": 3,
                 "sma_window": None,
-                "source_stop_transferred": False,
-                "transfer_exactness": "signal_only_proxy",
+                "atr_window": 3,
+                "stop_mult": 3.0,
+                "source_min_bars": 8,
+                "source_vol_lookback": 5,
+                "source_stop_required": True,
+                "source_stop_transferred": True,
+                "transfer_exactness": "signal_and_atr_stop_logic_exact_v4_risk_resized",
             },
             {
                 "family": "continuous_daily_signal",
@@ -1939,8 +1944,13 @@ class MoonStrategy:
                 "entry_lookback": 5,
                 "exit_lookback": 3,
                 "sma_window": 7,
-                "source_stop_transferred": False,
-                "transfer_exactness": "signal_only_proxy",
+                "atr_window": 3,
+                "stop_mult": 3.0,
+                "source_min_bars": 10,
+                "source_vol_lookback": 5,
+                "source_stop_required": True,
+                "source_stop_transferred": True,
+                "transfer_exactness": "signal_and_atr_stop_logic_exact_v4_risk_resized",
             },
             {
                 "family": "continuous_daily_signal",
