@@ -36,6 +36,7 @@ from v4.live_bootstrap import (
     portfolio_challenger_wins,
     read_market_csv,
     research_commit_sha as live_research_commit_sha,
+    select_portfolio_architecture,
     select_portfolio_history_cohort,
 )
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
@@ -936,6 +937,34 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertFalse(
             portfolio_challenger_wins(lower_growth, incumbent)
         )
+
+    def test_architecture_selection_uses_common_static_tail_floor(self):
+        def result(median, q10, cagr):
+            r = mock.Mock()
+            r.chosen = mock.Mock(
+                bootstrap_median_cagr_pct=median,
+                bootstrap_cagr_q10_pct=q10,
+                cagr_pct=cagr,
+            )
+            return r
+
+        static = result(20.0, 10.0, 19.0)
+        first = result(22.0, 14.0, 21.0)
+        # This beats the same static floor (q10 >= 5) and has higher median,
+        # even though it would fail if compared sequentially to first's q10.
+        second = result(24.0, 8.0, 23.0)
+        fragile = result(30.0, 4.0, 29.0)
+
+        name, chosen = select_portfolio_architecture(
+            static,
+            {
+                "first": first,
+                "second": second,
+                "fragile": fragile,
+            },
+        )
+        self.assertEqual(name, "second")
+        self.assertIs(chosen, second)
 
     def test_meta_filter_label_delay_blocks_unavailable_previous_outcome(self):
         rng = np.random.default_rng(123)
