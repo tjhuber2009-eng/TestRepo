@@ -1,0 +1,74 @@
+name: AUTORESEARCH health audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autoresearch-health-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - name: Check out research source
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Compile health and integrity sources
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
+          python oos_guard.py
+
+      - name: Fetch live state snapshots
+        shell: bash
+        working-directory: .
+        run: |
+          mkdir -p /tmp/autoresearch-health
+          for branch in continuous-autoresearch-state phase2-autoresearch-state phase3-hydration-state phase3-reconstruction-state phase3-engine-mapping-state autoresearch-v4-state; do
+            git fetch origin "$branch:refs/remotes/origin/$branch"
+          done
+          git show origin/continuous-autoresearch-state:moondev_autoresearch_reconstruction/continuous_state/progress.json > /tmp/autoresearch-health/continuous.json
+          git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/progress.json > /tmp/autoresearch-health/phase2.json
+          git show origin/phase3-hydration-state:moondev_autoresearch_reconstruction/phase3_state/hydration_progress.json > /tmp/autoresearch-health/phase3-hydration.json
+          git show origin/phase3-reconstruction-state:moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json > /tmp/autoresearch-health/phase3-reconstruction.json
+          git show origin/phase3-engine-mapping-state:moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json > /tmp/autoresearch-health/phase3-mapping.json
+          git show origin/autoresearch-v4-state:moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json > /tmp/autoresearch-health/v4.json
+
+      - name: Run cross-lane health audit
+        run: |
+          python autoresearch_health_audit.py \
+            --continuous-progress /tmp/autoresearch-health/continuous.json \
+            --phase2-progress /tmp/autoresearch-health/phase2.json \
+            --phase3-hydration /tmp/autoresearch-health/phase3-hydration.json \
+            --phase3-reconstruction /tmp/autoresearch-health/phase3-reconstruction.json \
+            --phase3-mapping /tmp/autoresearch-health/phase3-mapping.json \
+            --v4-bootstrap /tmp/autoresearch-health/v4.json \
+            --output /tmp/autoresearch-health/report.json
+
+      - name: Upload health report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-health-${{ github.run_id }}
+          path: /tmp/autoresearch-health
+          retention-days: 14
