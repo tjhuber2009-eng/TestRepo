@@ -2,6 +2,7 @@ name: AUTORESEARCH v4 development bootstrap
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
