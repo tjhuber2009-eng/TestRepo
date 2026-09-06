@@ -52,6 +52,8 @@ jobs:
               ("MOONDEV","ATLASFORGE"),
               ("moondev_autoresearch_reconstruction","atlas_forge_autoresearch"),
               ("moondev-nvidia-autoresearch","atlas-forge-autoresearch"),
+              ("moondev-autoresearch","atlas-forge-autoresearch"),
+              ("moondev-cross-market-autoresearch","atlas-forge-cross-market-autoresearch"),
           ]
           if root.exists():
               for p in root.rglob("*"):
