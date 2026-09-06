@@ -1,4 +1,4 @@
-name: YKE v3.1 Windows Native Probe
+name: YKE v3.1 Windows Release Build
 
 on:
   workflow_dispatch:
@@ -6,34 +6,114 @@ on:
     branches: [yke-v3.1-windows-build]
     paths:
       - '.github/workflows/yke-windows-build.yml'
-      - 'youtube-knowledge-engine/native-probe/**'
 
 permissions:
   contents: read
 
-jobs:
-  windows-native-check:
-    runs-on: windows-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
+concurrency:
+  group: yke-v3.1-windows-release
+  cancel-in-progress: false
 
-      - uses: dtolnay/rust-toolchain@stable
+jobs:
+  build-windows-installers:
+    runs-on: windows-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+
+      - name: Reconstruct and verify certified v3.1 source archive
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $parts = Get-ChildItem 'youtube-knowledge-engine/source.b64.part*' | Sort-Object Name
+          if ($parts.Count -ne 18) { throw "Expected 18 source chunks, found $($parts.Count)" }
+
+          $b64 = ($parts | ForEach-Object { (Get-Content -Raw $_.FullName).Trim() }) -join ''
+          if ($b64.Length -ne 358072) { throw "Base64 length mismatch: $($b64.Length)" }
+
+          $bytes = [Convert]::FromBase64String($b64)
+          $zip = Join-Path $PWD 'youtube-knowledge-engine-v3.1.0-secure-desktop-source.zip'
+          [IO.File]::WriteAllBytes($zip, $bytes)
+
+          $size = (Get-Item $zip).Length
+          if ($size -ne 268553) { throw "Certified ZIP size mismatch: $size" }
+
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $expected = '5afad97f474df7a63fde3d98d38a7da952ffaab188ac0ce555ae3d630ccf2298'
+          if ($hash -ne $expected) { throw "Certified ZIP SHA-256 mismatch: $hash" }
+
+          New-Item -ItemType Directory -Force -Path 'build/yke-v3.1.0' | Out-Null
+          Expand-Archive -LiteralPath $zip -DestinationPath 'build/yke-v3.1.0' -Force
+          "CERTIFIED_SOURCE_SHA256=$hash" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "Certified source verified: $hash ($size bytes)"
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Rust 1.88
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: '1.88.0'
 
-      - name: Reconstruct and verify certified Windows icon
+      - name: Install Node dependencies
+        working-directory: build/yke-v3.1.0
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run complete source verification
+        working-directory: build/yke-v3.1.0
+        run: npm run verify
+
+      - name: Prepare exact Node sidecar
+        working-directory: build/yke-v3.1.0
+        run: npm run desktop:prepare-sidecar
+
+      - name: Verify native Tauri shell
+        working-directory: build/yke-v3.1.0
+        run: cargo check --manifest-path src-tauri/Cargo.toml --locked
+
+      - name: Build Windows Tauri installers
+        working-directory: build/yke-v3.1.0
+        run: npm run desktop:build
+
+      - name: Require installers and generate SHA-256 checksums
         shell: pwsh
         run: |
-          $b64 = (Get-Content -Raw 'youtube-knowledge-engine/native-probe/icons/icon.ico.b64').Trim()
-          $bytes = [Convert]::FromBase64String($b64)
-          [IO.File]::WriteAllBytes('youtube-knowledge-engine/native-probe/icons/icon.ico', $bytes)
-          $icon = 'youtube-knowledge-engine/native-probe/icons/icon.ico'
-          if ((Get-Item $icon).Length -ne 9576) { throw "Icon size mismatch: $((Get-Item $icon).Length)" }
-          $hash = (Get-FileHash $icon -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($hash -ne '27eabc7242f1cd18497b474003689d60959b0111dd87b6a34e51f3a7154efe27') {
-            throw "Icon SHA-256 mismatch: $hash"
+          $ErrorActionPreference = 'Stop'
+          $bundle = Join-Path $PWD 'build/yke-v3.1.0/src-tauri/target/release/bundle'
+          if (-not (Test-Path $bundle)) { throw "Tauri bundle directory was not created: $bundle" }
+
+          $installers = Get-ChildItem $bundle -Recurse -File |
+            Where-Object { $_.Extension -in '.msi', '.exe' }
+
+          if (-not $installers -or $installers.Count -lt 1) {
+            throw 'Tauri completed without producing a Windows MSI or EXE installer.'
           }
 
-      - name: Cargo check exact v3.1 native shell
-        run: cargo check --manifest-path youtube-knowledge-engine/native-probe/Cargo.toml
+          $checksumPath = Join-Path $bundle 'SHA256SUMS.txt'
+          $lines = foreach ($file in $installers) {
+            $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            $relative = [IO.Path]::GetRelativePath($bundle, $file.FullName).Replace('\','/')
+            "$hash  $relative"
+          }
+          $lines | Set-Content -Path $checksumPath -Encoding ascii
+
+          "Installer outputs:"
+          $installers | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$($_.FullName) | $($_.Length) bytes | $hash"
+          }
+          Get-Content $checksumPath
+
+      - name: Upload verified Windows installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-intelligence-desktop-v3.1.0-windows-installers
+          path: |
+            build/yke-v3.1.0/src-tauri/target/release/bundle/**
+            build/yke-v3.1.0/src-tauri/target/release/youtube-intelligence-desktop.exe
+          if-no-files-found: error
+          retention-days: 30
