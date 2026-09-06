@@ -287,15 +287,12 @@ jobs:
           fi
           git push --force-with-lease origin continuous-autoresearch-state
 
-      - name: Trigger sequential V4 promotion cycle
+      - name: V4 promotion dispatch paused for privacy
         if: success() && steps.v4_promotion.outputs.trigger == 'true'
         shell: bash
         working-directory: .
         run: |
-          echo "Dispatching V4 promotion cycle: ${{ steps.v4_promotion.outputs.reason }}"
-          gh workflow run autoresearch-v4-promotion-cycle.yml \
-            --repo "$GITHUB_REPOSITORY" \
-            --ref main
+          echo "V4 promotion opportunity detected but automatic dispatch is paused until repository privacy is confirmed."
 
       - name: Refresh stable live dashboard
         shell: bash
@@ -332,10 +329,9 @@ jobs:
           --repo tjhuber2009-eng/TestRepo
           --body-file moondev_autoresearch_reconstruction/completion-note.md
 
-      - name: Chain next cycle until exhaustive completion
+      - name: Continuous chaining paused for privacy
         if: success() && steps.completion.outputs.terminal != 'true'
         shell: bash
         working-directory: .
         run: |
-          echo "Dispatching next AUTORESEARCH cycle because runnable universe is not terminal."
-          gh workflow run continuous-autoresearch.yml             --repo tjhuber2009-eng/TestRepo             --ref main
+          echo "Automatic chaining is paused until repository privacy is confirmed."
