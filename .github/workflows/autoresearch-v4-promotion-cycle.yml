@@ -17,13 +17,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  resolve-source:
+    runs-on: ubuntu-latest
+    outputs:
+      source_ref: ${{ steps.source.outputs.source_ref }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: source
+        name: Resolve immutable V4 source from kick
+        shell: bash
+        run: |
+          source_ref="$(sed -n 's/^V4 source head: \([0-9a-fA-F]\{40\}\)$/\1/p' .github/atlas-forge-v4-kick | head -1)"
+          if [[ ! "$source_ref" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "::error::Kick file must contain exactly one 40-hex 'V4 source head:' value"
+            exit 1
+          fi
+          echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
+          echo "Pinned promotion source: $source_ref"
+
   private-development:
+    needs: resolve-source
     uses: ./.github/workflows/autoresearch-v4-bootstrap.yml
+    with:
+      source_ref: ${{ needs.resolve-source.outputs.source_ref }}
     secrets: inherit
 
   prop-development:
-    needs: private-development
+    needs: [resolve-source, private-development]
     uses: ./.github/workflows/autoresearch-v4-prop-intraday.yml
+    with:
+      source_ref: ${{ needs.resolve-source.outputs.source_ref }}
     secrets: inherit
 
   dashboard-refresh:
