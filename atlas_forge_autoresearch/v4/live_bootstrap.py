@@ -1340,8 +1340,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     static_portfolio = None
     satellite_portfolio = None
     satellite_portfolio_summary = None
+    satellite_matched_static_gross = None
     dynamic_portfolio = None
     dynamic_portfolio_summary = None
+    dynamic_matched_static_gross = None
     portfolio_selection = {
         "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
         "selected": None,
@@ -1446,7 +1448,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         satellite_results[candidate_name] = result
 
                 if satellite_results:
-                    best_satellite_name, satellite_portfolio = max(
+                    eligible_satellite_results = {
+                        name: result
+                        for name, result in satellite_results.items()
+                        if portfolio_challenger_wins(
+                            result, static_portfolio
+                        )
+                    }
+                    raw_best_name, raw_best_result = max(
                         satellite_results.items(),
                         key=lambda item: (
                             item[1].chosen.bootstrap_median_cagr_pct,
@@ -1455,32 +1464,62 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                             item[0],
                         ),
                     )
+                    selected_satellite_name = None
+                    if eligible_satellite_results:
+                        selected_satellite_name, satellite_portfolio = max(
+                            eligible_satellite_results.items(),
+                            key=lambda item: (
+                                item[1].chosen.bootstrap_median_cagr_pct,
+                                item[1].chosen.bootstrap_cagr_q10_pct,
+                                item[1].chosen.cagr_pct,
+                                item[0],
+                            ),
+                        )
+                    else:
+                        satellite_portfolio = raw_best_result
+
+                    summary_name = (
+                        selected_satellite_name or raw_best_name
+                    )
                     satellite_portfolio_summary = {
-                        "selected_candidate": best_satellite_name,
+                        "selected_candidate": selected_satellite_name,
+                        "best_raw_candidate": raw_best_name,
                         "spec": satellite_specs[
-                            best_satellite_name
+                            summary_name
                         ].to_dict(),
                         "candidate_count": len(satellite_results),
+                        "eligible_candidate_count": len(
+                            eligible_satellite_results
+                        ),
                         "policy": (
                             "supplemental sleeve capped at 25% composition; "
-                            "pre-inception allocation held as cash"
+                            "pre-inception allocation held as cash; all sleeves "
+                            "clear the same static-portfolio Q10 floor"
                         ),
                     }
-                    if portfolio_challenger_wins(
-                        satellite_portfolio, portfolio
-                    ):
-                        portfolio = satellite_portfolio
-                        portfolio_selection = {
-                            "method": (
-                                "static_vs_staggered_satellite_vs_"
-                                "causal_dynamic_v1"
-                            ),
-                            "selected": "staggered_satellite",
-                            "reason": (
-                                "higher_bootstrap_median_cagr_with_q10_not_"
-                                "more_than_5pct_points_worse"
-                            ),
-                        }
+
+                    if selected_satellite_name is not None:
+                        static_gross = float(
+                            static_portfolio.chosen.gross_exposure
+                        )
+                        satellite_matched_static_gross = (
+                            RobustPortfolioOptimizer(
+                                dd_cap_pct=private.max_dd_pct,
+                                n_candidates=1,
+                                bootstrap_reps=120,
+                                block=20,
+                                max_weight=1.0,
+                                max_gross=static_gross,
+                                min_gross=static_gross,
+                                seed=20260905,
+                            ).optimize(
+                                satellite_streams[
+                                    selected_satellite_name
+                                ].to_frame(
+                                    selected_satellite_name
+                                )
+                            )
+                        )
 
             # Causal strategy-level rotation is evaluated as one additional
             # portfolio architecture, never as a bypass around individual
@@ -1514,22 +1553,59 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     dynamic.returns.to_frame("causal_dynamic_allocator")
                 )
                 dynamic_portfolio_summary = dynamic.summary()
+                if static_portfolio is not None and static_portfolio.chosen is not None:
+                    static_gross = float(
+                        static_portfolio.chosen.gross_exposure
+                    )
+                    dynamic_matched_static_gross = RobustPortfolioOptimizer(
+                        dd_cap_pct=private.max_dd_pct,
+                        n_candidates=1,
+                        bootstrap_reps=120,
+                        block=20,
+                        max_weight=1.0,
+                        max_gross=static_gross,
+                        min_gross=static_gross,
+                        seed=20260905,
+                    ).optimize(
+                        dynamic.returns.to_frame(
+                            "causal_dynamic_allocator"
+                        )
+                    )
 
-                if portfolio_challenger_wins(
-                    dynamic_portfolio, portfolio
-                ):
-                    portfolio = dynamic_portfolio
-                    portfolio_selection = {
-                        "method": (
-                            "static_vs_staggered_satellite_vs_"
-                            "causal_dynamic_v1"
-                        ),
-                        "selected": "causal_dynamic",
-                        "reason": (
-                            "higher_bootstrap_median_cagr_with_q10_not_more_"
-                            "than_5pct_points_worse"
-                        ),
-                    }
+            challengers = {}
+            if (
+                satellite_portfolio_summary is not None
+                and satellite_portfolio_summary.get(
+                    "selected_candidate"
+                ) is not None
+            ):
+                challengers[
+                    "staggered_satellite"
+                ] = satellite_portfolio
+            if portfolio_challenger_wins(
+                dynamic_portfolio, static_portfolio
+            ):
+                challengers["causal_dynamic"] = dynamic_portfolio
+
+            selected_name, selected_result = (
+                select_portfolio_architecture(
+                    static_portfolio,
+                    challengers,
+                )
+            )
+            if selected_result is not None:
+                portfolio = selected_result
+                portfolio_selection = {
+                    "method": (
+                        "static_vs_staggered_satellite_vs_"
+                        "causal_dynamic_v2"
+                    ),
+                    "selected": selected_name,
+                    "reason": (
+                        "highest_bootstrap_median_cagr_among_architectures_"
+                        "clearing_common_static_q10_floor"
+                    ),
+                }
 
     strategies = {
         "rotation_raw_diagnostic": rotation_raw.summary(),
