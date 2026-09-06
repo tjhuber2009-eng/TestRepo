@@ -1,0 +1,115 @@
+name: Atlas Forge V4 profit benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/atlas-forge-v4-profit-benchmark-kick"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-forge-v4-profit-benchmark
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
+    defaults:
+      run:
+        working-directory: atlas_forge_autoresearch
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: autoresearch-v4-alpha-generation
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Require Tiingo evidence token
+        shell: bash
+        run: |
+          test -n "$TIINGO_API_TOKEN" || {
+            echo "::error::TIINGO_API_TOKEN required"
+            exit 1
+          }
+
+      - name: Prepare development-only primary data
+        shell: bash
+        run: |
+          python -m v4.prepare_evidence_data --source tiingo --symbol QQQ --id qqq --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+          python -m v4.prepare_evidence_data --source tiingo --symbol TQQQ --id tqqq --start 2010-02-11 --end 2020-12-31 --output-dir v4_data
+          python -m v4.prepare_evidence_data --source tiingo --symbol SPY --id spy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+          python -m v4.prepare_evidence_data --source tiingo --symbol IEF --id ief --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+          python -m v4.prepare_evidence_data --source tiingo --symbol GLD --id gld --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+          python -m v4.prepare_evidence_data --source tiingo --symbol SHY --id shy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+          python -m v4.prepare_evidence_data --source cboe_vix --symbol VIX --id vix --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
+          python prepare_market_data.py --source binance --symbol BTCUSDT --id btc --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
+          python prepare_market_data.py --source binance --symbol ETHUSDT --id eth --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
+
+      - name: Run upgraded private profit benchmark
+        run: >
+          python -m v4.live_bootstrap
+          --data-dir v4_data
+          --output v4_state/profit-benchmark.json
+
+      - name: Enforce sealed boundaries and print comparison
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          x=json.loads(Path("v4_state/profit-benchmark.json").read_text())
+          assert x["protocol"]=="alpha_generation_v4"
+          assert x["stage"]=="development_only"
+          assert x["hidden_validation_opened"] is False
+          assert x["final_oos_opened"] is False
+
+          def chosen(container):
+              if not container:
+                  return None
+              if "chosen" in container:
+                  return container["chosen"]
+              result=container.get("risk_scaled_result") or {}
+              return result.get("chosen")
+
+          summary={
+              "research_commit_sha": x.get("research_commit_sha"),
+              "selected_architecture": x.get("portfolio_selection"),
+              "authoritative": chosen(x.get("portfolio")),
+              "static": chosen(x.get("portfolio_static")),
+              "satellite": chosen(x.get("portfolio_satellite")),
+              "dynamic": chosen(x.get("portfolio_dynamic")),
+              "satellite_sleeve": (
+                  None if not x.get("portfolio_satellite")
+                  else x["portfolio_satellite"].get("sleeve")
+              ),
+              "eligible_strategy_names": x.get("eligible_strategy_names"),
+              "hidden_validation_opened": x["hidden_validation_opened"],
+              "final_oos_opened": x["final_oos_opened"],
+          }
+          Path("v4_state/profit-benchmark-summary.json").write_text(
+              json.dumps(summary, indent=2, sort_keys=True)+"\n"
+          )
+          print(json.dumps(summary, indent=2, sort_keys=True))
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: atlas-forge-v4-profit-benchmark-${{ github.run_id }}
+          path: |
+            atlas_forge_autoresearch/v4_state/profit-benchmark.json
+            atlas_forge_autoresearch/v4_state/profit-benchmark-summary.json
+          retention-days: 30
