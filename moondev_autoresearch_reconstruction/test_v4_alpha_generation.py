@@ -10,7 +10,7 @@ import pandas as pd
 from v4.account_profiles import FTMO_1STEP, FTMO_2STEP, PropStageRule
 from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, pareto_frontier
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
-from v4.continuous_bridge import private_portfolio_eligible, select_candidates
+from v4.continuous_bridge import PROP_SIGNAL_ADAPTERS, private_portfolio_eligible, select_candidates
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
 from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
@@ -1507,6 +1507,15 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(
             set(full.columns) == {"BTCUSDT", "ETHUSDT"}
         )
+
+    def test_signal_only_prop_proxies_are_not_authoritative_adapters(self):
+        for family in (
+            "donchian_20_10",
+            "donchian_sma50",
+            "swing_terminal_pullback_proxy",
+        ):
+            with self.subTest(family=family):
+                self.assertNotIn(family, PROP_SIGNAL_ADAPTERS)
 
     def test_continuous_daily_signal_proxy_adapters_are_causal(self):
         idx = pd.date_range(
