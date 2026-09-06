@@ -81,6 +81,13 @@ def read_results():
             row["status"]="data_blocked"
             row["block_reason"]=quality[row["target"]].get("reason")
             row.pop("error",None)
+        # Retry tracks that were recorded only because of a fixed runner bug.
+        # Keeping these stale rows would permanently suppress valid screening.
+        if (
+            row.get("status") == "error"
+            and "NameError: name 'read_json' is not defined" in str(row.get("error") or "")
+        ):
+            continue
         out[row.get("track_id")]=row
     return out
 
