@@ -96,7 +96,7 @@ class V4AlphaGenerationTests(unittest.TestCase):
     def test_private_bootstrap_records_checked_out_research_commit(self):
         with mock.patch(
             "v4.live_bootstrap.subprocess.check_output",
-            return_value="abc123\\n",
+            return_value="abc123\n",
         ) as check:
             self.assertEqual(live_research_commit_sha(), "abc123")
         check.assert_called_once_with(
@@ -224,7 +224,7 @@ class V4AlphaGenerationTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 load_phase2_promotion_source(broken)
 
-        unsafe_source = source.replace("import math\\n", "import os\\n")
+        unsafe_source = source.replace("import math\n", "import os\n")
         unsafe_digest = hashlib.sha256(
             unsafe_source.encode("utf-8")
         ).hexdigest()
