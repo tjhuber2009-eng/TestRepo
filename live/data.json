@@ -21862,7 +21862,7 @@
     "stock_track_count": 900,
     "target_count": 37
   },
-  "generated_at": "2026-09-06T21:10:17Z",
+  "generated_at": "2026-09-06T21:28:42Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -40239,17 +40239,17 @@
     },
     "model_performance": [
       {
-        "admission_rate": 0.7716,
-        "attempts": 1550,
+        "admission_rate": 0.7662,
+        "attempts": 1561,
         "backtested": 1196,
-        "crash_rate": 0.0458,
+        "crash_rate": 0.0455,
         "crashes": 71,
         "guard_pass": 730,
-        "keeper_rate": 0.0477,
+        "keeper_rate": 0.0474,
         "kept": 74,
         "mean_delta_k": -0.027098,
         "model": "nvidia/nemotron-3-super-120b-a12b",
-        "unique_ideas": 1429
+        "unique_ideas": 1437
       }
     ],
     "pbo_baselined_track_count": 405,
@@ -46008,7 +46008,7 @@
         "valid_attempts": 1
       },
       {
-        "attempts": 22,
+        "attempts": 30,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 6.857,
@@ -46027,7 +46027,7 @@
         "valid_attempts": 6
       },
       {
-        "attempts": 16,
+        "attempts": 18,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 32.886,
@@ -46084,7 +46084,7 @@
         "valid_attempts": 0
       },
       {
-        "attempts": 14,
+        "attempts": 15,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 9.711,
@@ -50117,17 +50117,17 @@
     "seed_blocked_count": 1,
     "terminal_track_count": 1,
     "total_crashes": 71,
-    "total_duplicates": 6,
+    "total_duplicates": 8,
     "total_guard_passed_candidates": 730,
     "total_kept_candidates": 74,
-    "total_model_attempt_rows": 1550,
+    "total_model_attempt_rows": 1561,
     "total_parameter_only": 97,
-    "total_risk_control_changes": 155,
+    "total_risk_control_changes": 164,
     "total_too_broad": 25,
     "total_valid_candidates": 1196,
     "universe_metadata": {},
     "universe_stage": "phase1_fixed_514",
-    "updated_at": "2026-09-06T20:56:33Z",
+    "updated_at": "2026-09-06T21:28:27Z",
     "validation_fail_count": 0,
     "validation_pass_count": 0,
     "validation_pending_count": 0
@@ -50147,166 +50147,6 @@
   "project": "Atlas Forge AUTORESEARCH reconstruction",
   "protocol": "nested_chronological_v3",
   "recent_cycles": [
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "qqe_proxy",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -4.064,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 1.901,
-      "profile": "prop",
-      "return_pct": 30.687,
-      "score": 0.004631,
-      "sharpe": 0.9319,
-      "status": "active",
-      "target": "spy",
-      "track_id": "qqe_proxy__spy__prop",
-      "ts": "2026-09-06T12:51:14Z",
-      "valid_after": 8,
-      "valid_before": 5
-    },
-    {
-      "attempts_after": 6,
-      "bandit_reward": 1,
-      "family": "btc_rsi_adx",
-      "kept_after": 1,
-      "kept_before": 0,
-      "max_dd_pct": -4.907,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 3.269,
-      "profile": "prop",
-      "return_pct": 51.315,
-      "score": 0.189706,
-      "sharpe": 1.816,
-      "status": "active",
-      "target": "btc",
-      "track_id": "btc_rsi_adx__btc__prop",
-      "ts": "2026-09-06T12:55:22Z",
-      "valid_after": 5,
-      "valid_before": 2
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 1,
-      "family": "btc_rsi_adx",
-      "kept_after": 1,
-      "kept_before": 0,
-      "max_dd_pct": -25.016,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 4.025,
-      "profile": "private",
-      "return_pct": 358.853,
-      "score": 0.605817,
-      "sharpe": 1.7433,
-      "status": "active",
-      "target": "btc",
-      "track_id": "btc_rsi_adx__btc__private",
-      "ts": "2026-09-06T12:59:04Z",
-      "valid_after": 9,
-      "valid_before": 5
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "btc_rsi_adx",
-      "kept_after": 0,
-      "kept_before": 0,
-      "max_dd_pct": -3.557,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 2.281,
-      "profile": "prop",
-      "return_pct": 31.547,
-      "score": 0.077214,
-      "sharpe": 1.4949,
-      "status": "active",
-      "target": "eth",
-      "track_id": "btc_rsi_adx__eth__prop",
-      "ts": "2026-09-06T13:08:41Z",
-      "valid_after": 8,
-      "valid_before": 5
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 1,
-      "family": "btc_rsi_adx",
-      "kept_after": 1,
-      "kept_before": 0,
-      "max_dd_pct": -12.774,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 2.361,
-      "profile": "private",
-      "return_pct": 162.179,
-      "score": 0.281631,
-      "sharpe": 1.5402,
-      "status": "active",
-      "target": "eth",
-      "track_id": "btc_rsi_adx__eth__private",
-      "ts": "2026-09-06T13:16:18Z",
-      "valid_after": 7,
-      "valid_before": 4
-    },
-    {
-      "attempts_after": 13,
-      "bandit_reward": 0,
-      "family": "btc_rsi_adx",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -3.749,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 4.712,
-      "profile": "prop",
-      "return_pct": 31.382,
-      "score": 0.35943,
-      "sharpe": 2.4482,
-      "status": "active",
-      "target": "sol",
-      "track_id": "btc_rsi_adx__sol__prop",
-      "ts": "2026-09-06T13:17:56Z",
-      "valid_after": 10,
-      "valid_before": 7
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "ibs_deep_pullback",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -23.701,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 2.42,
-      "profile": "private",
-      "return_pct": 327.363,
-      "score": 0.07419,
-      "sharpe": 0.8368,
-      "status": "active",
-      "target": "aapl",
-      "track_id": "ibs_deep_pullback__aapl__private",
-      "ts": "2026-09-06T13:27:12Z",
-      "valid_after": 8,
-      "valid_before": 5
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "ibs_deep_pullback",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -5.7,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 2.437,
-      "profile": "prop",
-      "return_pct": 23.469,
-      "score": 0.005772,
-      "sharpe": 0.7087,
-      "status": "active",
-      "target": "nvda",
-      "track_id": "ibs_deep_pullback__nvda__prop",
-      "ts": "2026-09-06T13:36:48Z",
-      "valid_after": 7,
-      "valid_before": 5
-    },
     {
       "attempts_after": 10,
       "bandit_reward": 0,
@@ -51972,6 +51812,124 @@
       "status": "runner_error",
       "track_id": "swing_terminal_pullback_proxy__es__prop",
       "ts": "2026-09-06T20:56:32Z"
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_pullback_proxy__es__private",
+      "ts": "2026-09-06T20:57:11Z"
+    },
+    {
+      "attempts_after": 15,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -7.752,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 23.179,
+      "profile": "prop",
+      "return_pct": 36.701,
+      "score": 0.065624,
+      "sharpe": 1.2505,
+      "status": "active",
+      "target": "eth",
+      "track_id": "swing_terminal_pullback_proxy__eth__prop",
+      "ts": "2026-09-06T20:58:13Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "attempts_after": 26,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -8.884,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 7.682,
+      "profile": "prop",
+      "return_pct": 25.07,
+      "score": 0.039254,
+      "sharpe": 0.991,
+      "status": "active",
+      "target": "btc",
+      "track_id": "swing_terminal_pullback_proxy__btc__prop",
+      "ts": "2026-09-06T21:09:19Z",
+      "valid_after": 6,
+      "valid_before": 6
+    },
+    {
+      "attempts_after": 17,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -27.52,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 6.487,
+      "profile": "private",
+      "return_pct": 160.92,
+      "score": 0.280366,
+      "sharpe": 1.2447,
+      "status": "active",
+      "target": "btc",
+      "track_id": "swing_terminal_pullback_proxy__btc__private",
+      "ts": "2026-09-06T21:13:03Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_pullback_proxy__es__prop",
+      "ts": "2026-09-06T21:13:05Z"
+    },
+    {
+      "attempts_after": 30,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -8.884,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 7.682,
+      "profile": "prop",
+      "return_pct": 25.07,
+      "score": 0.039254,
+      "sharpe": 0.991,
+      "status": "active",
+      "target": "btc",
+      "track_id": "swing_terminal_pullback_proxy__btc__prop",
+      "ts": "2026-09-06T21:22:35Z",
+      "valid_after": 6,
+      "valid_before": 6
+    },
+    {
+      "attempts_after": 18,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -27.52,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 6.487,
+      "profile": "private",
+      "return_pct": 160.92,
+      "score": 0.280366,
+      "sharpe": 1.2447,
+      "status": "active",
+      "target": "btc",
+      "track_id": "swing_terminal_pullback_proxy__btc__private",
+      "ts": "2026-09-06T21:28:24Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_pullback_proxy__es__prop",
+      "ts": "2026-09-06T21:28:26Z"
     }
   ],
   "safeguards": {
@@ -59052,7 +59010,7 @@
       "valid_attempts": 1
     },
     {
-      "attempts": 22,
+      "attempts": 30,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -59074,7 +59032,7 @@
       "valid_attempts": 6
     },
     {
-      "attempts": 16,
+      "attempts": 18,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -59140,7 +59098,7 @@
       "valid_attempts": 0
     },
     {
-      "attempts": 14,
+      "attempts": 15,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -85103,30 +85061,25 @@
         "portfolio_eligible_count": 0
       },
       "portfolio": {
-        "candidates_evaluated": 1000,
+        "candidates_evaluated": 1,
         "chosen": {
-          "bootstrap_dd_q95_pct": 31.97862966051833,
-          "bootstrap_median_cagr_pct": 23.718869997878798,
-          "cagr_pct": 23.103655635377287,
+          "bootstrap_cagr_q10_pct": 20.21586234592559,
+          "bootstrap_cagr_q25_pct": 23.20624402995733,
+          "bootstrap_dd_q95_pct": 31.272617038988475,
+          "bootstrap_median_cagr_pct": 27.878387437856,
+          "cagr_pct": 27.449063945478123,
           "cash_weight": 0.0,
-          "effective_n": 3.553361714835645,
-          "gross_exposure": 1.2280057755881095,
-          "max_dd_pct": -19.33074566260168,
-          "score": 23.779148990613823,
-          "sharpe": 1.237268779333454,
+          "effective_n": 1.0,
+          "gross_exposure": 1.5,
+          "max_dd_pct": -18.932779521827293,
+          "score": 27.916701137393883,
+          "sharpe": 1.4156849768941298,
           "weights": {
-            "cash_rotation_risk_budgeted": 0.04039335204020914,
-            "cash_rotation_vix_stress": 0.22373034608619374,
-            "continuous__ibs_deep_pullback__tqqq__private": 0.5770843225252623,
-            "defensive_rotation_risk_budgeted": 0.1097371826095189,
-            "long_history_cross_asset_trend": 0.1286308850545363,
-            "rotation_risk_budgeted": 0.004767873240552307,
-            "rotation_sma_hysteresis": 0.09110384883088317,
-            "rotation_walkforward_meta_filter": 0.05255796520095356
+            "satellite_0.20__continuous__qqe_proxy__btc__private": 1.5
           }
         },
         "dd_cap_pct": 32.0,
-        "feasible_count": 1000,
+        "feasible_count": 1,
         "max_gross": 1.5,
         "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
       },
@@ -85135,6 +85088,8 @@
         "0.50": {
           "candidates_evaluated": 1000,
           "chosen": {
+            "bootstrap_cagr_q10_pct": 15.708588929931292,
+            "bootstrap_cagr_q25_pct": 19.624265847827534,
             "bootstrap_dd_q95_pct": 31.97862966051833,
             "bootstrap_median_cagr_pct": 23.718869997878798,
             "cagr_pct": 23.103655635377287,
@@ -85163,6 +85118,8 @@
         "0.55": {
           "candidates_evaluated": 1000,
           "chosen": {
+            "bootstrap_cagr_q10_pct": 15.708588929931292,
+            "bootstrap_cagr_q25_pct": 19.624265847827534,
             "bootstrap_dd_q95_pct": 31.97862966051833,
             "bootstrap_median_cagr_pct": 23.718869997878798,
             "cagr_pct": 23.103655635377287,
@@ -85191,6 +85148,8 @@
         "0.65": {
           "candidates_evaluated": 1000,
           "chosen": {
+            "bootstrap_cagr_q10_pct": 15.708588929931292,
+            "bootstrap_cagr_q25_pct": 19.624265847827534,
             "bootstrap_dd_q95_pct": 31.97862966051833,
             "bootstrap_median_cagr_pct": 23.718869997878798,
             "cagr_pct": 23.103655635377287,
@@ -85219,6 +85178,8 @@
         "0.90": {
           "candidates_evaluated": 1000,
           "chosen": {
+            "bootstrap_cagr_q10_pct": 15.708588929931292,
+            "bootstrap_cagr_q25_pct": 19.624265847827534,
             "bootstrap_dd_q95_pct": 31.97862966051833,
             "bootstrap_median_cagr_pct": 23.718869997878798,
             "cagr_pct": 23.103655635377287,
@@ -85241,6 +85202,63 @@
           },
           "dd_cap_pct": 32.0,
           "feasible_count": 1000,
+          "max_gross": 1.5,
+          "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+        }
+      },
+      "portfolio_dynamic": {
+        "allocator": {
+          "average_active_strategies": 5.264866836920832,
+          "average_gross": 0.6701295147756293,
+          "average_turnover": 0.01399607468130825,
+          "last_weights": {
+            "cash_rotation_risk_budgeted": 0.07152161357896905,
+            "cash_rotation_vix_stress": 0.12052928567522958,
+            "continuous__ibs_deep_pullback__tqqq__private": 0.10917032293292671,
+            "defensive_rotation_risk_budgeted": 0.088589810713699,
+            "long_history_cross_asset_trend": 0.0785127810116974,
+            "rotation_risk_budgeted": 0.09082050649251909,
+            "rotation_sma_hysteresis": 0.10182266558507175,
+            "rotation_walkforward_meta_filter": 0.08903301400988743
+          },
+          "policy": {
+            "causality": "row_t_weights_use_rows_strictly_before_t",
+            "correlation_penalty": 1.0,
+            "downside_penalty": 0.75,
+            "eligibility": "input_strategies_must_already_pass_individual_evidence_gates",
+            "growth_lookback": 126,
+            "hard_drawdown": -0.22,
+            "hard_scale": 0.5,
+            "max_weight": 0.55,
+            "min_history": 252,
+            "name": "causal_strategy_rotation_v1",
+            "periods_per_year": 252.0,
+            "rebalance_every": 21,
+            "risk_lookback": 63,
+            "soft_drawdown": -0.12,
+            "soft_scale": 0.75
+          }
+        },
+        "risk_scaled_result": {
+          "candidates_evaluated": 1,
+          "chosen": {
+            "bootstrap_cagr_q10_pct": 5.286959459822795,
+            "bootstrap_cagr_q25_pct": 8.20124290013865,
+            "bootstrap_dd_q95_pct": 31.74291522651594,
+            "bootstrap_median_cagr_pct": 11.687673362882279,
+            "cagr_pct": 10.751311561228306,
+            "cash_weight": 0.04398929074558766,
+            "effective_n": 1.0,
+            "gross_exposure": 0.9560107092544123,
+            "max_dd_pct": -18.122477698761475,
+            "score": 11.714356016510308,
+            "sharpe": 0.8341326814014716,
+            "weights": {
+              "causal_dynamic_allocator": 0.9560107092544123
+            }
+          },
+          "dd_cap_pct": 32.0,
+          "feasible_count": 1,
           "max_gross": 1.5,
           "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
         }
@@ -85341,6 +85359,81 @@
           "cross_asset_momentum_risk_budgeted"
         ]
       },
+      "portfolio_satellite": {
+        "risk_scaled_result": {
+          "candidates_evaluated": 1,
+          "chosen": {
+            "bootstrap_cagr_q10_pct": 20.21586234592559,
+            "bootstrap_cagr_q25_pct": 23.20624402995733,
+            "bootstrap_dd_q95_pct": 31.272617038988475,
+            "bootstrap_median_cagr_pct": 27.878387437856,
+            "cagr_pct": 27.449063945478123,
+            "cash_weight": 0.0,
+            "effective_n": 1.0,
+            "gross_exposure": 1.5,
+            "max_dd_pct": -18.932779521827293,
+            "score": 27.916701137393883,
+            "sharpe": 1.4156849768941298,
+            "weights": {
+              "satellite_0.20__continuous__qqe_proxy__btc__private": 1.5
+            }
+          },
+          "dd_cap_pct": 32.0,
+          "feasible_count": 1,
+          "max_gross": 1.5,
+          "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+        },
+        "sleeve": {
+          "candidate_count": 35,
+          "policy": "supplemental sleeve capped at 25% composition; pre-inception allocation held as cash",
+          "selected_candidate": "satellite_0.20__continuous__qqe_proxy__btc__private",
+          "spec": {
+            "inception_dates": {
+              "continuous__qqe_proxy__btc__private": "2017-08-17"
+            },
+            "name": "satellite_0.20__continuous__qqe_proxy__btc__private",
+            "satellite_weights": {
+              "continuous__qqe_proxy__btc__private": 1.0
+            },
+            "sleeve_weight": 0.2
+          }
+        }
+      },
+      "portfolio_selection": {
+        "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
+        "reason": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+        "selected": "staggered_satellite"
+      },
+      "portfolio_static": {
+        "candidates_evaluated": 1000,
+        "chosen": {
+          "bootstrap_cagr_q10_pct": 15.708588929931292,
+          "bootstrap_cagr_q25_pct": 19.624265847827534,
+          "bootstrap_dd_q95_pct": 31.97862966051833,
+          "bootstrap_median_cagr_pct": 23.718869997878798,
+          "cagr_pct": 23.103655635377287,
+          "cash_weight": 0.0,
+          "effective_n": 3.553361714835645,
+          "gross_exposure": 1.2280057755881095,
+          "max_dd_pct": -19.33074566260168,
+          "score": 23.779148990613823,
+          "sharpe": 1.237268779333454,
+          "weights": {
+            "cash_rotation_risk_budgeted": 0.04039335204020914,
+            "cash_rotation_vix_stress": 0.22373034608619374,
+            "continuous__ibs_deep_pullback__tqqq__private": 0.5770843225252623,
+            "defensive_rotation_risk_budgeted": 0.1097371826095189,
+            "long_history_cross_asset_trend": 0.1286308850545363,
+            "rotation_risk_budgeted": 0.004767873240552307,
+            "rotation_sma_hysteresis": 0.09110384883088317,
+            "rotation_walkforward_meta_filter": 0.05255796520095356
+          }
+        },
+        "dd_cap_pct": 32.0,
+        "feasible_count": 1000,
+        "max_gross": 1.5,
+        "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+      },
       "prior_work_diagnostics": {
         "hr_dual_alpha": {
           "authoritative_portfolio_eligible": false,
@@ -85351,18 +85444,18 @@
           "final_oos_opened": false,
           "hidden_validation_opened": false,
           "metrics_5bp": {
-            "cagr_pct": 29.766292977513785,
-            "cost_stress_cagr_pct": 28.146656715043395,
-            "cumulative_return_pct": 1605.5763905087997,
+            "cagr_pct": 29.76629805242279,
+            "cost_stress_cagr_pct": 28.146661725580934,
+            "cumulative_return_pct": 1605.5771166192565,
             "dsr": 1.0,
             "gross_exposure": 1.0,
-            "max_dd_pct": -59.883937242254405,
+            "max_dd_pct": -59.88393574699988,
             "pbo": null,
             "psr_zero": 1.0,
-            "sharpe": 0.9341543598567625,
-            "sortino": 1.304645054264783,
+            "sharpe": 0.9341543314297861,
+            "sortino": 1.3046450786871966,
             "trades": 204,
-            "turnover_per_year": 16.47661222988001,
+            "turnover_per_year": 16.476617251059675,
             "years": 10.885918259786306
           },
           "protocol": "alpha_generation_v4",
@@ -85386,7 +85479,7 @@
       },
       "promotion_blocked": false,
       "protocol": "alpha_generation_v4",
-      "research_commit_sha": "199c9001c8274c16d5ef5e7f693e60d913749ac3",
+      "research_commit_sha": "526540c48c4233000fad37c080e8721e24249365",
       "reversal_parameter_optimizer": {
         "chosen": null,
         "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
@@ -140293,14 +140386,25 @@
     "continuous_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-06T21:28:33Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34061179159",
+        "id": 34061179159,
+        "name": "Atlas Forge Continuous AUTORESEARCH",
+        "run_number": 118,
+        "status": "in_progress",
+        "updated_at": "2026-09-06T21:28:39Z"
+      },
+      {
+        "conclusion": "success",
         "created_at": "2026-09-06T20:56:39Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34059526895",
         "id": 34059526895,
         "name": "Atlas Forge Continuous AUTORESEARCH",
         "run_number": 117,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T20:56:45Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T21:28:36Z"
       },
       {
         "conclusion": "success",
@@ -140367,17 +140471,6 @@
         "run_number": 111,
         "status": "completed",
         "updated_at": "2026-09-06T19:38:57Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T17:34:12Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34049008655",
-        "id": 34049008655,
-        "name": "Continuous NVIDIA AUTORESEARCH",
-        "run_number": 110,
-        "status": "completed",
-        "updated_at": "2026-09-06T19:14:29Z"
       }
     ],
     "stock_fx_runs": [
@@ -140637,6 +140730,17 @@
     "v4_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-06T21:28:30Z",
+        "event": "push",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34061176677",
+        "id": 34061176677,
+        "name": "Atlas Forge V4 promotion cycle",
+        "run_number": 34,
+        "status": "pending",
+        "updated_at": "2026-09-06T21:28:31Z"
+      },
+      {
+        "conclusion": null,
         "created_at": "2026-09-06T20:56:46Z",
         "event": "push",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34059532514",
@@ -140644,7 +140748,7 @@
         "name": "Atlas Forge V4 promotion cycle",
         "run_number": 33,
         "status": "in_progress",
-        "updated_at": "2026-09-06T21:10:10Z"
+        "updated_at": "2026-09-06T21:22:56Z"
       },
       {
         "conclusion": "success",
@@ -140711,17 +140815,6 @@
         "run_number": 27,
         "status": "completed",
         "updated_at": "2026-09-06T18:14:12Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T16:52:34Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34046836242",
-        "id": 34046836242,
-        "name": "AUTORESEARCH v4 promotion cycle",
-        "run_number": 26,
-        "status": "completed",
-        "updated_at": "2026-09-06T17:48:15Z"
       }
     ]
   }
