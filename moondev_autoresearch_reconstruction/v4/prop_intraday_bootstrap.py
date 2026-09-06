@@ -364,6 +364,30 @@ def _continuous_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
             f"unsupported continuous daily signal family: {family}"
         )
 
+    # Preserve the source strategy's decision warm-up and realized-volatility
+    # validity gate. Source sizing is replaced by V4, but the source strategy
+    # does not evaluate entries or exits until both conditions are satisfied.
+    source_min_bars = int(params["source_min_bars"])
+    source_vol_lookback = int(params["source_vol_lookback"])
+    log_ret = np.log(close / close.shift(1))
+    source_rv = (
+        log_ret.rolling(source_vol_lookback)
+        .std(ddof=0)
+        .shift(1)
+        * np.sqrt(365.0)
+    )
+    bar_count = pd.Series(
+        np.arange(1, len(daily) + 1, dtype=int),
+        index=daily.index,
+    )
+    source_decision_ok = (
+        bar_count.ge(source_min_bars)
+        & source_rv.notna()
+        & source_rv.gt(0.0)
+    )
+    entry = entry & source_decision_ok
+    exit_ = exit_ & source_decision_ok
+
     state = []
     long = False
     for ent, ex in zip(entry.fillna(False), exit_.fillna(False)):
@@ -386,8 +410,9 @@ def hourly_continuous_daily_signal_strategy(params, all_symbols):
 
     Source position sizing is intentionally not copied: V4's volatility target
     and prop exposure optimizer own sizing, daily-loss rails, and payout risk.
-    For signal_only_proxy adapters, source ATR stop execution is not claimed to
-    be reproduced; the state records that limitation explicitly.
+    Supported transfers preserve source signal formulas, warm-up, realized-vol
+    decision validity, and exits; unsupported stop/bracket/short mechanics fail
+    closed before they reach this adapter.
     """
     target = str(params["source_target"])
     if target not in all_symbols:
