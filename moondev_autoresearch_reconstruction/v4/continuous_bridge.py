@@ -176,8 +176,8 @@ def select_candidates(
     profile: str,
     *,
     available_symbols: Iterable[str] | None = None,
-    per_target: int = 2,
-    max_total: int = 12,
+    per_target: int | None = 2,
+    max_total: int | None = 12,
     leaderboard: dict | None = None,
 ) -> list[PromotionCandidate]:
     """Select a diversified promotion queue from the continuous leaderboard."""
@@ -207,7 +207,10 @@ def select_candidates(
     out = []
     for row in rows:
         target = str(row["target"])
-        if counts.get(target, 0) >= int(per_target):
+        if (
+            per_target is not None
+            and counts.get(target, 0) >= int(per_target)
+        ):
             continue
         counts[target] = counts.get(target, 0) + 1
         family = str(row["family"])
@@ -248,7 +251,7 @@ def select_candidates(
                 adapter=PROP_SIGNAL_ADAPTERS.get(family),
             )
         )
-        if len(out) >= int(max_total):
+        if max_total is not None and len(out) >= int(max_total):
             break
     return out
 
@@ -343,14 +346,14 @@ def prop_transfer_candidates(
     leaderboard: dict | None = None,
 ) -> tuple[list[dict], dict]:
     """Return supported prop-transfer parameter seeds plus a full audit manifest."""
-    # Scan deeper than the eventual transfer budget. Unsupported high-ranked
-    # families must not consume a target's exact-adapter slots and hide a lower-
-    # ranked transferable champion.
+    # Scan the full eligible queue. Unsupported high-ranked families must not
+    # consume a target's exact-adapter slots or hide a lower-ranked transferable
+    # champion.
     candidates = select_candidates(
         "prop",
         available_symbols=available_symbols,
-        per_target=8,
-        max_total=64,
+        per_target=None,
+        max_total=None,
         leaderboard=leaderboard,
     )
     supported = []
