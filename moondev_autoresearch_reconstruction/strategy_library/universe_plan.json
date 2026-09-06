@@ -8,23 +8,27 @@
   "phases": [
     {
       "id": "phase1_fixed_514",
-      "description": "Complete the current 514 runnable tracks through development breadth/depth/elite using the frozen registry and targets.",
+      "description": "Complete the fixed current 514 tracks through development breadth/depth/elite. Phase 2 and Phase 3 may run concurrently but cannot alter this universe.",
       "expected_track_count": 514,
       "registry_expansion_allowed": false,
       "exit_condition": "current 514-track development search reaches the pre-validation freeze point",
-      "next": "phase2_prior_work"
+      "next": "development_lane_merge_freeze"
     },
     {
       "id": "phase2_prior_work",
-      "description": "Expand to trading strategies and bots from the user's prior projects that are not in the current runnable 514-track universe. Reconstruct exact causal rules where possible; otherwise record a terminal blocked reason.",
+      "description": "Runs concurrently with Phase 1 in isolated state: reconstruct and development-test strategies from the user's prior projects that are outside the fixed 514 universe.",
       "backlog": "strategy_library/prior_work_backlog.json",
       "paid_sources_allowed": false,
       "hidden_validation_allowed": false,
-      "next": "phase3_free_pipeline"
+      "next": "phase3_free_pipeline",
+      "concurrent_with": [
+        "phase1_fixed_514",
+        "phase3_free_pipeline"
+      ]
     },
     {
       "id": "phase3_free_pipeline",
-      "description": "Expand using free public discovery only. Every discovery is a hypothesis until exact causal reconstruction and project backtesting.",
+      "description": "Runs concurrently with Phase 1/2 in isolated state using free public discovery only. Every discovery remains a hypothesis until exact causal reconstruction and development testing.",
       "pipeline": "free_source_pipeline.py",
       "paid_sources_allowed": false,
       "sources": [
@@ -36,7 +40,11 @@
       ],
       "hidden_validation_allowed": false,
       "exit_condition": "finite discovery batch is admitted/rejected and all adaptive development search is frozen",
-      "next": "hidden_validation"
+      "next": "hidden_validation",
+      "concurrent_with": [
+        "phase1_fixed_514",
+        "phase2_prior_work"
+      ]
     },
     {
       "id": "hidden_validation",
@@ -44,5 +52,27 @@
       "opens_2021_2022_only": true,
       "final_2023_plus_remains_sealed": true
     }
-  ]
+  ],
+  "execution_model": "parallel_development_lanes_v2",
+  "parallel_lanes": {
+    "phase1": {
+      "status": "active",
+      "universe": "fixed_514",
+      "state": "continuous_state",
+      "rule": "never absorb Phase 2/3 candidates while Phase 1 adaptive search is running"
+    },
+    "phase2": {
+      "status": "active",
+      "universe": "prior_user_project_strategies",
+      "state": "phase2_state",
+      "rule": "isolated development-only screening/reconstruction; no Phase 1 ranking or PBO contamination"
+    },
+    "phase3": {
+      "status": "active",
+      "universe": "free_public_discovery",
+      "state": "phase3_state",
+      "rule": "isolated free discovery/reconstruction; source claims are hypotheses only"
+    }
+  },
+  "merge_policy": "Only after all adaptive development lanes are frozen may surviving candidates be combined for final development selection; hidden validation remains sealed until then."
 }
