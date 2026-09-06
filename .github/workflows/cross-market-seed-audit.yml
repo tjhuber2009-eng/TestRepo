@@ -153,7 +153,7 @@ jobs:
               encoding="utf-8",
           )
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: seed-${{ matrix.target.id }}-${{ matrix.profile }}-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/seed_audit_export/*.json
