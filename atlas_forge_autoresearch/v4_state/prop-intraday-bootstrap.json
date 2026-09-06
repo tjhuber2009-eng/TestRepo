@@ -50750,7 +50750,7 @@
     "reward_cycle_days": 14,
     "scaling_plan_upgrades_included": false
   },
-  "research_commit_sha": "4d30aadd0b9c3144811e34e9c92f89aaa9aa526f",
+  "research_commit_sha": "5f8546e0bf761b11d5d582d8b6e71f42b8bd25db",
   "reset_timezone": "Europe/Prague",
   "search_policy": {
     "broad_base_candidates": 120,
