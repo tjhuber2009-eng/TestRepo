@@ -271,6 +271,9 @@ jobs:
               f.write(
                   f"terminal={'true' if bool(x.get('all_runnable_tracks_terminal')) else 'false'}\n"
               )
+              f.write(
+                  f"expansion_pending={'true' if bool(x.get('expansion_pending')) else 'false'}\n"
+              )
 
       - name: Persist research state branch
         shell: bash
@@ -333,7 +336,7 @@ jobs:
           --body-file moondev_autoresearch_reconstruction/completion-note.md
 
       - name: Chain next cycle until exhaustive completion
-        if: success() && steps.completion.outputs.terminal != 'true'
+        if: success() && steps.completion.outputs.terminal != 'true' && steps.completion.outputs.expansion_pending != 'true'
         shell: bash
         working-directory: .
         run: |
