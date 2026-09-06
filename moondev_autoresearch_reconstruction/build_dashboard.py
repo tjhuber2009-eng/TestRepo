@@ -190,6 +190,7 @@ def normalize_leaderboard(board, state_dir):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--state-dir", default="continuous_state")
+    ap.add_argument("--stock-fx-state-dir", default="stock_fx_state")
     ap.add_argument("--v4-state-dir", default="v4_state")
     ap.add_argument("--tournament-state-dir", default="tournament_state")
     ap.add_argument("--runtime-dir", default="dashboard_runtime")
@@ -197,6 +198,7 @@ def main():
     args = ap.parse_args()
 
     state = HERE / args.state_dir
+    stock_fx_state = HERE / args.stock_fx_state_dir
     v4_state = HERE / args.v4_state_dir
     tournament_state = HERE / args.tournament_state_dir
     runtime = HERE / args.runtime_dir
@@ -208,6 +210,12 @@ def main():
     selections = load_json(state / "search_selections.json", {}) or {}
     cycles = load_jsonl(state / "cycles.jsonl", limit=120)
     tournament = load_json(tournament_state / "tournament-summary.json", None)
+    stock_fx_progress = load_json(stock_fx_state / "progress.json", {}) or {}
+    stock_fx_board = load_json(stock_fx_state / "leaderboard_latest.json", {}) or {}
+    stock_fx_config = load_json(HERE / "stock_fx_config.json", {}) or {}
+    stock_fx_plan = load_json(
+        HERE / "strategy_library" / "stock_fx_universe_plan.json", {}
+    ) or {}
     v4_private = load_json(v4_state / "development-bootstrap.json", None)
     v4_prop = load_json(v4_state / "prop-intraday-bootstrap.json", None)
 
@@ -254,12 +262,76 @@ def main():
     v4_runs = workflow_runs(
         load_json(runtime / "v4_runs.json", {}) or {}
     )
+    stock_fx_runs = workflow_runs(
+        load_json(runtime / "stock_fx_runs.json", {}) or {}
+    )
     tournament_runs = workflow_runs(
         load_json(runtime / "tournament_runs.json", {}) or {}
     )
     jobs = tournament_jobs(
         load_json(runtime / "tournament_jobs.json", {}) or {}
     )
+
+    stock_fx_state_is_active = bool(
+        stock_fx_progress
+        and stock_fx_progress.get("protocol") == ACTIVE_PROTOCOL
+        and stock_fx_board.get("protocol") == ACTIVE_PROTOCOL
+    )
+    stock_fx_phase = next(
+        (
+            x for x in (stock_fx_plan.get("phases") or [])
+            if x.get("id") == stock_fx_plan.get("current_stage")
+        ),
+        {},
+    )
+    stock_fx_targets = stock_fx_config.get("targets") or []
+    stock_fx_summary = {
+        "configured": bool(stock_fx_config),
+        "state_is_active": stock_fx_state_is_active,
+        "phase": stock_fx_progress.get("phase") or (
+            "breadth" if stock_fx_runs and stock_fx_runs[0].get("status") in {"queued", "pending", "in_progress"} else "initializing"
+        ),
+        "expected_track_count": int(
+            stock_fx_phase.get(
+                "expected_track_count",
+                (stock_fx_config.get("universe_metadata") or {}).get(
+                    "expected_track_count", 0
+                ),
+            ) or 0
+        ),
+        "target_count": int(
+            stock_fx_phase.get("target_count", len(stock_fx_targets)) or 0
+        ),
+        "stock_target_count": int(
+            stock_fx_phase.get(
+                "stock_target_count",
+                sum(x.get("market") == "stock" for x in stock_fx_targets),
+            ) or 0
+        ),
+        "forex_target_count": int(
+            stock_fx_phase.get(
+                "forex_target_count",
+                sum(x.get("market") == "forex" for x in stock_fx_targets),
+            ) or 0
+        ),
+        "stock_track_count": int(
+            stock_fx_phase.get("stock_target_count", 0) or 0
+        ) * int(stock_fx_phase.get("stock_family_count", 0) or 0) * 2,
+        "forex_track_count": int(
+            stock_fx_phase.get("forex_target_count", 0) or 0
+        ) * int(stock_fx_phase.get("forex_family_count", 0) or 0) * 2,
+        "forex_development_period": stock_fx_phase.get(
+            "forex_development_period"
+        ),
+        "forex_hidden_validation_period": stock_fx_phase.get(
+            "forex_hidden_validation_period"
+        ),
+        "hidden_validation_opened": bool(
+            int(stock_fx_progress.get("validation_pass_count", 0) or 0)
+            + int(stock_fx_progress.get("validation_fail_count", 0) or 0)
+        ),
+        "final_oos_opened": False,
+    }
 
     # Full progress rows are useful for searchable track coverage, but scrub
     # JSON non-finite sentinels if any stale track carries them.
@@ -290,6 +362,19 @@ def main():
         "selections": selections,
         "recent_cycles": cycles,
         "tournament": tournament,
+        "expansion": {
+            **stock_fx_summary,
+            "progress": stock_fx_progress if stock_fx_state_is_active else {},
+            "progress_derived": (
+                summarize_progress(stock_fx_progress)
+                if stock_fx_state_is_active else {}
+            ),
+            "leaderboard": (
+                normalize_leaderboard(stock_fx_board, stock_fx_state)
+                if stock_fx_state_is_active else []
+            ),
+            "metadata": stock_fx_config.get("universe_metadata") or {},
+        },
         "v4": {
             "available": bool(v4_private or v4_prop),
             "private": v4_private,
@@ -297,6 +382,7 @@ def main():
         },
         "workflow": {
             "continuous_runs": continuous_runs,
+            "stock_fx_runs": stock_fx_runs,
             "v4_runs": v4_runs,
             "tournament_runs": tournament_runs,
             "tournament_jobs": jobs,
@@ -305,6 +391,7 @@ def main():
             "hidden_validation_opened": bool(
                 int(progress.get("validation_pass_count", 0) or 0)
                 + int(progress.get("validation_fail_count", 0) or 0)
+                or stock_fx_summary["hidden_validation_opened"]
                 or (v4_private or {}).get("hidden_validation_opened")
                 or (v4_prop or {}).get("hidden_validation_opened")
             ),
