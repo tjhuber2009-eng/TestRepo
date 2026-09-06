@@ -302,6 +302,49 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
         )
 
+    def test_phase2_followup_cscv_is_deterministic_bounded_and_candidate_specific(self):
+        import phase2_followup_runner
+
+        rows = []
+        for i in range(7):
+            rows.append({
+                "track_id": f"s{i}",
+                "cscv_slice_k": [
+                    float(np.sin((i + 1) * (j + 1)) + 0.1 * i)
+                    for j in range(8)
+                ],
+            })
+        a = phase2_followup_runner.cohort_cscv(rows)
+        b = phase2_followup_runner.cohort_cscv(list(reversed(rows)))
+        self.assertIsNotNone(a)
+        self.assertIsNotNone(b)
+        self.assertGreaterEqual(a["pbo"], 0.0)
+        self.assertLessEqual(a["pbo"], 1.0)
+        self.assertEqual(a["cscv_splits"], 70)
+        self.assertEqual(a["pbo"], b["pbo"])
+        self.assertEqual(a["candidate_count"], 7)
+        self.assertEqual(set(a["candidate_diagnostics"]), {f"s{i}" for i in range(7)})
+
+    def test_phase2_followup_small_cohort_stays_provisional(self):
+        import phase2_followup_runner
+
+        rows = [
+            {"track_id": f"s{i}", "cscv_slice_k": [float(i + j) for j in range(8)]}
+            for i in range(4)
+        ]
+        self.assertIsNone(phase2_followup_runner.cohort_cscv(rows))
+
+    def test_phase2_followup_never_parameter_rescues_or_opens_oos(self):
+        import inspect
+        import phase2_followup_runner
+
+        src = inspect.getsource(phase2_followup_runner)
+        self.assertIn('"parameter_rescue_performed": False', src)
+        self.assertIn('"hidden_validation_opened": False', src)
+        self.assertIn('"final_oos_opened": False', src)
+        self.assertNotIn("--validation", src)
+        self.assertEqual(len(continuous_runner.build_tracks()), 514)
+
     def test_phase3_free_lane_is_finite_and_registry_isolated(self):
         import phase3_free_runner
         self.assertGreaterEqual(len(phase3_free_runner.QUERY_BATCHES), 4)
