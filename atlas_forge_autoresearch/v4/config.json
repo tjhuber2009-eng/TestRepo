@@ -219,6 +219,18 @@
       "purpose": "prevent leverage from creating artificial CAGR under zero-cost borrowing assumptions",
       "note": "Staggered sleeves and dynamic allocators pay financing only on gross exposure actually deployed each period.",
       "leverage_scale_selection": "maximize_development_geometric_growth_after_financing_within_drawdown_feasible_range"
+    },
+    "conditional_high_volatility_overlay": {
+      "enabled": true,
+      "architecture_scope": "selected_staggered_satellite_only",
+      "lookback": 20,
+      "min_history": 252,
+      "high_vol_quantile": 0.8,
+      "min_risk_scale": 0.5,
+      "low_vol_leverage_boost": false,
+      "max_satellite_weight": 0.35,
+      "max_gross": 1.5,
+      "rationale": "One pre-registered causal high-volatility de-risking challenger based on volatility-managed portfolio evidence; acts only in the top volatility quintile and cannot increase unit exposure"
     }
   },
   "intraday": {
