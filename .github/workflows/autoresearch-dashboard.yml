@@ -50,6 +50,7 @@ jobs:
         run: |
           mkdir -p dashboard_runtime
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/continuous-autoresearch.yml/runs?per_page=8" > dashboard_runtime/continuous_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/continuous_runs.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/autoresearch-v4-promotion-cycle.yml/runs?per_page=8" > dashboard_runtime/v4_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/v4_runs.json
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/model-tournament.yml/runs?per_page=8" > dashboard_runtime/tournament_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/tournament_runs.json
           tournament_run_id="$(python - <<'PY'
           import json
