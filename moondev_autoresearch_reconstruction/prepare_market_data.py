@@ -438,15 +438,20 @@ def write_manifest(out, source, symbol, ident, start, end):
                 "Bitstamp public OHLC endpoint has no archive checksum"
                 if source == "bitstamp"
                 else (
-                "Dukascopy native BID daily archives snapshotted by "
-                "per-year SHA256; provider publishes no archive checksum"
-                if source == "dukascopy_bid_daily"
-                else (
-                    "provider response snapshotted by generated CSV SHA256; "
-                    "Stooq public historical endpoint has no archive checksum"
-                    if source == "stooq"
-                    else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
-                )
+                    "authenticated Tiingo Forex API response; canonical CSV "
+                    "and raw response SHA256 recorded"
+                    if source == "tiingo_fx"
+                    else (
+                        "Dukascopy native BID daily archives snapshotted by "
+                        "per-year SHA256; provider publishes no archive checksum"
+                        if source == "dukascopy_bid_daily"
+                        else (
+                            "provider response snapshotted by generated CSV SHA256; "
+                            "Stooq public historical endpoint has no archive checksum"
+                            if source == "stooq"
+                            else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+                        )
+                    )
                 )
             )
         ),
@@ -459,10 +464,10 @@ def write_manifest(out, source, symbol, ident, start, end):
         manifest["normalization"] = json.loads(
             norm_path.read_text(encoding="utf-8")
         )
-    if source == "dukascopy_bid_daily":
+    if source in {"dukascopy_bid_daily", "tiingo_fx"}:
         source_path = out.with_suffix(".source.json")
         if not source_path.exists():
-            raise RuntimeError("Dukascopy source audit missing")
+            raise RuntimeError(f"{source} source audit missing")
         manifest["source_audit"] = json.loads(
             source_path.read_text(encoding="utf-8")
         )
