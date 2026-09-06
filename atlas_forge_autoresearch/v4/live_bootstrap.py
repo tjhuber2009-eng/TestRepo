@@ -1840,7 +1840,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "stress_rates_pct": list(
                 PRIVATE_PORTFOLIO_FINANCING_STRESS_RATES_PCT
             ),
-            "charged_on": "gross_exposure_above_1x_only",
+            "charged_on": "realized_time_varying_gross_above_1x_only",
             "cash_yield_credit": False,
             "purpose": (
                 "prevent leverage from creating artificial CAGR under "
