@@ -63,6 +63,12 @@ jobs:
             /v4-harvest)
               gh workflow run autoresearch-v4-harvest.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /phase2-prior)
+              gh workflow run autoresearch-phase2-prior-work.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
+            /phase3-free)
+              gh workflow run autoresearch-phase3-free.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             *)
               echo "Not an AUTORESEARCH command; ignoring."
               ;;
