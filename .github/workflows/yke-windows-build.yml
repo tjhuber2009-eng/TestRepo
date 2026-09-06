@@ -22,7 +22,18 @@ jobs:
         with:
           toolchain: '1.88.0'
 
+      - name: Reconstruct and verify certified Windows icon
+        shell: pwsh
+        run: |
+          $b64 = (Get-Content -Raw 'youtube-knowledge-engine/native-probe/icons/icon.ico.b64').Trim()
+          $bytes = [Convert]::FromBase64String($b64)
+          [IO.File]::WriteAllBytes('youtube-knowledge-engine/native-probe/icons/icon.ico', $bytes)
+          $icon = 'youtube-knowledge-engine/native-probe/icons/icon.ico'
+          if ((Get-Item $icon).Length -ne 9576) { throw "Icon size mismatch: $((Get-Item $icon).Length)" }
+          $hash = (Get-FileHash $icon -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '27eabc7242f1cd18497b474003689d60959b0111dd87b6a34e51f3a7154efe27') {
+            throw "Icon SHA-256 mismatch: $hash"
+          }
+
       - name: Cargo check exact v3.1 native shell
         run: cargo check --manifest-path youtube-knowledge-engine/native-probe/Cargo.toml
-
-# Probe trigger: complete native source staged.
