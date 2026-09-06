@@ -356,6 +356,7 @@ class AutoresearchIntegrityTests(unittest.TestCase):
                 "target": "btc",
                 "market": "crypto",
                 "profile": "private",
+                "status": "ok",
                 "score": 10.0 - i,
                 "cagr_pct": 50.0 - i,
                 "sharpe": 1.5,
