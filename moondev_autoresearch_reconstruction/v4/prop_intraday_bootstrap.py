@@ -408,6 +408,128 @@ def _continuous_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
     return pd.Series(state, index=daily.index, dtype=float)
 
 
+def _donchian_daily_decisions(frame: pd.DataFrame, params: dict):
+    """Return completed-day Donchian decisions and the source ATR stop basis."""
+    family = str(params["source_family"])
+    if family not in {"donchian_20_10", "donchian_sma50"}:
+        raise ValueError(f"stop-aware Donchian adapter cannot handle {family}")
+
+    daily = _utc_daily_ohlc(frame)
+    close = daily["Close"].astype(float)
+    entry_lb = int(params["entry_lookback"])
+    exit_lb = int(params["exit_lookback"])
+    atr_window = int(params["atr_window"])
+
+    hh = daily["High"].rolling(entry_lb).max().shift(1)
+    ll = daily["Low"].rolling(exit_lb).min().shift(1)
+    atr = _atr_shifted_daily(daily, atr_window)
+    entry = close > hh
+    exit_ = close < ll
+
+    sma_window = params.get("sma_window")
+    if sma_window is not None:
+        sma = close.rolling(int(sma_window)).mean().shift(1)
+        entry = entry & (close > sma)
+        exit_ = exit_ | (close < sma)
+
+    if "source_min_bars" not in params or "source_vol_lookback" not in params:
+        raise ValueError(
+            "stop-aware Donchian transfer requires source warmup and vol gate"
+        )
+    source_min_bars = int(params["source_min_bars"])
+    source_vol_lookback = int(params["source_vol_lookback"])
+    log_ret = np.log(close / close.shift(1))
+    source_rv = (
+        log_ret.rolling(source_vol_lookback)
+        .std(ddof=0)
+        .shift(1)
+        * np.sqrt(365.0)
+    )
+    bar_count = pd.Series(
+        np.arange(1, len(daily) + 1, dtype=int),
+        index=daily.index,
+    )
+    decision_ok = (
+        bar_count.ge(source_min_bars)
+        & source_rv.notna()
+        & source_rv.gt(0.0)
+        & atr.notna()
+        & atr.gt(0.0)
+    )
+    return (
+        daily,
+        (entry & decision_ok).fillna(False),
+        (exit_ & decision_ok).fillna(False),
+        atr,
+    )
+
+
+def _hourly_donchian_stop_state(
+    frame: pd.DataFrame,
+    params: dict,
+) -> tuple[pd.Series, pd.Series]:
+    """Replay source Donchian entry/exit plus standing ATR stop on hourly bars.
+
+    The source decision is formed from the completed UTC daily bar and can
+    execute no earlier than the following hourly open. A stop already placed
+    on an open position may trigger intrabar from the hourly low. Prague reset
+    still forces the V4 prop account flat.
+    """
+    daily, entry, exit_, atr = _donchian_daily_decisions(frame, params)
+    index = frame.index
+    utc_dates = pd.Series(index.floor("1D"), index=index)
+    next_utc_dates = utc_dates.shift(-1)
+    utc_day_complete = next_utc_dates.notna() & (next_utc_dates != utc_dates)
+
+    local_dates = pd.Series(index.tz_convert(PRAGUE).date, index=index)
+    next_local_dates = local_dates.shift(-1)
+    reset = next_local_dates.notna() & (next_local_dates != local_dates)
+
+    entry_map = entry.to_dict()
+    exit_map = exit_.to_dict()
+    close_map = daily["Close"].astype(float).to_dict()
+    atr_map = atr.astype(float).to_dict()
+    stop_mult = float(params["stop_mult"])
+
+    lows = frame["Low"].astype(float)
+    state_values = []
+    stop_values = []
+    long = False
+    stop = float("nan")
+
+    for i, ts in enumerate(index):
+        # The standing stop was known before this bar opened, so using this
+        # bar's low to determine whether the stop order filled is causal.
+        if long and np.isfinite(stop) and float(lows.iloc[i]) <= stop:
+            long = False
+            stop = float("nan")
+
+        if bool(reset.iloc[i]):
+            long = False
+            stop = float("nan")
+        elif bool(utc_day_complete.iloc[i]):
+            day = utc_dates.iloc[i]
+            if long and bool(exit_map.get(day, False)):
+                long = False
+                stop = float("nan")
+            if (not long) and bool(entry_map.get(day, False)):
+                px = float(close_map.get(day, float("nan")))
+                av = float(atr_map.get(day, float("nan")))
+                if np.isfinite(px) and np.isfinite(av) and av > 0.0:
+                    long = True
+                    stop = px - stop_mult * av
+
+        state_values.append(1.0 if long else 0.0)
+        stop_values.append(stop if long and np.isfinite(stop) else np.nan)
+
+    state = pd.Series(state_values, index=index, dtype=float)
+    stops = pd.Series(stop_values, index=index, dtype=float)
+    if len(state):
+        state.iloc[-1] = 0.0
+        stops.iloc[-1] = np.nan
+    return state, stops
+
+
 def hourly_continuous_daily_signal_strategy(params, all_symbols):
     """Transfer a daily continuous signal into the hourly prop execution model.
 
@@ -430,8 +552,14 @@ def hourly_continuous_daily_signal_strategy(params, all_symbols):
     def strategy(data, features=None):
         index = next(iter(data.values())).index
         columns = sorted(data)
-        daily_state = _continuous_daily_state(data[target], params)
 
+        if bool(params.get("source_stop_required")):
+            state, _ = _hourly_donchian_stop_state(data[target], params)
+            out = pd.DataFrame(0.0, index=index, columns=columns)
+            out.loc[:, target] = state.reindex(index).fillna(0.0)
+            return out
+
+        daily_state = _continuous_daily_state(data[target], params)
         utc_dates = pd.Series(index.floor("1D"), index=index)
         next_utc_dates = utc_dates.shift(-1)
         utc_day_complete = (
@@ -464,6 +592,7 @@ def intraday_bar_adverse(
     data: dict[str, pd.DataFrame],
     weights: pd.DataFrame,
     costs: pd.Series,
+    long_stop_prices: pd.DataFrame | None = None,
 ) -> pd.Series:
     idx = weights.index
     out = pd.Series(0.0, index=idx)
@@ -474,6 +603,21 @@ def intraday_bar_adverse(
         low = frame["Low"]
         high = frame["High"]
         long_bad = low / open_ - 1.0
+        if long_stop_prices is not None and symbol in long_stop_prices:
+            stop = pd.to_numeric(
+                long_stop_prices[symbol].reindex(idx),
+                errors="coerce",
+            )
+            active_stop = w.gt(0.0) & stop.notna() & stop.gt(0.0)
+            hit = active_stop & low.le(stop)
+            if hit.any():
+                fill = pd.Series(
+                    np.where(open_.le(stop), open_, stop),
+                    index=idx,
+                    dtype=float,
+                )
+                stop_bad = fill / open_ - 1.0
+                long_bad = long_bad.where(~hit, stop_bad)
         short_bad = high / open_ - 1.0
         out += pd.Series(
             np.where(w >= 0.0, w * long_bad, w * short_bad),
@@ -781,14 +925,37 @@ def evaluate_strategy(data, params):
         max_gross=1.0,
         max_scale=1.0,
     )
+    long_stop_prices = None
+    if (
+        family == "continuous_daily_signal"
+        and bool(params.get("source_stop_required"))
+    ):
+        _, stop_series = _hourly_donchian_stop_state(
+            data[str(params["source_target"])],
+            params,
+        )
+        long_stop_prices = pd.DataFrame(
+            np.nan,
+            index=stop_series.index,
+            columns=all_symbols,
+        )
+        long_stop_prices.loc[:, str(params["source_target"])] = stop_series
+
     result = engine.run(
         strategy,
         cost_multiplier=PROP_COST_STRESS_MULTIPLIER,
+        long_stop_prices=long_stop_prices,
+    )
+    execution_stop_prices = (
+        None
+        if long_stop_prices is None
+        else long_stop_prices.shift(1).reindex(result.returns.index)
     )
     bar_adverse = intraday_bar_adverse(
         data,
         result.execution_weights,
         result.costs,
+        long_stop_prices=execution_stop_prices,
     ).reindex(result.returns.index)
     aligned_weights = result.execution_weights.reindex(result.returns.index)
     daily_ret, daily_adv, opened = aggregate_prague_days(
