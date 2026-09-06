@@ -194,6 +194,19 @@
       ],
       "selection": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
       "purpose": "monetize strong shorter-history alpha without truncating the 2010-2020 core evidence window"
+    },
+    "financing": {
+      "enabled": true,
+      "base_annual_rate_pct": 6,
+      "stress_rates_pct": [
+        6,
+        10,
+        14
+      ],
+      "charged_on": "gross_exposure_above_1x_only",
+      "cash_yield_credit": false,
+      "selection_uses_base_financing_rate": true,
+      "purpose": "prevent leverage from creating artificial CAGR under zero-cost borrowing assumptions"
     }
   },
   "intraday": {
