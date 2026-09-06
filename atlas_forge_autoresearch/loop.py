@@ -18,6 +18,8 @@ import sys
 import time
 from datetime import datetime, timezone
 
+import atlas_evomind
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
 PY = sys.executable
@@ -312,7 +314,7 @@ def file_sha256(path):
 def append_experiment_record(
     ts, iteration, model, verdict, reason, desc, base_score,
     candidate_score, candidate_ast_sha, candidate_source_sha,
-    best_before_ast_sha, result=None,
+    best_before_ast_sha, result=None, evomind_arm=None,
 ):
     prompt_path = os.path.join(LOGS, f"prompt_{iteration}.txt")
     record = {
@@ -325,6 +327,8 @@ def append_experiment_record(
         "profile": os.environ.get("AUTORESEARCH_PROFILE", "unspecified"),
         "verdict": verdict,
         "reason": reason,
+        "evomind_version": atlas_evomind.EVOMIND_VERSION,
+        "evomind_proposal_arm": evomind_arm,
         "description": desc,
         "base_score": str(base_score),
         "candidate_score": str(candidate_score),
@@ -415,7 +419,7 @@ def results_rows():
     return lines[0], lines[1:]
 
 
-def build_prompt(iteration, base):
+def build_prompt(iteration, base, evomind_guidance=""):
     header, rows = results_rows()
     with open(PROGRAM, encoding="utf-8") as f:
         program = f.read()
@@ -442,6 +446,8 @@ def build_prompt(iteration, base):
             "## Last 30 results (newest last)",
             header,
             *rows[-30:],
+            "",
+            evomind_guidance,
             "",
             "## Current strategy.py",
             strategy,
@@ -967,7 +973,25 @@ def main():
         print("[1/4] AGENT")
 
         used_model = args.model
-        prompt = build_prompt(iteration, base)
+        evomind_guidance = ""
+        evomind_arm = None
+        try:
+            evomind_guidance, evomind_arm = (
+                atlas_evomind.prompt_guidance(iteration)
+            )
+            if evomind_arm:
+                print(
+                    f"[EvoMind v{atlas_evomind.EVOMIND_VERSION}] "
+                    f"proposal_mode={evomind_arm}"
+                )
+        except Exception as evomind_exc:
+            # EvoMind is an advisory search layer. A memory/runtime failure must
+            # never bypass or disable the authoritative Atlas evaluation path.
+            print(
+                f"[EvoMind warning] guidance unavailable: {evomind_exc}",
+                file=sys.stderr,
+            )
+        prompt = build_prompt(iteration, base, evomind_guidance)
         try:
             desc = run_agent(iteration, prompt, used_model)
         except Exception as primary_exc:
@@ -1145,7 +1169,32 @@ def main():
             candidate_source_sha=candidate_source_sha,
             best_before_ast_sha=best_before_ast_sha,
             result=result,
+            evomind_arm=evomind_arm,
         )
+        try:
+            evomind_update = atlas_evomind.learn_from_atlas(
+                iteration=iteration,
+                arm=evomind_arm,
+                verdict=verdict,
+                description=desc,
+                result=result,
+                base_score=base["score"],
+                candidate_score=score,
+                evidence_id=candidate_ast_sha,
+            )
+            if evomind_update is not None:
+                print(
+                    f"[EvoMind] learned arm={evomind_update['arm']} "
+                    f"reward={evomind_update['reward']:.3f} "
+                    f"tags={','.join(evomind_update['tags'][:5])}"
+                )
+        except Exception as evomind_exc:
+            # Keep/revert is already decided by Atlas Forge at this point.
+            # Failing to write advisory memory must not mutate that decision.
+            print(
+                f"[EvoMind warning] memory update failed: {evomind_exc}",
+                file=sys.stderr,
+            )
         scoreboard()
 
 
