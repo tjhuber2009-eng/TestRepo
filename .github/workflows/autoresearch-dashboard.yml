@@ -28,6 +28,14 @@ jobs:
           git fetch origin +refs/heads/continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state
           git checkout refs/remotes/origin/continuous-autoresearch-state -- moondev_autoresearch_reconstruction/continuous_state
 
+      - name: Restore current stock/FX expansion state
+        shell: bash
+        run: |
+          git fetch origin +refs/heads/stock-fx-autoresearch-state:refs/remotes/origin/stock-fx-autoresearch-state || true
+          if git rev-parse --verify refs/remotes/origin/stock-fx-autoresearch-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/stock-fx-autoresearch-state -- moondev_autoresearch_reconstruction/stock_fx_state || true
+          fi
+
       - name: Restore current V4 development state
         shell: bash
         run: |
@@ -50,6 +58,7 @@ jobs:
         run: |
           mkdir -p dashboard_runtime
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/continuous-autoresearch.yml/runs?per_page=8" > dashboard_runtime/continuous_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/continuous_runs.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/stock-fx-autoresearch.yml/runs?per_page=8" > dashboard_runtime/stock_fx_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/stock_fx_runs.json
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/autoresearch-v4-promotion-cycle.yml/runs?per_page=8" > dashboard_runtime/v4_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/v4_runs.json
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/model-tournament.yml/runs?per_page=8" > dashboard_runtime/tournament_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/tournament_runs.json
           tournament_run_id="$(python - <<'PY'
@@ -77,7 +86,7 @@ jobs:
         run: |
           python -m py_compile build_dashboard.py build_live_dashboard.py
           node --check dashboard_src/app.js
-          python build_dashboard.py --state-dir continuous_state --tournament-state-dir tournament_state --runtime-dir dashboard_runtime --output-dir dashboard_output
+          python build_dashboard.py --state-dir continuous_state --stock-fx-state-dir stock_fx_state --tournament-state-dir tournament_state --runtime-dir dashboard_runtime --output-dir dashboard_output
           python build_live_dashboard.py
           test -s live-dashboard.md
           test -s dashboard_output/index.html
