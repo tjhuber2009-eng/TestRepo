@@ -272,7 +272,7 @@
       "Return scoring is duration-normalized using annualized log growth.",
       "Candidates must remain profitable under 2x and 3x transaction-cost stress.",
       "Probabilistic Sharpe and block-bootstrap significance are soft penalties, not hard small-sample exclusions.",
-      "CSCV PBO uses fixed even development slices and selection-eligible backtested candidates only."
+      "CSCV PBO uses fixed even development slices, the frozen incumbent baseline, and unique selection-eligible candidates produced by matching harness/program fingerprints."
     ]
   }
 }
