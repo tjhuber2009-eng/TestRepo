@@ -19,10 +19,39 @@ jobs:
       run:
         working-directory: atlas_forge_autoresearch
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout smoke request
+        uses: actions/checkout@v7
         with:
-          ref: autoresearch-v4-alpha-generation
+          fetch-depth: 1
+
+      - id: source
+        name: Resolve immutable V4 source from smoke kick
+        shell: bash
+        working-directory: .
+        run: |
+          source_ref="$(sed -n 's/^Source head: \([0-9a-fA-F]\{40\}\)$/\1/p' .github/atlas-forge-v4-smoke-kick | head -1)"
+          if [[ ! "$source_ref" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "::error::Smoke kick must contain a 40-hex 'Source head:' value"
+            exit 1
+          fi
+          echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned V4 source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.source.outputs.source_ref }}
           fetch-depth: 0
+
+      - name: Verify pinned smoke source
+        shell: bash
+        working-directory: .
+        run: |
+          resolved="$(git rev-parse HEAD)"
+          requested="${{ steps.source.outputs.source_ref }}"
+          test "$resolved" = "$requested" || {
+            echo "::error::Smoke source mismatch: requested $requested, resolved $resolved"
+            exit 1
+          }
 
       - uses: actions/setup-python@v7
         with:
