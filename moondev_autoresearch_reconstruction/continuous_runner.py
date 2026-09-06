@@ -57,6 +57,34 @@ RUNTIME_FILES = [
 PROTOCOL = "nested_chronological_v3"
 
 
+def _inside_here(relative):
+    path = (HERE / relative).resolve()
+    try:
+        path.relative_to(HERE.resolve())
+    except ValueError as exc:
+        raise RuntimeError(f"runtime path escapes project root: {relative}") from exc
+    return path
+
+
+def configure_paths(
+    config="continuous_config.json",
+    state_dir="continuous_state",
+    universe_plan="strategy_library/universe_plan.json",
+):
+    """Select an isolated research universe while preserving legacy defaults."""
+    global CONFIG, UNIVERSE_PLAN, STATE, TRACKS, CURSOR, LEDGER, PROGRESS
+    global SELECTIONS, LEADERBOARD
+    CONFIG = _inside_here(config)
+    UNIVERSE_PLAN = _inside_here(universe_plan)
+    STATE = _inside_here(state_dir)
+    TRACKS = STATE / "tracks"
+    CURSOR = STATE / "cursor.json"
+    LEDGER = STATE / "cycles.jsonl"
+    PROGRESS = STATE / "progress.json"
+    SELECTIONS = STATE / "search_selections.json"
+    LEADERBOARD = STATE / "leaderboard_latest.json"
+
+
 def now():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -142,18 +170,20 @@ def hidden_validation_allowed_by_universe_plan():
 
 
 def assert_universe_lock(tracks):
-    """Prevent phase-2/3 additions from silently inflating the fixed 514 universe."""
+    """Fail closed when a configured frozen universe changes track count."""
     plan = load_universe_plan()
-    if plan.get("current_stage") != "phase1_fixed_514":
-        return
+    stage = str(plan.get("current_stage", ""))
     phase = next(
-        (x for x in plan.get("phases", []) if x.get("id") == "phase1_fixed_514"),
+        (x for x in plan.get("phases", []) if x.get("id") == stage),
         {},
     )
-    expected = int(phase.get("expected_track_count", 514))
+    if "expected_track_count" not in phase:
+        return
+    expected = int(phase["expected_track_count"])
     if len(tracks) != expected:
         raise RuntimeError(
-            f"phase1 universe lock violated: expected {expected} tracks, got {len(tracks)}"
+            f"{stage or 'configured'} universe lock violated: "
+            f"expected {expected} tracks, got {len(tracks)}"
         )
 
 
@@ -163,11 +193,18 @@ def build_tracks():
     families = [x for x in registry["families"] if x.get("status") == "runnable"]
     targets = [x for x in config["targets"] if x.get("enabled")]
     profiles = config["profiles"]
+    family_allowlists = {
+        market: set(ids)
+        for market, ids in (config.get("family_allowlist_by_market") or {}).items()
+    }
     tracks = []
     for family in sorted(families, key=lambda x: (int(x.get("priority", 50)), x["id"])):
         allowed = set(family.get("markets", []))
         for target in sorted(targets, key=lambda x: x["id"]):
             if allowed and target["market"] not in allowed:
+                continue
+            allowlist = family_allowlists.get(target["market"])
+            if allowlist is not None and family["id"] not in allowlist:
                 continue
             for profile_name in ["prop", "private"]:
                 tracks.append({
@@ -1396,6 +1433,7 @@ def write_progress(
         "prior_terminal_family_count": len(prior_terminal_families),
         "prior_terminal_families": prior_terminal_families,
         "model_performance": aggregate_model_performance(tracks),
+        "universe_metadata": load_json(CONFIG).get("universe_metadata", {}),
         "model_allocator": {
             "method": "deterministic_thompson_sampling_beta_bernoulli",
             "reward_unit": "two-iteration visit with at least one keeper",
@@ -1497,6 +1535,7 @@ def rebuild_leaderboard(tracks):
     save_json(LEADERBOARD, {
         "updated_at": now(),
         "protocol": PROTOCOL,
+        "universe_metadata": load_json(CONFIG).get("universe_metadata", {}),
         "count": len(rows),
         "rows": rows,
     })
@@ -1522,7 +1561,14 @@ def main():
         ),
     )
     ap.add_argument("--model", default="auto")
+    ap.add_argument("--config", default="continuous_config.json")
+    ap.add_argument("--state-dir", default="continuous_state")
+    ap.add_argument(
+        "--universe-plan",
+        default="strategy_library/universe_plan.json",
+    )
     args = ap.parse_args()
+    configure_paths(args.config, args.state_dir, args.universe_plan)
 
     if not os.environ.get("NVIDIA_API_KEY"):
         raise SystemExit("NVIDIA_API_KEY missing")

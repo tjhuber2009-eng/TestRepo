@@ -1,9 +1,10 @@
 """Prepare daily OHLCV for the cross-market tournament.
 
 Crypto uses Binance Data Vision checksum-verified monthly archives.
-ETFs, FX and continuous futures use Yahoo's public chart endpoint. For symbols
-with adjusted close, OHLC are adjusted by the same factor to avoid split
-artifacts (important for leveraged ETFs such as TQQQ).
+ETFs/stocks and continuous futures can use Yahoo's public chart endpoint.
+Daily FX expansion uses Stooq currency-history snapshots because the previously
+attempted Yahoo FX rows failed OHLC integrity checks. For symbols with adjusted
+close, OHLC are adjusted by the same factor to avoid split artifacts.
 """
 
 import argparse
@@ -303,7 +304,7 @@ def prepare_stooq(symbol, start, end, out):
         w = csv.writer(fh)
         w.writerow(["Date","Open","High","Low","Close","Volume"])
         w.writerows(rows)
-    print(f"Stooq {symbol}: {len(rows)} continuous-futures proxy bars -> {out}")
+    print(f"Stooq {symbol}: {len(rows)} daily bars -> {out}")
 
 
 def sha256_path(path):
@@ -339,8 +340,8 @@ def write_manifest(out, source, symbol, ident, start, end):
                 if source == "bitstamp"
                 else (
                 "provider response snapshotted by generated CSV SHA256; "
-                "Stooq continuous-futures proxy has no archive checksum"
-                if source == "stooq"
+                "Stooq public historical endpoint has no archive checksum"
+                if source in {"stooq", "stooq_fx"}
                 else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
                 )
             )
@@ -362,7 +363,7 @@ def write_manifest(out, source, symbol, ident, start, end):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", choices=["binance","bitstamp","yahoo","yahoo_futures_proxy","stooq"], required=True)
+    ap.add_argument("--source", choices=["binance","bitstamp","yahoo","yahoo_futures_proxy","stooq","stooq_fx"], required=True)
     ap.add_argument("--symbol", required=True)
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
@@ -386,7 +387,7 @@ def main():
         prepare_binance(args.symbol, start, end, out)
     elif args.source == "bitstamp":
         prepare_bitstamp(args.symbol, start, end, out)
-    elif args.source == "stooq":
+    elif args.source in {"stooq", "stooq_fx"}:
         prepare_stooq(args.symbol, start, end, out)
     elif args.source == "yahoo_futures_proxy":
         prepare_yahoo_futures_proxy(args.symbol, start, end, out)

@@ -219,6 +219,47 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             )
             compile(p.read_text(encoding="utf-8"), str(p), "exec")
 
+    def test_stock_fx_expansion_is_isolated_locked_and_holdout_sealed(self):
+        default = (
+            "continuous_config.json",
+            "continuous_state",
+            "strategy_library/universe_plan.json",
+        )
+        try:
+            continuous_runner.configure_paths(
+                "stock_fx_config.json",
+                "stock_fx_state",
+                "strategy_library/stock_fx_universe_plan.json",
+            )
+            tracks = continuous_runner.build_tracks()
+            self.assertEqual(len(tracks), 1110)
+            by_market = {}
+            for track in tracks:
+                by_market[track["target"]["market"]] = (
+                    by_market.get(track["target"]["market"], 0) + 1
+                )
+            self.assertEqual(by_market, {"stock": 900, "forex": 210})
+            targets = {track["target"]["id"] for track in tracks}
+            self.assertNotIn("aapl", targets)
+            self.assertNotIn("nvda", targets)
+            self.assertTrue({"msft", "tsla", "brkb", "eurusd", "usdjpy"} <= targets)
+            fx_families = {
+                track["family"]["id"] for track in tracks
+                if track["target"]["market"] == "forex"
+            }
+            self.assertNotIn("zanger_volume_breakout_proxy", fx_families)
+            self.assertNotIn("swing_terminal_breakout_proxy", fx_families)
+            self.assertEqual(len(fx_families), 15)
+            self.assertFalse(
+                continuous_runner.hidden_validation_allowed_by_universe_plan()
+            )
+            self.assertTrue(
+                all(continuous_runner.development_end(t) <= "2020-12-31" for t in tracks)
+            )
+        finally:
+            continuous_runner.configure_paths(*default)
+        self.assertEqual(len(continuous_runner.build_tracks()), 514)
+
     def test_causal_monthly_seed_is_phase2_only_and_future_invariant(self):
         import phase2_prior_runner
         import phase2_seed_factory
@@ -495,6 +536,19 @@ class AutoresearchIntegrityTests(unittest.TestCase):
                 {"hydration_status": "hydrated", "hydration_version": 2}
             ),
             3,
+        )
+
+    def test_stock_fx_config_uses_non_yahoo_fx_source_and_no_volume_families(self):
+        cfg = json.loads((HERE / "stock_fx_config.json").read_text(encoding="utf-8"))
+        fx = [x for x in cfg["targets"] if x["market"] == "forex"]
+        stocks = [x for x in cfg["targets"] if x["market"] == "stock"]
+        self.assertEqual(len(fx), 7)
+        self.assertEqual(len(stocks), 30)
+        self.assertTrue(all(x["source"] == "stooq_fx" for x in fx))
+        self.assertTrue(all(x["validation_start"] == "2021-01-01" for x in fx))
+        self.assertNotIn(
+            "zanger_volume_breakout_proxy",
+            cfg["family_allowlist_by_market"]["forex"],
         )
 
     def test_yahoo_futures_proxy_normalization_is_explicit_and_conservative(self):

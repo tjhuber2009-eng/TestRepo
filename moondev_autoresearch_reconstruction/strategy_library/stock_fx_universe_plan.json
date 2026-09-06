@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "current_stage": "stock_fx_seed_v1",
+  "hidden_validation_policy": "sealed_until_stock_fx_adaptive_search_frozen",
+  "final_oos_start": "2023-01-01",
+  "phases": [
+    {
+      "id": "stock_fx_seed_v1",
+      "status": "active_development_only",
+      "expected_track_count": 1110,
+      "target_count": 37,
+      "stock_target_count": 30,
+      "forex_target_count": 7,
+      "stock_family_count": 15,
+      "forex_family_count": 15,
+      "profiles": [
+        "prop",
+        "private"
+      ],
+      "hidden_validation_opened": false,
+      "final_oos_opened": false
+    },
+    {
+      "id": "hidden_validation",
+      "status": "locked",
+      "period": "2021-01-01..2022-12-31"
+    }
+  ],
+  "notes": [
+    "This lane is isolated from phase1_fixed_514 and cannot change its track count.",
+    "The 30-stock basket is a fixed 2026-selected seed basket, not point-in-time historical membership.",
+    "FX uses Stooq daily snapshots; volume-dependent strategy families are excluded.",
+    "2023+ final OOS remains absent until explicit authorization."
+  ]
+}

@@ -58,7 +58,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "sma200_regime",
       "min_trades": 6,
@@ -88,7 +89,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "tsmom_252",
       "min_trades": 4,
@@ -154,7 +156,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "sentinel63",
       "min_trades": 8,
@@ -169,7 +172,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "donchian_20_10",
       "priority": 2
@@ -183,7 +187,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "turtle_55_20",
       "priority": 2
@@ -197,7 +202,8 @@
         "etf",
         "stock",
         "crypto",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "sma175_regime_proxy",
       "min_trades": 6,
@@ -212,7 +218,8 @@
         "etf",
         "stock",
         "crypto",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "sma200_roc126_proxy",
       "min_trades": 6,
@@ -227,7 +234,8 @@
         "etf",
         "stock",
         "crypto",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "roc126_regime",
       "min_trades": 6,
@@ -283,7 +291,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "zscore_mean_reversion",
       "priority": 3
@@ -297,7 +306,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "bollinger_mean_reversion",
       "priority": 3
@@ -311,7 +321,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "atr_channel_trend",
       "priority": 3
@@ -325,7 +336,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "vol_contraction_breakout",
       "priority": 3
@@ -339,7 +351,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "qqe_proxy",
       "priority": 3
@@ -353,7 +366,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "halftrend_proxy",
       "priority": 3
@@ -379,7 +393,8 @@
         "crypto",
         "etf",
         "stock",
-        "futures_proxy"
+        "futures_proxy",
+        "forex"
       ],
       "factory": "donchian_sma50",
       "priority": 2
