@@ -2,9 +2,8 @@ name: Atlas Forge Stock + FX AUTORESEARCH
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - ".github/workflows/stock-fx-autoresearch.yml"
+  schedule:
+    - cron: "11 * * * *"
 
 permissions:
   actions: write
@@ -100,12 +99,14 @@ jobs:
           PY
           python oos_guard.py
 
-      - name: Qualify all 37 development datasets
+      - name: Inspect quota-safe development data cache
         shell: bash
         run: |
           python - <<'PY'
-          import time
+          import json
+          from pathlib import Path
           import continuous_runner as c
+
           c.configure_paths(
               "stock_fx_config.json",
               "stock_fx_state",
@@ -115,11 +116,42 @@ jobs:
           unique={}
           for track in tracks:
               unique.setdefault(track["target"]["id"], track["target"])
-          for i,target in enumerate(sorted(unique.values(), key=lambda x:x["id"]),1):
-              print(f"[{i}/{len(unique)}] {target['id']} {target['symbol']} {target['source']}")
-              c.prepare_data({"target": target})
-              time.sleep(0.25)
-          print(f"qualified {len(unique)} development-only datasets")
+
+          ready=[]
+          missing=[]
+          for target in sorted(unique.values(), key=lambda x:x["id"]):
+              manifest=Path("data")/f"{target['id']}_1d.manifest.json"
+              ok=False
+              if manifest.exists():
+                  try:
+                      m=json.loads(manifest.read_text())
+                      expected_end=(
+                          __import__("datetime").datetime.strptime(
+                              target.get("validation_start","2021-01-01"),
+                              "%Y-%m-%d",
+                          )
+                          - __import__("datetime").timedelta(days=1)
+                      ).strftime("%Y-%m-%d")
+                      ok=(
+                          m.get("source")==target.get("source")
+                          and m.get("requested_start")==target.get("start","2017-08-17")
+                          and m.get("requested_end")==expected_end
+                          and m.get("final_oos_included") is False
+                      )
+                  except Exception:
+                      ok=False
+              (ready if ok else missing).append(target["id"])
+
+          print({
+              "development_datasets_ready":len(ready),
+              "development_datasets_total":len(unique),
+              "missing_sample":missing[:12],
+              "policy":(
+                  "while cache is incomplete, the runner hydrates only targets "
+                  "actually visited (max 6 visits/run) to stay below Tiingo's "
+                  "free hourly request budget; no bulk 37-symbol prefetch"
+              ),
+          })
           PY
 
       - name: Post-data OOS contamination guard
@@ -209,19 +241,56 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Chain next stock/FX cycle
+      - name: Chain next stock/FX cycle when data cache is fully hydrated
         if: success()
         shell: bash
         working-directory: .
         run: |
-          phase="$(python - <<'PY'
+          read -r phase ready total <<EOF
+          $(python - <<'PY'
           import json
+          from datetime import datetime, timedelta
           from pathlib import Path
-          print(json.loads(Path("atlas_forge_autoresearch/stock_fx_state/progress.json").read_text()).get("phase",""))
+
+          progress=json.loads(
+              Path("atlas_forge_autoresearch/stock_fx_state/progress.json").read_text()
+          )
+          cfg=json.loads(
+              Path("atlas_forge_autoresearch/stock_fx_config.json").read_text()
+          )
+          targets=[x for x in cfg["targets"] if x.get("enabled")]
+          ready=0
+          for target in targets:
+              p=Path("atlas_forge_autoresearch/data")/f"{target['id']}_1d.manifest.json"
+              if not p.exists():
+                  continue
+              try:
+                  m=json.loads(p.read_text())
+                  end=(
+                      datetime.strptime(
+                          target.get("validation_start","2021-01-01"),
+                          "%Y-%m-%d",
+                      ) - timedelta(days=1)
+                  ).strftime("%Y-%m-%d")
+                  if (
+                      m.get("source")==target.get("source")
+                      and m.get("requested_start")==target.get("start","2017-08-17")
+                      and m.get("requested_end")==end
+                      and m.get("final_oos_included") is False
+                  ):
+                      ready += 1
+              except Exception:
+                  pass
+          print(progress.get("phase",""), ready, len(targets))
           PY
-          )"
-          if test "$phase" != "expansion_pending" && test "$phase" != "complete" && test "$phase" != "validation"; then
+          )
+          EOF
+          echo "phase=$phase development_cache=$ready/$total"
+          if test "$phase" = "expansion_pending" || test "$phase" = "complete" || test "$phase" = "validation"; then
+            echo "stock/FX adaptive lane frozen at phase=$phase; not opening hidden validation"
+          elif test "$ready" = "$total"; then
+            echo "all development data cached; resuming fast chained research"
             gh workflow run stock-fx-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
           else
-            echo "stock/FX adaptive lane frozen at phase=$phase; not opening hidden validation"
+            echo "development cache still hydrating; hourly schedule will resume the lane without exceeding Tiingo's free request budget"
           fi
