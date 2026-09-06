@@ -2,6 +2,7 @@ from prepare_market_data import yahoo_rows_from_chart
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,7 @@ from v4.continuous_bridge import (
     _parse_float_required,
     _parse_int_required,
     private_portfolio_eligible,
+    prop_transfer_candidates,
     select_candidates,
     source_execution_adapter_blocker,
 )
@@ -1584,6 +1586,68 @@ class MoonStrategy:
         ):
             with self.subTest(family=family):
                 self.assertNotIn(family, PROP_SIGNAL_ADAPTERS)
+
+    def test_unsupported_prop_leaders_do_not_block_lower_exact_adapter(self):
+        def row(track, family, score):
+            return {
+                "track_id": track,
+                "profile": "prop",
+                "family": family,
+                "target": "btc",
+                "market": "crypto",
+                "exactness": "reconstructed",
+                "evidence_grade": "A",
+                "development_guard_ok": True,
+                "development_cagr_pct": 20.0 + score,
+                "development_max_dd_pct": -5.0,
+                "development_sharpe": 1.5,
+                "development_pf": 2.0,
+                "development_years": 3.0,
+                "development_trades": 20,
+                "selection_score": score,
+                "multiple_test_qvalue": 0.05,
+                "pbo": None,
+                "extreme_stress_return_pct": 25.0,
+            }
+        board = {
+            "protocol": "nested_chronological_v3",
+            "rows": [
+                row("d1", "donchian_20_10", 10.0),
+                row("d2", "donchian_sma50", 9.0),
+                row("rsi", "btc_rsi_adx", 8.0),
+            ],
+        }
+        source = """
+class MoonStrategy:
+    vol_lookback = 30
+    vol_target = 0.08
+    def init(self):
+        self.sma50 = self.I(_sma_now, self.data.Close, 50)
+        self.ema7 = self.I(_ema_now, self.data.Close, 7)
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.adx2 = self.I(_adx_now, self.data.High, self.data.Low, self.data.Close, 2)
+    def next(self):
+        if len(self.data.Close) < 70:
+            return
+        if not self.position and self.rsi2[-1] > self.adx2[-1]:
+            self.buy(size=1)
+        elif self.position and self.rsi2[-1] < self.adx2[-1]:
+            self.position.close()
+"""
+        with mock.patch(
+            "v4.continuous_bridge.load_candidate_source",
+            return_value=source,
+        ):
+            supported, audit = prop_transfer_candidates(
+                {"BTCUSDT"},
+                leaderboard=board,
+            )
+        self.assertEqual(len(supported), 1)
+        self.assertEqual(supported[0]["continuous_track_id"], "rsi")
+        status = {r["track_id"]: r["transfer_status"] for r in audit["candidates"]}
+        self.assertEqual(status["d1"], "adapter_required")
+        self.assertEqual(status["d2"], "adapter_required")
+        self.assertEqual(status["rsi"], "supported")
 
     def test_exact_daily_adapter_preserves_source_warmup_and_vol_gate(self):
         days = 40
