@@ -21,6 +21,11 @@ from v4.continuous_bridge import (
     source_execution_adapter_blocker,
 )
 from v4.feature_store import FeatureStoreBuilder
+from v4.hr_dual_locked import (
+    SOURCE_LOCK as HR_DUAL_SOURCE_LOCK,
+    build_targets as hr_dual_build_targets,
+    mark_day as hr_dual_mark_day,
+)
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
 from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
@@ -76,6 +81,63 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(cfg["boundaries"]["final_oos_sealed"])
         self.assertEqual(cfg["boundaries"]["final_oos_start"], "2023-01-01")
         self.assertEqual(cfg["objective"]["primary"], "maximize_sustainable_cagr_subject_to_hard_risk_and_evidence_gates")
+
+    def test_hr_dual_source_lock_is_exact_and_prior_result_is_not_reopened(self):
+        self.assertEqual(
+            HR_DUAL_SOURCE_LOCK["commit"],
+            "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+        )
+        self.assertEqual(
+            HR_DUAL_SOURCE_LOCK["implementation_blob_sha"],
+            "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+        )
+        self.assertEqual(
+            HR_DUAL_SOURCE_LOCK["prior_classification"],
+            "SUPERIOR_PASS",
+        )
+
+    def test_hr_dual_target_generation_is_prefix_invariant(self):
+        idx = pd.date_range("2018-01-02", periods=620, freq="B")
+        data = {}
+        base = 100.0 + np.linspace(0.0, 35.0, len(idx))
+        for j, symbol in enumerate(("QQQ", "TQQQ", "TECL", "IEF", "GLD", "SHY")):
+            wave = np.sin(np.arange(len(idx)) / (11.0 + j)) * (1.0 + 0.15 * j)
+            close = base * (1.0 + 0.002 * j) + wave
+            data[symbol] = pd.DataFrame(
+                {
+                    "Open": close * 0.999,
+                    "High": close * 1.004,
+                    "Low": close * 0.996,
+                    "Close": close,
+                },
+                index=idx,
+            )
+        cut = 500
+        full_targets, _ = hr_dual_build_targets(data)
+        prefix_data = {k: v.iloc[:cut].copy() for k, v in data.items()}
+        prefix_targets, _ = hr_dual_build_targets(prefix_data)
+        for date, row in prefix_targets.items():
+            self.assertIn(date, full_targets)
+            self.assertEqual(row, full_targets[date])
+
+    def test_hr_dual_gap_and_touched_stop_are_source_faithful(self):
+        d = pd.Timestamp("2020-01-02")
+        frame = pd.DataFrame(
+            {"Open": [89.0], "High": [92.0], "Low": [88.0], "Close": [91.0]},
+            index=[d],
+        )
+        data = {"TQQQ": frame, "TECL": frame, "IEF": frame, "GLD": frame, "SHY": frame}
+        state = {
+            "mode": "RISK_ON",
+            "mom": {"eq": 0.6, "held": "TQQQ", "basis": 100.0, "prev": 100.0},
+            "rev": {"eq": 0.4, "held": None, "basis": None, "prev": None},
+            "def": None,
+            "cash": 0.0,
+        }
+        hits = hr_dual_mark_day(data, state, d, 0.0005)
+        self.assertEqual(hits, 1)
+        self.assertIsNone(state["mom"]["held"])
+        self.assertAlmostEqual(state["mom"]["eq"], 0.6 * 0.89 * 0.9995)
 
     def test_family_pbo_gate_rejects_missing_diagnostic(self):
         self.assertFalse(pbo_gate(None, 0.25))
