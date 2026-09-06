@@ -1,7 +1,7 @@
 {
   "continuous_prop_transfer": {
     "available": true,
-    "candidate_count": 17,
+    "candidate_count": 16,
     "candidates": [
       {
         "adapter": "daily_donchian_atr_stop",
@@ -220,7 +220,7 @@
         "family": "swing_terminal_pullback_proxy",
         "market": "crypto",
         "multiple_test_qvalue": 0.038131,
-        "pbo": null,
+        "pbo": 0.257143,
         "profile": "prop",
         "selection_score": 0.065624,
         "symbol": "ETHUSDT",
@@ -342,35 +342,12 @@
         "family": "vol_contraction_breakout",
         "market": "crypto",
         "multiple_test_qvalue": 0.050877,
-        "pbo": null,
+        "pbo": 0.485714,
         "profile": "prop",
         "selection_score": 0.038557,
         "symbol": "BTCUSDT",
         "target": "btc",
         "track_id": "vol_contraction_breakout__btc__prop",
-        "transfer_reason": "missing_authoritative_adapter",
-        "transfer_status": "adapter_required"
-      },
-      {
-        "adapter": null,
-        "development_cagr_pct": 8.941,
-        "development_max_dd_pct": -9.22,
-        "development_pf": 14.92,
-        "development_sharpe": 1.2168,
-        "development_trades": 13,
-        "development_years": 3.3731,
-        "evidence_grade": "B",
-        "exactness": "proxy",
-        "extreme_stress_return_pct": 33.154,
-        "family": "swing_terminal_breakout_proxy",
-        "market": "crypto",
-        "multiple_test_qvalue": 0.034037,
-        "pbo": null,
-        "profile": "prop",
-        "selection_score": 0.035579,
-        "symbol": "BTCUSDT",
-        "target": "btc",
-        "track_id": "swing_terminal_breakout_proxy__btc__prop",
         "transfer_reason": "missing_authoritative_adapter",
         "transfer_status": "adapter_required"
       },
@@ -47370,7 +47347,7 @@
     "reward_cycle_days": 14,
     "scaling_plan_upgrades_included": false
   },
-  "research_commit_sha": "b16e8e473f06f95dd25f1a175f1d5adfb2a38e48",
+  "research_commit_sha": "e3ee02ee99d1ab0fa3f11976c45d5ae96ae0b1db",
   "reset_timezone": "Europe/Prague",
   "search_policy": {
     "broad_base_candidates": 120,
