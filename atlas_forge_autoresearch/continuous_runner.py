@@ -1149,25 +1149,92 @@ def current_search_plan(
     return "validation", {}
 
 
-def _opportunity_rank(track):
-    """Rank a track for bounded exploitation without changing eligibility gates."""
+def _money_opportunity_value(track):
+    """Expected-money research utility from development evidence only.
+
+    This value controls only a bounded minority of research visits. It never
+    changes promotion, PBO, validation, drawdown, or OOS gates.
+    """
     meta = track_meta(track) or {}
     baseline = meta.get("baseline") or {}
     if not bool(baseline.get("guard_ok")):
         return None
-    score = development_selection_score(track)
-    if not math.isfinite(score):
+
+    selection = development_selection_score(track)
+    if not math.isfinite(selection):
         return None
-    counts = track_counts(track)
+
+    def finite_float(value, default=0.0):
+        try:
+            x = float(value)
+        except Exception:
+            return float(default)
+        return x if math.isfinite(x) else float(default)
+
+    # Prefer growth that survives the harshest already-computed cost stress.
+    extreme = baseline.get("extreme_stress") or {}
+    stress_cagr = finite_float(
+        extreme.get("cagr_pct"),
+        finite_float(baseline.get("cagr_pct"), 0.0),
+    )
+    calmar = max(0.0, finite_float(baseline.get("calmar"), 0.0))
+
     diag = development_overfit(track)
-    pbo_ready = bool(diag and diag.get("pbo") is not None)
-    # Missing-PBO tracks come first; within that set prefer stronger current
-    # evidence and tracks already producing guard-passing candidates. This does
-    # not promote them or weaken PBO -- it only decides where a minority of the
-    # unchanged research-call budget is spent.
+    pbo = None if not diag else diag.get("pbo")
+    if pbo is None:
+        # Unknown PBO keeps some evidence-completion value but no longer
+        # outranks a proven low-PBO high-growth track by construction.
+        pbo_quality = 0.60
+        pbo_missing = 1
+    else:
+        pbo_value = min(max(finite_float(pbo, 1.0), 0.0), 1.0)
+        pbo_quality = 1.0 - pbo_value
+        pbo_missing = 0
+
+    grade = str(baseline.get("evidence_grade") or "").upper()
+    evidence_quality = {
+        "A": 1.00,
+        "B": 0.75,
+        "C": 0.50,
+        "D": 0.25,
+    }.get(grade, 0.40)
+
+    counts = track_counts(track)
+    valid = max(int(counts.get("valid", 0)), 1)
+    guard_density = min(
+        1.0,
+        max(0.0, float(counts.get("guard_passed", 0)) / valid),
+    )
+
+    # Log transforms stop one spectacular CAGR/Calmar estimate from consuming
+    # all exploitation budget while still strongly rewarding capital growth.
+    growth_term = math.log1p(max(stress_cagr, 0.0) / 100.0)
+    calmar_term = math.log1p(min(calmar, 20.0))
+    selection_term = max(0.0, min(float(selection), 3.0))
+
+    value = (
+        0.42 * growth_term
+        + 0.18 * calmar_term
+        + 0.20 * selection_term
+        + 0.12 * pbo_quality
+        + 0.05 * evidence_quality
+        + 0.03 * guard_density
+    )
+    return float(value), pbo_missing
+
+
+def _opportunity_rank(track):
+    """Rank bounded exploitation by expected-money development utility."""
+    valued = _money_opportunity_value(track)
+    if valued is None:
+        return None
+    value, pbo_missing = valued
+    counts = track_counts(track)
+    score = development_selection_score(track)
     return (
-        1 if not pbo_ready else 0,
+        float(value),
         float(score),
+        int(pbo_missing),
         int(counts.get("guard_passed", 0)),
         int(counts.get("valid", 0)),
         -int(counts.get("attempts", 0)),
