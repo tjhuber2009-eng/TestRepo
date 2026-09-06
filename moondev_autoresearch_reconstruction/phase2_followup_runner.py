@@ -27,6 +27,7 @@ SELECTION = STATE / "followup_selection.json"
 RESULTS = STATE / "followup_results.jsonl"
 PROGRESS = STATE / "followup_progress.json"
 PROMOTION = STATE / "promotion_queue.json"
+PROMOTION_SOURCES = STATE / "promotion_sources"
 CURSOR = STATE / "followup_cursor.json"
 
 PROTOCOL = p2.PROTOCOL
@@ -48,6 +49,14 @@ def save_json(path, obj):
 def json_hash(obj):
     raw = json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(raw).hexdigest()
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with Path(path).open("rb") as fh:
+        for block in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
 
 
 def read_jsonl(path):
@@ -111,6 +120,37 @@ def freeze_selection():
         "candidate_ids": ids,
         "baseline_fingerprints": fingerprints,
     }
+    lookup = track_lookup()
+    PROMOTION_SOURCES.mkdir(parents=True, exist_ok=True)
+    for item in queue:
+        if not item["ready_for_v4_replay"]:
+            continue
+        track = lookup.get(item["track_id"])
+        if track is None:
+            raise RuntimeError(
+                f"ready Phase-2 promotion track disappeared: {item['track_id']}"
+            )
+        source_path = PROMOTION_SOURCES / f"{item['track_id']}.py"
+        p2.generate(
+            track["family"],
+            source_path,
+            int(track["target"]["bars_per_year"]),
+            float(track["profile"]["starting_vol_target"]),
+            float(track["profile"]["f_max"]),
+        )
+        source_sha = sha256_file(source_path)
+        expected_sha = str(item.get("strategy_sha256") or "")
+        if not expected_sha or source_sha != expected_sha:
+            raise RuntimeError(
+                f"Phase-2 promotion source hash mismatch for {item['track_id']}: "
+                f"{source_sha} != {expected_sha}"
+            )
+        item["promotion_source_path"] = (
+            f"moondev_autoresearch_reconstruction/phase2_state/"
+            f"promotion_sources/{item['track_id']}.py"
+        )
+        item["promotion_source_sha256"] = source_sha
+
     payload = {
         "protocol": PROTOCOL,
         "lane": LANE,
@@ -442,6 +482,10 @@ def build_promotion(rows, selection):
             "max_dd_pct": row.get("max_dd_pct"),
             "trades": row.get("trades"),
             "evidence_grade": row.get("evidence_grade"),
+            "strategy_sha256": row.get("strategy_sha256"),
+            "harness_sha256": row.get("harness_sha256"),
+            "program_sha256": row.get("program_sha256"),
+            "extreme_stress_return_pct": row.get("extreme_stress_return_pct"),
             "bootstrap_fdr_qvalue": qvalue,
             "fdr_report_level": FDR_REPORT_LEVEL,
             "cohort": cohort_key,
