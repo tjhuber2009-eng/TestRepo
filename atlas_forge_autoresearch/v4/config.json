@@ -152,7 +152,32 @@
     "objective": "portfolio_cagr_under_portfolio_drawdown_cap",
     "bootstrap": "paired_moving_block",
     "bootstrap_reps": 200,
-    "candidate_weights": 3000
+    "candidate_weights": 3000,
+    "dynamic_allocator": {
+      "enabled": true,
+      "role": "challenger_to_static_robust_portfolio",
+      "method": "causal_strategy_rotation_growth_risk_correlation",
+      "min_history_sessions": 252,
+      "growth_lookback_sessions": 126,
+      "risk_lookback_sessions": 63,
+      "rebalance_every_sessions": 21,
+      "max_strategy_weight": 0.55,
+      "drawdown_throttle": true,
+      "selection": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+      "causality": "weights_at_t_use_only_strategy_returns_before_t"
+    },
+    "guided_seed_search": {
+      "enabled": true,
+      "seeds": [
+        "growth_over_risk_and_correlation",
+        "growth_over_risk",
+        "positive_geometric_growth",
+        "inverse_volatility",
+        "equal_weight",
+        "top_growth_correlation_subsets"
+      ],
+      "note": "guided seeds consume the same fixed candidate budget and remain subject to identical bootstrap drawdown gates"
+    }
   },
   "intraday": {
     "enabled": true,
