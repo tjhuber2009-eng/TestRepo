@@ -452,6 +452,10 @@ def target_env(track):
         "AUTORESEARCH_EXTREME_COST_STRESS_MULT": str(
             cfg.get("protocol", {}).get("extreme_cost_stress_multiplier", 3.0)
         ),
+        "AUTORESEARCH_EVOMIND_ENABLED": "1",
+        "AUTORESEARCH_EVOMIND_DB": str(STATE / "evomind.db"),
+        "AUTORESEARCH_TRACK_ID": track["id"],
+        "AUTORESEARCH_PROTOCOL": PROTOCOL,
         "AUTORESEARCH_BOOTSTRAP_REPS": str(
             cfg.get("protocol", {}).get("bootstrap_reps", 500)
         ),
