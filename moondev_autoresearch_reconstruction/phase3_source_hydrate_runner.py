@@ -23,7 +23,8 @@ PROGRESS = STATE / "hydration_progress.json"
 CURSOR = STATE / "hydration_cursor.json"
 LANE = "phase3_source_hydration"
 PROTOCOL = "nested_chronological_v3"
-MAX_TEXT = 50000\nHYDRATION_VERSION = 2
+MAX_TEXT = 50000
+HYDRATION_VERSION = 2
 
 
 def now():
