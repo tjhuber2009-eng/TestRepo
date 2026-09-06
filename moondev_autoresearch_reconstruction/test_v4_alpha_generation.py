@@ -1531,10 +1531,12 @@ class MoonStrategy:
         self.assertEqual(
             source_execution_adapter_blocker(
                 "class MoonStrategy:\n"
+                "    def hidden_risk_helper(self):\n"
+                "        self.buy(size=1, sl=99)\n"
                 "    def next(self):\n"
-                "        self._buy_with_stop()\n"
+                "        self.hidden_risk_helper()\n"
             ),
-            "source_stop_not_transferred",
+            "source_bracket_not_transferred",
         )
         self.assertEqual(
             source_execution_adapter_blocker(
