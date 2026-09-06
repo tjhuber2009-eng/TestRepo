@@ -177,6 +177,23 @@
         "top_growth_correlation_subsets"
       ],
       "note": "guided seeds consume the same fixed candidate budget and remain subject to identical bootstrap drawdown gates"
+    },
+    "satellite_sleeve": {
+      "enabled": true,
+      "role": "challenger_to_long_history_core",
+      "max_composition_weight": 0.25,
+      "eligible_inputs": "qualified supplemental strategies excluded only by long-history cohort coverage",
+      "pre_inception_policy": "cash",
+      "post_inception_missing_data_policy": "reject_candidate",
+      "sleeve_grid": [
+        0.05,
+        0.1,
+        0.15,
+        0.2,
+        0.25
+      ],
+      "selection": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+      "purpose": "monetize strong shorter-history alpha without truncating the 2010-2020 core evidence window"
     }
   },
   "intraday": {
