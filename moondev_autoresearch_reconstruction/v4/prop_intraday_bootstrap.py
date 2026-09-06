@@ -1032,11 +1032,11 @@ def evaluate_strategy(data, params):
     """Build one causal hourly strategy path, reusable across prop programs."""
     all_symbols = tuple(sorted(data))
     family = str(params.get("family", "cross_sectional_long"))
-    if family == "continuous_daily_signal":
+    if family in {"continuous_daily_signal", "phase2_daily_signal"}:
         symbols = (str(params["source_target"]),)
         if symbols[0] not in data:
             raise RuntimeError(
-                f"continuous transfer target unavailable: {symbols[0]}"
+                f"{family} transfer target unavailable: {symbols[0]}"
             )
     else:
         symbols = _resolve_prop_symbols(
@@ -1059,6 +1059,12 @@ def evaluate_strategy(data, params):
     elif family == "continuous_daily_signal":
         net_min, net_max = 0.0, 1.0
         base_strategy = hourly_continuous_daily_signal_strategy(
+            params,
+            all_symbols,
+        )
+    elif family == "phase2_daily_signal":
+        net_min, net_max = -1.0, 1.0
+        base_strategy = hourly_phase2_daily_signal_strategy(
             params,
             all_symbols,
         )
