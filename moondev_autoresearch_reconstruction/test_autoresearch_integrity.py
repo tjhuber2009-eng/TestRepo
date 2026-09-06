@@ -143,11 +143,41 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             self.assertIn("origin", row)
             self.assertIn(row["factory"], seed_factory.BODIES)
 
-    def test_track_ids_are_unique_and_universe_is_large(self):
+    def test_track_ids_are_unique_and_phase1_universe_is_exactly_514(self):
         tracks = continuous_runner.build_tracks()
         ids = [x["id"] for x in tracks]
         self.assertEqual(len(ids), len(set(ids)))
-        self.assertGreaterEqual(len(ids), 400)
+        self.assertEqual(len(ids), 514)
+
+    def test_phase1_plan_seals_hidden_validation_until_expansion_finishes(self):
+        plan = json.loads(
+            (HERE / "strategy_library" / "universe_plan.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(plan["current_stage"], "phase1_fixed_514")
+        self.assertFalse(continuous_runner.hidden_validation_allowed_by_universe_plan())
+        self.assertEqual(
+            plan["hidden_validation_policy"],
+            "sealed_until_phase3_universe_and_all_adaptive_search_are_frozen",
+        )
+
+    def test_prior_work_backlog_is_staged_but_not_in_phase1_runnable_registry(self):
+        backlog = json.loads(
+            (HERE / "strategy_library" / "prior_work_backlog.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        ids = {x["id"] for x in backlog["items"]}
+        self.assertGreaterEqual(len(ids), 30)
+        self.assertIn("utbot_linreg_combo", ids)
+        self.assertIn("pead", ids)
+        self.assertIn("funding_basis", ids)
+        runnable = {
+            x["id"] for x in self.registry["families"]
+            if x.get("status") == "runnable"
+        }
+        self.assertNotIn("utbot_linreg_combo", runnable)
 
     def test_crashes_and_duplicates_do_not_count_as_valid(self):
         body = (
