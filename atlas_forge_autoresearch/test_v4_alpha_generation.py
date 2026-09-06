@@ -809,6 +809,84 @@ class V4AlphaGenerationTests(unittest.TestCase):
             chosen.bootstrap_median_cagr_pct + 1e-12,
         )
 
+    def test_portfolio_financing_charge_applies_only_above_one_x(self):
+        ret = pd.DataFrame({
+            "alpha": np.full(600, 0.0008, dtype=float),
+        })
+        free = RobustPortfolioOptimizer(
+            dd_cap_pct=40,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=1.5,
+            max_gross=1.5,
+            annual_financing_rate_pct=0.0,
+            seed=12,
+        ).optimize(ret).chosen
+        financed = RobustPortfolioOptimizer(
+            dd_cap_pct=40,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=1.5,
+            max_gross=1.5,
+            annual_financing_rate_pct=6.0,
+            seed=12,
+        ).optimize(ret).chosen
+        self.assertIsNotNone(free)
+        self.assertIsNotNone(financed)
+        self.assertLess(financed.cagr_pct, free.cagr_pct)
+        self.assertLess(
+            financed.bootstrap_median_cagr_pct,
+            free.bootstrap_median_cagr_pct,
+        )
+        self.assertAlmostEqual(financed.borrowed_gross, 0.5, places=12)
+        self.assertAlmostEqual(
+            financed.annual_financing_drag_pct, 3.0, places=12
+        )
+        self.assertAlmostEqual(financed.financing_rate_pct, 6.0, places=12)
+
+        unlevered_free = RobustPortfolioOptimizer(
+            dd_cap_pct=40,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=1.0,
+            max_gross=1.0,
+            annual_financing_rate_pct=0.0,
+            seed=12,
+        ).optimize(ret).chosen
+        unlevered_financed = RobustPortfolioOptimizer(
+            dd_cap_pct=40,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=1.0,
+            max_gross=1.0,
+            annual_financing_rate_pct=14.0,
+            seed=12,
+        ).optimize(ret).chosen
+        self.assertAlmostEqual(
+            unlevered_free.cagr_pct,
+            unlevered_financed.cagr_pct,
+            places=12,
+        )
+        self.assertEqual(unlevered_financed.borrowed_gross, 0.0)
+        self.assertEqual(unlevered_financed.annual_financing_drag_pct, 0.0)
+
+    def test_v4_config_records_financing_stress_policy(self):
+        cfg = json.loads(
+            (Path(__file__).parent / "v4" / "config.json").read_text()
+        )
+        financing = cfg["portfolio_optimizer"]["financing"]
+        self.assertTrue(financing["enabled"])
+        self.assertEqual(financing["base_annual_rate_pct"], 6.0)
+        self.assertEqual(financing["stress_rates_pct"], [6.0, 10.0, 14.0])
+        self.assertEqual(
+            financing["charged_on"],
+            "gross_exposure_above_1x_only",
+        )
+
     def test_dynamic_portfolio_is_prefix_invariant_and_capped(self):
         rng = np.random.default_rng(444)
         idx = pd.bdate_range("2018-01-01", periods=420)
