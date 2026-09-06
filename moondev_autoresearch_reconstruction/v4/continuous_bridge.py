@@ -59,6 +59,7 @@ PROP_SIGNAL_ADAPTERS = {
     "sentinel65": "daily_sentinel",
     "donchian_20_10": "daily_donchian_atr_stop",
     "donchian_sma50": "daily_donchian_atr_stop",
+    "atr_channel_trend": "daily_atr_channel_stop",
 }
 
 GRADE_RANK = {"A": 3, "B": 2, "C": 1, "D": 0}
@@ -385,7 +386,10 @@ def prop_transfer_candidates(
 
         blocker = source_execution_adapter_blocker(
             source,
-            allow_source_stop=(c.adapter == "daily_donchian_atr_stop"),
+            allow_source_stop=(c.adapter in {
+                "daily_donchian_atr_stop",
+                "daily_atr_channel_stop",
+            }),
         )
         if blocker is not None:
             row["transfer_status"] = "adapter_required"
@@ -511,6 +515,44 @@ def prop_transfer_candidates(
                     "exit_lookback": exit_lookback,
                     "sma_window": sma_window,
                     "atr_window": atr_window,
+                    "stop_mult": stop_mult,
+                    "source_stop_required": True,
+                    "source_stop_transferred": True,
+                    "transfer_exactness": (
+                        "signal_and_atr_stop_logic_exact_v4_risk_resized"
+                    ),
+                })
+            except ValueError as exc:
+                row["transfer_status"] = "adapter_required"
+                row["transfer_reason"] = str(exc)
+                audit.append(row)
+                continue
+        elif c.family == "atr_channel_trend":
+            try:
+                ema_window = _parse_int_required(
+                    source,
+                    r"self\.ema\s*=\s*self\.I\(_ema,\s*self\.data\.Close,\s*(\d+)\)",
+                    "ema_window",
+                )
+                atr_window = _parse_int_required(
+                    source,
+                    r"self\.atr\s*=\s*self\.I\(_atr,.*?,\s*(\d+)\)",
+                    "atr_window",
+                )
+                entry_atr_mult = _parse_float_required(
+                    source,
+                    r"px\s*>\s*ema\s*\+\s*([0-9]*\.?[0-9]+)\s*\*\s*atr",
+                    "entry_atr_mult",
+                )
+                stop_mult = _parse_float_required(
+                    source,
+                    r"_buy_with_stop\(px,\s*atr,\s*([0-9]*\.?[0-9]+)\)",
+                    "stop_mult",
+                )
+                params.update({
+                    "ema_window": ema_window,
+                    "atr_window": atr_window,
+                    "entry_atr_mult": entry_atr_mult,
                     "stop_mult": stop_mult,
                     "source_stop_required": True,
                     "source_stop_transferred": True,
