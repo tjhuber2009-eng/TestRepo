@@ -1,8 +1,9 @@
-"""Causal conditional risk scaling for one already-qualified portfolio stream.
+"""Causal downside-semivolatility risk scaling for a qualified portfolio stream.
 
-The overlay only cuts risk in an extreme high-volatility state.  It never
-raises unit exposure above 1x, so the outer robust optimizer's existing gross
-cap remains authoritative.  Every decision for return[t] uses returns <= t-1.
+The overlay only cuts risk in an extreme high-downside-volatility state. It
+does not interpret upside/rally volatility as risk. Unit exposure never rises
+above 1x, so the outer robust optimizer's existing gross cap remains
+authoritative. Every decision for return[t] uses returns <= t-1.
 """
 from __future__ import annotations
 
@@ -37,7 +38,7 @@ class ConditionalRiskResult:
     summary: ConditionalRiskSummary
 
 
-def conditional_high_volatility_overlay(
+def conditional_high_downside_volatility_overlay(
     returns: pd.Series,
     gross_profile: pd.Series,
     *,
@@ -47,13 +48,13 @@ def conditional_high_volatility_overlay(
     min_risk_scale: float = 0.50,
     periods_per_year: float = 252.0,
 ) -> ConditionalRiskResult:
-    """Cut exposure only in a causally identified extreme high-vol state.
+    """Cut exposure only in a causal extreme downside-semivolatility state.
 
-    The current realized-volatility estimate is formed from returns strictly
-    before the return being scaled.  Its high-vol threshold and reference
-    median are computed from still earlier volatility estimates.  In a high
-    state, exposure targets median_vol/current_vol, floored at min_risk_scale.
-    Outside the high state exposure remains exactly 1.0.
+    Downside semivolatility is the annualized RMS of negative returns, with
+    positive returns contributing zero. The estimate applied to return[t] is
+    formed from returns strictly before t. Its high-state threshold and
+    reference median are formed from still earlier estimates. This avoids
+    cutting exposure merely because an upside rally is volatile.
     """
     r=pd.to_numeric(returns,errors="coerce").astype(float)
     g=pd.to_numeric(gross_profile,errors="coerce").reindex(r.index).astype(float)
@@ -71,11 +72,17 @@ def conditional_high_volatility_overlay(
         raise ValueError("min_risk_scale must be in (0,1]")
 
     # shift(1) is the central causality guard: the scale applied to r[t] never
-    # observes r[t]. Thresholds shift once more so the current vol estimate
-    # does not move its own classification boundary.
+    # observes r[t]. Positive returns contribute zero rather than inflating the
+    # risk signal, which is important for rally-prone crypto return streams.
+    downside_squared=pd.Series(
+        np.square(np.minimum(r.to_numpy(dtype=float),0.0)),
+        index=r.index,
+        dtype=float,
+    )
     realized_vol=(
-        r.rolling(lookback,min_periods=lookback).std(ddof=1)
-        .shift(1)
+        downside_squared.rolling(
+            lookback,min_periods=lookback
+        ).mean().pow(0.5).shift(1)
         * math.sqrt(float(periods_per_year))
     )
     prior_vol=realized_vol.shift(1)
@@ -116,8 +123,9 @@ def conditional_high_volatility_overlay(
         average_risk_scale=float(scale.mean()),
         minimum_realized_risk_scale=float(scale.min()),
         policy=(
-            "causal top-quintile high-volatility de-risking only; "
-            "unit exposure never exceeds 1x; no low-vol leverage boost"
+            "causal top-quintile downside-semivolatility de-risking only; "
+            "positive/upside volatility does not increase the risk signal; "
+            "unit exposure never exceeds 1x; no low-risk leverage boost"
         ),
     )
     return ConditionalRiskResult(
