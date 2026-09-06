@@ -229,11 +229,11 @@
     {
       "id": "nbe_volume_profile",
       "origin": "NodeBreachEngine POC/POV research",
-      "status": "registry_blocked_revisit",
+      "status": "spec_recovered_engine_blocked",
       "registry_id": "nbe_volume_profile",
       "requirements": [
-        "intraday volume-profile engine",
-        "POC/POV parity"
+        "causal intraday swing-profile engine",
+        "5-minute forex feed parity"
       ]
     },
     {
@@ -315,28 +315,33 @@
     {
       "id": "stat_arb_pairs",
       "origin": "Prior cointegration/stat-arb repository research",
-      "status": "registry_blocked_revisit",
+      "status": "v4_engine_available_rules_pending",
       "registry_id": "stat_arb_pairs",
       "requirements": [
-        "multi-asset synchronized engine"
+        "freeze pair universe and formation",
+        "freeze hedge-ratio/entry/exit/rebalance",
+        "synchronized pair data"
       ]
     },
     {
       "id": "finlab_rotation_exact",
       "origin": "Prior FinLab leveraged-ETF rotation research",
-      "status": "registry_blocked_revisit",
+      "status": "v4_engine_available_spec_incomplete",
       "registry_id": "finlab_rotation_exact",
       "requirements": [
-        "multi-asset portfolio engine"
+        "freeze exact 3m-minus-1m lookback",
+        "freeze monthly rebalance convention",
+        "freeze stop/re-entry execution"
       ]
     },
     {
       "id": "hr_dual_alpha",
       "origin": "HR-DUAL-ALPHA-001 project",
-      "status": "registry_blocked_revisit",
+      "status": "rules_recovered_port_pending",
       "registry_id": "hr_dual_alpha",
       "requirements": [
-        "recover frozen exact implementation"
+        "port frozen semantics into v4",
+        "recover exact stop/re-entry and defensive-selection execution details"
       ]
     },
     {
@@ -476,6 +481,29 @@
       "origin": "Prior strategy research",
       "status": "prior_terminal_overfit",
       "registry_id": "crazy_sma"
+    },
+    {
+      "id": "calendar_monthly",
+      "origin": "Recovered Bitcoin monthly cycle-seasonality research",
+      "status": "phase2_runnable",
+      "markets": [
+        "crypto"
+      ],
+      "timeframe": "daily_monthly_state",
+      "factory": "bitcoin_cycle_monthly_causal",
+      "requirements": [
+        "use expanding-history table only",
+        "hindsight frozen 2012-2024 table remains diagnostic-only"
+      ]
+    },
+    {
+      "id": "zanger_exact",
+      "origin": "ZANGER-MECH-001B frozen source-closer/signal-runner research",
+      "status": "locked_translation_artifact_recovery",
+      "requirements": [
+        "recover/import locked package bytes matching recorded hashes",
+        "PIT provider/universe inputs"
+      ]
     }
   ]
 }
