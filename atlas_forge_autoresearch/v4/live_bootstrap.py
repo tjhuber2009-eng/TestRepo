@@ -1680,6 +1680,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     for financing_rate in (
                         PRIVATE_PORTFOLIO_FINANCING_STRESS_RATES_PCT
                     ):
+                        stress_name = (
+                            f"selected_architecture_{financing_rate:.0f}pct"
+                        )
                         stressed = RobustPortfolioOptimizer(
                             dd_cap_pct=private.max_dd_pct,
                             n_candidates=1,
@@ -1690,9 +1693,6 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                             min_gross=0.10,
                             annual_financing_rate_pct=financing_rate,
                             seed=20260905,
-                        stress_name = (
-                            f"selected_architecture_{financing_rate:.0f}pct"
-                        )
                         ).optimize(
                             selected_stream.rename(stress_name).to_frame(),
                             gross_profiles=(
