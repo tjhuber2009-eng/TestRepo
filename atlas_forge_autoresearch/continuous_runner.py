@@ -320,6 +320,35 @@ def result_counts_at(path):
     return counts
 
 
+def stored_target_source(meta):
+    """Read source identity from new metadata or the persisted data manifest."""
+    if not isinstance(meta, dict):
+        return None
+    direct = meta.get("target_source")
+    if direct:
+        return str(direct)
+    manifest = meta.get("data_manifest") or {}
+    source = manifest.get("source")
+    return None if not source else str(source)
+
+
+def track_state_identity_matches(track, meta):
+    """Reject evidence produced from a different configured provider path."""
+    if not isinstance(meta, dict) or meta.get("protocol") != PROTOCOL:
+        return False
+    stored_source = stored_target_source(meta)
+    configured_source = str(track.get("target", {}).get("source") or "")
+    # Legacy state without a stored source is left intact. Current state writes
+    # source identity explicitly, while old manifests normally provide it.
+    if stored_source and configured_source and stored_source != configured_source:
+        return False
+    stored_symbol = meta.get("symbol")
+    configured_symbol = track.get("target", {}).get("symbol")
+    if stored_symbol and configured_symbol and str(stored_symbol) != str(configured_symbol):
+        return False
+    return True
+
+
 def track_meta(track):
     p = TRACKS / track["id"] / "state_meta.json"
     if not p.exists():
@@ -328,7 +357,7 @@ def track_meta(track):
         m = load_json(p)
     except Exception:
         return None
-    if m.get("protocol") != PROTOCOL:
+    if not track_state_identity_matches(track, m):
         return None
     return m
 
@@ -341,7 +370,7 @@ def track_counts(track):
             meta = load_json(meta_path)
         except Exception:
             meta = {}
-        if meta.get("protocol") != PROTOCOL:
+        if not track_state_identity_matches(track, meta):
             return result_counts_at(Path("__missing_stale_protocol_results__"))
     return result_counts_at(track_dir / "results.tsv")
 
@@ -567,6 +596,8 @@ def initialize_track(track, track_dir, env):
                 "family": track["family"]["id"],
                 "target": track["target"]["id"],
                 "profile": track["profile_name"],
+                "symbol": track["target"]["symbol"],
+                "target_source": track["target"].get("source"),
                 "updated_at": now(),
             })
             return False, reason
@@ -591,6 +622,8 @@ def initialize_track(track, track_dir, env):
                 "status": "seed_blocked",
                 "reason": reason,
                 "protocol": PROTOCOL,
+                "symbol": track["target"]["symbol"],
+                "target_source": track["target"].get("source"),
                 "updated_at": now(),
             })
             return False, reason
@@ -613,6 +646,8 @@ def initialize_track(track, track_dir, env):
             "status": "seed_blocked",
             "reason": reason,
             "protocol": PROTOCOL,
+            "symbol": track["target"]["symbol"],
+            "target_source": track["target"].get("source"),
             "updated_at": now(),
         })
         return False, reason
@@ -663,6 +698,7 @@ def save_track_state(track, track_dir, reason=""):
         "target": track["target"]["id"],
         "symbol": track["target"]["symbol"],
         "market": track["target"]["market"],
+        "target_source": track["target"].get("source"),
         "profile": track["profile_name"],
         "max_dd_limit_pct": track["profile"]["max_dd_pct"],
         **counts,
@@ -685,7 +721,7 @@ def append_cycle(record):
         )
 
 
-def discard_stale_track_state(track_dir):
+def discard_stale_track_state(track, track_dir):
     meta = track_dir / "state_meta.json"
     if not meta.exists():
         return
@@ -693,8 +729,13 @@ def discard_stale_track_state(track_dir):
         payload = load_json(meta)
     except Exception:
         payload = {}
-    if payload.get("protocol") != PROTOCOL:
-        print(f"[state reset] discarding stale protocol state in {track_dir.name}")
+    if not track_state_identity_matches(track, payload):
+        old_source = stored_target_source(payload)
+        new_source = track.get("target", {}).get("source")
+        print(
+            f"[state reset] discarding stale identity state in {track_dir.name} "
+            f"source={old_source!r}->{new_source!r}"
+        )
         shutil.rmtree(track_dir)
 
 
@@ -927,7 +968,7 @@ def process_track(track, iters, model):
     print("=" * 88, flush=True)
 
     track_dir = TRACKS / track["id"]
-    discard_stale_track_state(track_dir)
+    discard_stale_track_state(track, track_dir)
     clean_runtime()
     prepare_data(track)
     env = target_env(track)
