@@ -1233,6 +1233,12 @@ def write_progress(
         + counts["breadth_eliminated"] + counts["depth_eliminated"]
         + counts["validation_pass"] + counts["validation_fail"]
     )
+    pbo_ready = sum(1 for row in rows if row.get("pbo") is not None)
+    pbo_baselined = sum(
+        1 for row in rows
+        if row.get("development_score") is not None
+        and math.isfinite(float(row.get("development_score")))
+    )
     payload = {
         "updated_at": now(),
         "protocol": PROTOCOL,
@@ -1251,6 +1257,10 @@ def write_progress(
         "validation_pending_count": counts["validation_pending"],
         "searching_count": counts["searching"],
         "total_valid_candidates": total_valid,
+        "pbo_ready_track_count": pbo_ready,
+        "pbo_baselined_track_count": pbo_baselined,
+        "pbo_min_strategy_count": 5,
+        "pbo_readiness_definition": "baseline_plus_at_least_four_unique_selection_eligible_backtests",
         "total_model_attempt_rows": total_attempts,
         "total_guard_passed_candidates": total_guard_passed,
         "total_kept_candidates": total_kept,
@@ -1495,6 +1505,8 @@ def main():
         "phase": phase,
         "visits_this_run": visits,
         "valid_candidates": progress["total_valid_candidates"],
+        "pbo_ready_tracks": progress.get("pbo_ready_track_count", 0),
+        "pbo_baselined_tracks": progress.get("pbo_baselined_track_count", 0),
         "terminal_tracks": progress["terminal_track_count"],
         "runnable_tracks": progress["runnable_track_count"],
         "validation_pass": progress["validation_pass_count"],
