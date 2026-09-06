@@ -127,9 +127,11 @@ function renderPhaseRail(phase,hiddenOpen){
 function renderWorkflows(){
   const wrap=$("#workflowSummary");
   const continuous=(DATA.workflow?.continuous_runs||[])[0];
+  const v4=(DATA.workflow?.v4_runs||[])[0];
   const tournament=(DATA.workflow?.tournament_runs||[])[0];
   const rows=[
     ["Continuous research",continuous],
+    ["V4 promotion",v4],
     ["Model tournament",tournament],
   ];
   wrap.innerHTML=rows.map(([label,r])=>{
