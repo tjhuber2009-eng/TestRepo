@@ -50,10 +50,12 @@ jobs:
           git show origin/continuous-autoresearch-state:moondev_autoresearch_reconstruction/continuous_state/progress.json > /tmp/autoresearch-health/continuous.json
           git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/progress.json > /tmp/autoresearch-health/phase2.json
           git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/followup_progress.json > /tmp/autoresearch-health/phase2-followup.json 2>/dev/null || true
+          git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/promotion_queue.json > /tmp/autoresearch-health/phase2-promotion.json 2>/dev/null || true
           git show origin/phase3-hydration-state:moondev_autoresearch_reconstruction/phase3_state/hydration_progress.json > /tmp/autoresearch-health/phase3-hydration.json
           git show origin/phase3-reconstruction-state:moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json > /tmp/autoresearch-health/phase3-reconstruction.json
           git show origin/phase3-engine-mapping-state:moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json > /tmp/autoresearch-health/phase3-mapping.json
           git show origin/autoresearch-v4-state:moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json > /tmp/autoresearch-health/v4.json
+          git show origin/autoresearch-v4-state:moondev_autoresearch_reconstruction/v4_state/prop-intraday-bootstrap.json > /tmp/autoresearch-health/v4-prop.json 2>/dev/null || true
 
       - name: Run cross-lane health audit
         run: |
@@ -61,10 +63,12 @@ jobs:
             --continuous-progress /tmp/autoresearch-health/continuous.json \
             --phase2-progress /tmp/autoresearch-health/phase2.json \
             --phase2-followup-progress /tmp/autoresearch-health/phase2-followup.json \
+            --phase2-promotion /tmp/autoresearch-health/phase2-promotion.json \
             --phase3-hydration /tmp/autoresearch-health/phase3-hydration.json \
             --phase3-reconstruction /tmp/autoresearch-health/phase3-reconstruction.json \
             --phase3-mapping /tmp/autoresearch-health/phase3-mapping.json \
             --v4-bootstrap /tmp/autoresearch-health/v4.json \
+            --v4-prop /tmp/autoresearch-health/v4-prop.json \
             --output /tmp/autoresearch-health/report.json
 
       - name: Upload health report
