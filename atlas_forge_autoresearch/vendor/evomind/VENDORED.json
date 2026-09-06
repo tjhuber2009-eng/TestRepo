@@ -1,0 +1,41 @@
+{
+  "project": "EvoMind",
+  "integrated_version": "0.10.0",
+  "integration_role": "Atlas Forge research-intelligence layer only",
+  "source_artifact": "evomind-0.10.0-source.zip",
+  "source_sha256": "9ed2ba620ccd4e97db9648244e815fb5e668920d8fd32028006a900f1dcae5e9",
+  "wheel_artifact": "evomind-0.10.0-py3-none-any.whl",
+  "wheel_sha256": "4d1958b3384b8ed970db3a274b163cc5236839bbb5805fb432f178cb1133796d",
+  "release_artifact": "EvoMind-v0.10.0-release.zip",
+  "release_sha256": "d336d7a74c5668dc60d55458485420d767d6ab84f0e01271b208d3ba9adcd811",
+  "upstream_component_hashes": {
+    "meta_search_py": "b0180b371d6247c2d14ee80d5b7c17001e893c1ee0d087011e285b905bf3a8c1",
+    "models_py": "8d83de9c787000275712b2cc92d87e485c7a8fd6c66020183568615840382118",
+    "memory_py": "2f53d4e72ef66cc39667a1bcaebb082d6fb4a7ca8ab155d27541a6a8adced6a6"
+  },
+  "safe_v010_production_defaults": {
+    "adaptive_portfolio": false,
+    "compute_cost_penalty": 0,
+    "islands": 1
+  },
+  "atlas_integration": {
+    "proposal_modes": [
+      "evolution",
+      "synthesis",
+      "skill_transfer",
+      "immigrant",
+      "external_proposal"
+    ],
+    "persistent_concept_memory": true,
+    "cross_domain_transfer": true,
+    "proposal_portfolio_learning": true,
+    "sees_market_data_files": false,
+    "may_open_hidden_validation": false,
+    "may_open_final_oos": false,
+    "may_change_position_sizing": false,
+    "may_keep_or_promote_strategies": false,
+    "authoritative_evaluator": "Atlas Forge robust harness and promotion gates"
+  },
+  "license": "MIT",
+  "note": "Atlas Forge adapts the v0.10 proposal-source allocator and concept-memory semantics rather than embedding EvoMind's unrelated benchmark/vault datasets."
+}
