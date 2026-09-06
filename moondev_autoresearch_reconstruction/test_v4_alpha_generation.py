@@ -1650,6 +1650,102 @@ class MoonStrategy:
         self.assertEqual(status["d2"], "adapter_required")
         self.assertEqual(status["rsi"], "supported")
 
+    def test_all_exact_same_target_adapters_reach_v4_evaluation(self):
+        def row(track, family, score):
+            return {
+                "track_id": track,
+                "profile": "prop",
+                "family": family,
+                "target": "btc",
+                "market": "crypto",
+                "exactness": "reconstructed",
+                "evidence_grade": "A",
+                "development_guard_ok": True,
+                "development_cagr_pct": 12.0,
+                "development_max_dd_pct": -5.0,
+                "development_sharpe": 1.5,
+                "development_pf": 2.0,
+                "development_years": 3.0,
+                "development_trades": 20,
+                "selection_score": score,
+                "multiple_test_qvalue": 0.05,
+                "pbo": None,
+                "extreme_stress_return_pct": 20.0,
+            }
+
+        board = {
+            "protocol": "nested_chronological_v3",
+            "rows": [
+                row("s65", "sentinel65", 3.0),
+                row("s63", "sentinel63", 2.0),
+                row("rsi", "btc_rsi_adx", 1.0),
+            ],
+        }
+        sentinel65 = """
+class MoonStrategy:
+    vol_lookback = 30
+    vol_target = 0.05
+    def init(self):
+        self.ema65 = self.I(_ema_now, self.data.Close, 65)
+    def next(self):
+        if len(self.data.Close) < 82:
+            return
+        z = 1.0
+        if not self.position and z > 0.5:
+            self.buy(size=1)
+        elif self.position and z < -0.5:
+            self.position.close()
+"""
+        sentinel63 = """
+class MoonStrategy:
+    vol_lookback = 30
+    vol_target = 0.05
+    def init(self):
+        self.ema63 = self.I(_ema_now, self.data.Close, 63)
+    def next(self):
+        if len(self.data.Close) < 80:
+            return
+        z = 1.0
+        if not self.position and z > 0.5:
+            self.buy(size=1)
+        elif self.position and z < -0.5:
+            self.position.close()
+"""
+        rsi = """
+class MoonStrategy:
+    vol_lookback = 30
+    vol_target = 0.08
+    def init(self):
+        self.sma50 = self.I(_sma_now, self.data.Close, 50)
+        self.ema7 = self.I(_ema_now, self.data.Close, 7)
+        self.rsi2 = self.I(_rsi_now, self.data.Close, 2)
+        self.adx2 = self.I(_adx_now, self.data.High, self.data.Low, self.data.Close, 2)
+    def next(self):
+        if len(self.data.Close) < 70:
+            return
+        if not self.position and self.rsi2[-1] > self.adx2[-1]:
+            self.buy(size=1)
+        elif self.position and self.rsi2[-1] < self.adx2[-1]:
+            self.position.close()
+"""
+        sources = {"s65": sentinel65, "s63": sentinel63, "rsi": rsi}
+        with mock.patch(
+            "v4.continuous_bridge.load_candidate_source",
+            side_effect=lambda track_id: sources[track_id],
+        ):
+            supported, audit = prop_transfer_candidates(
+                {"BTCUSDT"},
+                leaderboard=board,
+            )
+        self.assertEqual(
+            [x["continuous_track_id"] for x in supported],
+            ["s65", "s63", "rsi"],
+        )
+        status = {r["track_id"]: r["transfer_status"] for r in audit["candidates"]}
+        self.assertEqual(status["s65"], "supported")
+        self.assertEqual(status["s63"], "supported")
+        self.assertEqual(status["rsi"], "supported")
+
     def test_exact_daily_adapter_preserves_source_warmup_and_vol_gate(self):
         days = 40
         idx = pd.date_range(
