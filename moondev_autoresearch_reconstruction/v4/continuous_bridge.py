@@ -287,6 +287,7 @@ def source_execution_adapter_blocker(
     source: str,
     *,
     allow_source_stop: bool = False,
+    allow_short: bool = False,
 ) -> str | None:
     """Return why a daily adapter cannot preserve supported source execution."""
     try:
@@ -322,7 +323,7 @@ def source_execution_adapter_blocker(
         for node in ast.walk(fn):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 attr = node.func.attr
-                if attr == "sell":
+                if attr == "sell" and not allow_short:
                     return "short_entry_not_transferred"
                 if attr == "buy":
                     for kw in node.keywords:
