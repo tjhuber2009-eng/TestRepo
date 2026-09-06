@@ -325,24 +325,34 @@
     },
     {
       "id": "finlab_rotation_exact",
-      "origin": "Prior FinLab leveraged-ETF rotation research",
-      "status": "v4_engine_available_spec_incomplete",
+      "origin": "FL-ETFROT-A-001 frozen independent replication",
+      "status": "prior_terminal",
       "registry_id": "finlab_rotation_exact",
-      "requirements": [
-        "freeze exact 3m-minus-1m lookback",
-        "freeze monthly rebalance convention",
-        "freeze stop/re-entry execution"
-      ]
+      "source_lock": {
+        "repository": "tjhuber2009-eng/hr_mech",
+        "branch": "research/finlab-etfrot-independent-001",
+        "commit": "09dcfe3e2c4f298205534eed9fec6038b0f479e3",
+        "result_blob_sha": "ac8222e877ef75de6f80efdb3a6eba8455c8aa03"
+      },
+      "prior_classification": "FAIL",
+      "evidence": "Predeclared 2022+ CAGR and Sharpe gates failed; do not parameter-rescue."
     },
     {
       "id": "hr_dual_alpha",
-      "origin": "HR-DUAL-ALPHA-001 project",
-      "status": "rules_recovered_port_pending",
+      "origin": "HR-DUAL-ALPHA-001 frozen implementation recovered from hr_mech",
+      "status": "prior_frozen_superior_pass",
       "registry_id": "hr_dual_alpha",
       "requirements": [
-        "port frozen semantics into v4",
-        "recover exact stop/re-entry and defensive-selection execution details"
-      ]
+        "development-safe locked transfer only; no parameter rescue or re-optimization"
+      ],
+      "source_lock": {
+        "repository": "tjhuber2009-eng/hr_mech",
+        "branch": "research/hr-dual-alpha-001",
+        "commit": "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+        "implementation_blob_sha": "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+        "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
+      },
+      "prior_classification": "SUPERIOR_PASS"
     },
     {
       "id": "copy_trader_signal_replication",
