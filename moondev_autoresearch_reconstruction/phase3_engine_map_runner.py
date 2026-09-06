@@ -92,6 +92,16 @@ def classify(text):
     return max(scores)[1] if scores else "unclassified"
 
 
+def hydration_is_current(row):
+    if not row:
+        return False
+    return bool(
+        row.get("hydration_status") == "hydrated"
+        or int(row.get("hydration_version", 1) or 1)
+        >= REQUIRED_HYDRATION_VERSION
+    )
+
+
 def register_rule_hash(admitted, rules_hash, seen_rule_hashes):
     """Return duplicate status and register only admitted complete rule sets."""
     duplicate = bool(
@@ -172,14 +182,7 @@ def main():
             status = "duplicate_rule_set"
         else:
             hrow = hydrated.get(k)
-            hydration_current = bool(
-                hrow
-                and (
-                    hrow.get("hydration_status") == "hydrated"
-                    or int(hrow.get("hydration_version", 1) or 1)
-                    >= REQUIRED_HYDRATION_VERSION
-                )
-            )
+            hydration_current = hydration_is_current(hrow)
             status = (
                 "incomplete_after_hydration"
                 if hydration_current
