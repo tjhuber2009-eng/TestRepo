@@ -200,13 +200,20 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertEqual(
             phase2_sources["gold"], ("yahoo_futures_proxy", "GC=F")
         )
-        phase1_es = [
+        phase1_futures = [
             x for x in continuous_runner.build_tracks()
-            if x["target"]["id"] == "es"
+            if x["target"]["market"] == "futures_proxy"
         ]
-        self.assertTrue(phase1_es)
+        self.assertTrue(phase1_futures)
+        self.assertEqual(
+            {x["target"]["id"] for x in phase1_futures},
+            {"es", "nq", "gold", "oil"},
+        )
         self.assertTrue(
-            all(x["target"]["source"] == "yahoo" for x in phase1_es)
+            all(
+                x["target"]["source"] == "yahoo_futures_proxy"
+                for x in phase1_futures
+            )
         )
         self.assertNotIn(
             "macd_12_26_9",
@@ -654,6 +661,64 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         )
         self.assertAlmostEqual(jpy_rows[0][1], 109.5)
         self.assertAlmostEqual(jpy_rows[0][4], 109.6)
+
+    def test_track_state_source_identity_invalidates_only_changed_provider(self):
+        track = {
+            "target": {
+                "source": "yahoo_futures_proxy",
+                "symbol": "ES=F",
+            }
+        }
+        legacy_raw = {
+            "protocol": continuous_runner.PROTOCOL,
+            "symbol": "ES=F",
+            "data_manifest": {"source": "yahoo"},
+        }
+        normalized = {
+            "protocol": continuous_runner.PROTOCOL,
+            "symbol": "ES=F",
+            "data_manifest": {"source": "yahoo_futures_proxy"},
+        }
+        unrelated = {
+            "protocol": continuous_runner.PROTOCOL,
+            "symbol": "SPY",
+            "data_manifest": {"source": "yahoo"},
+        }
+        self.assertFalse(
+            continuous_runner.track_state_identity_matches(
+                track, legacy_raw
+            )
+        )
+        self.assertTrue(
+            continuous_runner.track_state_identity_matches(
+                track, normalized
+            )
+        )
+        stock_track = {
+            "target": {"source": "yahoo", "symbol": "SPY"}
+        }
+        self.assertTrue(
+            continuous_runner.track_state_identity_matches(
+                stock_track, unrelated
+            )
+        )
+
+    def test_track_state_identity_prefers_explicit_source_over_manifest(self):
+        track = {
+            "target": {
+                "source": "yahoo_futures_proxy",
+                "symbol": "ES=F",
+            }
+        }
+        meta = {
+            "protocol": continuous_runner.PROTOCOL,
+            "symbol": "ES=F",
+            "target_source": "yahoo_futures_proxy",
+            "data_manifest": {"source": "yahoo"},
+        }
+        self.assertTrue(
+            continuous_runner.track_state_identity_matches(track, meta)
+        )
 
     def test_yahoo_futures_proxy_normalization_is_explicit_and_conservative(self):
         import prepare_market_data
