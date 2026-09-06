@@ -13,6 +13,7 @@ import csv
 import hashlib
 import io
 import json
+import os
 import time
 import urllib.error
 import urllib.parse
@@ -33,11 +34,14 @@ def dt(s):
     return datetime.strptime(s, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
 
-def request_bytes(url, tries=4):
+def request_bytes(url, tries=4, headers=None):
+    merged_headers = {"User-Agent": UA}
+    if headers:
+        merged_headers.update(headers)
     last = None
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            req = urllib.request.Request(url, headers=merged_headers)
             with urllib.request.urlopen(req, timeout=60) as r:
                 return r.read()
         except Exception as exc:
@@ -310,6 +314,98 @@ def prepare_stooq(symbol, start, end, out):
     print(f"Stooq {symbol}: {len(rows)} daily bars -> {out}")
 
 
+
+def _parse_iso_utc(value):
+    raw = str(value).strip()
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    stamp = datetime.fromisoformat(raw)
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=timezone.utc)
+    return stamp.astimezone(timezone.utc)
+
+
+def tiingo_fx_rows(payload, start, end):
+    if not isinstance(payload, list):
+        raise RuntimeError("Tiingo FX response is not a list")
+    rows = []
+    seen = set()
+    for raw in payload:
+        if not isinstance(raw, dict) or not raw.get("date"):
+            continue
+        stamp = _parse_iso_utc(raw["date"])
+        if not (start <= stamp <= end):
+            continue
+        day = stamp.strftime("%Y-%m-%d")
+        if day in seen:
+            raise RuntimeError(f"Tiingo FX duplicate daily bar: {day}")
+        if any(raw.get(key) is None for key in ("open", "high", "low", "close")):
+            continue
+        o = float(raw["open"])
+        h = float(raw["high"])
+        l = float(raw["low"])
+        close = float(raw["close"])
+        if h < max(o, l, close) or l > min(o, h, close):
+            raise RuntimeError(f"Tiingo FX malformed OHLC row {day}")
+        rows.append([stamp.isoformat(), o, h, l, close, 0.0])
+        seen.add(day)
+    rows.sort(key=lambda row: row[0])
+    return rows
+
+
+def prepare_tiingo_fx(symbol, start, end, out):
+    token = os.environ.get("TIINGO_API_TOKEN", "").strip()
+    if not token:
+        raise RuntimeError("TIINGO_API_TOKEN is required for Tiingo FX data")
+    ticker = str(symbol).lower().replace("/", "").replace("-", "")
+    query = urllib.parse.urlencode({
+        "startDate": start.strftime("%Y-%m-%d"),
+        "endDate": end.strftime("%Y-%m-%d"),
+        "resampleFreq": "1day",
+    })
+    url = (
+        f"https://api.tiingo.com/tiingo/fx/"
+        f"{urllib.parse.quote(ticker, safe='')}/prices?{query}"
+    )
+    blob = request_bytes(
+        url,
+        headers={
+            "Authorization": f"Token {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    payload = json.loads(blob.decode("utf-8"))
+    rows = tiingo_fx_rows(payload, start, end)
+    if len(rows) < 100:
+        raise RuntimeError(
+            f"Tiingo FX {symbol}: insufficient daily rows ({len(rows)})"
+        )
+    if rows[-1][0][:10] >= "2023-01-01":
+        raise RuntimeError("refusing Tiingo FX 2023+ final OOS data")
+    with out.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["Date", "Open", "High", "Low", "Close", "Volume"])
+        writer.writerows(rows)
+    audit = {
+        "version": 1,
+        "source": "tiingo_fx",
+        "ticker": ticker,
+        "requested_start": start.strftime("%Y-%m-%d"),
+        "requested_end": end.strftime("%Y-%m-%d"),
+        "rows": len(rows),
+        "response_sha256": hashlib.sha256(blob).hexdigest(),
+        "provider": "Tiingo Forex API",
+        "resample_freq": "1day",
+        "final_oos_included": False,
+    }
+    out.with_suffix(".source.json").write_text(
+        json.dumps(audit, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Tiingo FX {ticker}: {len(rows)} daily bars -> {out}")
+    return audit
+
+
 def sha256_path(path):
     h = hashlib.sha256()
     with Path(path).open("rb") as f:
@@ -382,7 +478,7 @@ def main():
         "--source",
         choices=[
             "binance", "bitstamp", "yahoo", "yahoo_futures_proxy",
-            "stooq", "dukascopy_bid_daily",
+            "stooq", "dukascopy_bid_daily", "tiingo_fx",
         ],
         required=True,
     )
@@ -413,6 +509,8 @@ def main():
         prepare_stooq(args.symbol, start, end, out)
     elif args.source == "dukascopy_bid_daily":
         dukascopy_daily.prepare(args.symbol, start, end, out, request_bytes)
+    elif args.source == "tiingo_fx":
+        prepare_tiingo_fx(args.symbol, start, end, out)
     elif args.source == "yahoo_futures_proxy":
         prepare_yahoo_futures_proxy(args.symbol, start, end, out)
     else:
