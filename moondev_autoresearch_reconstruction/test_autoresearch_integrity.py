@@ -187,6 +187,27 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertEqual(len(phase1_ids), 514)
         self.assertGreaterEqual(len(phase2_tracks), 1000)
         self.assertTrue(phase1_ids.isdisjoint({x["id"] for x in phase2_tracks}))
+        phase2_sources = {
+            x["target"]["id"]: (x["target"]["source"], x["target"]["symbol"])
+            for x in phase2_tracks
+        }
+        self.assertEqual(
+            phase2_sources["es"], ("yahoo_futures_proxy", "ES=F")
+        )
+        self.assertEqual(
+            phase2_sources["nq"], ("yahoo_futures_proxy", "NQ=F")
+        )
+        self.assertEqual(
+            phase2_sources["gold"], ("yahoo_futures_proxy", "GC=F")
+        )
+        phase1_es = [
+            x for x in continuous_runner.build_tracks()
+            if x["target"]["id"] == "es"
+        ]
+        self.assertTrue(phase1_es)
+        self.assertTrue(
+            all(x["target"]["source"] == "yahoo" for x in phase1_es)
+        )
         self.assertNotIn(
             "macd_12_26_9",
             {x["id"] for x in self.registry["families"] if x.get("status") == "runnable"},
@@ -203,6 +224,47 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertGreaterEqual(len(phase3_free_runner.QUERY_BATCHES), 4)
         self.assertTrue(all(phase3_free_runner.QUERY_BATCHES))
         self.assertFalse((HERE / "phase3_state" / "validation_data").exists())
+
+    def test_phase3_incomplete_specs_are_not_deduplicated(self):
+        import phase3_engine_map_runner
+        seen = set()
+        self.assertFalse(
+            phase3_engine_map_runner.register_rule_hash(False, "same", seen)
+        )
+        self.assertFalse(
+            phase3_engine_map_runner.register_rule_hash(False, "same", seen)
+        )
+        self.assertEqual(seen, set())
+        self.assertFalse(
+            phase3_engine_map_runner.register_rule_hash(True, "same", seen)
+        )
+        self.assertTrue(
+            phase3_engine_map_runner.register_rule_hash(True, "same", seen)
+        )
+
+    def test_yahoo_futures_proxy_normalization_is_explicit_and_conservative(self):
+        import prepare_market_data
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "es_1d.csv"
+            p.write_text(
+                "Date,Open,High,Low,Close,Volume\n"
+                "2020-01-02T00:00:00+00:00,100,104,99,105,10\n"
+                "2020-01-03T00:00:00+00:00,105,106,101,102,12\n",
+                encoding="utf-8",
+            )
+            meta = prepare_market_data.normalize_yahoo_futures_proxy(p)
+            df = pd.read_csv(p)
+            self.assertEqual(meta["changed_rows"], 1)
+            self.assertEqual(float(df.loc[0, "Open"]), 100.0)
+            self.assertEqual(float(df.loc[0, "Close"]), 105.0)
+            self.assertEqual(float(df.loc[0, "High"]), 105.0)
+            self.assertEqual(float(df.loc[0, "Low"]), 99.0)
+            audit = json.loads(
+                p.with_suffix(".normalization.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(audit["changes"][0]["Date"], "2020-01-02T00:00:00+00:00")
 
     def test_crashes_and_duplicates_do_not_count_as_valid(self):
         body = (
