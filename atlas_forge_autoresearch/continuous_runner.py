@@ -1242,7 +1242,14 @@ def _opportunity_rank(track):
     )
 
 
-def next_search_track(tracks, plan, start, *, prefer_opportunity=False):
+def next_search_track(
+    tracks,
+    plan,
+    start,
+    *,
+    prefer_opportunity=False,
+    opportunity_market=None,
+):
     n = len(tracks)
     if prefer_opportunity:
         ranked = []
@@ -1251,6 +1258,12 @@ def next_search_track(tracks, plan, start, *, prefer_opportunity=False):
             if target is None or is_terminal_block(track):
                 continue
             if track_counts(track)["valid"] >= target:
+                continue
+            if (
+                opportunity_market is not None
+                and track.get("target", {}).get("market")
+                != opportunity_market
+            ):
                 continue
             rank = _opportunity_rank(track)
             if rank is not None:
@@ -1658,8 +1671,9 @@ def main():
         type=float,
         default=0.30,
         help=(
-            "fraction of search visits allocated to high-evidence, missing-PBO "
-            "tracks; remaining visits preserve persistent round-robin exploration"
+            "fraction of search visits allocated to high expected-money "
+            "development opportunities; remaining visits preserve persistent "
+            "round-robin exploration"
         ),
     )
     ap.add_argument("--model", default="auto")
@@ -1759,11 +1773,31 @@ def main():
             continue
 
         prefer_opportunity = visits in opportunity_visits
+        scheduled = None
+        scheduled_cursor_next = None
+        opportunity_market = None
+        if prefer_opportunity:
+            scheduled = next_search_track(
+                tracks,
+                plan,
+                cursor,
+                prefer_opportunity=False,
+            )
+            if scheduled is not None:
+                scheduled_idx, scheduled_track, _ = scheduled
+                scheduled_cursor_next = (
+                    scheduled_idx + 1
+                ) % len(tracks)
+                opportunity_market = (
+                    scheduled_track.get("target", {}).get("market")
+                )
+
         nxt = next_search_track(
             tracks,
             plan,
             cursor,
             prefer_opportunity=prefer_opportunity,
+            opportunity_market=opportunity_market,
         )
         if nxt is None:
             # Recompute phase on the next loop; this occurs at a phase boundary.
@@ -1787,7 +1821,10 @@ def main():
                 "reason": f"{type(exc).__name__}: {str(exc)[:500]}",
             })
             print(f"[runner error] {track['id']}: {exc}", file=sys.stderr)
-        cursor = (idx + 1) % len(tracks)
+        if prefer_opportunity and scheduled_cursor_next is not None:
+            cursor = scheduled_cursor_next
+        else:
+            cursor = (idx + 1) % len(tracks)
         visits += 1
 
     write_cursor(cursor, len(tracks))
