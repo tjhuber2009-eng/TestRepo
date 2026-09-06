@@ -22,6 +22,9 @@ class PortfolioCandidate:
     bootstrap_cagr_q10_pct: float
     bootstrap_dd_q95_pct: float
     effective_n: float
+    financing_rate_pct: float
+    borrowed_gross: float
+    annual_financing_drag_pct: float
     score: float
 
     def to_dict(self) -> dict:
@@ -35,6 +38,7 @@ class PortfolioOptimizationResult:
     feasible_count: int
     dd_cap_pct: float
     max_gross: float
+    financing_rate_pct: float
     policy: str
 
     def to_dict(self) -> dict:
@@ -44,6 +48,7 @@ class PortfolioOptimizationResult:
             "feasible_count": self.feasible_count,
             "dd_cap_pct": self.dd_cap_pct,
             "max_gross": self.max_gross,
+            "financing_rate_pct": self.financing_rate_pct,
             "policy": self.policy,
         }
 
@@ -61,6 +66,37 @@ def _cagr(r: np.ndarray, periods_per_year: float) -> float:
     if years <= 0 or eq[-1] <= 0:
         return float("nan")
     return float((eq[-1] ** (1.0 / years) - 1.0) * 100.0)
+
+
+def _financing_drag_per_period(
+    scale: float,
+    *,
+    annual_financing_rate_pct: float,
+    periods_per_year: float,
+) -> float:
+    """Simple conservative carry charge on portfolio borrowing above 1x gross."""
+    borrowed = max(float(scale) - 1.0, 0.0)
+    return float(
+        borrowed
+        * (float(annual_financing_rate_pct) / 100.0)
+        / float(periods_per_year)
+    )
+
+
+def _apply_gross_and_financing(
+    returns: np.ndarray,
+    scale: float,
+    *,
+    annual_financing_rate_pct: float,
+    periods_per_year: float,
+) -> np.ndarray:
+    arr = np.asarray(returns, dtype=float) * float(scale)
+    drag = _financing_drag_per_period(
+        scale,
+        annual_financing_rate_pct=annual_financing_rate_pct,
+        periods_per_year=periods_per_year,
+    )
+    return arr - drag
 
 
 def _block_bootstrap_indices(
@@ -111,6 +147,7 @@ class RobustPortfolioOptimizer:
         max_gross: float = 1.5,
         min_gross: float = 0.10,
         scale_search_steps: int = 12,
+        annual_financing_rate_pct: float = 0.0,
         seed: int = 20260905,
     ):
         self.dd_cap_pct = float(dd_cap_pct)
@@ -123,9 +160,12 @@ class RobustPortfolioOptimizer:
         self.max_gross = float(max_gross)
         self.min_gross = float(min_gross)
         self.scale_search_steps = int(scale_search_steps)
+        self.annual_financing_rate_pct = float(annual_financing_rate_pct)
         self.seed = int(seed)
         if not (0.0 < self.min_gross <= self.max_gross):
             raise ValueError("require 0 < min_gross <= max_gross")
+        if self.annual_financing_rate_pct < 0.0:
+            raise ValueError("annual_financing_rate_pct must be nonnegative")
 
     def _normalize_capped(self, raw: np.ndarray) -> np.ndarray:
         """Project nonnegative preferences onto the simplex with max_weight."""
@@ -277,10 +317,21 @@ class RobustPortfolioOptimizer:
             key = round(float(scale), 10)
             if key in cache:
                 return cache[key]
-            pr = base_returns * float(scale)
+            pr = _apply_gross_and_financing(
+                base_returns,
+                float(scale),
+                annual_financing_rate_pct=self.annual_financing_rate_pct,
+                periods_per_year=self.periods_per_year,
+            )
             dd = abs(min(max_drawdown_pct(_equity(pr)), 0.0))
+            boot_scaled = _apply_gross_and_financing(
+                boot_base_returns,
+                float(scale),
+                annual_financing_rate_pct=self.annual_financing_rate_pct,
+                periods_per_year=self.periods_per_year,
+            )
             q = _bootstrap_dd_q95(
-                boot_base_returns, float(scale), self.dd_quantile
+                boot_scaled, 1.0, self.dd_quantile
             )
             ok = (
                 np.isfinite(dd)
@@ -375,14 +426,30 @@ class RobustPortfolioOptimizer:
                 continue
 
             actual_w = composition * scale
-            pr = base * scale
+            pr = _apply_gross_and_financing(
+                base,
+                scale,
+                annual_financing_rate_pct=self.annual_financing_rate_pct,
+                periods_per_year=self.periods_per_year,
+            )
             base_eq = _equity(pr)
             dd = max_drawdown_pct(base_eq)
             cagr = _cagr(pr, self.periods_per_year)
             sharpe = annualized_sharpe(pr, self.periods_per_year)
 
             boot_cagr = np.asarray(
-                [_cagr(row * scale, self.periods_per_year) for row in boot_base],
+                [
+                    _cagr(
+                        _apply_gross_and_financing(
+                            row,
+                            scale,
+                            annual_financing_rate_pct=self.annual_financing_rate_pct,
+                            periods_per_year=self.periods_per_year,
+                        ),
+                        self.periods_per_year,
+                    )
+                    for row in boot_base
+                ],
                 dtype=float,
             )
             med_cagr = float(np.nanmedian(boot_cagr))
@@ -416,6 +483,12 @@ class RobustPortfolioOptimizer:
                     bootstrap_cagr_q10_pct=q10_cagr,
                     bootstrap_dd_q95_pct=float(dd_q),
                     effective_n=effective_n,
+                    financing_rate_pct=self.annual_financing_rate_pct,
+                    borrowed_gross=float(max(gross - 1.0, 0.0)),
+                    annual_financing_drag_pct=float(
+                        max(gross - 1.0, 0.0)
+                        * self.annual_financing_rate_pct
+                    ),
                     score=score,
                 )
             )
@@ -435,9 +508,11 @@ class RobustPortfolioOptimizer:
             feasible_count=len(feasible),
             dd_cap_pct=self.dd_cap_pct,
             max_gross=self.max_gross,
+            financing_rate_pct=self.annual_financing_rate_pct,
             policy=(
                 "choose strategy composition and maximum feasible total gross exposure; "
-                "maximize paired moving-block-bootstrap median CAGR subject to original "
-                "and bootstrap drawdown caps; cash is allowed and leverage is capped"
+                "charge financing on gross exposure above 1x; maximize paired moving-"
+                "block-bootstrap median CAGR subject to original and bootstrap drawdown "
+                "caps; cash is allowed and leverage is capped"
             ),
         )
