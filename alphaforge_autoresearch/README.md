@@ -1,6 +1,6 @@
-# Moon Dev AUTORESEARCH — NVIDIA NIM reconstruction
+# AlphaForge AUTORESEARCH — NVIDIA NIM reconstruction
 
-This branch contains a runnable reconstruction of the Moon Dev/Karpathy trading
+This branch contains a runnable reconstruction of the independent adaptive trading
 autoresearch loop, with the repeated research-agent calls moved from Claude Code
 to NVIDIA NIM.
 
@@ -83,6 +83,6 @@ into another training set.
 
 ## Reconstruction limitation
 
-The original Moon Dev seed strategy and exact data-loader implementation were
+The original predecessor seed strategy and exact data-loader implementation were
 not visible in the supplied screenshots. The included seed is a simple breakout
-strategy so the loop is runnable; it is not claimed to be Moon Dev's original.
+strategy so the loop is runnable; it is not claimed to be the predecessor project's original.

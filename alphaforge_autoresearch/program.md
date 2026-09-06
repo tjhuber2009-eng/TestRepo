@@ -1,4 +1,4 @@
-# Moon Dev AUTORESEARCH — program.md
+# AlphaForge AUTORESEARCH — program.md
 
 This file is the research memory and steering wheel. The loop gives you this
 file plus the last 30 scored experiments. You propose one change; the frozen

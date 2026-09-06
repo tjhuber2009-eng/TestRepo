@@ -1,5 +1,5 @@
 """
-Moon Dev AUTORESEARCH — NVIDIA NIM variant.
+AlphaForge AUTORESEARCH — NVIDIA NIM variant.
 
 The research harness and keep/revert rules stay local and frozen. NVIDIA only
 proposes one complete replacement for strategy.py at a time.
@@ -923,7 +923,7 @@ def main():
     ap.add_argument("--fallback-model", default=DEFAULT_MODEL)
     args = ap.parse_args()
 
-    print("MOON DEV AUTORESEARCH — NVIDIA NIM")
+    print("ALPHAFORGE AUTORESEARCH — NVIDIA NIM")
     print(f"model={args.model}")
     print(f"endpoint={NVIDIA_BASE_URL}")
     print(f"harness={HARNESS}")

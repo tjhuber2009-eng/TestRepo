@@ -1,7 +1,7 @@
 {
   "protocol": "alpha_generation_v4",
   "status": "architecture_frozen_before_v4_outcomes",
-  "source_v3_branch": "moondev-nvidia-autoresearch",
+  "source_v3_branch": "alphaforge-autoresearch",
   "source_v3_sha": "412452f846a5858e23b8ac0869c8ae754dd1f6a2",
   "boundaries": {
     "development_end": "2020-12-31",

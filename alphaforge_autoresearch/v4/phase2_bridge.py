@@ -28,7 +28,7 @@ from .continuous_bridge import (
 
 STATE_BRANCH = "phase2-autoresearch-state"
 PROMOTION_QUEUE_PATH = (
-    "moondev_autoresearch_reconstruction/phase2_state/promotion_queue.json"
+    "alphaforge_autoresearch/phase2_state/promotion_queue.json"
 )
 
 TARGET_SYMBOL = {
