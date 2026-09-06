@@ -6,8 +6,6 @@ on:
 permissions:
   actions: write
   contents: write
-  issues: write
-  pull-requests: write
 
 concurrency:
   group: continuous-nvidia-autoresearch
@@ -319,15 +317,6 @@ jobs:
             moondev_autoresearch_reconstruction/continuous_state/dashboard/data.json
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Comment final exhaustive completion
-        if: steps.completion.outputs.new_completion == 'true'
-        shell: bash
-        working-directory: .
-        run: >
-          gh pr comment 13
-          --repo tjhuber2009-eng/TestRepo
-          --body-file moondev_autoresearch_reconstruction/completion-note.md
 
       - name: Continuous chaining paused for privacy
         if: success() && steps.completion.outputs.terminal != 'true'
