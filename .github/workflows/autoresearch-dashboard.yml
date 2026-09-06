@@ -68,6 +68,10 @@ jobs:
             echo '{"jobs":[]}' > dashboard_runtime/tournament_jobs.json
           fi
 
+      - name: Validate dashboard JavaScript
+        working-directory: moondev_autoresearch_reconstruction
+        run: node --check dashboard_src/app.js
+
       - name: Build dashboard
         working-directory: moondev_autoresearch_reconstruction
         run: |
