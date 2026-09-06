@@ -148,11 +148,20 @@ def main():
             "pending": int(r.get("hydrated_reconstruction_pending", 0)),
         })
     if m and m.get("next_stage") == "source_hydration":
-        pending.append({
-            "type": "finite_lane_progress",
-            "id": "phase3_mapping",
-            "pending": int(m.get("hydration_queue_count", 0)),
-        })
+        mapper_pending = int(m.get("hydration_queue_count", 0))
+        hydration_pending = 0 if not h else int(h.get("retry_pending_count", 0))
+        hydration_is_v2 = bool(
+            h and int(h.get("hydration_version", 1) or 1) >= 2
+        )
+        # Mapping is upstream of hydration. Once the current-version hydrator
+        # is actively consuming that queue, reporting both as separate pending
+        # work double-counts one dependency.
+        if mapper_pending and not (hydration_is_v2 and hydration_pending >= 0):
+            pending.append({
+                "type": "finite_lane_progress",
+                "id": "phase3_mapping",
+                "pending": mapper_pending,
+            })
 
     v4 = states["v4"]
     if v4:
