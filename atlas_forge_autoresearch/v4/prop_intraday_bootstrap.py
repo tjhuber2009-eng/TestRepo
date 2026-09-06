@@ -30,6 +30,15 @@ PROP_SCALES = tuple(np.round(np.arange(0.05, 1.01, 0.05), 2))
 FTMO_CRYPTO_COMMISSION_BPS = 3.25
 RESEARCH_SLIPPAGE_BPS = 2.0
 PROP_COST_STRESS_MULTIPLIER = 3.0
+PROP_FRONTIER_VIEW_NAMES = (
+    "max_payout_efficiency",
+    "max_repeat_payout_efficiency",
+    "max_repeat_expected_reward",
+    "max_evaluation_pass",
+    "safest_funded",
+    "balanced",
+    "conservative",
+)
 
 
 def research_commit_sha() -> str | None:
@@ -1284,15 +1293,7 @@ def _frontier_universe_mutations(
 
 def _frontier_day_brake_mutations(
     leaders_by_program: dict,
-    view_names: Sequence[str] = (
-        "max_payout_efficiency",
-        "max_repeat_payout_efficiency",
-        "max_repeat_expected_reward",
-        "max_evaluation_pass",
-        "safest_funded",
-        "balanced",
-        "conservative",
-    ),
+    view_names: Sequence[str] = PROP_FRONTIER_VIEW_NAMES,
 ) -> list[dict]:
     """Compact risk/payout smoothing mutations around strict frontier leaders."""
     seen = set()
@@ -1362,14 +1363,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     ]
 
     programs = [FTMO_2STEP, FTMO_1STEP]
-    view_names = (
-        "max_payout_efficiency",
-        "max_repeat_payout_efficiency",
-        "max_evaluation_pass",
-        "safest_funded",
-        "balanced",
-        "conservative",
-    )
+    view_names = PROP_FRONTIER_VIEW_NAMES
     rows_by_program = {program.id: [] for program in programs}
     leaders = {
         program.id: {name: None for name in view_names}
