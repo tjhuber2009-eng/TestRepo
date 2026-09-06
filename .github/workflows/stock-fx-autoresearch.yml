@@ -99,8 +99,9 @@ jobs:
           python oos_guard.py
 
       - name: Qualify all 37 development datasets
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           import time
           import continuous_runner as c
           c.configure_paths(
