@@ -49,6 +49,7 @@ jobs:
           done
           git show origin/continuous-autoresearch-state:moondev_autoresearch_reconstruction/continuous_state/progress.json > /tmp/autoresearch-health/continuous.json
           git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/progress.json > /tmp/autoresearch-health/phase2.json
+          git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/followup_progress.json > /tmp/autoresearch-health/phase2-followup.json 2>/dev/null || true
           git show origin/phase3-hydration-state:moondev_autoresearch_reconstruction/phase3_state/hydration_progress.json > /tmp/autoresearch-health/phase3-hydration.json
           git show origin/phase3-reconstruction-state:moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json > /tmp/autoresearch-health/phase3-reconstruction.json
           git show origin/phase3-engine-mapping-state:moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json > /tmp/autoresearch-health/phase3-mapping.json
@@ -59,6 +60,7 @@ jobs:
           python autoresearch_health_audit.py \
             --continuous-progress /tmp/autoresearch-health/continuous.json \
             --phase2-progress /tmp/autoresearch-health/phase2.json \
+            --phase2-followup-progress /tmp/autoresearch-health/phase2-followup.json \
             --phase3-hydration /tmp/autoresearch-health/phase3-hydration.json \
             --phase3-reconstruction /tmp/autoresearch-health/phase3-reconstruction.json \
             --phase3-mapping /tmp/autoresearch-health/phase3-mapping.json \
