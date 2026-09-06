@@ -947,7 +947,7 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(financing["stress_rates_pct"], [6.0, 10.0, 14.0])
         self.assertEqual(
             financing["charged_on"],
-            "gross_exposure_above_1x_only",
+            "realized_time_varying_gross_above_1x_only",
         )
 
     def test_dynamic_portfolio_is_prefix_invariant_and_capped(self):
