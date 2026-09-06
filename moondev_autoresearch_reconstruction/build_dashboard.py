@@ -190,12 +190,14 @@ def normalize_leaderboard(board, state_dir):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--state-dir", default="continuous_state")
+    ap.add_argument("--v4-state-dir", default="v4_state")
     ap.add_argument("--tournament-state-dir", default="tournament_state")
     ap.add_argument("--runtime-dir", default="dashboard_runtime")
     ap.add_argument("--output-dir", default="continuous_state/dashboard")
     args = ap.parse_args()
 
     state = HERE / args.state_dir
+    v4_state = HERE / args.v4_state_dir
     tournament_state = HERE / args.tournament_state_dir
     runtime = HERE / args.runtime_dir
     output = HERE / args.output_dir
@@ -206,6 +208,8 @@ def main():
     selections = load_json(state / "search_selections.json", {}) or {}
     cycles = load_jsonl(state / "cycles.jsonl", limit=120)
     tournament = load_json(tournament_state / "tournament-summary.json", None)
+    v4_private = load_json(v4_state / "development-bootstrap.json", None)
+    v4_prop = load_json(v4_state / "prop-intraday-bootstrap.json", None)
 
     # Never render protocol-stale state as the active control room. The v2
     # archive is useful historical evidence, but its scores are not comparable
@@ -283,6 +287,11 @@ def main():
         "selections": selections,
         "recent_cycles": cycles,
         "tournament": tournament,
+        "v4": {
+            "available": bool(v4_private or v4_prop),
+            "private": v4_private,
+            "prop": v4_prop,
+        },
         "workflow": {
             "continuous_runs": continuous_runs,
             "tournament_runs": tournament_runs,
@@ -292,9 +301,14 @@ def main():
             "hidden_validation_opened": bool(
                 int(progress.get("validation_pass_count", 0) or 0)
                 + int(progress.get("validation_fail_count", 0) or 0)
+                or (v4_private or {}).get("hidden_validation_opened")
+                or (v4_prop or {}).get("hidden_validation_opened")
             ),
             "final_oos_start": "2023-01-01",
-            "final_oos_opened": False,
+            "final_oos_opened": bool(
+                (v4_private or {}).get("final_oos_opened")
+                or (v4_prop or {}).get("final_oos_opened")
+            ),
             "prop_dd_cap_pct": 10,
             "private_dd_cap_pct": 32,
             "cost_stress_multiplier": 2.0,
