@@ -325,6 +325,92 @@ def _parse_iso_utc(value):
     return stamp.astimezone(timezone.utc)
 
 
+def tiingo_eod_rows(payload, start, end):
+    """Canonical adjusted Tiingo EOD bars for research/backtest continuity."""
+    if not isinstance(payload, list):
+        raise RuntimeError("Tiingo EOD response is not a list")
+    rows = []
+    seen = set()
+    for raw in payload:
+        if not isinstance(raw, dict) or not raw.get("date"):
+            continue
+        stamp = _parse_iso_utc(raw["date"])
+        if not (start <= stamp <= end):
+            continue
+        day = stamp.strftime("%Y-%m-%d")
+        if day in seen:
+            raise RuntimeError(f"Tiingo EOD duplicate daily bar: {day}")
+        keys = ("adjOpen", "adjHigh", "adjLow", "adjClose")
+        if any(raw.get(key) is None for key in keys):
+            raise RuntimeError(f"Tiingo EOD adjusted OHLC missing for {day}")
+        o = float(raw["adjOpen"])
+        h = float(raw["adjHigh"])
+        l = float(raw["adjLow"])
+        close = float(raw["adjClose"])
+        if h < max(o, l, close) or l > min(o, h, close):
+            raise RuntimeError(f"Tiingo EOD malformed adjusted OHLC row {day}")
+        vol_raw = raw.get("adjVolume")
+        vol = 0.0 if vol_raw is None else float(vol_raw)
+        rows.append([stamp.isoformat(), o, h, l, close, vol])
+        seen.add(day)
+    rows.sort(key=lambda row: row[0])
+    return rows
+
+
+def prepare_tiingo_eod(symbol, start, end, out):
+    token = os.environ.get("TIINGO_API_TOKEN", "").strip()
+    if not token:
+        raise RuntimeError("TIINGO_API_TOKEN is required for Tiingo EOD data")
+    ticker = str(symbol).upper().strip()
+    query = urllib.parse.urlencode({
+        "startDate": start.strftime("%Y-%m-%d"),
+        "endDate": end.strftime("%Y-%m-%d"),
+        "resampleFreq": "daily",
+    })
+    url = (
+        f"https://api.tiingo.com/tiingo/daily/"
+        f"{urllib.parse.quote(ticker, safe='')}/prices?{query}"
+    )
+    blob = request_bytes(
+        url,
+        headers={
+            "Authorization": f"Token {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    payload = json.loads(blob.decode("utf-8"))
+    rows = tiingo_eod_rows(payload, start, end)
+    if len(rows) < 100:
+        raise RuntimeError(
+            f"Tiingo EOD {symbol}: insufficient daily rows ({len(rows)})"
+        )
+    if rows[-1][0][:10] >= "2023-01-01":
+        raise RuntimeError("refusing Tiingo EOD 2023+ final OOS data")
+    with out.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["Date", "Open", "High", "Low", "Close", "Volume"])
+        writer.writerows(rows)
+    audit = {
+        "version": 1,
+        "source": "tiingo_eod",
+        "ticker": ticker,
+        "requested_start": start.strftime("%Y-%m-%d"),
+        "requested_end": end.strftime("%Y-%m-%d"),
+        "rows": len(rows),
+        "response_sha256": hashlib.sha256(blob).hexdigest(),
+        "provider": "Tiingo End-of-Day Stock Price API",
+        "price_basis": "dividend_and_split_adjusted_ohlcv",
+        "resample_freq": "daily",
+        "final_oos_included": False,
+    }
+    out.with_suffix(".source.json").write_text(
+        json.dumps(audit, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Tiingo EOD {ticker}: {len(rows)} adjusted daily bars -> {out}")
+    return audit
+
+
 def tiingo_fx_rows(payload, start, end):
     if not isinstance(payload, list):
         raise RuntimeError("Tiingo FX response is not a list")
@@ -438,10 +524,14 @@ def write_manifest(out, source, symbol, ident, start, end):
                 "Bitstamp public OHLC endpoint has no archive checksum"
                 if source == "bitstamp"
                 else (
-                    "authenticated Tiingo Forex API response; canonical CSV "
+                    "authenticated Tiingo API response; adjusted canonical CSV "
                     "and raw response SHA256 recorded"
-                    if source == "tiingo_fx"
+                    if source == "tiingo_eod"
                     else (
+                        "authenticated Tiingo Forex API response; canonical CSV "
+                        "and raw response SHA256 recorded"
+                        if source == "tiingo_fx"
+                        else (
                         "Dukascopy native BID daily archives snapshotted by "
                         "per-year SHA256; provider publishes no archive checksum"
                         if source == "dukascopy_bid_daily"
@@ -454,6 +544,7 @@ def write_manifest(out, source, symbol, ident, start, end):
                     )
                 )
             )
+        )
         ),
         "oos_included": False,
     }
@@ -464,7 +555,7 @@ def write_manifest(out, source, symbol, ident, start, end):
         manifest["normalization"] = json.loads(
             norm_path.read_text(encoding="utf-8")
         )
-    if source in {"dukascopy_bid_daily", "tiingo_fx"}:
+    if source in {"dukascopy_bid_daily", "tiingo_fx", "tiingo_eod"}:
         source_path = out.with_suffix(".source.json")
         if not source_path.exists():
             raise RuntimeError(f"{source} source audit missing")
@@ -483,7 +574,7 @@ def main():
         "--source",
         choices=[
             "binance", "bitstamp", "yahoo", "yahoo_futures_proxy",
-            "stooq", "dukascopy_bid_daily", "tiingo_fx",
+            "stooq", "dukascopy_bid_daily", "tiingo_fx", "tiingo_eod",
         ],
         required=True,
     )
@@ -516,6 +607,8 @@ def main():
         dukascopy_daily.prepare(args.symbol, start, end, out, request_bytes)
     elif args.source == "tiingo_fx":
         prepare_tiingo_fx(args.symbol, start, end, out)
+    elif args.source == "tiingo_eod":
+        prepare_tiingo_eod(args.symbol, start, end, out)
     elif args.source == "yahoo_futures_proxy":
         prepare_yahoo_futures_proxy(args.symbol, start, end, out)
     else:
