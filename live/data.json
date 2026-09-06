@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T15:13:51Z",
+  "generated_at": "2026-09-06T15:48:11Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -79,7 +79,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "spot_exact",
       "market": "crypto",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.071429,
       "pbo_candidate_count": 8,
       "pbo_cscv_splits": 70,
@@ -124,7 +124,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "spot_exact",
       "market": "crypto",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.685714,
       "pbo_candidate_count": 7,
       "pbo_cscv_splits": 70,
@@ -259,7 +259,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "spot_exact",
       "market": "crypto",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.6,
       "pbo_candidate_count": 6,
       "pbo_cscv_splits": 70,
@@ -351,7 +351,7 @@
       "market": "crypto",
       "multiple_test_qvalue": 0.042176,
       "pbo": 0.342857,
-      "pbo_candidate_count": 7,
+      "pbo_candidate_count": 9,
       "pbo_cscv_splits": 70,
       "pbo_fold_count": 8,
       "profile": "private",
@@ -359,7 +359,7 @@
       "sharpe_minus_buyhold": 0.4732,
       "target": "btc",
       "track_id": "swing_terminal_breakout_proxy__btc__private",
-      "valid_attempts": 7
+      "valid_attempts": 10
     },
     {
       "benchmark_cagr_pct": 30.247,
@@ -979,7 +979,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.385714,
       "pbo_candidate_count": 7,
       "pbo_cscv_splits": 70,
@@ -1024,7 +1024,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "spot_exact",
       "market": "crypto",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.671429,
       "pbo_candidate_count": 5,
       "pbo_cscv_splits": 70,
@@ -1114,7 +1114,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.757143,
       "pbo_candidate_count": 5,
       "pbo_cscv_splits": 70,
@@ -1294,7 +1294,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.5,
       "pbo_candidate_count": 7,
       "pbo_cscv_splits": 70,
@@ -1400,6 +1400,51 @@
       "benchmark_cagr_pct": 31.41,
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
+      "development_bootstrap_pvalue": 0.003992,
+      "development_cagr_pct": 15.68912,
+      "development_calmar": 0.7155,
+      "development_end": "2020-12-31",
+      "development_guard_ok": true,
+      "development_max_dd_pct": -21.945,
+      "development_pf": 3.402,
+      "development_psr_zero": 0.999854,
+      "development_return_pct": 396.709,
+      "development_score": 0.077204,
+      "development_sharpe": 1.0991,
+      "development_start": "2010-01-01",
+      "development_trades": 52,
+      "development_trades_per_year": 4.732,
+      "development_ulcer_index_pct": 8.405,
+      "development_years": 10.9982,
+      "evidence_grade": "A",
+      "exactness": "proxy",
+      "excess_cagr_vs_buyhold_pct": -15.708,
+      "extreme_stress_return_pct": 385.162,
+      "family": "swing_terminal_breakout_proxy",
+      "hidden_cagr_pct": null,
+      "hidden_max_dd_pct": null,
+      "hidden_pf": null,
+      "hidden_return_pct": null,
+      "hidden_sharpe": null,
+      "hidden_validation_pass": null,
+      "instrument_fidelity": "adjusted_daily",
+      "market": "stock",
+      "multiple_test_qvalue": 0.028871,
+      "pbo": 0.5,
+      "pbo_candidate_count": 7,
+      "pbo_cscv_splits": 70,
+      "pbo_fold_count": 8,
+      "profile": "private",
+      "selection_score": 0.077204,
+      "sharpe_minus_buyhold": -0.0088,
+      "target": "aapl",
+      "track_id": "swing_terminal_breakout_proxy__aapl__private",
+      "valid_attempts": 8
+    },
+    {
+      "benchmark_cagr_pct": 31.41,
+      "data_quality_grade": "B",
+      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
       "development_bootstrap_pvalue": 0.001996,
       "development_cagr_pct": 14.118145,
       "development_calmar": 0.5962,
@@ -1429,7 +1474,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.642857,
       "pbo_candidate_count": 5,
       "pbo_cscv_splits": 70,
@@ -1609,7 +1654,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.342857,
       "pbo_candidate_count": 6,
       "pbo_cscv_splits": 70,
@@ -1620,51 +1665,6 @@
       "target": "aapl",
       "track_id": "vol_contraction_breakout__aapl__private",
       "valid_attempts": 6
-    },
-    {
-      "benchmark_cagr_pct": 31.41,
-      "data_quality_grade": "B",
-      "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
-      "development_bootstrap_pvalue": 0.001996,
-      "development_cagr_pct": 15.410572,
-      "development_calmar": 0.6679,
-      "development_end": "2020-12-31",
-      "development_guard_ok": true,
-      "development_max_dd_pct": -23.092,
-      "development_pf": 4.417,
-      "development_psr_zero": 0.999834,
-      "development_return_pct": 383.713,
-      "development_score": 0.05672,
-      "development_sharpe": 1.0816,
-      "development_start": "2010-01-01",
-      "development_trades": 42,
-      "development_trades_per_year": 3.822,
-      "development_ulcer_index_pct": 9.059,
-      "development_years": 10.9982,
-      "evidence_grade": "A",
-      "exactness": "proxy",
-      "excess_cagr_vs_buyhold_pct": -15.987,
-      "extreme_stress_return_pct": 375.313,
-      "family": "swing_terminal_breakout_proxy",
-      "hidden_cagr_pct": null,
-      "hidden_max_dd_pct": null,
-      "hidden_pf": null,
-      "hidden_return_pct": null,
-      "hidden_sharpe": null,
-      "hidden_validation_pass": null,
-      "instrument_fidelity": "adjusted_daily",
-      "market": "stock",
-      "multiple_test_qvalue": 0.025262,
-      "pbo": null,
-      "pbo_candidate_count": null,
-      "pbo_cscv_splits": null,
-      "pbo_fold_count": null,
-      "profile": "private",
-      "selection_score": 0.05672,
-      "sharpe_minus_buyhold": -0.0263,
-      "target": "aapl",
-      "track_id": "swing_terminal_breakout_proxy__aapl__private",
-      "valid_attempts": 5
     },
     {
       "benchmark_cagr_pct": 30.247,
@@ -1709,7 +1709,7 @@
       "sharpe_minus_buyhold": 0.0017,
       "target": "eth",
       "track_id": "donchian_20_10__eth__private",
-      "valid_attempts": 2
+      "valid_attempts": 5
     },
     {
       "benchmark_cagr_pct": 76.139,
@@ -1924,7 +1924,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2014,7 +2014,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2207,51 +2207,6 @@
       "valid_attempts": 5
     },
     {
-      "benchmark_cagr_pct": 76.139,
-      "data_quality_grade": "A",
-      "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
-      "development_bootstrap_pvalue": 0.007984,
-      "development_cagr_pct": 8.940889,
-      "development_calmar": 0.9698,
-      "development_end": "2020-12-31",
-      "development_guard_ok": true,
-      "development_max_dd_pct": -9.22,
-      "development_pf": 14.92,
-      "development_psr_zero": 0.984467,
-      "development_return_pct": 33.49,
-      "development_score": 0.035579,
-      "development_sharpe": 1.2168,
-      "development_start": "2017-08-17",
-      "development_trades": 13,
-      "development_trades_per_year": 3.854,
-      "development_ulcer_index_pct": 5.405,
-      "development_years": 3.3731,
-      "evidence_grade": "B",
-      "exactness": "proxy",
-      "excess_cagr_vs_buyhold_pct": -67.198,
-      "extreme_stress_return_pct": 33.154,
-      "family": "swing_terminal_breakout_proxy",
-      "hidden_cagr_pct": null,
-      "hidden_max_dd_pct": null,
-      "hidden_pf": null,
-      "hidden_return_pct": null,
-      "hidden_sharpe": null,
-      "hidden_validation_pass": null,
-      "instrument_fidelity": "spot_exact",
-      "market": "crypto",
-      "multiple_test_qvalue": 0.034037,
-      "pbo": null,
-      "pbo_candidate_count": null,
-      "pbo_cscv_splits": null,
-      "pbo_fold_count": null,
-      "profile": "prop",
-      "selection_score": 0.035579,
-      "sharpe_minus_buyhold": 0.1023,
-      "target": "btc",
-      "track_id": "swing_terminal_breakout_proxy__btc__prop",
-      "valid_attempts": 5
-    },
-    {
       "benchmark_cagr_pct": 31.41,
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
@@ -2284,7 +2239,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2329,7 +2284,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2340,6 +2295,51 @@
       "target": "spy",
       "track_id": "ibs_deep_pullback__spy__private",
       "valid_attempts": 2
+    },
+    {
+      "benchmark_cagr_pct": 76.139,
+      "data_quality_grade": "A",
+      "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
+      "development_bootstrap_pvalue": 0.007984,
+      "development_cagr_pct": 8.940889,
+      "development_calmar": 0.9698,
+      "development_end": "2020-12-31",
+      "development_guard_ok": true,
+      "development_max_dd_pct": -9.22,
+      "development_pf": 14.92,
+      "development_psr_zero": 0.984467,
+      "development_return_pct": 33.49,
+      "development_score": 0.035579,
+      "development_sharpe": 1.2168,
+      "development_start": "2017-08-17",
+      "development_trades": 13,
+      "development_trades_per_year": 3.854,
+      "development_ulcer_index_pct": 5.405,
+      "development_years": 3.3731,
+      "evidence_grade": "B",
+      "exactness": "proxy",
+      "excess_cagr_vs_buyhold_pct": -67.198,
+      "extreme_stress_return_pct": 33.154,
+      "family": "swing_terminal_breakout_proxy",
+      "hidden_cagr_pct": null,
+      "hidden_max_dd_pct": null,
+      "hidden_pf": null,
+      "hidden_return_pct": null,
+      "hidden_sharpe": null,
+      "hidden_validation_pass": null,
+      "instrument_fidelity": "spot_exact",
+      "market": "crypto",
+      "multiple_test_qvalue": 0.034037,
+      "pbo": 0.614286,
+      "pbo_candidate_count": 7,
+      "pbo_cscv_splits": 70,
+      "pbo_fold_count": 8,
+      "profile": "prop",
+      "selection_score": 0.033545909203000004,
+      "sharpe_minus_buyhold": 0.1023,
+      "target": "btc",
+      "track_id": "swing_terminal_breakout_proxy__btc__prop",
+      "valid_attempts": 8
     },
     {
       "benchmark_cagr_pct": 53.39,
@@ -2509,7 +2509,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2734,7 +2734,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2914,7 +2914,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -2959,7 +2959,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.014286,
       "pbo_candidate_count": 5,
       "pbo_cscv_splits": 70,
@@ -3049,7 +3049,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -3409,7 +3409,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -3544,7 +3544,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -4264,7 +4264,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -4354,7 +4354,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -4489,7 +4489,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -4984,7 +4984,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.314286,
       "pbo_candidate_count": 7,
       "pbo_cscv_splits": 70,
@@ -5569,7 +5569,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -5974,7 +5974,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -6379,7 +6379,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -8134,7 +8134,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": 0.242857,
       "pbo_candidate_count": 5,
       "pbo_cscv_splits": 70,
@@ -8764,7 +8764,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -10024,7 +10024,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "etf",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -14569,7 +14569,7 @@
       "hidden_validation_pass": null,
       "instrument_fidelity": "adjusted_daily",
       "market": "stock",
-      "multiple_test_qvalue": 0.025262,
+      "multiple_test_qvalue": 0.026077,
       "pbo": null,
       "pbo_candidate_count": null,
       "pbo_cscv_splits": null,
@@ -18232,15 +18232,6 @@
     "all_runnable_tracks_terminal": false,
     "blocked_families": [
       {
-        "exactness": "unrecovered",
-        "id": "calendar_monthly",
-        "origin": "Monthly seasonality research; exact frozen rule not yet recovered",
-        "requires": [
-          "frozen monthly seasonality rule from prior project"
-        ],
-        "status": "blocked"
-      },
-      {
         "exactness": "documented",
         "id": "pead",
         "origin": "PEAD academic/mechanical research",
@@ -18252,24 +18243,24 @@
         "status": "blocked"
       },
       {
-        "exactness": "unrecovered",
+        "exactness": "frozen_translation",
         "id": "zanger_exact",
-        "origin": "ZANGER-MECH exact chart-pattern implementation",
+        "origin": "ZANGER-MECH-001B source-closer specification and outcome-blind signal runner were frozen in prior research",
         "requires": [
-          "exact mechanical pattern rules",
-          "curated universe reconstruction"
+          "recover/import the locked package bytes matching the recorded hashes",
+          "point-in-time provider/universe inputs required by the frozen runner"
         ],
-        "status": "blocked"
+        "status": "locked_translation_artifact_recovery"
       },
       {
-        "exactness": "provisional",
+        "exactness": "source_exact_plus_interpreted_parity",
         "id": "nbe_volume_profile",
-        "origin": "NodeBreachEngine POC/POV volume-profile rejection",
+        "origin": "NodeBreachEngine official 5m forex settings + parity audit recovered",
         "requires": [
-          "intraday volume-profile engine",
-          "POC/POV parity"
+          "intraday swing-profile volume engine with causal pivot confirmation",
+          "5-minute forex data/feed parity for the target broker/TradingView source"
         ],
-        "status": "blocked"
+        "status": "spec_recovered_engine_blocked"
       },
       {
         "exactness": "documented_live_family",
@@ -18349,29 +18340,13 @@
       {
         "exactness": "family",
         "id": "stat_arb_pairs",
-        "origin": "Cointegration/stat-arb pairs repositories researched previously",
+        "origin": "Cointegration/stat-arb family; synchronized v4 multi-asset engine now exists",
         "requires": [
-          "multi-asset synchronized engine"
+          "freeze pair-universe/formation rule",
+          "freeze hedge-ratio, entry, exit and rebalance rules",
+          "synchronized source data for selected pairs"
         ],
-        "status": "blocked"
-      },
-      {
-        "exactness": "documented",
-        "id": "finlab_rotation_exact",
-        "origin": "QQQ SMA200 + 126d momentum; leveraged risk-on and IEF/GLD/SHY defensive rotation",
-        "requires": [
-          "multi-asset portfolio engine"
-        ],
-        "status": "blocked"
-      },
-      {
-        "exactness": "partially_documented",
-        "id": "hr_dual_alpha",
-        "origin": "HR-DUAL-ALPHA-001 research",
-        "requires": [
-          "frozen exact implementation from prior project"
-        ],
-        "status": "blocked"
+        "status": "v4_engine_available_rules_pending"
       },
       {
         "exactness": "external_signal",
@@ -18384,7 +18359,7 @@
         "status": "blocked"
       }
     ],
-    "blocked_family_count": 16,
+    "blocked_family_count": 13,
     "breadth_eliminated_count": 0,
     "breadth_target": 10,
     "data_insufficient_count": 0,
@@ -18401,25 +18376,48 @@
     },
     "model_performance": [
       {
-        "admission_rate": 0.7825,
-        "attempts": 1370,
-        "backtested": 1072,
-        "crash_rate": 0.0409,
-        "crashes": 56,
-        "guard_pass": 640,
-        "keeper_rate": 0.0467,
-        "kept": 64,
-        "mean_delta_k": -0.028035,
+        "admission_rate": 0.7827,
+        "attempts": 1385,
+        "backtested": 1084,
+        "crash_rate": 0.0419,
+        "crashes": 58,
+        "guard_pass": 650,
+        "keeper_rate": 0.0469,
+        "kept": 65,
+        "mean_delta_k": -0.028171,
         "model": "nvidia/nemotron-3-super-120b-a12b",
-        "unique_ideas": 1271
+        "unique_ideas": 1284
       }
     ],
     "pbo_baselined_track_count": 405,
     "pbo_min_strategy_count": 5,
     "pbo_readiness_definition": "baseline_plus_at_least_four_unique_selection_eligible_backtests",
-    "pbo_ready_track_count": 54,
+    "pbo_ready_track_count": 56,
     "phase": "breadth",
+    "prior_positive_families": [
+      {
+        "id": "hr_dual_alpha",
+        "origin": "HR-DUAL-ALPHA-001 frozen-before-result implementation recovered from tjhuber2009-eng/hr_mech",
+        "prior_classification": "SUPERIOR_PASS",
+        "source_lock": {
+          "branch": "research/hr-dual-alpha-001",
+          "commit": "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+          "implementation_blob_sha": "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+          "prereg_blob_sha": "8cf531021a29d57e468d074d0a1b4d0ea9e14270",
+          "repository": "tjhuber2009-eng/hr_mech",
+          "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
+        },
+        "status": "prior_frozen_superior_pass"
+      }
+    ],
+    "prior_positive_family_count": 1,
     "prior_terminal_families": [
+      {
+        "evidence": "Frozen independent replication classified FAIL because the preregistered 2022+ CAGR and Sharpe gates failed; retain as terminal negative evidence.",
+        "id": "finlab_rotation_exact",
+        "origin": "FL-ETFROT-A-001 frozen independent FinLab aggressive ETF-rotation replication",
+        "status": "prior_rejected"
+      },
       {
         "evidence": "Long-history prior test: weak/negative after realistic cost stress; rejected.",
         "id": "boto_pumpdump_30m",
@@ -18481,7 +18479,7 @@
         "status": "prior_rejected_overfit"
       }
     ],
-    "prior_terminal_family_count": 10,
+    "prior_terminal_family_count": 11,
     "protocol": "nested_chronological_v3",
     "rows": [
       {
@@ -21506,7 +21504,7 @@
         "valid_attempts": 5
       },
       {
-        "attempts": 2,
+        "attempts": 6,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 13.469,
@@ -21522,7 +21520,7 @@
         "status": "searching",
         "target": "eth",
         "track_id": "donchian_20_10__eth__private",
-        "valid_attempts": 2
+        "valid_attempts": 5
       },
       {
         "attempts": 0,
@@ -23672,26 +23670,26 @@
         "valid_attempts": 2
       },
       {
-        "attempts": 6,
+        "attempts": 10,
         "data_quality_grade": "B",
         "depth_selected": false,
-        "development_cagr_pct": 15.423,
-        "development_score": 0.05672,
+        "development_cagr_pct": 15.702,
+        "development_score": 0.077204,
         "elite_selected": false,
         "evidence_grade": "A",
         "family": "swing_terminal_breakout_proxy",
         "instrument_fidelity": "adjusted_daily",
-        "pbo": null,
+        "pbo": 0.5,
         "profile": "private",
-        "psr_zero": 0.999834,
-        "selection_score": 0.05672,
+        "psr_zero": 0.999854,
+        "selection_score": 0.077204,
         "status": "searching",
         "target": "aapl",
         "track_id": "swing_terminal_breakout_proxy__aapl__private",
-        "valid_attempts": 5
+        "valid_attempts": 8
       },
       {
-        "attempts": 6,
+        "attempts": 10,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 8.941,
@@ -23700,17 +23698,17 @@
         "evidence_grade": "B",
         "family": "swing_terminal_breakout_proxy",
         "instrument_fidelity": "spot_exact",
-        "pbo": null,
+        "pbo": 0.614286,
         "profile": "prop",
         "psr_zero": 0.984467,
-        "selection_score": 0.035579,
+        "selection_score": 0.033545909203000004,
         "status": "searching",
         "target": "btc",
         "track_id": "swing_terminal_breakout_proxy__btc__prop",
-        "valid_attempts": 5
+        "valid_attempts": 8
       },
       {
-        "attempts": 10,
+        "attempts": 13,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 59.672,
@@ -23726,7 +23724,7 @@
         "status": "searching",
         "target": "btc",
         "track_id": "swing_terminal_breakout_proxy__btc__private",
-        "valid_attempts": 7
+        "valid_attempts": 10
       },
       {
         "attempts": 0,
@@ -28255,112 +28253,36 @@
     "searching_count": 513,
     "seed_blocked_count": 1,
     "terminal_track_count": 1,
-    "total_crashes": 56,
+    "total_crashes": 58,
     "total_duplicates": 3,
-    "total_guard_passed_candidates": 640,
-    "total_kept_candidates": 64,
-    "total_model_attempt_rows": 1370,
+    "total_guard_passed_candidates": 650,
+    "total_kept_candidates": 65,
+    "total_model_attempt_rows": 1385,
     "total_parameter_only": 89,
-    "total_risk_control_changes": 126,
+    "total_risk_control_changes": 127,
     "total_too_broad": 24,
-    "total_valid_candidates": 1072,
+    "total_valid_candidates": 1084,
     "universe_stage": "phase1_fixed_514",
-    "updated_at": "2026-09-06T15:13:36Z",
+    "updated_at": "2026-09-06T15:47:50Z",
     "validation_fail_count": 0,
     "validation_pass_count": 0,
     "validation_pending_count": 0
   },
   "progress_derived": {
-    "breadth_pct": 20.856,
+    "breadth_pct": 21.089,
     "breadth_target": 10,
     "breadth_total_candidates": 5140,
     "depth_target": 30,
     "elite_target": 60,
     "touched_tracks": 405,
     "tracks_valid_ge_1": 392,
-    "tracks_valid_ge_10": 13,
+    "tracks_valid_ge_10": 14,
     "tracks_valid_ge_2": 291,
-    "tracks_valid_ge_5": 62
+    "tracks_valid_ge_5": 63
   },
   "project": "Moon Dev AUTORESEARCH reconstruction",
   "protocol": "nested_chronological_v3",
   "recent_cycles": [
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "swing_terminal_breakout_proxy__nq__prop",
-      "ts": "2026-09-06T08:06:06Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "swing_terminal_breakout_proxy__nq__private",
-      "ts": "2026-09-06T08:06:08Z"
-    },
-    {
-      "attempts_after": 11,
-      "bandit_reward": 0,
-      "family": "swing_terminal_breakout_proxy",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -25.831,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 8.33,
-      "profile": "private",
-      "return_pct": 189.35,
-      "score": 0.250303,
-      "sharpe": 1.2068,
-      "status": "active",
-      "target": "eth",
-      "track_id": "swing_terminal_breakout_proxy__eth__private",
-      "ts": "2026-09-06T08:07:39Z",
-      "valid_after": 10,
-      "valid_before": 9
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "swing_terminal_breakout_proxy__gold__prop",
-      "ts": "2026-09-06T08:07:41Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "swing_terminal_breakout_proxy__gold__private",
-      "ts": "2026-09-06T08:07:42Z"
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "donchian_sma50",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -25.979,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 7.326,
-      "profile": "private",
-      "return_pct": 140.596,
-      "score": 0.230314,
-      "sharpe": 1.3057,
-      "status": "active",
-      "target": "eth",
-      "track_id": "donchian_sma50__eth__private",
-      "ts": "2026-09-06T08:17:26Z",
-      "valid_after": 7,
-      "valid_before": 5
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "donchian_sma50__gold__prop",
-      "ts": "2026-09-06T08:17:28Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "donchian_sma50__gold__private",
-      "ts": "2026-09-06T08:17:30Z"
-    },
     {
       "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
       "status": "runner_error",
@@ -29970,6 +29892,110 @@
       "ts": "2026-09-06T15:13:36Z",
       "valid_after": 7,
       "valid_before": 5
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_breakout_proxy__es__prop",
+      "ts": "2026-09-06T15:14:16Z"
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_breakout_proxy__es__private",
+      "ts": "2026-09-06T15:14:18Z"
+    },
+    {
+      "attempts_after": 10,
+      "bandit_reward": 1,
+      "family": "swing_terminal_breakout_proxy",
+      "kept_after": 2,
+      "kept_before": 1,
+      "max_dd_pct": -21.945,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 3.402,
+      "profile": "private",
+      "return_pct": 396.709,
+      "score": 0.077204,
+      "sharpe": 1.0991,
+      "status": "active",
+      "target": "aapl",
+      "track_id": "swing_terminal_breakout_proxy__aapl__private",
+      "ts": "2026-09-06T15:30:19Z",
+      "valid_after": 8,
+      "valid_before": 5
+    },
+    {
+      "attempts_after": 10,
+      "bandit_reward": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -9.22,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 14.92,
+      "profile": "prop",
+      "return_pct": 33.49,
+      "score": 0.035579,
+      "sharpe": 1.2168,
+      "status": "active",
+      "target": "btc",
+      "track_id": "swing_terminal_breakout_proxy__btc__prop",
+      "ts": "2026-09-06T15:40:24Z",
+      "valid_after": 8,
+      "valid_before": 5
+    },
+    {
+      "attempts_after": 13,
+      "bandit_reward": 0,
+      "family": "swing_terminal_breakout_proxy",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -30.257,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 17.76,
+      "profile": "private",
+      "return_pct": 384.746,
+      "score": 0.423816,
+      "sharpe": 1.5877,
+      "status": "active",
+      "target": "btc",
+      "track_id": "swing_terminal_breakout_proxy__btc__private",
+      "ts": "2026-09-06T15:43:55Z",
+      "valid_after": 10,
+      "valid_before": 7
+    },
+    {
+      "attempts_after": 6,
+      "bandit_reward": 0,
+      "family": "donchian_20_10",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -30.635,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 4.172,
+      "profile": "private",
+      "return_pct": 53.147,
+      "score": 0.054712,
+      "sharpe": 0.7801,
+      "status": "active",
+      "target": "eth",
+      "track_id": "donchian_20_10__eth__private",
+      "ts": "2026-09-06T15:47:45Z",
+      "valid_after": 5,
+      "valid_before": 2
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "donchian_20_10__gold__prop",
+      "ts": "2026-09-06T15:47:47Z"
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "donchian_20_10__gold__private",
+      "ts": "2026-09-06T15:47:49Z"
     }
   ],
   "safeguards": {
@@ -33992,7 +34018,7 @@
       "valid_attempts": 5
     },
     {
-      "attempts": 2,
+      "attempts": 6,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -34011,7 +34037,7 @@
       "status": "searching",
       "target": "eth",
       "track_id": "donchian_20_10__eth__private",
-      "valid_attempts": 2
+      "valid_attempts": 5
     },
     {
       "attempts": 0,
@@ -36500,29 +36526,29 @@
       "valid_attempts": 2
     },
     {
-      "attempts": 6,
+      "attempts": 10,
       "data_quality_grade": "B",
       "depth_selected": false,
       "development_cagr_pct": null,
       "development_end": "2020-12-31",
-      "development_score": 0.05672,
+      "development_score": 0.077204,
       "development_start": "2010-01-01",
       "development_years": 10.9982,
       "elite_selected": false,
       "evidence_grade": "A",
       "family": "swing_terminal_breakout_proxy",
       "instrument_fidelity": "adjusted_daily",
-      "pbo": null,
+      "pbo": 0.5,
       "profile": "private",
-      "psr_zero": 0.999834,
-      "selection_score": 0.05672,
+      "psr_zero": 0.999854,
+      "selection_score": 0.077204,
       "status": "searching",
       "target": "aapl",
       "track_id": "swing_terminal_breakout_proxy__aapl__private",
-      "valid_attempts": 5
+      "valid_attempts": 8
     },
     {
-      "attempts": 6,
+      "attempts": 10,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -36534,17 +36560,17 @@
       "evidence_grade": "B",
       "family": "swing_terminal_breakout_proxy",
       "instrument_fidelity": "spot_exact",
-      "pbo": null,
+      "pbo": 0.614286,
       "profile": "prop",
       "psr_zero": 0.984467,
-      "selection_score": 0.035579,
+      "selection_score": 0.033545909203000004,
       "status": "searching",
       "target": "btc",
       "track_id": "swing_terminal_breakout_proxy__btc__prop",
-      "valid_attempts": 5
+      "valid_attempts": 8
     },
     {
-      "attempts": 10,
+      "attempts": 13,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -36563,7 +36589,7 @@
       "status": "searching",
       "target": "btc",
       "track_id": "swing_terminal_breakout_proxy__btc__private",
-      "valid_attempts": 7
+      "valid_attempts": 10
     },
     {
       "attempts": 0,
@@ -54424,7 +54450,7 @@
             "worst_score": -3.636685761722702
           },
           {
-            "adjusted_score": 9.806508163307882,
+            "adjusted_score": 9.837967942446195,
             "fold_scores": [
               21.54530486501569,
               5.646336571268851,
@@ -54445,7 +54471,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 16.049751101867095,
+            "plateau_score": 16.15461703232814,
             "primary_score": 14.799434469041728,
             "score_std": 15.1483133876243,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -54704,7 +54730,7 @@
             "worst_score": -2.685224606061154
           },
           {
-            "adjusted_score": 8.526787877264377,
+            "adjusted_score": 8.622433618566433,
             "fold_scores": [
               13.230842854895819,
               7.143423026575024,
@@ -54725,7 +54751,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 14.05116199365029,
+            "plateau_score": 14.369981131323804,
             "primary_score": 14.277582400344047,
             "score_std": 14.863326870309434,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -63060,7 +63086,7 @@
           "gross_exposure": 0.9024925363279448,
           "max_dd_pct": -17.292203507758387,
           "score": 16.18178187710505,
-          "sharpe": 1.0805640230289828,
+          "sharpe": 1.0805640230289826,
           "weights": {
             "cash_rotation_risk_budgeted": 0.0022245923798104284,
             "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63089,7 +63115,7 @@
             "gross_exposure": 0.7775924788539519,
             "max_dd_pct": -16.346811898542658,
             "score": 15.864395423773308,
-            "sharpe": 1.0702085019086347,
+            "sharpe": 1.070208501908635,
             "weights": {
               "cash_rotation_risk_budgeted": 0.009315446914387892,
               "cash_rotation_vix_stress": 0.0411487227259109,
@@ -63116,7 +63142,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289828,
+            "sharpe": 1.0805640230289826,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63143,7 +63169,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289828,
+            "sharpe": 1.0805640230289826,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63170,7 +63196,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289828,
+            "sharpe": 1.0805640230289826,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63275,6 +63301,45 @@
           "continuous__qqe_proxy__btc__private",
           "cross_asset_momentum_risk_budgeted"
         ]
+      },
+      "prior_work_diagnostics": {
+        "hr_dual_alpha": {
+          "authoritative_portfolio_eligible": false,
+          "data_basis": "Yahoo chart OHLC scaled by AdjClose/Close to match yfinance auto_adjust=True semantics",
+          "data_end": "2020-12-31",
+          "data_start": "2010-02-11",
+          "eligibility_reason": "frozen prior strategy is replayed source-faithfully, but V4 authoritative portfolio remains Tiingo evidence-bearing",
+          "final_oos_opened": false,
+          "hidden_validation_opened": false,
+          "metrics_5bp": {
+            "cagr_pct": 29.766321345834367,
+            "cost_stress_cagr_pct": 28.146684715416104,
+            "cumulative_return_pct": 1605.5804494096435,
+            "dsr": 1.0,
+            "gross_exposure": 1.0,
+            "max_dd_pct": -59.8839255870289,
+            "pbo": null,
+            "psr_zero": 1.0,
+            "sharpe": 0.9341549482624961,
+            "sortino": 1.30464603719254,
+            "trades": 204,
+            "turnover_per_year": 16.476634374936875,
+            "years": 10.885918259786306
+          },
+          "protocol": "alpha_generation_v4",
+          "provider_role": "Yahoo legacy_adjusted_close source-parity diagnostic",
+          "scheduled_rebalances": 121,
+          "source_lock": {
+            "branch": "research/hr-dual-alpha-001",
+            "commit": "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+            "implementation_blob_sha": "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+            "prior_classification": "SUPERIOR_PASS",
+            "repository": "tjhuber2009-eng/hr_mech",
+            "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
+          },
+          "stage": "development_only",
+          "stop_count": 83
+        }
       },
       "promotion_blocked": false,
       "protocol": "alpha_generation_v4",
@@ -117287,14 +117352,36 @@
     "continuous_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-06T15:48:00Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34043434326",
+        "id": 34043434326,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 107,
+        "status": "pending",
+        "updated_at": "2026-09-06T15:48:03Z"
+      },
+      {
+        "conclusion": null,
+        "created_at": "2026-09-06T15:30:52Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34042541913",
+        "id": 34042541913,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 106,
+        "status": "in_progress",
+        "updated_at": "2026-09-06T15:48:07Z"
+      },
+      {
+        "conclusion": "success",
         "created_at": "2026-09-06T15:13:43Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34041640010",
         "id": 34041640010,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 105,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T15:13:49Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T15:48:04Z"
       },
       {
         "conclusion": "success",
@@ -117350,28 +117437,6 @@
         "run_number": 100,
         "status": "completed",
         "updated_at": "2026-09-06T13:49:23Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T12:22:55Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34032927460",
-        "id": 34032927460,
-        "name": "Continuous NVIDIA AUTORESEARCH",
-        "run_number": 99,
-        "status": "completed",
-        "updated_at": "2026-09-06T13:08:53Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T12:01:39Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34031897757",
-        "id": 34031897757,
-        "name": "Continuous NVIDIA AUTORESEARCH",
-        "run_number": 98,
-        "status": "completed",
-        "updated_at": "2026-09-06T12:22:59Z"
       }
     ],
     "tournament_jobs": [
@@ -117540,6 +117605,17 @@
     ],
     "v4_runs": [
       {
+        "conclusion": null,
+        "created_at": "2026-09-06T15:47:56Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34043430701",
+        "id": 34043430701,
+        "name": "AUTORESEARCH v4 promotion cycle",
+        "run_number": 24,
+        "status": "pending",
+        "updated_at": "2026-09-06T15:47:58Z"
+      },
+      {
         "conclusion": "success",
         "created_at": "2026-09-06T13:49:15Z",
         "event": "workflow_dispatch",
@@ -117615,17 +117691,6 @@
         "run_number": 17,
         "status": "completed",
         "updated_at": "2026-09-06T10:22:36Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T09:30:24Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34024840971",
-        "id": 34024840971,
-        "name": "AUTORESEARCH v4 promotion cycle",
-        "run_number": 16,
-        "status": "completed",
-        "updated_at": "2026-09-06T10:01:45Z"
       }
     ]
   }
