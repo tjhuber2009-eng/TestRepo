@@ -67,7 +67,7 @@ def build_tracks():
 
 def read_results():
     out={}
-    quality=read_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
+    quality=load_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
     blocked_targets={
         key for key,row in quality.items()
         if isinstance(row,dict) and row.get("status")=="blocked"
@@ -101,7 +101,7 @@ def development_end(target):
 
 
 def qualify_data(target, path):
-    quality=read_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
+    quality=load_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
     prior=quality.get(target["id"])
     if prior:
         if prior.get("status")=="blocked":
