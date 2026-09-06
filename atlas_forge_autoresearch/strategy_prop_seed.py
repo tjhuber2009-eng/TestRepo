@@ -1,7 +1,7 @@
 """
-Reconstructed MoonStrategy PROP-FIRM seed with volatility-targeted sizing.
+Reconstructed AtlasStrategy PROP-FIRM seed with volatility-targeted sizing.
 
-IMPORTANT: Moon Dev's exact original strategy.py was not visible in the supplied
+IMPORTANT: Atlas Forge's exact original strategy.py was not visible in the supplied
 screenshots. The screenshots do, however, explicitly reference vol_target and
 f_max as sizing controls and say the frozen margin exists to allow
 volatility-targeted units. This seed therefore preserves the simple breakout
@@ -48,7 +48,7 @@ def _realized_vol(close, n):
     ).to_numpy()
 
 
-class MoonStrategy(Strategy):
+class AtlasStrategy(Strategy):
     # Structural seed logic.
     entry_lookback = 20
     exit_lookback = 10

@@ -171,10 +171,10 @@ def assert_stage_data_boundary(df, stage):
 
 
 def run_bt(df, commission):
-    from strategy import MoonStrategy
+    from strategy import AtlasStrategy
     return Backtest(
         df,
-        MoonStrategy,
+        AtlasStrategy,
         cash=CASH,
         commission=commission,
         margin=MARGIN,

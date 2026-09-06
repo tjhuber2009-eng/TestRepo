@@ -1,5 +1,5 @@
 """
-Moon Dev AUTORESEARCH — NVIDIA NIM variant.
+Atlas Forge AUTORESEARCH — NVIDIA NIM variant.
 
 The research harness and keep/revert rules stay local and frozen. NVIDIA only
 proposes one complete replacement for strategy.py at a time.
@@ -110,15 +110,15 @@ def semantic_units(source):
     for node in tree.body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             units[f"func:{node.name}"] = _node_hash(node)
-        elif isinstance(node, ast.ClassDef) and node.name == "MoonStrategy":
+        elif isinstance(node, ast.ClassDef) and node.name == "AtlasStrategy":
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    units[f"MoonStrategy.{item.name}"] = _node_hash(item)
+                    units[f"AtlasStrategy.{item.name}"] = _node_hash(item)
                 elif isinstance(item, (ast.Assign, ast.AnnAssign)):
                     targets = item.targets if isinstance(item, ast.Assign) else [item.target]
                     for target in targets:
                         if isinstance(target, ast.Name):
-                            units[f"MoonStrategy.assign:{target.id}"] = _node_hash(item)
+                            units[f"AtlasStrategy.assign:{target.id}"] = _node_hash(item)
     return units
 
 
@@ -136,9 +136,9 @@ def local_change_guard(candidate, baseline):
     if len(changed) > 4:
         return False, f"too many semantic units changed ({len(changed)}): {changed[:8]}"
 
-    changed_methods = [x for x in changed if x.startswith("MoonStrategy.")]
+    changed_methods = [x for x in changed if x.startswith("AtlasStrategy.")]
     if len(changed_methods) > 3:
-        return False, f"too many MoonStrategy units changed ({len(changed_methods)}): {changed_methods}"
+        return False, f"too many AtlasStrategy units changed ({len(changed_methods)}): {changed_methods}"
 
     base_c = ast_complexity(baseline)
     cand_c = ast_complexity(candidate)
@@ -168,7 +168,7 @@ def risk_control_fingerprint(source):
     """
     tree = ast.parse(source, filename=STRATEGY)
     cls = next(
-        (x for x in tree.body if isinstance(x, ast.ClassDef) and x.name == "MoonStrategy"),
+        (x for x in tree.body if isinstance(x, ast.ClassDef) and x.name == "AtlasStrategy"),
         None,
     )
     if cls is None:
@@ -456,7 +456,7 @@ def build_prompt(iteration, base):
             "COPY the current file verbatim except for the smallest code region needed",
             "for that one conceptual change. Do not rewrite unchanged helpers/imports.",
             "A normal accepted edit changes at most one helper plus init/next.",
-            "Preserve class MoonStrategy and obey every law in program.md.",
+            "Preserve class AtlasStrategy and obey every law in program.md.",
             "Do not change position size merely to increase returns.",
             "Do not use future data or OOS information.",
             "Do not run a backtest yourself.",
@@ -628,10 +628,10 @@ def validate_payload(proposal, source):
         raise ValueError("strategy source contains markdown fences")
     tree = ast.parse(source, filename=STRATEGY)
     if not any(
-        isinstance(node, ast.ClassDef) and node.name == "MoonStrategy"
+        isinstance(node, ast.ClassDef) and node.name == "AtlasStrategy"
         for node in ast.walk(tree)
     ):
-        raise ValueError("strategy.py does not define class MoonStrategy")
+        raise ValueError("strategy.py does not define class AtlasStrategy")
     validate_source_safety(tree)
     proposal = proposal.strip().splitlines()[0].replace("\t", " ")[:200]
     return proposal, source.rstrip() + "\n"
@@ -923,7 +923,7 @@ def main():
     ap.add_argument("--fallback-model", default=DEFAULT_MODEL)
     args = ap.parse_args()
 
-    print("MOON DEV AUTORESEARCH — NVIDIA NIM")
+    print("ATLAS FORGE AUTORESEARCH — NVIDIA NIM")
     print(f"model={args.model}")
     print(f"endpoint={NVIDIA_BASE_URL}")
     print(f"harness={HARNESS}")

@@ -77,10 +77,10 @@ def load_data():
 
 
 def run(df):
-    from strategy import MoonStrategy
+    from strategy import AtlasStrategy
     return Backtest(
         df,
-        MoonStrategy,
+        AtlasStrategy,
         cash=CASH,
         commission=COMMISSION,
         margin=MARGIN,

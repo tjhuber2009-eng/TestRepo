@@ -16,7 +16,7 @@ Claude Code. It calls NVIDIA NIM through the OpenAI-compatible endpoint, reads
 the key from NVIDIA_API_KEY, and requires strict JSON containing one proposal
 and a complete replacement strategy.py.
 
-The host validates Python syntax and the MoonStrategy class before any strategy
+The host validates Python syntax and the AtlasStrategy class before any strategy
 replacement is accepted for backtesting.
 
 The frozen harness, scoring equation, dates, commission, margin, minimum-trade

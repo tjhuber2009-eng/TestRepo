@@ -11,7 +11,7 @@ from the research dataset entirely.
 
 - Change `strategy.py` only.
 - Make exactly **one conceptual strategy change** per attempt.
-- Preserve class `MoonStrategy`.
+- Preserve class `AtlasStrategy`.
 - Preserve causal execution. Backtesting.py uses `trade_on_close=False`;
   orders placed from the newest completed bar fill on the following bar.
 - Do not read files, environment variables, network resources, shell commands,

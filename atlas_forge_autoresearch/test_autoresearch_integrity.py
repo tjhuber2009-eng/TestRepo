@@ -399,7 +399,7 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             'import pandas as pd\n'
             'from backtesting import Strategy\n'
             'FAMILY = "bollinger_breakout_20_2"\n'
-            'class MoonStrategy(Strategy):\n'
+            'class AtlasStrategy(Strategy):\n'
             '    def init(self): pass\n'
             '    def next(self): pass\n'
         )
@@ -689,7 +689,7 @@ class AutoresearchIntegrityTests(unittest.TestCase):
 
     def test_numeric_only_mutation_is_structurally_detectable(self):
         a = """
-class MoonStrategy:
+class AtlasStrategy:
     vol_target = 0.08
     f_max = 0.5
     vol_lookback = 30
@@ -705,7 +705,7 @@ class MoonStrategy:
 
     def test_risk_control_changes_are_detectable(self):
         a = """
-class MoonStrategy:
+class AtlasStrategy:
     vol_target = 0.08
     f_max = 0.5
     vol_lookback = 30
@@ -723,7 +723,7 @@ class MoonStrategy:
 def helper(x):
     return x
 
-class MoonStrategy:
+class AtlasStrategy:
     vol_target = 0.08
     f_max = 0.5
     vol_lookback = 30
@@ -741,14 +741,14 @@ class MoonStrategy:
         )
         ok, detail = loop.local_change_guard(candidate, base)
         self.assertTrue(ok, detail)
-        self.assertEqual(detail, ["MoonStrategy.next"])
+        self.assertEqual(detail, ["AtlasStrategy.next"])
 
     def test_wholesale_rewrite_is_rejected(self):
         base = """
 def h1(x): return x
 def h2(x): return x
 
-class MoonStrategy:
+class AtlasStrategy:
     vol_target = 0.08
     f_max = 0.5
     vol_lookback = 30
@@ -762,7 +762,7 @@ def h1(x): return x + 1
 def h2(x): return x + 2
 def h3(x): return x + 3
 
-class MoonStrategy:
+class AtlasStrategy:
     vol_target = 0.08
     f_max = 0.5
     vol_lookback = 30
@@ -1307,7 +1307,7 @@ class MoonStrategy:
 
     def test_strategy_safety_rejects_dunder_builtin_io_bypass(self):
         tree = __import__("ast").parse(
-            'class MoonStrategy:\n'
+            'class AtlasStrategy:\n'
             '    def next(self):\n'
             '        __builtins__["open"]("hidden.csv")\n'
         )
@@ -1317,7 +1317,7 @@ class MoonStrategy:
     def test_strategy_safety_rejects_unlisted_pandas_reader_family(self):
         tree = __import__("ast").parse(
             'import pandas as pd\n'
-            'class MoonStrategy:\n'
+            'class AtlasStrategy:\n'
             '    def next(self):\n'
             '        pd.read_fwf("hidden.txt")\n'
         )

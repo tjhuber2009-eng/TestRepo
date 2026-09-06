@@ -475,7 +475,7 @@ def realized_vol(close, n=30):
     return (r.rolling(n).std(ddof=0).shift(1)*np.sqrt(BARS_PER_YEAR)).to_numpy()
 
 
-class MoonStrategy(Strategy):
+class AtlasStrategy(Strategy):
     vol_lookback=30
     vol_target=__VOL_TARGET__
     f_max=__F_MAX__

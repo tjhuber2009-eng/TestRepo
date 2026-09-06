@@ -148,7 +148,7 @@ def _atr_ratio_mean(high, low, close, atr_n, mean_n):
     return ratio.rolling(mean_n).mean().shift(1).to_numpy()
 
 
-class MoonStrategy(Strategy):
+class AtlasStrategy(Strategy):
     vol_lookback = 30
     vol_target = __VOL_TARGET__
     f_max = __F_MAX__

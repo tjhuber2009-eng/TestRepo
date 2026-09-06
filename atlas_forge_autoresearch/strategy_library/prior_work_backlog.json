@@ -425,8 +425,8 @@
       ]
     },
     {
-      "id": "moondev_channel_strategy_research",
-      "origin": "Prior Moon Dev YouTube strategy-mining project",
+      "id": "atlasforge_channel_strategy_research",
+      "origin": "Prior Atlas Forge YouTube strategy-mining project",
       "status": "source_revisit",
       "requirements": [
         "recover mechanical rules for additional strategies not already in registry"

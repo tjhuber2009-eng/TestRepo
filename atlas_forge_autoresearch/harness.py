@@ -1,5 +1,5 @@
 """
-Moon Dev AUTORESEARCH — reconstructed FROZEN harness.
+Atlas Forge AUTORESEARCH — reconstructed FROZEN harness.
 """
 
 import argparse
@@ -45,10 +45,10 @@ def k_metric(stats):
 
 
 def run(df):
-    from strategy import MoonStrategy
+    from strategy import AtlasStrategy
     bt = Backtest(
         df,
-        MoonStrategy,
+        AtlasStrategy,
         cash=CASH,
         commission=COMMISSION,
         margin=MARGIN,

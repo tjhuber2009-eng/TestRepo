@@ -1,4 +1,4 @@
-# Moon Dev AUTORESEARCH — program.md
+# Atlas Forge AUTORESEARCH — program.md
 
 This file is the research memory and steering wheel. The loop gives you this
 file plus the last 30 scored experiments. You propose one change; the frozen
@@ -8,7 +8,7 @@ harness decides whether it lives.
 
 - `strategy.py` only. Nothing else. Not the harness, not the data, not this file.
 - One idea per try. If a change needs two knobs to make sense, that is one idea.
-- Keep the class name `MoonStrategy`. Keep indicators in `self.I()`.
+- Keep the class name `AtlasStrategy`. Keep indicators in `self.I()`.
 - You may run `python harness.py --check` to catch a crash (fast, 1500 bars).
   Do NOT run `--is`, `--oos`, `--full`, or `--asset`. The loop scores. You propose.
 - Write a one-line description of the idea to `proposal.txt`, then stop.

@@ -1,6 +1,6 @@
-# Moon Dev AUTORESEARCH — NVIDIA NIM reconstruction
+# Atlas Forge AUTORESEARCH — NVIDIA NIM reconstruction
 
-This branch contains a runnable reconstruction of the Moon Dev/Karpathy trading
+This branch contains a runnable reconstruction of the Atlas Forge/Karpathy trading
 autoresearch loop, with the repeated research-agent calls moved from Claude Code
 to NVIDIA NIM.
 
@@ -41,7 +41,7 @@ The model must return JSON with:
 
     {"proposal":"one-line description","strategy_py":"complete Python source"}
 
-The host validates JSON, Python syntax, and the required MoonStrategy class
+The host validates JSON, Python syntax, and the required AtlasStrategy class
 before writing strategy.py.
 
 ## Setup on Windows PowerShell
@@ -83,6 +83,6 @@ into another training set.
 
 ## Reconstruction limitation
 
-The original Moon Dev seed strategy and exact data-loader implementation were
+The original Atlas Forge seed strategy and exact data-loader implementation were
 not visible in the supplied screenshots. The included seed is a simple breakout
-strategy so the loop is runnable; it is not claimed to be Moon Dev's original.
+strategy so the loop is runnable; it is not claimed to be Atlas Forge's original.
