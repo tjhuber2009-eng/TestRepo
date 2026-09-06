@@ -25,13 +25,13 @@ jobs:
       - name: Restore current research state
         shell: bash
         run: |
-          git fetch origin continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state
+          git fetch origin +refs/heads/continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state
           git checkout refs/remotes/origin/continuous-autoresearch-state -- moondev_autoresearch_reconstruction/continuous_state
 
       - name: Restore current V4 development state
         shell: bash
         run: |
-          git fetch origin autoresearch-v4-state:refs/remotes/origin/autoresearch-v4-state || true
+          git fetch origin +refs/heads/autoresearch-v4-state:refs/remotes/origin/autoresearch-v4-state || true
           if git rev-parse --verify refs/remotes/origin/autoresearch-v4-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/autoresearch-v4-state -- moondev_autoresearch_reconstruction/v4_state || true
           fi
@@ -39,7 +39,7 @@ jobs:
       - name: Restore tournament state if available
         shell: bash
         run: |
-          git fetch origin model-tournament-state:refs/remotes/origin/model-tournament-state || true
+          git fetch origin +refs/heads/model-tournament-state:refs/remotes/origin/model-tournament-state || true
           if git rev-parse --verify refs/remotes/origin/model-tournament-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/model-tournament-state -- moondev_autoresearch_reconstruction/tournament_state || true
           fi
@@ -89,7 +89,7 @@ jobs:
       - name: Publish standalone-dashboard data feed
         shell: bash
         run: |
-          git fetch origin autoresearch-dashboard-state:refs/remotes/origin/autoresearch-dashboard-state
+          git fetch origin +refs/heads/autoresearch-dashboard-state:refs/remotes/origin/autoresearch-dashboard-state
           rm -rf ../autoresearch-dashboard-state-wt
           git worktree add -B autoresearch-dashboard-state ../autoresearch-dashboard-state-wt refs/remotes/origin/autoresearch-dashboard-state
           mkdir -p ../autoresearch-dashboard-state-wt/live
