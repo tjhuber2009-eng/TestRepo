@@ -1079,6 +1079,49 @@ class V4AlphaGenerationTests(unittest.TestCase):
             places=12,
         )
 
+    def test_staggered_satellite_anchor_blend_is_finite_and_one_sided(self):
+        idx = pd.bdate_range("2018-01-01", periods=320)
+        core = pd.DataFrame({
+            "core_a": np.full(len(idx), 0.0004),
+            "core_b": np.full(len(idx), 0.0002),
+        }, index=idx)
+        leader = pd.Series(0.0012, index=idx[180:], name="leader")
+        partner = pd.Series(0.0007, index=idx[200:], name="partner")
+        other = pd.Series(0.0005, index=idx[210:], name="other")
+        candidates, specs = build_staggered_satellite_candidates(
+            core,
+            {"core_a": 0.5, "core_b": 0.5},
+            {
+                "leader": leader,
+                "partner": partner,
+                "other": other,
+            },
+            max_satellite_weight=0.35,
+            sleeve_steps=(0.35,),
+            anchor_name="leader",
+            anchor_weight=0.80,
+        )
+        targeted = [
+            name for name in candidates
+            if name.startswith("satellite_0.35__anchor_0.80__leader+")
+        ]
+        self.assertEqual(len(targeted), 2)
+        for name in targeted:
+            spec = specs[name]
+            self.assertAlmostEqual(spec.satellite_weights["leader"], 0.80)
+            partner_names = set(spec.satellite_weights) - {"leader"}
+            self.assertEqual(len(partner_names), 1)
+            self.assertAlmostEqual(
+                spec.satellite_weights[next(iter(partner_names))],
+                0.20,
+            )
+        self.assertFalse(
+            any(
+                "anchor_0.80__partner+leader" in name
+                for name in candidates
+            )
+        )
+
     def test_staggered_satellite_rejects_missing_returns_after_inception(self):
         idx = pd.bdate_range("2018-01-01", periods=300)
         core = pd.DataFrame({
