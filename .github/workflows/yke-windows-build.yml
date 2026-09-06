@@ -146,6 +146,74 @@ jobs:
           }
           Get-Content $checksumPath
 
+      - name: Smoke install and uninstall Windows packages
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = Join-Path $PWD 'build/yke-v3.1.0/src-tauri/target/release/bundle'
+          $displayName = 'YouTube Intelligence Desktop'
+
+          function Get-AppEntry {
+            $paths = @(
+              'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+              'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+              'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*'
+            )
+            foreach ($path in $paths) {
+              $hit = Get-ItemProperty $path -ErrorAction SilentlyContinue |
+                Where-Object { $_.DisplayName -eq $displayName } |
+                Select-Object -First 1
+              if ($hit) { return $hit }
+            }
+            return $null
+          }
+
+          function Assert-AppInstalled {
+            param([string]$Kind)
+            Start-Sleep -Seconds 2
+            $entry = Get-AppEntry
+            if (-not $entry) { throw "$Kind installer returned success but no uninstall registration was found." }
+            if ($entry.InstallLocation -and -not (Test-Path -LiteralPath $entry.InstallLocation)) {
+              throw "$Kind registered an install location that does not exist: $($entry.InstallLocation)"
+            }
+            "${Kind} install registration: $($entry.PSPath)"
+            return $entry
+          }
+
+          function Assert-AppRemoved {
+            param([string]$Kind)
+            Start-Sleep -Seconds 2
+            if (Get-AppEntry) { throw "$Kind uninstall completed but product registration remains." }
+            "${Kind} uninstall registration removed."
+          }
+
+          $msi = Get-ChildItem (Join-Path $bundle 'msi') -Filter '*.msi' -File | Select-Object -First 1
+          if (-not $msi) { throw 'MSI installer missing before smoke test.' }
+          & msiexec.exe /i $msi.FullName /qn /norestart
+          if ($LASTEXITCODE -notin 0, 3010) { throw "MSI install failed with exit code $LASTEXITCODE" }
+          $null = Assert-AppInstalled -Kind 'MSI'
+          & msiexec.exe /x $msi.FullName /qn /norestart
+          if ($LASTEXITCODE -notin 0, 3010) { throw "MSI uninstall failed with exit code $LASTEXITCODE" }
+          Assert-AppRemoved -Kind 'MSI'
+
+          $nsis = Get-ChildItem (Join-Path $bundle 'nsis') -Filter '*.exe' -File | Select-Object -First 1
+          if (-not $nsis) { throw 'NSIS installer missing before smoke test.' }
+          $p = Start-Process -FilePath $nsis.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "NSIS install failed with exit code $($p.ExitCode)" }
+          $entry = Assert-AppInstalled -Kind 'NSIS'
+          $uninstall = [string]$entry.UninstallString
+          if ([string]::IsNullOrWhiteSpace($uninstall)) { throw 'NSIS uninstall registration has no UninstallString.' }
+          if ($uninstall -match '^"([^"]+)"') {
+            $uninstaller = $Matches[1]
+          } else {
+            $uninstaller = ($uninstall -split ' ')[0]
+          }
+          if (-not (Test-Path -LiteralPath $uninstaller -PathType Leaf)) {
+            throw "NSIS uninstaller does not exist: $uninstaller"
+          }
+          $p = Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "NSIS uninstall failed with exit code $($p.ExitCode)" }
+          Assert-AppRemoved -Kind 'NSIS'
       - name: Upload verified Windows installers
         uses: actions/upload-artifact@v4
         with:
