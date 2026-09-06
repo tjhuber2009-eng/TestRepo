@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "policy": "sequential_universe_expansion_v1",
+  "purpose": "Finish the fixed current universe before adding prior-work families; only after that expand through free external discovery. Keep all hidden validation sealed until the final expanded development universe is frozen.",
+  "current_stage": "phase1_fixed_514",
+  "hidden_validation_policy": "sealed_until_phase3_universe_and_all_adaptive_search_are_frozen",
+  "final_oos_policy": "2023_plus_sealed_until_explicit_user_authorization",
+  "phases": [
+    {
+      "id": "phase1_fixed_514",
+      "description": "Complete the current 514 runnable tracks through development breadth/depth/elite using the frozen registry and targets.",
+      "expected_track_count": 514,
+      "registry_expansion_allowed": false,
+      "exit_condition": "current 514-track development search reaches the pre-validation freeze point",
+      "next": "phase2_prior_work"
+    },
+    {
+      "id": "phase2_prior_work",
+      "description": "Expand to trading strategies and bots from the user's prior projects that are not in the current runnable 514-track universe. Reconstruct exact causal rules where possible; otherwise record a terminal blocked reason.",
+      "backlog": "strategy_library/prior_work_backlog.json",
+      "paid_sources_allowed": false,
+      "hidden_validation_allowed": false,
+      "next": "phase3_free_pipeline"
+    },
+    {
+      "id": "phase3_free_pipeline",
+      "description": "Expand using free public discovery only. Every discovery is a hypothesis until exact causal reconstruction and project backtesting.",
+      "pipeline": "free_source_pipeline.py",
+      "paid_sources_allowed": false,
+      "sources": [
+        "Crossref",
+        "OpenAlex",
+        "arXiv",
+        "GitHub",
+        "Reddit"
+      ],
+      "hidden_validation_allowed": false,
+      "exit_condition": "finite discovery batch is admitted/rejected and all adaptive development search is frozen",
+      "next": "hidden_validation"
+    },
+    {
+      "id": "hidden_validation",
+      "description": "One-look hidden pre-OOS validation only after the full expanded research universe is frozen.",
+      "opens_2021_2022_only": true,
+      "final_2023_plus_remains_sealed": true
+    }
+  ]
+}
