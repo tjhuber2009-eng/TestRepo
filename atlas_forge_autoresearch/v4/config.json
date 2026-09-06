@@ -196,7 +196,14 @@
       ],
       "selection": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
       "boundary_expansion_reason": "the prior development winner used the full 0.25 sleeve cap; test only the next two sleeve steps without opening hidden validation",
-      "purpose": "monetize strong shorter-history alpha without truncating the 2010-2020 core evidence window"
+      "purpose": "monetize strong shorter-history alpha without truncating the 2010-2020 core evidence window",
+      "local_diversification": {
+        "enabled": true,
+        "anchor_strategy": "continuous__qqe_proxy__btc__private",
+        "anchor_weight": 0.8,
+        "partner_weight": 0.2,
+        "rationale": "Development-only local neighborhood around prior 35% BTC QQE winner; seeks tail-risk diversification without increasing the 35% sleeve cap or 1.5x gross cap"
+      }
     },
     "financing": {
       "enabled": true,
