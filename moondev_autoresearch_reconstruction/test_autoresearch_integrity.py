@@ -385,6 +385,60 @@ class MoonStrategy:
         self.assertEqual(matrix.shape, (5, 8))
         self.assertEqual(len(ids), 5)
 
+    def test_cscv_loader_includes_baseline_deduplicates_and_matches_fingerprints(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "baseline.json").write_text(
+                json.dumps({
+                    "strategy_sha256": "baseline",
+                    "harness_sha256": "h1",
+                    "program_sha256": "p1",
+                    "cscv_slices": [
+                        {"raw_k": 0.1 + 0.01 * i} for i in range(8)
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            rows = [
+                {
+                    "candidate_ast_sha256": f"c{i}",
+                    "selection_eligible": True,
+                    "harness_sha256": "h1",
+                    "program_sha256": "p1",
+                    "cscv_slice_k": [0.02 * (i + j) for j in range(8)],
+                }
+                for i in range(4)
+            ]
+            rows += [
+                dict(rows[-1]),
+                {
+                    "candidate_ast_sha256": "wrong-harness",
+                    "selection_eligible": True,
+                    "harness_sha256": "other",
+                    "program_sha256": "p1",
+                    "cscv_slice_k": [9.0] * 8,
+                },
+            ]
+            p = root / "experiments.jsonl"
+            p.write_text(
+                "".join(json.dumps(x) + "\n" for x in rows),
+                encoding="utf-8",
+            )
+            matrix, ids = overfit_diagnostics.load_experiment_fold_matrix(
+                p,
+                baseline_path=root / "baseline.json",
+            )
+            diag = overfit_diagnostics.track_pbo(p)
+        self.assertEqual(matrix.shape, (5, 8))
+        self.assertEqual(ids[0], "baseline")
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertIsNotNone(diag)
+        self.assertEqual(diag["candidate_count"], 5)
+        self.assertEqual(
+            diag["candidate_pool"],
+            "frozen_baseline_plus_unique_selection_eligible_backtests",
+        )
+
     def test_cscv_requires_even_symmetric_partition(self):
         self.assertIsNone(overfit_diagnostics.cscv_pbo(np.ones((6, 7))))
         out = overfit_diagnostics.cscv_pbo(
