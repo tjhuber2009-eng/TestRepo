@@ -2,6 +2,9 @@ name: Stock + FX AUTORESEARCH
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/stock-fx-autoresearch.yml"
 
 permissions:
   actions: write
