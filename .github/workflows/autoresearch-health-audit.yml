@@ -45,7 +45,7 @@ jobs:
         run: |
           mkdir -p /tmp/autoresearch-health
           for branch in continuous-autoresearch-state phase2-autoresearch-state phase3-hydration-state phase3-reconstruction-state phase3-engine-mapping-state autoresearch-v4-state; do
-            git fetch origin "$branch:refs/remotes/origin/$branch"
+            git fetch origin "+refs/heads/$branch:refs/remotes/origin/$branch"
           done
           git show origin/continuous-autoresearch-state:moondev_autoresearch_reconstruction/continuous_state/progress.json > /tmp/autoresearch-health/continuous.json
           git show origin/phase2-autoresearch-state:moondev_autoresearch_reconstruction/phase2_state/progress.json > /tmp/autoresearch-health/phase2.json
