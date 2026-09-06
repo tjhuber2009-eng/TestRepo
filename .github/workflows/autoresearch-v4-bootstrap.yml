@@ -2,7 +2,18 @@ name: AUTORESEARCH v4 development bootstrap
 
 on:
   workflow_dispatch:
+    inputs:
+      source_ref:
+        description: "Immutable V4 source commit or branch"
+        required: false
+        default: "autoresearch-v4-alpha-generation"
+        type: string
   workflow_call:
+    inputs:
+      source_ref:
+        required: false
+        type: string
+        default: "autoresearch-v4-alpha-generation"
 
 permissions:
   contents: write
@@ -23,8 +34,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: autoresearch-v4-alpha-generation
+          ref: ${{ inputs.source_ref }}
           fetch-depth: 0
+
+      - name: Verify requested V4 source
+        shell: bash
+        run: |
+          resolved="$(git rev-parse HEAD)"
+          requested="${{ inputs.source_ref }}"
+          if [[ "$requested" =~ ^[0-9a-fA-F]{40}$ ]] && [[ "$resolved" != "$requested" ]]; then
+            echo "::error::V4 source mismatch: requested $requested, resolved $resolved"
+            exit 1
+          fi
+          echo "Pinned V4 source: $resolved"
 
       - uses: actions/setup-python@v7
         with:
