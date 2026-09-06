@@ -1189,6 +1189,13 @@ def _frontier_rank(view_name, candidate):
             float(candidate.combined_evaluation_pass_probability),
             float(candidate.payout_efficiency_score),
         )
+    if view_name == "max_repeat_expected_reward":
+        return (
+            float(candidate.repeat_expected_reward_pct),
+            float(candidate.funded.survival_probability),
+            float(candidate.combined_evaluation_pass_probability),
+            float(candidate.repeat_payout_efficiency_score),
+        )
     if view_name == "max_evaluation_pass":
         days = (
             1e99
@@ -1280,6 +1287,7 @@ def _frontier_day_brake_mutations(
     view_names: Sequence[str] = (
         "max_payout_efficiency",
         "max_repeat_payout_efficiency",
+        "max_repeat_expected_reward",
         "max_evaluation_pass",
         "safest_funded",
         "balanced",
