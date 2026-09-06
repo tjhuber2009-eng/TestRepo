@@ -24,3 +24,5 @@ jobs:
 
       - name: Cargo check exact v3.1 native shell
         run: cargo check --manifest-path youtube-knowledge-engine/native-probe/Cargo.toml
+
+# Probe trigger: complete native source staged.
