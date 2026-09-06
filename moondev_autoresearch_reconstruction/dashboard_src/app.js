@@ -386,16 +386,6 @@ function renderV4(){
 
   wrap.innerHTML=`
     <div class="v4-explainer">
-      <b>How to read this section:</b> “Pass” is the simulated probability of completing the evaluation, “12-cycle reward” is the repeated-payout research projection, and “survival” is the simulated funded-account survival rate. These are development estimates, not live proof.
-    </div>
-    <div class="frontier-grid">
-      ${summaryCard("FTMO 2-Step","" && repeat2,"Best repeat economics")}
-    </div>
-  `;
-
-  // Avoid nested-template coercion by append via insertAdjacentHTML.
-  wrap.innerHTML=`
-    <div class="v4-explainer">
       <b>How to read this section:</b> “Pass” = simulated evaluation completion; “12-cycle reward” = repeated-payout projection; “Survival” = simulated funded-account survival. Development estimates only.
     </div>
     <div class="frontier-grid">
