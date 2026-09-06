@@ -29,10 +29,9 @@ CONFIG=HERE/"continuous_config.json"
 PROTOCOL="nested_chronological_v3"
 LANE="phase2_prior_work"
 PHASE2_SOURCE_OVERRIDES={
-    "es":{"source":"stooq","symbol":"ES.F"},
-    "nq":{"source":"stooq","symbol":"NQ.F"},
-    "gold":{"source":"stooq","symbol":"GC.F"},
-    "oil":{"source":"stooq","symbol":"CL.F"},
+    "es":{"source":"yahoo_futures_proxy","symbol":"ES=F"},
+    "nq":{"source":"yahoo_futures_proxy","symbol":"NQ=F"},
+    "gold":{"source":"yahoo_futures_proxy","symbol":"GC=F"},
 }
 
 
@@ -63,7 +62,7 @@ def build_tracks():
         target.update(PHASE2_SOURCE_OVERRIDES.get(target["id"],{}))
         if target["id"] in PHASE2_SOURCE_OVERRIDES:
             target["data_quality_note"]=(
-                "Stooq continuous futures proxy; development screening only; "
+                "Yahoo continuous futures proxy with audited settlement-envelope normalization; "
                 "not contract-exact"
             )
         targets.append(target)
