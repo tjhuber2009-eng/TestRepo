@@ -34,10 +34,12 @@ def main():
     ap.add_argument("--continuous-progress")
     ap.add_argument("--phase2-progress")
     ap.add_argument("--phase2-followup-progress")
+    ap.add_argument("--phase2-promotion")
     ap.add_argument("--phase3-hydration")
     ap.add_argument("--phase3-reconstruction")
     ap.add_argument("--phase3-mapping")
     ap.add_argument("--v4-bootstrap")
+    ap.add_argument("--v4-prop")
     ap.add_argument("--output", default="health_report.json")
     args = ap.parse_args()
 
@@ -94,10 +96,12 @@ def main():
         "continuous": load(args.continuous_progress),
         "phase2": load(args.phase2_progress),
         "phase2_followup": load(args.phase2_followup_progress),
+        "phase2_promotion": load(args.phase2_promotion),
         "phase3_hydration": load(args.phase3_hydration),
         "phase3_reconstruction": load(args.phase3_reconstruction),
         "phase3_mapping": load(args.phase3_mapping),
         "v4": load(args.v4_bootstrap),
+        "v4_prop": load(args.v4_prop),
     }
 
     for name, state in states.items():
@@ -154,6 +158,106 @@ def main():
         if p2_follow.get("final_oos_opened") is True:
             errors.append("phase2 follow-up unexpectedly opened final OOS")
 
+    p2_promotion = states["phase2_promotion"]
+    ready_private = []
+    ready_prop = []
+    if p2_follow and p2_follow.get("all_survivors_followed_up"):
+        expected_ready = int(p2_follow.get("ready_for_v4_replay_count", 0))
+        if p2_promotion is None:
+            if expected_ready:
+                errors.append(
+                    "phase2 follow-up is frozen with V4-ready candidates but "
+                    "promotion_queue.json is missing"
+                )
+        else:
+            if p2_promotion.get("stage") != "adaptive_followup_complete":
+                errors.append(
+                    f"phase2 promotion unexpected stage: "
+                    f"{p2_promotion.get('stage')!r}"
+                )
+            rows = list(p2_promotion.get("rows") or [])
+            ready = [x for x in rows if x.get("ready_for_v4_replay") is True]
+            if len(ready) != expected_ready:
+                errors.append(
+                    f"phase2 promotion ready count {len(ready)} != "
+                    f"follow-up count {expected_ready}"
+                )
+            for row in ready:
+                source_path = row.get("promotion_source_path")
+                source_sha = row.get("promotion_source_sha256")
+                strategy_sha = row.get("strategy_sha256")
+                if not source_path or not source_sha or not strategy_sha:
+                    errors.append(
+                        f"{row.get('track_id')}: V4-ready Phase-2 candidate "
+                        "lacks exact promotion-source metadata"
+                    )
+                elif source_sha != strategy_sha:
+                    errors.append(
+                        f"{row.get('track_id')}: Phase-2 promotion source hash "
+                        "does not match replayed strategy hash"
+                    )
+            ready_private = [
+                x for x in ready if x.get("profile") == "private"
+            ]
+            ready_prop = [
+                x for x in ready if x.get("profile") == "prop"
+            ]
+
+    v4 = states["v4"]
+    if ready_private:
+        transfer = None if v4 is None else v4.get("phase2_private_transfer")
+        if not transfer:
+            pending.append({
+                "type": "finite_lane_progress",
+                "id": "phase2_private_v4_handoff",
+                "consumed": 0,
+                "total": len(ready_private),
+            })
+        else:
+            for row in transfer.get("candidates") or []:
+                if row.get("replay_status") == "error":
+                    errors.append(
+                        f"phase2 private V4 replay error: "
+                        f"{row.get('error') or row.get('track_id')}"
+                    )
+            consumed = int(transfer.get("candidate_count", 0))
+            if consumed < len(ready_private):
+                pending.append({
+                    "type": "finite_lane_progress",
+                    "id": "phase2_private_v4_handoff",
+                    "consumed": consumed,
+                    "total": len(ready_private),
+                })
+
+    v4_prop = states["v4_prop"]
+    if ready_prop:
+        transfer = (
+            None if v4_prop is None
+            else v4_prop.get("phase2_prop_transfer")
+        )
+        if not transfer:
+            pending.append({
+                "type": "finite_lane_progress",
+                "id": "phase2_prop_v4_handoff",
+                "consumed": 0,
+                "total": len(ready_prop),
+            })
+        else:
+            for row in transfer.get("candidates") or []:
+                if row.get("transfer_status") == "error":
+                    errors.append(
+                        f"phase2 prop V4 transfer error: "
+                        f"{row.get('error') or row.get('track_id')}"
+                    )
+            consumed = int(transfer.get("candidate_count", 0))
+            if consumed < len(ready_prop):
+                pending.append({
+                    "type": "finite_lane_progress",
+                    "id": "phase2_prop_v4_handoff",
+                    "consumed": consumed,
+                    "total": len(ready_prop),
+                })
+
     h = states["phase3_hydration"]
     r = states["phase3_reconstruction"]
     m = states["phase3_mapping"]
@@ -192,13 +296,22 @@ def main():
                 "pending": mapper_pending,
             })
 
-    v4 = states["v4"]
     if v4:
         data_end = str(v4.get("data_end", ""))
         if data_end and data_end > "2020-12-31":
             errors.append(f"v4 development data_end crossed sealed boundary: {data_end}")
         if v4.get("stage") != "development_only":
             errors.append(f"v4 unexpected stage: {v4.get('stage')!r}")
+    if v4_prop:
+        prop_end = str(v4_prop.get("data_end", ""))
+        if prop_end and prop_end > "2020-12-31":
+            errors.append(
+                f"v4 prop development data_end crossed sealed boundary: {prop_end}"
+            )
+        if v4_prop.get("stage") != "development_only":
+            errors.append(
+                f"v4 prop unexpected stage: {v4_prop.get('stage')!r}"
+            )
 
     report = {
         "status": "PASS" if not errors else "FAIL",
