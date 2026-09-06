@@ -5,6 +5,7 @@ from pathlib import Path
 import argparse
 import json
 import math
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -29,6 +30,18 @@ from .strategy_examples import (
     independent_trend_basket,
     leveraged_defensive_rotation,
 )
+
+
+def research_commit_sha() -> str | None:
+    """Return the exact checked-out research commit for result provenance."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
 
 
 def json_safe(value):
@@ -1364,6 +1377,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
 
     payload = {
         "protocol": "alpha_generation_v4",
+        "research_commit_sha": research_commit_sha(),
         "stage": "development_only",
         "data_end": max(
             frame.index.max().strftime("%Y-%m-%d") for frame in data.values()
