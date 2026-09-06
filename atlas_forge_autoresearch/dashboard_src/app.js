@@ -484,8 +484,8 @@ function renderV4(){
       <article class="kpi-card"><span>Observed max DD</span><strong>${pct(chosen.max_dd_pct,2)}</strong><small>cap 32%</small></article>
       <article class="kpi-card"><span>Bootstrap q95 DD</span><strong>${pct(chosen.bootstrap_dd_q95_pct,2)}</strong><small>stress drawdown</small></article>
       <article class="kpi-card"><span>Sharpe</span><strong>${fmt(chosen.sharpe,3)}</strong><small>development only</small></article>
-      <article class="kpi-card"><span>Gross / cash</span><strong>${pct(100*Number(chosen.gross_exposure||0),1)} / ${pct(100*Number(chosen.cash_weight||0),1)}</strong><small>portfolio exposure</small></article>
-      <article class="kpi-card"><span>Financing rate</span><strong>${chosen.financing_rate_pct==null?"—":pct(chosen.financing_rate_pct,1)}</strong><small>borrowed gross above 1× only</small></article>
+      <article class="kpi-card"><span>Scale / avg realized gross</span><strong>${fmt(Number(chosen.gross_exposure||0),3)}× / ${chosen.average_gross_exposure==null?"—":fmt(chosen.average_gross_exposure,3)+"×"}</strong><small>staggered sleeves may hold pre-inception cash</small></article>
+      <article class="kpi-card"><span>Financing rate</span><strong>${chosen.financing_rate_pct==null?"—":pct(chosen.financing_rate_pct,1)}</strong><small>realized gross above 1× only</small></article>
       <article class="kpi-card"><span>Annual financing drag</span><strong>${chosen.annual_financing_drag_pct==null?"—":pct(chosen.annual_financing_drag_pct,2)}</strong><small>${chosen.borrowed_gross==null?"—":fmt(chosen.borrowed_gross,3)}× borrowed gross</small></article>
     </div>
     <div class="dashboard-grid" style="margin-top:16px">
@@ -498,7 +498,7 @@ function renderV4(){
       </article>
     </div>
     ${financingRows?`<article class="glass-card" style="margin-top:16px"><div class="card-title-row"><div><span class="kicker">LEVERAGE REALISM</span><h3>Financing-rate sensitivity</h3></div></div>
-      <div class="v4-explainer">Base financing: ${pct(financingPolicy.base_annual_rate_pct,1)} annually. Charges apply only to gross exposure above 1×; no cash-yield credit is assumed.</div>
+      <div class="v4-explainer">Base financing: ${pct(financingPolicy.base_annual_rate_pct,1)} annually. Charges apply only to realized time-varying gross above 1×; no cash-yield credit is assumed.</div>
       <div class="table-wrap"><table><thead><tr><th>Financing</th><th class="num">CAGR</th><th class="num">Boot median</th><th class="num">Boot Q10</th><th class="num">q95 DD</th><th class="num">Gross</th><th class="num">Annual drag</th></tr></thead><tbody>${financingRows}</tbody></table></div>
     </article>`:""}`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
 
