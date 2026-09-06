@@ -86,37 +86,10 @@ jobs:
           test -s dashboard_output/app.js
           test -s dashboard_output/styles.css
 
-      - name: Publish standalone-dashboard data feed
-        shell: bash
-        run: |
-          git fetch origin autoresearch-dashboard-state:refs/remotes/origin/autoresearch-dashboard-state
-          rm -rf ../autoresearch-dashboard-state-wt
-          git worktree add -B autoresearch-dashboard-state ../autoresearch-dashboard-state-wt refs/remotes/origin/autoresearch-dashboard-state
-          mkdir -p ../autoresearch-dashboard-state-wt/live
-          cp moondev_autoresearch_reconstruction/dashboard_output/data.json ../autoresearch-dashboard-state-wt/live/data.json
-          cd ../autoresearch-dashboard-state-wt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f live/data.json
-          if git diff --cached --quiet; then
-            echo "dashboard data unchanged"
-          else
-            git commit -m "Dashboard live data run $GITHUB_RUN_ID"
-            git push origin HEAD:autoresearch-dashboard-state
-          fi
-
-      - name: Update stable live dashboard issue
+      - name: Keep dashboard local to workflow
         shell: bash
         working-directory: moondev_autoresearch_reconstruction
         run: |
-          gh issue edit 20 \
-            --repo "$GITHUB_REPOSITORY" \
-            --body-file live-dashboard.md
-
-      - name: Upload private dashboard artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: autoresearch-dashboard-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/dashboard_output
-          retention-days: 30
+          echo "Public dashboard publishing disabled."
+          echo "dashboard_output retained only inside this ephemeral job workspace."
 
