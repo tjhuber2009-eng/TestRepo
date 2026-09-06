@@ -2,6 +2,9 @@ name: Atlas Forge brand migration
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/atlas-forge-brand-migration.yml"
 
 permissions:
   actions: write
@@ -54,7 +57,6 @@ jobs:
           git checkout -B atlas-forge-autoresearch refs/remotes/origin/atlas-forge-autoresearch
           python - <<'PY'
           from pathlib import Path
-          import subprocess
 
           replacements = [
               ("MOON DEV AUTORESEARCH", "ATLAS FORGE AUTORESEARCH"),
