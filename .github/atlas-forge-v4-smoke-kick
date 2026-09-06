@@ -1,6 +1,6 @@
 Atlas Forge V4 smoke
-Exposure-aware financing verification
-Source head: a814acbdfc65c9a86cf8049fdc2e003f25adcf0b
-Checks: realized time-varying gross financing, staggered sleeve cash before inception, max expected prop reward registry
+Profit-optimal financing verification
+Source head: faa747ceedc1df07ad8b62e8cb10e5535f1c08d3
+Checks: realized time-varying gross financing + growth-optimal leverage scale + max expected prop reward registry
 Hidden validation: sealed
 Final 2023+ OOS: sealed
