@@ -21862,7 +21862,7 @@
     "stock_track_count": 900,
     "target_count": 37
   },
-  "generated_at": "2026-09-06T21:41:49Z",
+  "generated_at": "2026-09-06T22:06:53Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -85239,6 +85239,14 @@
             "soft_scale": 0.75
           }
         },
+        "matched_static_gross_result": {
+          "candidates_evaluated": 1,
+          "chosen": null,
+          "dd_cap_pct": 32.0,
+          "feasible_count": 0,
+          "max_gross": 1.2280057755881095,
+          "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+        },
         "risk_scaled_result": {
           "candidates_evaluated": 1,
           "chosen": {
@@ -85360,6 +85368,29 @@
         ]
       },
       "portfolio_satellite": {
+        "matched_static_gross_result": {
+          "candidates_evaluated": 1,
+          "chosen": {
+            "bootstrap_cagr_q10_pct": 16.565371599400933,
+            "bootstrap_cagr_q25_pct": 18.938959877394645,
+            "bootstrap_dd_q95_pct": 26.29654866234814,
+            "bootstrap_median_cagr_pct": 22.61896731256561,
+            "cagr_pct": 22.27216834163317,
+            "cash_weight": 0.0,
+            "effective_n": 1.0,
+            "gross_exposure": 1.2280057755881095,
+            "max_dd_pct": -15.69684226584086,
+            "score": 22.657281012103493,
+            "sharpe": 1.4156849768941295,
+            "weights": {
+              "satellite_0.20__continuous__qqe_proxy__btc__private": 1.2280057755881095
+            }
+          },
+          "dd_cap_pct": 32.0,
+          "feasible_count": 1,
+          "max_gross": 1.2280057755881095,
+          "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+        },
         "risk_scaled_result": {
           "candidates_evaluated": 1,
           "chosen": {
@@ -85384,8 +85415,10 @@
           "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
         },
         "sleeve": {
+          "best_raw_candidate": "satellite_0.20__continuous__qqe_proxy__btc__private",
           "candidate_count": 35,
-          "policy": "supplemental sleeve capped at 25% composition; pre-inception allocation held as cash",
+          "eligible_candidate_count": 22,
+          "policy": "supplemental sleeve capped at 25% composition; pre-inception allocation held as cash; all sleeves clear the same static-portfolio Q10 floor",
           "selected_candidate": "satellite_0.20__continuous__qqe_proxy__btc__private",
           "spec": {
             "inception_dates": {
@@ -85400,8 +85433,8 @@
         }
       },
       "portfolio_selection": {
-        "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
-        "reason": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+        "method": "static_vs_staggered_satellite_vs_causal_dynamic_v2",
+        "reason": "highest_bootstrap_median_cagr_among_architectures_clearing_common_static_q10_floor",
         "selected": "staggered_satellite"
       },
       "portfolio_static": {
@@ -85444,18 +85477,18 @@
           "final_oos_opened": false,
           "hidden_validation_opened": false,
           "metrics_5bp": {
-            "cagr_pct": 29.76629805242279,
-            "cost_stress_cagr_pct": 28.146661725580934,
-            "cumulative_return_pct": 1605.5771166192565,
+            "cagr_pct": 29.766277783369777,
+            "cost_stress_cagr_pct": 28.14664170576977,
+            "cumulative_return_pct": 1605.5742165548868,
             "dsr": 1.0,
             "gross_exposure": 1.0,
-            "max_dd_pct": -59.88393574699988,
+            "max_dd_pct": -59.883937373147056,
             "pbo": null,
             "psr_zero": 1.0,
-            "sharpe": 0.9341543314297861,
-            "sortino": 1.3046450786871966,
+            "sharpe": 0.9341540474881505,
+            "sortino": 1.3046446248201573,
             "trades": 204,
-            "turnover_per_year": 16.476617251059675,
+            "turnover_per_year": 16.476597253625588,
             "years": 10.885918259786306
           },
           "protocol": "alpha_generation_v4",
@@ -85479,7 +85512,7 @@
       },
       "promotion_blocked": false,
       "protocol": "alpha_generation_v4",
-      "research_commit_sha": "526540c48c4233000fad37c080e8721e24249365",
+      "research_commit_sha": "d3be45636e016c05e0c1109c8285b509ac5669ae",
       "reversal_parameter_optimizer": {
         "chosen": null,
         "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
@@ -113561,7 +113594,7 @@
                 }
               ],
               "input_precision": "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_prague_midnight_reset_exact_scale_compounding_daily_flat_policy",
-              "objective": "independently optimize Challenge, Verification, and funded exposure; use common bootstrap paths across scales; report first-reward payout, 12-cycle survival-discounted repeat-payout, pass-probability, safest-funded, balanced, and conservative risk views",
+              "objective": "independently optimize Challenge, Verification, and funded exposure; use common bootstrap paths across scales; report first-reward payout, maximum 12-cycle expected repeat reward, survival-discounted repeat-payout efficiency, pass-probability, safest-funded, balanced, and conservative risk views",
               "program": {
                 "challenge": {
                   "analysis_horizon_days": 252,
@@ -113781,6 +113814,44 @@
                   "payout_efficiency_score": 0.008201526144539964,
                   "repeat_expected_reward_pct": 3.0529658494439267,
                   "repeat_payout_efficiency_score": 0.003824326901830025,
+                  "repeat_reward_cycles": 12,
+                  "verification": null,
+                  "verification_exposure_scale": null
+                },
+                "max_repeat_expected_reward": {
+                  "challenge": {
+                    "analysis_horizon_days": 252,
+                    "daily_loss_breach_probability": 0.13975,
+                    "exposure_scale": 0.35,
+                    "fail_probability": 0.476,
+                    "max_loss_breach_probability": 0.33625,
+                    "median_days_to_pass": 122.0,
+                    "p75_days_to_pass": 170.0,
+                    "pass_probability": 0.346,
+                    "paths": 4000,
+                    "stage_id": "challenge",
+                    "timeout_probability": 0.178
+                  },
+                  "challenge_exposure_scale": 0.35,
+                  "combined_evaluation_pass_probability": 0.346,
+                  "expected_evaluation_days_if_passed": 122.0,
+                  "funded": {
+                    "best_day_ineligible_probability": 0.5905,
+                    "daily_loss_breach_probability": 0.01175,
+                    "expected_reward_pct": 0.6624181977736991,
+                    "exposure_scale": 0.35,
+                    "max_loss_breach_probability": 0.0,
+                    "median_positive_reward_pct": 1.9970327711233682,
+                    "paths": 4000,
+                    "positive_reward_probability": 0.30525,
+                    "reward_eligible_probability": 0.39775,
+                    "reward_window_days": 14,
+                    "survival_probability": 0.98825
+                  },
+                  "funded_exposure_scale": 0.35,
+                  "payout_efficiency_score": 0.0016852698266889698,
+                  "repeat_expected_reward_pct": 7.4549111243372606,
+                  "repeat_payout_efficiency_score": 0.00889448016903687,
                   "repeat_reward_cycles": 12,
                   "verification": null,
                   "verification_exposure_scale": null
@@ -139645,7 +139716,7 @@
                 }
               ],
               "input_precision": "hourly_intraday_equity_proxy_binance_spot_to_ftmo_crypto_cfd_prague_midnight_reset_exact_scale_compounding_daily_flat_policy",
-              "objective": "independently optimize Challenge, Verification, and funded exposure; use common bootstrap paths across scales; report first-reward payout, 12-cycle survival-discounted repeat-payout, pass-probability, safest-funded, balanced, and conservative risk views",
+              "objective": "independently optimize Challenge, Verification, and funded exposure; use common bootstrap paths across scales; report first-reward payout, maximum 12-cycle expected repeat reward, survival-discounted repeat-payout efficiency, pass-probability, safest-funded, balanced, and conservative risk views",
               "program": {
                 "challenge": {
                   "analysis_horizon_days": 252,
@@ -140199,6 +140270,56 @@
                   },
                   "verification_exposure_scale": 0.95
                 },
+                "max_repeat_expected_reward": {
+                  "challenge": {
+                    "analysis_horizon_days": 252,
+                    "daily_loss_breach_probability": 0.0875,
+                    "exposure_scale": 0.55,
+                    "fail_probability": 0.3935,
+                    "max_loss_breach_probability": 0.306,
+                    "median_days_to_pass": 76.0,
+                    "p75_days_to_pass": 124.0,
+                    "pass_probability": 0.52875,
+                    "paths": 4000,
+                    "stage_id": "challenge",
+                    "timeout_probability": 0.07775
+                  },
+                  "challenge_exposure_scale": 0.55,
+                  "combined_evaluation_pass_probability": 0.3755446875000001,
+                  "expected_evaluation_days_if_passed": 116.0,
+                  "funded": {
+                    "best_day_ineligible_probability": 0.0,
+                    "daily_loss_breach_probability": 0.0345,
+                    "expected_reward_pct": 1.6729002907204018,
+                    "exposure_scale": 0.75,
+                    "max_loss_breach_probability": 0.01175,
+                    "median_positive_reward_pct": 2.7553444739942456,
+                    "paths": 4000,
+                    "positive_reward_probability": 0.488,
+                    "reward_eligible_probability": 0.95375,
+                    "reward_window_days": 14,
+                    "survival_probability": 0.95375
+                  },
+                  "funded_exposure_scale": 0.75,
+                  "payout_efficiency_score": 0.004832683206901943,
+                  "repeat_expected_reward_pct": 15.679355752894589,
+                  "repeat_payout_efficiency_score": 0.020733446325430022,
+                  "repeat_reward_cycles": 12,
+                  "verification": {
+                    "analysis_horizon_days": 252,
+                    "daily_loss_breach_probability": 0.0005,
+                    "exposure_scale": 0.5,
+                    "fail_probability": 0.26075,
+                    "max_loss_breach_probability": 0.26025,
+                    "median_days_to_pass": 40.0,
+                    "p75_days_to_pass": 84.0,
+                    "pass_probability": 0.71025,
+                    "paths": 4000,
+                    "stage_id": "verification",
+                    "timeout_probability": 0.029
+                  },
+                  "verification_exposure_scale": 0.5
+                },
                 "max_repeat_payout_efficiency": {
                   "challenge": {
                     "analysis_horizon_days": 252,
@@ -140326,7 +140447,7 @@
         "reward_cycle_days": 14,
         "scaling_plan_upgrades_included": false
       },
-      "research_commit_sha": "f6d77888270eac5c44e87385b37fae0cc81e73e2",
+      "research_commit_sha": "d3be45636e016c05e0c1109c8285b509ac5669ae",
       "reset_timezone": "Europe/Prague",
       "search_policy": {
         "broad_base_candidates": 120,
@@ -140729,15 +140850,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T21:35:55Z",
         "event": "push",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34061562734",
         "id": 34061562734,
         "name": "Atlas Forge V4 promotion cycle",
         "run_number": 35,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T21:41:36Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T22:06:36Z"
       },
       {
         "conclusion": "cancelled",
