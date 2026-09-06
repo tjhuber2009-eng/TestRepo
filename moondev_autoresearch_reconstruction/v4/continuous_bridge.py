@@ -283,39 +283,57 @@ def source_execution_adapter_blocker(source: str) -> str | None:
         tree = ast.parse(source)
     except SyntaxError:
         return "source_parse_failed"
-    next_fn = None
-    for node in tree.body:
-        if not isinstance(node, ast.ClassDef) or node.name != "MoonStrategy":
-            continue
-        next_fn = next(
-            (
-                child for child in node.body
-                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
-                and child.name == "next"
-            ),
-            None,
-        )
-        break
+
+    strategy = next(
+        (
+            node for node in tree.body
+            if isinstance(node, ast.ClassDef) and node.name == "MoonStrategy"
+        ),
+        None,
+    )
+    if strategy is None:
+        return "strategy_class_missing"
+    methods = {
+        node.name: node
+        for node in strategy.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    next_fn = methods.get("next")
     if next_fn is None:
         return "next_method_missing"
-    for node in ast.walk(next_fn):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-            if node.func.attr == "sell":
-                return "short_entry_not_transferred"
-            if node.func.attr == "_buy_with_stop":
-                return "source_stop_not_transferred"
-            if node.func.attr == "buy":
-                for kw in node.keywords:
-                    if kw.arg in {"sl", "tp"} and not (
-                        isinstance(kw.value, ast.Constant) and kw.value.value is None
-                    ):
-                        return "source_bracket_not_transferred"
-        if (
-            isinstance(node, ast.Attribute)
-            and isinstance(node.ctx, ast.Store)
-            and node.attr in {"sl", "tp"}
-        ):
-            return "dynamic_stop_or_target_not_transferred"
+
+    pending = [next_fn]
+    visited = set()
+    while pending:
+        fn = pending.pop()
+        if fn.name in visited:
+            continue
+        visited.add(fn.name)
+        for node in ast.walk(fn):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                attr = node.func.attr
+                if attr == "sell":
+                    return "short_entry_not_transferred"
+                if attr == "buy":
+                    for kw in node.keywords:
+                        if kw.arg in {"sl", "tp"} and not (
+                            isinstance(kw.value, ast.Constant)
+                            and kw.value.value is None
+                        ):
+                            return "source_bracket_not_transferred"
+                if (
+                    isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "self"
+                    and attr in methods
+                    and attr not in visited
+                ):
+                    pending.append(methods[attr])
+            if (
+                isinstance(node, ast.Attribute)
+                and isinstance(node.ctx, ast.Store)
+                and node.attr in {"sl", "tp"}
+            ):
+                return "dynamic_stop_or_target_not_transferred"
     return None
 
 
