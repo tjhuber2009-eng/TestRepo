@@ -47,5 +47,5 @@ jobs:
           rustc --version
           cargo --version
 
-      - name: Compile exact v3.1 native shell
-        run: cargo check --locked
+      - name: Resolve and compile exact v3.1 native shell
+        run: cargo check
