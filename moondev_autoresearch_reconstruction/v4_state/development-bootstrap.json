@@ -3834,37 +3834,37 @@
       },
       {
         "base": {
-          "cagr_pct": 32.92343189080589,
-          "max_dd_pct": -12.77406535835236,
-          "sharpe": 1.517773662731498,
-          "trades": 104
+          "cagr_pct": 33.019633825203385,
+          "max_dd_pct": -12.774144597507775,
+          "sharpe": 1.5389941189273824,
+          "trades": 94
         },
         "candidate": {
           "adapter": "daily_rsi_adx",
-          "development_cagr_pct": 32.979,
+          "development_cagr_pct": 33.076,
           "development_max_dd_pct": -12.774,
-          "development_pf": 2.243,
-          "development_sharpe": 1.519,
-          "development_trades": 104,
+          "development_pf": 2.361,
+          "development_sharpe": 1.5402,
+          "development_trades": 94,
           "development_years": 3.3731,
           "evidence_grade": "A",
           "exactness": "substantially_specified",
-          "extreme_stress_return_pct": 140.729,
+          "extreme_stress_return_pct": 143.235,
           "family": "btc_rsi_adx",
           "market": "crypto",
-          "multiple_test_qvalue": 0.042176,
-          "pbo": 0.2,
+          "multiple_test_qvalue": 0.038131,
+          "pbo": 0.257143,
           "profile": "private",
-          "selection_score": 0.272222,
+          "selection_score": 0.281631,
           "symbol": "ETHUSDT",
           "target": "eth",
           "track_id": "btc_rsi_adx__eth__private"
         },
         "cost_stress": {
-          "cagr_pct": 29.700631502406914,
-          "max_dd_pct": -13.9619514423986,
-          "sharpe": 1.3970537188878218,
-          "trades": 104
+          "cagr_pct": 30.0988675899847,
+          "max_dd_pct": -13.639549312041655,
+          "sharpe": 1.4286220907141514,
+          "trades": 94
         },
         "final_oos_opened": false,
         "hidden_validation_opened": false,
@@ -12618,7 +12618,7 @@
         "worst_score": -3.636685761722702
       },
       {
-        "adjusted_score": 9.837967942446195,
+        "adjusted_score": 9.806508163307882,
         "fold_scores": [
           21.54530486501569,
           5.646336571268851,
@@ -12639,7 +12639,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 16.15461703232814,
+        "plateau_score": 16.049751101867095,
         "primary_score": 14.799434469041728,
         "score_std": 15.1483133876243,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -12898,7 +12898,7 @@
         "worst_score": -2.685224606061154
       },
       {
-        "adjusted_score": 8.622433618566433,
+        "adjusted_score": 8.526787877264377,
         "fold_scores": [
           13.230842854895819,
           7.143423026575024,
@@ -12919,7 +12919,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 14.369981131323804,
+        "plateau_score": 14.05116199365029,
         "primary_score": 14.277582400344047,
         "score_std": 14.863326870309434,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -21254,7 +21254,7 @@
       "gross_exposure": 0.9024925363279448,
       "max_dd_pct": -17.292203507758387,
       "score": 16.18178187710505,
-      "sharpe": 1.0805640230289826,
+      "sharpe": 1.0805640230289828,
       "weights": {
         "cash_rotation_risk_budgeted": 0.0022245923798104284,
         "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21283,7 +21283,7 @@
         "gross_exposure": 0.7775924788539519,
         "max_dd_pct": -16.346811898542658,
         "score": 15.864395423773308,
-        "sharpe": 1.070208501908635,
+        "sharpe": 1.0702085019086347,
         "weights": {
           "cash_rotation_risk_budgeted": 0.009315446914387892,
           "cash_rotation_vix_stress": 0.0411487227259109,
@@ -21310,7 +21310,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289826,
+        "sharpe": 1.0805640230289828,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21337,7 +21337,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289826,
+        "sharpe": 1.0805640230289828,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21364,7 +21364,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289826,
+        "sharpe": 1.0805640230289828,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
