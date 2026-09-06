@@ -1,6 +1,8 @@
 Atlas Forge V4 profit benchmark
-Source head: 4d30aadd0b9c3144811e34e9c92f89aaa9aa526f
-Purpose: financed private portfolio benchmark plus 6/10/14 percent leverage-cost sensitivity
+Source head: 30fe98758a9f7964cd002830e386c5b378dcaac7
+Purpose: definitive exposure-aware financed private benchmark
+Financing: 6% base, 10% and 14% stress; realized time-varying gross above 1x only
+Scale selection: maximize development geometric growth within drawdown-feasible range
 Persistent state: read only
 Hidden validation: sealed
 Final 2023+ OOS: sealed
