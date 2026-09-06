@@ -57,6 +57,8 @@ PROP_SIGNAL_ADAPTERS = {
     "btc_rsi_adx": "daily_rsi_adx",
     "sentinel63": "daily_sentinel",
     "sentinel65": "daily_sentinel",
+    "donchian_20_10": "daily_donchian_atr_stop",
+    "donchian_sma50": "daily_donchian_atr_stop",
 }
 
 GRADE_RANK = {"A": 3, "B": 2, "C": 1, "D": 0}
@@ -280,8 +282,12 @@ def _parse_float_required(source: str, pattern: str, name: str) -> float:
     return float(m.group(1))
 
 
-def source_execution_adapter_blocker(source: str) -> str | None:
-    """Return why a daily signal adapter cannot preserve source execution."""
+def source_execution_adapter_blocker(
+    source: str,
+    *,
+    allow_source_stop: bool = False,
+) -> str | None:
+    """Return why a daily adapter cannot preserve supported source execution."""
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -319,11 +325,16 @@ def source_execution_adapter_blocker(source: str) -> str | None:
                     return "short_entry_not_transferred"
                 if attr == "buy":
                     for kw in node.keywords:
-                        if kw.arg in {"sl", "tp"} and not (
+                        if kw.arg not in {"sl", "tp"}:
+                            continue
+                        if (
                             isinstance(kw.value, ast.Constant)
                             and kw.value.value is None
                         ):
-                            return "source_bracket_not_transferred"
+                            continue
+                        if kw.arg == "sl" and allow_source_stop:
+                            continue
+                        return "source_bracket_not_transferred"
                 if (
                     isinstance(node.func.value, ast.Name)
                     and node.func.value.id == "self"
@@ -372,7 +383,10 @@ def prop_transfer_candidates(
             audit.append(row)
             continue
 
-        blocker = source_execution_adapter_blocker(source)
+        blocker = source_execution_adapter_blocker(
+            source,
+            allow_source_stop=(c.adapter == "daily_donchian_atr_stop"),
+        )
         if blocker is not None:
             row["transfer_status"] = "adapter_required"
             row["transfer_reason"] = blocker
@@ -464,37 +478,51 @@ def prop_transfer_candidates(
                 audit.append(row)
                 continue
         elif c.family in {"donchian_20_10", "donchian_sma50"}:
-            params.update({
-                "entry_lookback": _parse_int(
+            try:
+                entry_lookback = _parse_int_required(
                     source,
-                    r"entry_lookback\s*=\s*(\d+)",
-                    _parse_int(
-                        source,
-                        r"self\.hh\s*=\s*self\.I\(_rolling_high,.*?,\s*(\d+)\)",
-                        20,
-                    ),
-                ),
-                "exit_lookback": _parse_int(
+                    r"(?:entry_lookback\\s*=\\s*|_rolling_high,.*?,\\s*)(\\d+)",
+                    "entry_lookback",
+                )
+                exit_lookback = _parse_int_required(
                     source,
-                    r"exit_lookback\s*=\s*(\d+)",
-                    _parse_int(
+                    r"(?:exit_lookback\\s*=\\s*|_rolling_low,.*?,\\s*)(\\d+)",
+                    "exit_lookback",
+                )
+                atr_window = _parse_int_required(
+                    source,
+                    r"self\\.atr\\s*=\\s*self\\.I\\(_atr,.*?,\\s*(\\d+)\\)",
+                    "atr_window",
+                )
+                stop_mult = _parse_float_required(
+                    source,
+                    r"_buy_with_stop\\(px,\\s*atr,\\s*([0-9]*\\.?[0-9]+)\\)",
+                    "stop_mult",
+                )
+                sma_window = None
+                if c.family == "donchian_sma50":
+                    sma_window = _parse_int_required(
                         source,
-                        r"self\.ll\s*=\s*self\.I\(_rolling_low,.*?,\s*(\d+)\)",
-                        10,
-                    ),
-                ),
-                "sma_window": (
-                    None
-                    if c.family == "donchian_20_10"
-                    else _parse_int(
-                        source,
-                        r"self\.sma\d+\s*=\s*self\.I\(_sma,.*?,\s*(\d+)\)",
-                        50,
+                        r"self\\.sma\\d+\\s*=\\s*self\\.I\\(_sma,.*?,\\s*(\\d+)\\)",
+                        "sma_window",
                     )
-                ),
-                "source_stop_transferred": False,
-                "transfer_exactness": "signal_only_proxy",
-            })
+                params.update({
+                    "entry_lookback": entry_lookback,
+                    "exit_lookback": exit_lookback,
+                    "sma_window": sma_window,
+                    "atr_window": atr_window,
+                    "stop_mult": stop_mult,
+                    "source_stop_required": True,
+                    "source_stop_transferred": True,
+                    "transfer_exactness": (
+                        "signal_and_atr_stop_logic_exact_v4_risk_resized"
+                    ),
+                })
+            except ValueError as exc:
+                row["transfer_status"] = "adapter_required"
+                row["transfer_reason"] = str(exc)
+                audit.append(row)
+                continue
         elif c.family == "swing_terminal_pullback_proxy":
             params.update({
                 "ema_fast": _parse_int(
