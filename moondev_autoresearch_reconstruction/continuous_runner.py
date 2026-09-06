@@ -1035,8 +1035,51 @@ def current_search_plan(
     return "validation", {}
 
 
-def next_search_track(tracks, plan, start):
+def _opportunity_rank(track):
+    """Rank a track for bounded exploitation without changing eligibility gates."""
+    meta = track_meta(track) or {}
+    baseline = meta.get("baseline") or {}
+    if not bool(baseline.get("guard_ok")):
+        return None
+    score = development_selection_score(track)
+    if not math.isfinite(score):
+        return None
+    counts = track_counts(track)
+    diag = development_overfit(track)
+    pbo_ready = bool(diag and diag.get("pbo") is not None)
+    # Missing-PBO tracks come first; within that set prefer stronger current
+    # evidence and tracks already producing guard-passing candidates. This does
+    # not promote them or weaken PBO -- it only decides where a minority of the
+    # unchanged research-call budget is spent.
+    return (
+        1 if not pbo_ready else 0,
+        float(score),
+        int(counts.get("guard_passed", 0)),
+        int(counts.get("valid", 0)),
+        -int(counts.get("attempts", 0)),
+        track["id"],
+    )
+
+
+def next_search_track(tracks, plan, start, *, prefer_opportunity=False):
     n = len(tracks)
+    if prefer_opportunity:
+        ranked = []
+        for idx, track in enumerate(tracks):
+            target = plan.get(track["id"])
+            if target is None or is_terminal_block(track):
+                continue
+            if track_counts(track)["valid"] >= target:
+                continue
+            rank = _opportunity_rank(track)
+            if rank is not None:
+                ranked.append((rank, idx, track, target))
+        if ranked:
+            ranked.sort(key=lambda x: x[0], reverse=True)
+            _, idx, track, target = ranked[0]
+            return idx, track, target
+
+    # Exploration path remains the original persistent round-robin scheduler.
     for offset in range(n):
         idx = (start + offset) % n
         track = tracks[idx]
@@ -1046,6 +1089,20 @@ def next_search_track(tracks, plan, start):
         if track_counts(track)["valid"] < target:
             return idx, track, target
     return None
+
+
+def opportunity_visit_indices(max_visits, fraction):
+    """Evenly spread a bounded number of exploitation visits through a run."""
+    max_visits = max(0, int(max_visits))
+    fraction = float(fraction)
+    if max_visits == 0 or fraction <= 0.0:
+        return set()
+    count = min(max_visits, max(1, int(round(max_visits * fraction))))
+    slots = set()
+    for k in range(count):
+        slot = int(round((k + 1) * (max_visits + 1) / (count + 1))) - 1
+        slots.add(min(max_visits - 1, max(0, slot)))
+    return slots
 
 
 def next_validation_track(tracks, start):
@@ -1391,6 +1448,15 @@ def main():
     ap.add_argument("--elite-target", type=int, default=60)
     ap.add_argument("--depth-fraction", type=float, default=0.25)
     ap.add_argument("--elite-fraction", type=float, default=0.20)
+    ap.add_argument(
+        "--opportunity-fraction",
+        type=float,
+        default=0.30,
+        help=(
+            "fraction of search visits allocated to high-evidence, missing-PBO "
+            "tracks; remaining visits preserve persistent round-robin exploration"
+        ),
+    )
     ap.add_argument("--model", default="auto")
     args = ap.parse_args()
 
@@ -1398,6 +1464,8 @@ def main():
         raise SystemExit("NVIDIA_API_KEY missing")
     if not (0 < args.depth_fraction <= 1 and 0 < args.elite_fraction <= 1):
         raise SystemExit("selection fractions must be in (0,1]")
+    if not (0.0 <= args.opportunity_fraction <= 0.50):
+        raise SystemExit("opportunity fraction must be in [0,0.50]")
     if not (1 <= args.breadth_target <= args.depth_target <= args.elite_target):
         raise SystemExit("require breadth <= depth <= elite targets")
 
@@ -1411,6 +1479,10 @@ def main():
     started = time.monotonic()
     cursor = read_cursor(len(tracks))
     visits = 0
+    opportunity_visits = opportunity_visit_indices(
+        args.max_visits,
+        args.opportunity_fraction,
+    )
 
     while visits < args.max_visits and (time.monotonic() - started) < args.max_seconds:
         phase, plan = current_search_plan(
@@ -1467,11 +1539,22 @@ def main():
             visits += 1
             continue
 
-        nxt = next_search_track(tracks, plan, cursor)
+        prefer_opportunity = visits in opportunity_visits
+        nxt = next_search_track(
+            tracks,
+            plan,
+            cursor,
+            prefer_opportunity=prefer_opportunity,
+        )
         if nxt is None:
             # Recompute phase on the next loop; this occurs at a phase boundary.
             continue
         idx, track, target = nxt
+        print(
+            f"[track allocator] mode="
+            f"{'opportunity' if prefer_opportunity else 'exploration'} "
+            f"track={track['id']}"
+        )
         current = track_counts(track)["valid"]
         visit_iters = min(args.iters_per_visit, max(1, target - current))
         try:
