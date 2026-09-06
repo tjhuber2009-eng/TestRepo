@@ -164,7 +164,7 @@
       "id": "donchian_20_10",
       "status": "runnable",
       "exactness": "reconstructed",
-      "origin": "Moon Dev reconstruction/current seed",
+      "origin": "Atlas Forge reconstruction/current seed",
       "markets": [
         "crypto",
         "etf",

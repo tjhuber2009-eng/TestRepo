@@ -24,7 +24,7 @@ DATA.mkdir(exist_ok=True)
 BASE = "https://data.binance.vision/data/spot/monthly/klines"
 DEFAULT_START = "2017-08-17"
 INTERVAL = "6h"
-USER_AGENT = "moondev-autoresearch-reconstruction/1.0"
+USER_AGENT = "atlas-forge-autoresearch-reconstruction/1.0"
 
 
 def parse_date(s):

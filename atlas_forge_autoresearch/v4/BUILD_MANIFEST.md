@@ -2,7 +2,7 @@
 
 Protocol: `alpha_generation_v4`
 
-Base: `moondev-nvidia-autoresearch@412452f846a5858e23b8ac0869c8ae754dd1f6a2`
+Base: `atlas-forge-autoresearch@412452f846a5858e23b8ac0869c8ae754dd1f6a2`
 
 This branch implements the complete architecture requested after the v3 model
 allocator research:

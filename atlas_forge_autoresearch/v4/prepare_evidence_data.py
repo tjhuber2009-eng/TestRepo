@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[1]
-UA = "moondev-autoresearch-v4-evidence-data/1.0"
+UA = "atlas-forge-autoresearch-v4-evidence-data/1.0"
 TIINGO_ROOT = "https://api.tiingo.com/tiingo/daily"
 CBOE_VIX_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
 

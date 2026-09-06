@@ -28,11 +28,11 @@ import pandas as pd
 
 STATE_BRANCH = "continuous-autoresearch-state"
 LEADERBOARD_PATH = (
-    "moondev_autoresearch_reconstruction/continuous_state/"
+    "atlas_forge_autoresearch/continuous_state/"
     "leaderboard_latest.json"
 )
 TRACK_ROOT = (
-    "moondev_autoresearch_reconstruction/continuous_state/tracks"
+    "atlas_forge_autoresearch/continuous_state/tracks"
 )
 
 TARGET_SYMBOL = {

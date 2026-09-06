@@ -271,7 +271,7 @@ def main():
 
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "project": "Moon Dev AUTORESEARCH reconstruction",
+        "project": "Atlas Forge AUTORESEARCH reconstruction",
         "protocol": ACTIVE_PROTOCOL,
         "state_is_active": state_is_active,
         "stale_state": stale_state,
