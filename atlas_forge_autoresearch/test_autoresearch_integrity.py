@@ -1155,7 +1155,7 @@ class AtlasStrategy:
             set(),
         )
 
-    def test_track_allocator_prioritizes_strong_missing_pbo_without_replacing_round_robin(self):
+    def test_track_allocator_prioritizes_money_opportunity_without_replacing_round_robin(self):
         tracks = continuous_runner.build_tracks()[:3]
         plan = {track["id"]: 10 for track in tracks}
         scores = {
@@ -1176,7 +1176,15 @@ class AtlasStrategy:
             return counts[track["id"]]
 
         def meta_for(track):
-            return {"baseline": {"guard_ok": True}}
+            return {
+                "baseline": {
+                    "guard_ok": True,
+                    "cagr_pct": 50.0,
+                    "calmar": 2.0,
+                    "evidence_grade": "A",
+                    "extreme_stress": {"cagr_pct": 45.0},
+                }
+            }
 
         def score_for(track):
             return scores[track["id"]]
@@ -1210,8 +1218,50 @@ class AtlasStrategy:
                 prefer_opportunity=False,
             )
 
-        self.assertEqual(exploit[1]["id"], tracks[1]["id"])
+        # Low-PBO stronger alpha now beats a merely missing-PBO candidate.
+        self.assertEqual(exploit[1]["id"], tracks[0]["id"])
         self.assertEqual(explore[1]["id"], tracks[0]["id"])
+
+    def test_money_opportunity_rewards_stress_surviving_growth(self):
+        tracks = continuous_runner.build_tracks()[:2]
+        metas = {
+            tracks[0]["id"]: {
+                "baseline": {
+                    "guard_ok": True,
+                    "cagr_pct": 80.0,
+                    "calmar": 1.0,
+                    "evidence_grade": "A",
+                    "extreme_stress": {"cagr_pct": 0.0},
+                }
+            },
+            tracks[1]["id"]: {
+                "baseline": {
+                    "guard_ok": True,
+                    "cagr_pct": 70.0,
+                    "calmar": 3.0,
+                    "evidence_grade": "A",
+                    "extreme_stress": {"cagr_pct": 65.0},
+                }
+            },
+        }
+        scores = {tracks[0]["id"]: 0.90, tracks[1]["id"]: 0.65}
+
+        with mock.patch.object(
+            continuous_runner, "track_meta", side_effect=lambda t: metas[t["id"]]
+        ), mock.patch.object(
+            continuous_runner, "development_selection_score",
+            side_effect=lambda t: scores[t["id"]],
+        ), mock.patch.object(
+            continuous_runner, "development_overfit",
+            return_value={"pbo": 0.10},
+        ), mock.patch.object(
+            continuous_runner, "track_counts",
+            return_value={"valid": 8, "attempts": 9, "guard_passed": 7},
+        ):
+            a = continuous_runner._money_opportunity_value(tracks[0])[0]
+            b = continuous_runner._money_opportunity_value(tracks[1])[0]
+
+        self.assertGreater(b, a)
 
     def test_pbo_diagnostic_stays_in_probability_bounds(self):
         # Strategies alternate between excellent and poor halves, a pattern
