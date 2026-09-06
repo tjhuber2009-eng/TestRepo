@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T08:17:47Z",
+  "generated_at": "2026-09-06T08:24:59Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -70144,7 +70144,7 @@
             "extreme_stress_return_pct": 28.394,
             "family": "qqe_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.038494,
+            "multiple_test_qvalue": 0.038864,
             "pbo": 0.242857,
             "profile": "prop",
             "selection_score": 0.08467,
@@ -70245,7 +70245,7 @@
             "extreme_stress_return_pct": 36.469,
             "family": "swing_terminal_pullback_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.038494,
+            "multiple_test_qvalue": 0.038864,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.065624,
@@ -117673,19 +117673,19 @@
         "id": 34020892926,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 14,
-        "status": "pending",
-        "updated_at": "2026-09-06T08:05:35Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T08:24:57Z"
       },
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T07:48:09Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34020121518",
         "id": 34020121518,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 13,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T08:07:09Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T08:24:53Z"
       },
       {
         "conclusion": "cancelled",
