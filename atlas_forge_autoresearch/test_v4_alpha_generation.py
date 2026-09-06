@@ -878,6 +878,25 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(unlevered_financed.borrowed_gross, 0.0)
         self.assertEqual(unlevered_financed.annual_financing_drag_pct, 0.0)
 
+    def test_financing_can_make_one_x_more_profitable_than_max_leverage(self):
+        ret = pd.DataFrame({
+            "low_edge": np.full(700, 0.0001, dtype=float),
+        })
+        chosen = RobustPortfolioOptimizer(
+            dd_cap_pct=80,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=0.5,
+            max_gross=1.5,
+            annual_financing_rate_pct=20.0,
+            scale_search_steps=12,
+            seed=23,
+        ).optimize(ret).chosen
+        self.assertIsNotNone(chosen)
+        self.assertAlmostEqual(chosen.gross_exposure, 1.0, places=10)
+        self.assertEqual(chosen.borrowed_gross, 0.0)
+
     def test_staggered_satellite_financing_uses_realized_gross(self):
         idx = pd.bdate_range("2018-01-01", periods=300)
         core = pd.DataFrame({
