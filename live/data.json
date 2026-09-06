@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T14:12:08Z",
+  "generated_at": "2026-09-06T14:16:50Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -395,16 +395,16 @@
       "instrument_fidelity": "spot_exact",
       "market": "crypto",
       "multiple_test_qvalue": 0.042176,
-      "pbo": 0.6,
-      "pbo_candidate_count": 8,
+      "pbo": 0.671429,
+      "pbo_candidate_count": 9,
       "pbo_cscv_splits": 70,
       "pbo_fold_count": 8,
       "profile": "private",
-      "selection_score": 0.38318915,
+      "selection_score": 0.3687834564235,
       "sharpe_minus_buyhold": 0.812,
       "target": "eth",
       "track_id": "swing_terminal_pullback_proxy__eth__private",
-      "valid_attempts": 9
+      "valid_attempts": 10
     },
     {
       "benchmark_cagr_pct": 1611.594,
@@ -1475,16 +1475,16 @@
       "instrument_fidelity": "spot_exact",
       "market": "crypto",
       "multiple_test_qvalue": 0.038131,
-      "pbo": null,
-      "pbo_candidate_count": null,
-      "pbo_cscv_splits": null,
-      "pbo_fold_count": null,
+      "pbo": 0.257143,
+      "pbo_candidate_count": 5,
+      "pbo_cscv_splits": 70,
+      "pbo_fold_count": 8,
       "profile": "prop",
       "selection_score": 0.065624,
       "sharpe_minus_buyhold": 0.4721,
       "target": "eth",
       "track_id": "swing_terminal_pullback_proxy__eth__prop",
-      "valid_attempts": 5
+      "valid_attempts": 9
     },
     {
       "benchmark_cagr_pct": 30.247,
@@ -13544,7 +13544,7 @@
       "sharpe_minus_buyhold": 0.5576,
       "target": "eth",
       "track_id": "atr_channel_trend__eth__private",
-      "valid_attempts": 8
+      "valid_attempts": 10
     },
     {
       "benchmark_cagr_pct": 1611.594,
@@ -14219,7 +14219,7 @@
       "sharpe_minus_buyhold": 0.2828,
       "target": "eth",
       "track_id": "atr_channel_trend__eth__prop",
-      "valid_attempts": 7
+      "valid_attempts": 9
     },
     {
       "benchmark_cagr_pct": 1611.594,
@@ -18401,23 +18401,23 @@
     },
     "model_performance": [
       {
-        "admission_rate": 0.7832,
-        "attempts": 1324,
-        "backtested": 1037,
-        "crash_rate": 0.0415,
-        "crashes": 55,
-        "guard_pass": 619,
-        "keeper_rate": 0.0483,
+        "admission_rate": 0.7829,
+        "attempts": 1336,
+        "backtested": 1046,
+        "crash_rate": 0.0419,
+        "crashes": 56,
+        "guard_pass": 623,
+        "keeper_rate": 0.0479,
         "kept": 64,
-        "mean_delta_k": -0.027651,
+        "mean_delta_k": -0.027573,
         "model": "nvidia/nemotron-3-super-120b-a12b",
-        "unique_ideas": 1226
+        "unique_ideas": 1237
       }
     ],
     "pbo_baselined_track_count": 405,
     "pbo_min_strategy_count": 5,
     "pbo_readiness_definition": "baseline_plus_at_least_four_unique_selection_eligible_backtests",
-    "pbo_ready_track_count": 50,
+    "pbo_ready_track_count": 51,
     "phase": "breadth",
     "prior_terminal_families": [
       {
@@ -24223,7 +24223,7 @@
         "valid_attempts": 0
       },
       {
-        "attempts": 6,
+        "attempts": 12,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 9.711,
@@ -24232,17 +24232,17 @@
         "evidence_grade": "B",
         "family": "swing_terminal_pullback_proxy",
         "instrument_fidelity": "spot_exact",
-        "pbo": null,
+        "pbo": 0.257143,
         "profile": "prop",
         "psr_zero": 0.987217,
         "selection_score": 0.065624,
         "status": "searching",
         "target": "eth",
         "track_id": "swing_terminal_pullback_proxy__eth__prop",
-        "valid_attempts": 5
+        "valid_attempts": 9
       },
       {
-        "attempts": 10,
+        "attempts": 11,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 47.796,
@@ -24251,14 +24251,14 @@
         "evidence_grade": "B",
         "family": "swing_terminal_pullback_proxy",
         "instrument_fidelity": "spot_exact",
-        "pbo": 0.6,
+        "pbo": 0.671429,
         "profile": "private",
         "psr_zero": 0.998287,
-        "selection_score": 0.38318915,
+        "selection_score": 0.3687834564235,
         "status": "searching",
         "target": "eth",
         "track_id": "swing_terminal_pullback_proxy__eth__private",
-        "valid_attempts": 9
+        "valid_attempts": 10
       },
       {
         "attempts": 0,
@@ -25439,7 +25439,7 @@
         "valid_attempts": 0
       },
       {
-        "attempts": 10,
+        "attempts": 13,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 6.81,
@@ -25455,10 +25455,10 @@
         "status": "searching",
         "target": "eth",
         "track_id": "atr_channel_trend__eth__prop",
-        "valid_attempts": 7
+        "valid_attempts": 9
       },
       {
-        "attempts": 10,
+        "attempts": 12,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 44.296,
@@ -25474,7 +25474,7 @@
         "status": "searching",
         "target": "eth",
         "track_id": "atr_channel_trend__eth__private",
-        "valid_attempts": 8
+        "valid_attempts": 10
       },
       {
         "attempts": 0,
@@ -28255,168 +28255,36 @@
     "searching_count": 513,
     "seed_blocked_count": 1,
     "terminal_track_count": 1,
-    "total_crashes": 55,
-    "total_duplicates": 1,
-    "total_guard_passed_candidates": 619,
+    "total_crashes": 56,
+    "total_duplicates": 3,
+    "total_guard_passed_candidates": 623,
     "total_kept_candidates": 64,
-    "total_model_attempt_rows": 1324,
+    "total_model_attempt_rows": 1336,
     "total_parameter_only": 84,
     "total_risk_control_changes": 123,
     "total_too_broad": 24,
-    "total_valid_candidates": 1037,
+    "total_valid_candidates": 1046,
     "universe_stage": "phase1_fixed_514",
-    "updated_at": "2026-09-06T13:49:10Z",
+    "updated_at": "2026-09-06T14:16:34Z",
     "validation_fail_count": 0,
     "validation_pass_count": 0,
     "validation_pending_count": 0
   },
   "progress_derived": {
-    "breadth_pct": 20.175,
+    "breadth_pct": 20.35,
     "breadth_target": 10,
     "breadth_total_candidates": 5140,
     "depth_target": 30,
     "elite_target": 60,
     "touched_tracks": 405,
     "tracks_valid_ge_1": 392,
-    "tracks_valid_ge_10": 10,
+    "tracks_valid_ge_10": 12,
     "tracks_valid_ge_2": 290,
     "tracks_valid_ge_5": 57
   },
   "project": "Moon Dev AUTORESEARCH reconstruction",
   "protocol": "nested_chronological_v3",
   "recent_cycles": [
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "donchian_20_10",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -24.054,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 3.561,
-      "profile": "private",
-      "return_pct": 1085.252,
-      "score": 0.088087,
-      "sharpe": 1.266,
-      "status": "active",
-      "target": "aapl",
-      "track_id": "donchian_20_10__aapl__private",
-      "ts": "2026-09-06T06:57:36Z",
-      "valid_after": 8,
-      "valid_before": 5
-    },
-    {
-      "attempts_after": 6,
-      "bandit_reward": 0,
-      "family": "donchian_20_10",
-      "kept_after": 0,
-      "kept_before": 0,
-      "max_dd_pct": -8.218,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 20.99,
-      "profile": "prop",
-      "return_pct": 87.028,
-      "score": 0.210462,
-      "sharpe": 1.916,
-      "status": "active",
-      "target": "btc",
-      "track_id": "donchian_20_10__btc__prop",
-      "ts": "2026-09-06T07:01:31Z",
-      "valid_after": 3,
-      "valid_before": 1
-    },
-    {
-      "attempts_after": 10,
-      "bandit_reward": 0,
-      "family": "btc_rsi_adx",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -3.749,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 4.712,
-      "profile": "prop",
-      "return_pct": 31.382,
-      "score": 0.35943,
-      "sharpe": 2.4482,
-      "status": "active",
-      "target": "sol",
-      "track_id": "btc_rsi_adx__sol__prop",
-      "ts": "2026-09-06T07:18:19Z",
-      "valid_after": 7,
-      "valid_before": 4
-    },
-    {
-      "attempts_after": 12,
-      "bandit_reward": 0,
-      "family": "btc_rsi_adx",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -13.291,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 3.872,
-      "profile": "private",
-      "return_pct": 144.994,
-      "score": 1.122375,
-      "sharpe": 2.4245,
-      "status": "active",
-      "target": "sol",
-      "track_id": "btc_rsi_adx__sol__private",
-      "ts": "2026-09-06T07:20:43Z",
-      "valid_after": 9,
-      "valid_before": 8
-    },
-    {
-      "attempts_after": 12,
-      "bandit_reward": 0,
-      "family": "donchian_20_10",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -24.054,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 3.561,
-      "profile": "private",
-      "return_pct": 1085.252,
-      "score": 0.088087,
-      "sharpe": 1.266,
-      "status": "active",
-      "target": "aapl",
-      "track_id": "donchian_20_10__aapl__private",
-      "ts": "2026-09-06T07:23:07Z",
-      "valid_after": 10,
-      "valid_before": 8
-    },
-    {
-      "attempts_after": 6,
-      "bandit_reward": 1,
-      "family": "swing_terminal_pullback_proxy",
-      "kept_after": 1,
-      "kept_before": 0,
-      "max_dd_pct": -24.695,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 5.741,
-      "profile": "private",
-      "return_pct": 236.5,
-      "score": 0.390131,
-      "sharpe": 1.5127,
-      "status": "active",
-      "target": "eth",
-      "track_id": "swing_terminal_pullback_proxy__eth__private",
-      "ts": "2026-09-06T07:27:36Z",
-      "valid_after": 6,
-      "valid_before": 2
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "swing_terminal_pullback_proxy__gold__prop",
-      "ts": "2026-09-06T07:27:38Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "swing_terminal_pullback_proxy__gold__private",
-      "ts": "2026-09-06T07:27:39Z"
-    },
     {
       "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
       "status": "runner_error",
@@ -29984,6 +29852,124 @@
       "status": "runner_error",
       "track_id": "atr_channel_trend__es__private",
       "ts": "2026-09-06T13:49:09Z"
+    },
+    {
+      "attempts_after": 13,
+      "bandit_reward": 0,
+      "family": "atr_channel_trend",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -7.378,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 15.213,
+      "profile": "prop",
+      "return_pct": 24.885,
+      "score": 0.01804,
+      "sharpe": 1.0612,
+      "status": "active",
+      "target": "eth",
+      "track_id": "atr_channel_trend__eth__prop",
+      "ts": "2026-09-06T14:02:30Z",
+      "valid_after": 9,
+      "valid_before": 7
+    },
+    {
+      "attempts_after": 12,
+      "bandit_reward": 0,
+      "family": "atr_channel_trend",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -27.496,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 14.401,
+      "profile": "private",
+      "return_pct": 244.491,
+      "score": 0.240888,
+      "sharpe": 1.336,
+      "status": "active",
+      "target": "eth",
+      "track_id": "atr_channel_trend__eth__private",
+      "ts": "2026-09-06T14:04:04Z",
+      "valid_after": 10,
+      "valid_before": 8
+    },
+    {
+      "attempts_after": 10,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -7.752,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 23.179,
+      "profile": "prop",
+      "return_pct": 36.701,
+      "score": 0.065624,
+      "sharpe": 1.2505,
+      "status": "active",
+      "target": "eth",
+      "track_id": "swing_terminal_pullback_proxy__eth__prop",
+      "ts": "2026-09-06T14:10:27Z",
+      "valid_after": 8,
+      "valid_before": 5
+    },
+    {
+      "attempts_after": 11,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 2,
+      "kept_before": 2,
+      "max_dd_pct": -25.114,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 6.546,
+      "profile": "private",
+      "return_pct": 273.499,
+      "score": 0.403357,
+      "sharpe": 1.5904,
+      "status": "active",
+      "target": "eth",
+      "track_id": "swing_terminal_pullback_proxy__eth__private",
+      "ts": "2026-09-06T14:14:49Z",
+      "valid_after": 10,
+      "valid_before": 9
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_pullback_proxy__gold__prop",
+      "ts": "2026-09-06T14:14:51Z"
+    },
+    {
+      "attempts_after": 12,
+      "bandit_reward": 0,
+      "family": "swing_terminal_pullback_proxy",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -7.752,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 23.179,
+      "profile": "prop",
+      "return_pct": 36.701,
+      "score": 0.065624,
+      "sharpe": 1.2505,
+      "status": "active",
+      "target": "eth",
+      "track_id": "swing_terminal_pullback_proxy__eth__prop",
+      "ts": "2026-09-06T14:16:29Z",
+      "valid_after": 9,
+      "valid_before": 8
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_pullback_proxy__gold__prop",
+      "ts": "2026-09-06T14:16:31Z"
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "swing_terminal_pullback_proxy__gold__private",
+      "ts": "2026-09-06T14:16:33Z"
     }
   ],
   "safeguards": {
@@ -37152,7 +37138,7 @@
       "valid_attempts": 0
     },
     {
-      "attempts": 6,
+      "attempts": 12,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -37164,17 +37150,17 @@
       "evidence_grade": "B",
       "family": "swing_terminal_pullback_proxy",
       "instrument_fidelity": "spot_exact",
-      "pbo": null,
+      "pbo": 0.257143,
       "profile": "prop",
       "psr_zero": 0.987217,
       "selection_score": 0.065624,
       "status": "searching",
       "target": "eth",
       "track_id": "swing_terminal_pullback_proxy__eth__prop",
-      "valid_attempts": 5
+      "valid_attempts": 9
     },
     {
-      "attempts": 10,
+      "attempts": 11,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -37186,14 +37172,14 @@
       "evidence_grade": "B",
       "family": "swing_terminal_pullback_proxy",
       "instrument_fidelity": "spot_exact",
-      "pbo": 0.6,
+      "pbo": 0.671429,
       "profile": "private",
       "psr_zero": 0.998287,
-      "selection_score": 0.38318915,
+      "selection_score": 0.3687834564235,
       "status": "searching",
       "target": "eth",
       "track_id": "swing_terminal_pullback_proxy__eth__private",
-      "valid_attempts": 9
+      "valid_attempts": 10
     },
     {
       "attempts": 0,
@@ -38560,7 +38546,7 @@
       "valid_attempts": 0
     },
     {
-      "attempts": 10,
+      "attempts": 13,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -38579,10 +38565,10 @@
       "status": "searching",
       "target": "eth",
       "track_id": "atr_channel_trend__eth__prop",
-      "valid_attempts": 7
+      "valid_attempts": 9
     },
     {
-      "attempts": 10,
+      "attempts": 12,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -38601,7 +38587,7 @@
       "status": "searching",
       "target": "eth",
       "track_id": "atr_channel_trend__eth__private",
-      "valid_attempts": 8
+      "valid_attempts": 10
     },
     {
       "attempts": 0,
@@ -117301,14 +117287,25 @@
     "continuous_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-06T14:16:42Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34038656431",
+        "id": 34038656431,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 102,
+        "status": "queued",
+        "updated_at": "2026-09-06T14:16:46Z"
+      },
+      {
+        "conclusion": "success",
         "created_at": "2026-09-06T13:49:19Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34037257347",
         "id": 34037257347,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 101,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T13:49:26Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T14:16:46Z"
       },
       {
         "conclusion": "success",
@@ -117375,17 +117372,6 @@
         "run_number": 95,
         "status": "completed",
         "updated_at": "2026-09-06T10:39:06Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T09:50:34Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34025775137",
-        "id": 34025775137,
-        "name": "Continuous NVIDIA AUTORESEARCH",
-        "run_number": 94,
-        "status": "completed",
-        "updated_at": "2026-09-06T10:11:14Z"
       }
     ],
     "tournament_jobs": [
