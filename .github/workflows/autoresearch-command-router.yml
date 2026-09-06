@@ -81,6 +81,9 @@ jobs:
             /special-smoke)
               gh workflow run autoresearch-special-smoke.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /health)
+              gh workflow run autoresearch-health-audit.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             *)
               echo "Not an AUTORESEARCH command; ignoring."
               ;;
