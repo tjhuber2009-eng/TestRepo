@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T03:26:50Z",
+  "generated_at": "2026-09-06T03:48:11Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 76.139,
@@ -54883,7 +54883,7 @@
             "worst_score": -3.636685761722702
           },
           {
-            "adjusted_score": 9.837967942446195,
+            "adjusted_score": 9.806508163307882,
             "fold_scores": [
               21.54530486501569,
               5.646336571268851,
@@ -54904,7 +54904,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 16.15461703232814,
+            "plateau_score": 16.049751101867095,
             "primary_score": 14.799434469041728,
             "score_std": 15.1483133876243,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -55163,7 +55163,7 @@
             "worst_score": -2.685224606061154
           },
           {
-            "adjusted_score": 8.622433618566433,
+            "adjusted_score": 8.526787877264377,
             "fold_scores": [
               13.230842854895819,
               7.143423026575024,
@@ -55184,7 +55184,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 14.369981131323804,
+            "plateau_score": 14.05116199365029,
             "primary_score": 14.277582400344047,
             "score_std": 14.863326870309434,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -63517,7 +63517,7 @@
           "gross_exposure": 0.9024925363279448,
           "max_dd_pct": -17.292203507758387,
           "score": 16.18178187710505,
-          "sharpe": 1.0805640230289826,
+          "sharpe": 1.0805640230289828,
           "weights": {
             "cash_rotation_risk_budgeted": 0.0022245923798104284,
             "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63546,7 +63546,7 @@
             "gross_exposure": 0.7775924788539519,
             "max_dd_pct": -16.346811898542658,
             "score": 15.864395423773308,
-            "sharpe": 1.070208501908635,
+            "sharpe": 1.0702085019086347,
             "weights": {
               "cash_rotation_risk_budgeted": 0.009315446914387892,
               "cash_rotation_vix_stress": 0.0411487227259109,
@@ -63573,7 +63573,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63600,7 +63600,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63627,7 +63627,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -115172,6 +115172,17 @@
     "continuous_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-06T03:26:59Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34009018441",
+        "id": 34009018441,
+        "name": "Continuous NVIDIA AUTORESEARCH",
+        "run_number": 79,
+        "status": "pending",
+        "updated_at": "2026-09-06T03:27:01Z"
+      },
+      {
+        "conclusion": null,
         "created_at": "2026-09-06T03:21:34Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34008793719",
@@ -115246,17 +115257,6 @@
         "run_number": 72,
         "status": "completed",
         "updated_at": "2026-09-06T00:54:14Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T00:13:02Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34000703475",
-        "id": 34000703475,
-        "name": "Continuous NVIDIA AUTORESEARCH",
-        "run_number": 71,
-        "status": "completed",
-        "updated_at": "2026-09-06T00:37:51Z"
       }
     ],
     "tournament_jobs": [
@@ -115425,15 +115425,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T03:21:30Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34008791066",
         "id": 34008791066,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 6,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T03:21:33Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T03:48:01Z"
       },
       {
         "conclusion": "success",
