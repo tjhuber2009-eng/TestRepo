@@ -89,7 +89,10 @@ def prior_hydration():
 
 
 def reconstruction_version_for(hydrated_row):
-    if hydrated_row is None:
+    # A hydration attempt that recovered no text adds no evidence and must not
+    # consume another model call. The mapper can terminalize the candidate once
+    # the required hydration version has been attempted.
+    if not hydrated_row or hydrated_row.get("hydration_status") != "hydrated":
         return 1
     hydration_version = int(hydrated_row.get("hydration_version", 1) or 1)
     return 1 + hydration_version
