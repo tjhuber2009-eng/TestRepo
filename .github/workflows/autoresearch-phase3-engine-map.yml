@@ -1,0 +1,105 @@
+name: AUTORESEARCH Phase 3 engine mapping
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: autoresearch-phase3-engine-mapping
+  cancel-in-progress: false
+
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - name: Check out research source
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore discovery state
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state
+          git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state/candidate_queue.json
+
+      - name: Restore reconstruction state
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-reconstruction-state:refs/remotes/origin/phase3-reconstruction-state
+          git checkout refs/remotes/origin/phase3-reconstruction-state -- moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json
+
+      - name: Restore hydration attempts
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
+          if git rev-parse --verify refs/remotes/origin/phase3-hydration-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/phase3-hydration-state -- moondev_autoresearch_reconstruction/phase3_state/hydrated_sources.jsonl 2>/dev/null || true
+          fi
+
+      - name: Compile and map candidates
+        run: |
+          python -m py_compile phase3_engine_map_runner.py
+          python phase3_engine_map_runner.py
+
+      - name: Verify sealed boundaries
+        id: progress
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          x=json.loads(Path("phase3_state/engine_mapping_progress.json").read_text())
+          assert x["phase1_registry_mutated"] is False
+          assert x["hidden_validation_opened"] is False
+          assert x["final_oos_opened"] is False
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"hydrate={int(x.get('hydration_queue_count',0))}\n")
+              f.write(f"ready={int(x.get('ready_for_development_adapter_count',0))}\n")
+
+      - name: Persist engine-mapping state
+        shell: bash
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C phase3-engine-mapping-state
+          git add -f moondev_autoresearch_reconstruction/phase3_state/engine_mapping.json moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json moondev_autoresearch_reconstruction/phase3_state/hydration_queue.json
+          if git diff --cached --quiet; then
+            echo "no engine-mapping state changes"
+          else
+            git commit -m "Phase 3 engine mapping state run $GITHUB_RUN_ID"
+          fi
+          git push --force-with-lease origin phase3-engine-mapping-state
+
+      - name: Upload mapping snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-phase3-engine-mapping-${{ github.run_id }}
+          path: |
+            moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json
+            moondev_autoresearch_reconstruction/phase3_state/engine_mapping.json
+            moondev_autoresearch_reconstruction/phase3_state/hydration_queue.json
+          retention-days: 14
+
+      - name: Start public-source hydration
+        if: success() && steps.progress.outputs.hydrate != '0'
+        shell: bash
+        working-directory: .
+        run: gh workflow run autoresearch-phase3-hydrate.yml --repo "$GITHUB_REPOSITORY" --ref main
