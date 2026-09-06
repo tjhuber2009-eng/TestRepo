@@ -42,7 +42,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Download preserved source-run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -181,7 +181,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Download preserved source-run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -192,7 +192,7 @@ jobs:
 
       - name: Download recovered Lightning artifact
         if: needs.lightning.result == 'success'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: tournament-nemotron-lightning
           path: tournament_results
