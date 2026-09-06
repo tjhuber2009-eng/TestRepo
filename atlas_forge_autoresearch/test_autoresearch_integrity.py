@@ -814,6 +814,43 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertNotIn("OTHER_SECRET", clean)
         self.assertEqual(clean["AUTORESEARCH_SYMBOL"], "BTCUSDT")
 
+    def test_target_env_enables_lane_scoped_evomind_memory(self):
+        track = {
+            "id": "test_family__btc__private",
+            "family": {"id": "test_family"},
+            "target": {
+                "id": "btc",
+                "symbol": "BTCUSDT",
+                "market": "crypto",
+                "commission": 0.001,
+                "margin": 1.0,
+                "bars_per_year": 365,
+                "start": "2019-01-01",
+                "validation_start": "2021-01-01",
+                "validation_end": "2022-12-31",
+            },
+            "profile_name": "private",
+            "profile": {"max_dd_pct": 32.0},
+        }
+        env = continuous_runner.target_env(track)
+        self.assertEqual(env["AUTORESEARCH_EVOMIND_ENABLED"], "1")
+        self.assertEqual(
+            env["AUTORESEARCH_TRACK_ID"],
+            "test_family__btc__private",
+        )
+        self.assertEqual(
+            env["AUTORESEARCH_PROTOCOL"],
+            continuous_runner.PROTOCOL,
+        )
+        self.assertEqual(
+            Path(env["AUTORESEARCH_EVOMIND_DB"]).name,
+            "evomind.db",
+        )
+        self.assertEqual(
+            Path(env["AUTORESEARCH_EVOMIND_DB"]).parent,
+            continuous_runner.STATE,
+        )
+
     def test_successive_halving_targets_are_monotonic(self):
         breadth, depth, elite = 10, 30, 60
         self.assertLessEqual(breadth, depth)
