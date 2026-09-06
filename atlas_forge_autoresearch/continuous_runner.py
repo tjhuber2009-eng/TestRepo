@@ -187,6 +187,39 @@ def assert_universe_lock(tracks):
         )
 
 
+
+def balanced_market_track_order(tracks):
+    """Interleave market groups proportionally without changing track membership."""
+    groups = {}
+    market_order = []
+    for track in tracks:
+        market = track["target"]["market"]
+        if market not in groups:
+            groups[market] = []
+            market_order.append(market)
+        groups[market].append(track)
+    if len(groups) <= 1:
+        return list(tracks)
+
+    emitted = {market: 0 for market in market_order}
+    ordered = []
+    while len(ordered) < len(tracks):
+        available = [
+            market for market in market_order
+            if emitted[market] < len(groups[market])
+        ]
+        market = min(
+            available,
+            key=lambda name: (
+                emitted[name] / len(groups[name]),
+                market_order.index(name),
+            ),
+        )
+        ordered.append(groups[market][emitted[market]])
+        emitted[market] += 1
+    return ordered
+
+
 def build_tracks():
     registry = load_json(REGISTRY)
     config = load_json(CONFIG)
@@ -214,6 +247,8 @@ def build_tracks():
                     "profile": profiles[profile_name],
                     "id": slug(family["id"], target["id"], profile_name),
                 })
+    if bool(config.get("balanced_market_scheduling", False)):
+        tracks = balanced_market_track_order(tracks)
     assert_universe_lock(tracks)
     return tracks
 
