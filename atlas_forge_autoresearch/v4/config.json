@@ -203,10 +203,11 @@
         10,
         14
       ],
-      "charged_on": "gross_exposure_above_1x_only",
+      "charged_on": "realized_time_varying_gross_above_1x_only",
       "cash_yield_credit": false,
       "selection_uses_base_financing_rate": true,
-      "purpose": "prevent leverage from creating artificial CAGR under zero-cost borrowing assumptions"
+      "purpose": "prevent leverage from creating artificial CAGR under zero-cost borrowing assumptions",
+      "note": "Staggered sleeves and dynamic allocators pay financing only on gross exposure actually deployed each period."
     }
   },
   "intraday": {
