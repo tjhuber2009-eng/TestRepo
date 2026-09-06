@@ -21,7 +21,7 @@ RESULTS = STATE / "reconstructions.jsonl"
 PROGRESS = STATE / "reconstruction_progress.json"
 CURSOR = STATE / "reconstruction_cursor.json"
 HYDRATED = STATE / "hydrated_sources.jsonl"
-RECONSTRUCTION_VERSION = 2
+MAX_RECONSTRUCTION_VERSION = 3
 LANE = "phase3_free_reconstruction"
 PROTOCOL = "nested_chronological_v3"
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
@@ -86,6 +86,13 @@ def prior_hydration():
         if key:
             rows[key] = row
     return rows
+
+
+def reconstruction_version_for(hydrated_row):
+    if hydrated_row is None:
+        return 1
+    hydration_version = int(hydrated_row.get("hydration_version", 1) or 1)
+    return 1 + hydration_version
 
 
 def append_result(row):
@@ -200,9 +207,8 @@ def main():
         prior = results.get(key)
         hydrated = hydration.get(key)
         prior_version = int((prior or {}).get("reconstruction_version", 1) or 1)
-        if prior is not None and (
-            hydrated is None or prior_version >= RECONSTRUCTION_VERSION
-        ):
+        desired_version = reconstruction_version_for(hydrated)
+        if prior is not None and prior_version >= desired_version:
             continue
         hydrated_text = (
             "" if hydrated is None else str(hydrated.get("hydrated_text") or "")
@@ -229,8 +235,10 @@ def main():
                 "source_url": row.get("url"),
                 "source_query": row.get("query"),
                 "model": args.model,
-                "reconstruction_version": (
-                    RECONSTRUCTION_VERSION if hydrated is not None else 1
+                "reconstruction_version": desired_version,
+                "hydration_version_used": (
+                    None if hydrated is None
+                    else int(hydrated.get("hydration_version", 1) or 1)
                 ),
                 "hydrated_evidence_used": bool(hydrated_text),
                 "spec": spec,
@@ -254,8 +262,10 @@ def main():
                 "source_url": row.get("url"),
                 "source_query": row.get("query"),
                 "model": args.model,
-                "reconstruction_version": (
-                    RECONSTRUCTION_VERSION if hydrated is not None else 1
+                "reconstruction_version": desired_version,
+                "hydration_version_used": (
+                    None if hydrated is None
+                    else int(hydrated.get("hydration_version", 1) or 1)
                 ),
                 "hydrated_evidence_used": bool(hydrated_text),
                 "reconstruction_admitted": False,
@@ -277,11 +287,11 @@ def main():
     vals = list(results.values())
     hydrated_pending = sum(
         1
-        for hkey in hydration
+        for hkey, hrow in hydration.items()
         if hkey not in results
         or int(
             (results.get(hkey) or {}).get("reconstruction_version", 1) or 1
-        ) < RECONSTRUCTION_VERSION
+        ) < reconstruction_version_for(hrow)
     )
     base_complete = len(vals) >= len(queue)
     all_current = base_complete and hydrated_pending == 0
@@ -305,7 +315,7 @@ def main():
         "base_queue_reconstructed": base_complete,
         "hydrated_source_count": len(hydration),
         "hydrated_reconstruction_pending": hydrated_pending,
-        "reconstruction_version": RECONSTRUCTION_VERSION,
+        "max_reconstruction_version": MAX_RECONSTRUCTION_VERSION,
         "stage": (
             "reconstruction_complete"
             if all_current else "reconstructing"
