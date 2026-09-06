@@ -77,6 +77,7 @@ function render(){
 
   renderPhaseRail(phase,hiddenOpen);
   renderWorkflows();
+  renderV4();
   setupFilters();
   renderChampions();
   renderTournament();
@@ -141,6 +142,172 @@ function renderWorkflows(){
       <span class="pill ${cls}">${esc(text)}</span>
     </div>`;
   }).join("");
+}
+
+function renderV4(){
+  const state=$("#v4State");
+  const wrap=$("#v4Content");
+  if(!state||!wrap) return;
+  const v4=DATA.v4||{};
+  const priv=v4.private||{};
+  const prop=v4.prop||{};
+  if(!v4.available){
+    state.textContent="no state";
+    state.className="pill neutral";
+    wrap.innerHTML='<div class="empty">V4 development state is not present in this dashboard snapshot.</div>';
+    return;
+  }
+  const hidden=!!priv.hidden_validation_opened||!!prop.hidden_validation_opened;
+  const finalOos=!!priv.final_oos_opened||!!prop.final_oos_opened;
+  state.textContent=hidden||finalOos?"boundary opened":"development sealed";
+  state.className=`pill ${hidden||finalOos?"warn":"good"}`;
+
+  const chosen=priv.portfolio?.chosen||null;
+  const cap=Number(priv.portfolio_authoritative_concentration_cap||0.55);
+  const weights=chosen?.weights||{};
+  const weightRows=Object.entries(weights).sort((a,b)=>Number(b[1])-Number(a[1])).map(([name,w])=>`
+    <tr><td><b>${esc(name)}</b></td><td class="num">${fmt(100*Number(w),2)}%</td></tr>`).join("");
+  const concentration=priv.portfolio_concentration_sensitivity||{};
+  const concentrationRows=Object.entries(concentration).sort((a,b)=>Number(a[0])-Number(b[0])).map(([k,row])=>{
+    const x=row?.chosen||row||{};
+    const auth=Math.abs(Number(k)-cap)<1e-9;
+    return `<tr>
+      <td><b>${fmt(100*Number(k),0)}%</b> ${auth?'<span class="pill good">AUTHORITATIVE</span>':""}</td>
+      <td class="num">${pct(x.cagr_pct,2)}</td>
+      <td class="num">${pct(x.bootstrap_median_cagr_pct,2)}</td>
+      <td class="num">${pct(x.bootstrap_dd_q95_pct,2)}</td>
+      <td class="num">${pct(x.max_dd_pct,2)}</td>
+      <td class="num">${fmt(x.sharpe,3)}</td>
+      <td class="num">${x.gross_exposure==null?"—":pct(100*Number(x.gross_exposure),1)}</td>
+      <td class="num">${x.cash_weight==null?"—":pct(100*Number(x.cash_weight),1)}</td>
+    </tr>`;
+  }).join("");
+
+  const privateTransfer=(priv.continuous_private_transfer?.candidates||[]).map(r=>{
+    const cand=r.candidate||r;
+    const gate=r.portfolio_gate_reason||r.transfer_status||"—";
+    return `<tr>
+      <td><b>${esc(cand.track_id||"—")}</b><div class="muted">${esc(cand.family||"")}</div></td>
+      <td class="num">${pct(r.base?.cagr_pct,2)}</td>
+      <td class="num">${pct(r.cost_stress?.cagr_pct,2)}</td>
+      <td class="num">${pct(r.base?.max_dd_pct,2)}</td>
+      <td class="num">${fmt(r.base?.sharpe,3)}</td>
+      <td class="num">${cand.pbo==null?"—":pct(100*Number(cand.pbo),1)}</td>
+      <td><span class="pill ${r.portfolio_eligible?"good":"warn"}">${r.portfolio_eligible?"eligible":"blocked"}</span><div class="muted">${esc(gate)}</div></td>
+    </tr>`;
+  }).join("");
+
+  const viewOrder=["max_payout_efficiency","max_repeat_payout_efficiency","max_evaluation_pass","safest_funded","balanced","conservative"];
+  const viewLabel={
+    max_payout_efficiency:"Max first payout",
+    max_repeat_payout_efficiency:"Max repeat payout",
+    max_evaluation_pass:"Max evaluation pass",
+    safest_funded:"Safest funded",
+    balanced:"Balanced",
+    conservative:"Conservative",
+  };
+  const isNonAuthoritative=(params)=>{
+    if(!params) return false;
+    return params.transfer_exactness==="signal_only_proxy"||params.source_stop_transferred===false;
+  };
+  const programBlock=(id,label)=>{
+    const p=prop.programs?.[id]||{};
+    const front=p.refined_frontiers||{};
+    const rows=viewOrder.map(view=>{
+      const r=front[view]||{};
+      const params=r.params||{};
+      const x=r.view||{};
+      const funded=x.funded||{};
+      const nonauth=isNonAuthoritative(params);
+      const family=params.family||"—";
+      const source=params.continuous_track_id||"";
+      const exposures=[x.challenge_exposure_scale,x.verification_exposure_scale,x.funded_exposure_scale]
+        .map(v=>v==null?"—":fmt(v,2)).join(" / ");
+      return `<tr>
+        <td><b>${esc(viewLabel[view])}</b></td>
+        <td><b>${esc(family)}</b>${source?`<div class="muted">${esc(source)}</div>`:""}${nonauth?'<span class="pill bad">NON-AUTH PROXY</span>':""}</td>
+        <td class="num">${exposures}</td>
+        <td class="num">${x.combined_evaluation_pass_probability==null?"—":pct(100*Number(x.combined_evaluation_pass_probability),1)}</td>
+        <td class="num">${fmt(x.expected_evaluation_days_if_passed,1)}</td>
+        <td class="num">${fmt(x.payout_efficiency_score,6)}</td>
+        <td class="num">${fmt(x.repeat_payout_efficiency_score,6)}</td>
+        <td class="num">${pct(x.repeat_expected_reward_pct,2)}</td>
+        <td class="num">${funded.survival_probability==null?"—":pct(100*Number(funded.survival_probability),1)}</td>
+        <td class="num">${funded.daily_loss_breach_probability==null?"—":pct(100*Number(funded.daily_loss_breach_probability),1)}</td>
+        <td class="num">${funded.max_loss_breach_probability==null?"—":pct(100*Number(funded.max_loss_breach_probability),1)}</td>
+      </tr>`;
+    }).join("");
+    const horizons=p.horizon_sensitivity||{};
+    const hrows=viewOrder.map(view=>{
+      const h=horizons[view]?.horizons||{};
+      const cell=(n)=>{
+        const x=h[String(n)]?.view||{};
+        const funded=x.funded||{};
+        return `<td>
+          <div><b>Pass</b> ${x.combined_evaluation_pass_probability==null?"—":pct(100*Number(x.combined_evaluation_pass_probability),1)}</div>
+          <div><b>Repeat</b> ${fmt(x.repeat_payout_efficiency_score,5)}</div>
+          <div><b>Reward</b> ${pct(x.repeat_expected_reward_pct,1)}</div>
+          <div><b>Survival</b> ${funded.survival_probability==null?"—":pct(100*Number(funded.survival_probability),1)}</div>
+        </td>`;
+      };
+      return `<tr><td><b>${esc(viewLabel[view])}</b></td>${cell(252)}${cell(365)}${cell(504)}</tr>`;
+    }).join("");
+    return `<article class="glass-card" style="margin-top:16px">
+      <div class="card-title-row"><div><span class="kicker">PROP PROGRAM</span><h3>${esc(label)}</h3></div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Frontier</th><th>Family / source</th><th class="num">C / V / F</th><th class="num">Pass</th><th class="num">Eval days</th><th class="num">First eff.</th><th class="num">Repeat eff.</th><th class="num">12-cycle reward</th><th class="num">Survival</th><th class="num">Daily breach</th><th class="num">Max breach</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <h4 style="margin:18px 0 8px">252 / 365 / 504-day sensitivity</h4>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Frontier</th><th>252 days</th><th>365 days</th><th>504 days</th></tr></thead>
+        <tbody>${hrows}</tbody>
+      </table></div>
+    </article>`;
+  };
+
+  const adapterRows=(prop.continuous_prop_transfer?.candidates||[]).map(c=>{
+    const p=c.transfer_params||{};
+    const nonauth=isNonAuthoritative(p);
+    const status=c.transfer_status==="adapter_required"?"adapter_required":nonauth?"non-authoritative proxy":c.transfer_status||"—";
+    const cls=status==="supported"?"good":status==="adapter_required"?"warn":"bad";
+    return `<tr>
+      <td><b>${esc(c.track_id||"—")}</b></td><td>${esc(c.family||"—")}</td>
+      <td>${esc(c.adapter||"—")}</td><td>${esc(p.transfer_exactness||c.exactness||"—")}</td>
+      <td>${p.source_stop_transferred===undefined?"—":esc(p.source_stop_transferred)}</td>
+      <td><span class="pill ${cls}">${esc(status)}</span></td>
+    </tr>`;
+  }).join("");
+
+  const privateHtml=chosen?`<div class="kpi-grid">
+      <article class="kpi-card accent-kpi"><span>Private CAGR</span><strong>${pct(chosen.cagr_pct,2)}</strong><small>55% authoritative cap</small></article>
+      <article class="kpi-card"><span>Bootstrap median CAGR</span><strong>${pct(chosen.bootstrap_median_cagr_pct,2)}</strong><small>paired block bootstrap</small></article>
+      <article class="kpi-card"><span>Observed max DD</span><strong>${pct(chosen.max_dd_pct,2)}</strong><small>cap 32%</small></article>
+      <article class="kpi-card"><span>Bootstrap q95 DD</span><strong>${pct(chosen.bootstrap_dd_q95_pct,2)}</strong><small>stress drawdown</small></article>
+      <article class="kpi-card"><span>Sharpe</span><strong>${fmt(chosen.sharpe,3)}</strong><small>development only</small></article>
+      <article class="kpi-card"><span>Gross / cash</span><strong>${pct(100*Number(chosen.gross_exposure||0),1)} / ${pct(100*Number(chosen.cash_weight||0),1)}</strong><small>portfolio exposure</small></article>
+    </div>
+    <div class="dashboard-grid" style="margin-top:16px">
+      <article class="glass-card"><div class="card-title-row"><div><span class="kicker">PRIVATE ACCOUNT</span><h3>Authoritative weights</h3></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Strategy</th><th class="num">Weight</th></tr></thead><tbody>${weightRows}</tbody></table></div>
+      </article>
+      <article class="glass-card"><div class="card-title-row"><div><span class="kicker">ROBUSTNESS</span><h3>Concentration sensitivity</h3></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Cap</th><th class="num">CAGR</th><th class="num">Boot CAGR</th><th class="num">q95 DD</th><th class="num">DD</th><th class="num">Sharpe</th><th class="num">Gross</th><th class="num">Cash</th></tr></thead><tbody>${concentrationRows}</tbody></table></div>
+      </article>
+    </div>`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
+
+  wrap.innerHTML=`
+    ${privateHtml}
+    <article class="glass-card" style="margin-top:16px">
+      <div class="card-title-row"><div><span class="kicker">PRIVATE PROMOTION QUEUE</span><h3>PBO-gated continuous transfers</h3></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Track</th><th class="num">V4 CAGR</th><th class="num">3× cost CAGR</th><th class="num">DD</th><th class="num">Sharpe</th><th class="num">PBO</th><th>Gate</th></tr></thead><tbody>${privateTransfer||'<tr><td colspan="7">No candidates</td></tr>'}</tbody></table></div>
+    </article>
+    ${programBlock("ftmo_1step_2026","FTMO 1-Step")}
+    ${programBlock("ftmo_2step_2026","FTMO 2-Step")}
+    <article class="glass-card" style="margin-top:16px">
+      <div class="card-title-row"><div><span class="kicker">TRANSFER AUDIT</span><h3>Continuous → prop adapter exactness</h3></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Track</th><th>Family</th><th>Adapter</th><th>Exactness</th><th>Source stop</th><th>Status</th></tr></thead><tbody>${adapterRows||'<tr><td colspan="6">No transferred candidates</td></tr>'}</tbody></table></div>
+    </article>`;
 }
 
 function setupFilters(){
