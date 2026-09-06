@@ -35,7 +35,7 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state || true
+          git fetch origin +refs/heads/phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state || true
           if git rev-parse --verify refs/remotes/origin/phase3-free-discovery-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state || true
           fi
