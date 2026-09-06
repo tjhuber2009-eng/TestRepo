@@ -13,38 +13,73 @@ from pathlib import Path
 import numpy as np
 
 
-def load_experiment_fold_matrix(path):
+def load_experiment_fold_matrix(path, baseline_path=None):
     path=Path(path)
-    if not path.exists():
-        return np.empty((0,0)), []
     rows=[]
     ids=[]
-    with path.open(encoding="utf-8") as f:
-        for line in f:
+    seen=set()
+    baseline=None
+    if baseline_path is not None:
+        bp=Path(baseline_path)
+        if bp.exists():
             try:
-                x=json.loads(line)
+                b=json.loads(bp.read_text(encoding="utf-8"))
+                vals=[float(x["raw_k"]) for x in b.get("cscv_slices",[])]
+                arr=np.asarray(vals,dtype=float)
+                if len(arr)>=4 and np.all(np.isfinite(arr)):
+                    baseline={
+                        "arr":arr,
+                        "id":str(b.get("strategy_sha256") or "baseline"),
+                        "harness_sha256":b.get("harness_sha256"),
+                        "program_sha256":b.get("program_sha256"),
+                    }
+                    rows.append(arr)
+                    ids.append(baseline["id"])
+                    seen.add(baseline["id"])
             except Exception:
-                continue
-            if x.get("selection_eligible") is not True:
-                continue
-            vals=x.get("cscv_slice_k")
-            if not isinstance(vals,list) or len(vals)<4:
-                continue
-            try:
-                arr=np.asarray([float(v) for v in vals],dtype=float)
-            except Exception:
-                continue
-            if not np.all(np.isfinite(arr)):
-                continue
-            rows.append(arr)
-            ids.append(x.get("candidate_ast_sha256") or f"iter-{x.get('iteration')}")
+                baseline=None
+    if path.exists():
+        with path.open(encoding="utf-8") as f:
+            for line in f:
+                try:
+                    x=json.loads(line)
+                except Exception:
+                    continue
+                if x.get("selection_eligible") is not True:
+                    continue
+                if baseline is not None:
+                    if baseline["harness_sha256"] and x.get("harness_sha256") != baseline["harness_sha256"]:
+                        continue
+                    if baseline["program_sha256"] and x.get("program_sha256") != baseline["program_sha256"]:
+                        continue
+                vals=x.get("cscv_slice_k")
+                if not isinstance(vals,list) or len(vals)<4:
+                    continue
+                try:
+                    arr=np.asarray([float(v) for v in vals],dtype=float)
+                except Exception:
+                    continue
+                if not np.all(np.isfinite(arr)):
+                    continue
+                ident=str(
+                    x.get("candidate_ast_sha256")
+                    or x.get("candidate_source_sha256")
+                    or f"iter-{x.get('iteration')}"
+                )
+                if ident in seen:
+                    continue
+                seen.add(ident)
+                rows.append(arr)
+                ids.append(ident)
     if not rows:
         return np.empty((0,0)), []
-    # Use the modal fold count so variants are compared on identical slices.
-    counts={}
-    for r in rows:
-        counts[len(r)]=counts.get(len(r),0)+1
-    width=max(counts,key=lambda k:(counts[k],k))
+    if baseline is not None:
+        width=len(baseline["arr"])
+    else:
+        counts={}
+        for r in rows:
+            counts[len(r)]=counts.get(len(r),0)+1
+        width=max(counts,key=lambda k:(counts[k],k))
     keep=[(r,i) for r,i in zip(rows,ids) if len(r)==width]
     if not keep:
         return np.empty((0,0)), []
@@ -105,11 +140,15 @@ def cscv_pbo(matrix, max_splits=252):
         "median_oos_logit":round(float(np.median(arr)),6),
         "candidate_count":int(n_strat),
         "fold_count":int(n_folds),
-        "candidate_pool":"selection_eligible_backtests",
+        "candidate_pool":"frozen_baseline_plus_unique_selection_eligible_backtests",
         "partition":"fixed_even_development_slices",
     }
 
 
 def track_pbo(experiments_path):
-    matrix,_=load_experiment_fold_matrix(experiments_path)
+    experiments_path=Path(experiments_path)
+    matrix,_=load_experiment_fold_matrix(
+        experiments_path,
+        baseline_path=experiments_path.parent/"baseline.json",
+    )
     return cscv_pbo(matrix)
