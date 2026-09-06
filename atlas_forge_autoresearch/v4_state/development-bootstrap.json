@@ -21295,30 +21295,25 @@
     "portfolio_eligible_count": 0
   },
   "portfolio": {
-    "candidates_evaluated": 1000,
+    "candidates_evaluated": 1,
     "chosen": {
-      "bootstrap_dd_q95_pct": 31.97862966051833,
-      "bootstrap_median_cagr_pct": 23.718869997878798,
-      "cagr_pct": 23.103655635377287,
+      "bootstrap_cagr_q10_pct": 20.21586234592559,
+      "bootstrap_cagr_q25_pct": 23.20624402995733,
+      "bootstrap_dd_q95_pct": 31.272617038988475,
+      "bootstrap_median_cagr_pct": 27.878387437856,
+      "cagr_pct": 27.449063945478123,
       "cash_weight": 0.0,
-      "effective_n": 3.553361714835645,
-      "gross_exposure": 1.2280057755881095,
-      "max_dd_pct": -19.33074566260168,
-      "score": 23.779148990613823,
-      "sharpe": 1.237268779333454,
+      "effective_n": 1.0,
+      "gross_exposure": 1.5,
+      "max_dd_pct": -18.932779521827293,
+      "score": 27.916701137393883,
+      "sharpe": 1.4156849768941298,
       "weights": {
-        "cash_rotation_risk_budgeted": 0.04039335204020914,
-        "cash_rotation_vix_stress": 0.22373034608619374,
-        "continuous__ibs_deep_pullback__tqqq__private": 0.5770843225252623,
-        "defensive_rotation_risk_budgeted": 0.1097371826095189,
-        "long_history_cross_asset_trend": 0.1286308850545363,
-        "rotation_risk_budgeted": 0.004767873240552307,
-        "rotation_sma_hysteresis": 0.09110384883088317,
-        "rotation_walkforward_meta_filter": 0.05255796520095356
+        "satellite_0.20__continuous__qqe_proxy__btc__private": 1.5
       }
     },
     "dd_cap_pct": 32.0,
-    "feasible_count": 1000,
+    "feasible_count": 1,
     "max_gross": 1.5,
     "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
   },
@@ -21327,6 +21322,8 @@
     "0.50": {
       "candidates_evaluated": 1000,
       "chosen": {
+        "bootstrap_cagr_q10_pct": 15.708588929931292,
+        "bootstrap_cagr_q25_pct": 19.624265847827534,
         "bootstrap_dd_q95_pct": 31.97862966051833,
         "bootstrap_median_cagr_pct": 23.718869997878798,
         "cagr_pct": 23.103655635377287,
@@ -21355,6 +21352,8 @@
     "0.55": {
       "candidates_evaluated": 1000,
       "chosen": {
+        "bootstrap_cagr_q10_pct": 15.708588929931292,
+        "bootstrap_cagr_q25_pct": 19.624265847827534,
         "bootstrap_dd_q95_pct": 31.97862966051833,
         "bootstrap_median_cagr_pct": 23.718869997878798,
         "cagr_pct": 23.103655635377287,
@@ -21383,6 +21382,8 @@
     "0.65": {
       "candidates_evaluated": 1000,
       "chosen": {
+        "bootstrap_cagr_q10_pct": 15.708588929931292,
+        "bootstrap_cagr_q25_pct": 19.624265847827534,
         "bootstrap_dd_q95_pct": 31.97862966051833,
         "bootstrap_median_cagr_pct": 23.718869997878798,
         "cagr_pct": 23.103655635377287,
@@ -21411,6 +21412,8 @@
     "0.90": {
       "candidates_evaluated": 1000,
       "chosen": {
+        "bootstrap_cagr_q10_pct": 15.708588929931292,
+        "bootstrap_cagr_q25_pct": 19.624265847827534,
         "bootstrap_dd_q95_pct": 31.97862966051833,
         "bootstrap_median_cagr_pct": 23.718869997878798,
         "cagr_pct": 23.103655635377287,
@@ -21433,6 +21436,63 @@
       },
       "dd_cap_pct": 32.0,
       "feasible_count": 1000,
+      "max_gross": 1.5,
+      "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+    }
+  },
+  "portfolio_dynamic": {
+    "allocator": {
+      "average_active_strategies": 5.264866836920832,
+      "average_gross": 0.6701295147756293,
+      "average_turnover": 0.01399607468130825,
+      "last_weights": {
+        "cash_rotation_risk_budgeted": 0.07152161357896905,
+        "cash_rotation_vix_stress": 0.12052928567522958,
+        "continuous__ibs_deep_pullback__tqqq__private": 0.10917032293292671,
+        "defensive_rotation_risk_budgeted": 0.088589810713699,
+        "long_history_cross_asset_trend": 0.0785127810116974,
+        "rotation_risk_budgeted": 0.09082050649251909,
+        "rotation_sma_hysteresis": 0.10182266558507175,
+        "rotation_walkforward_meta_filter": 0.08903301400988743
+      },
+      "policy": {
+        "causality": "row_t_weights_use_rows_strictly_before_t",
+        "correlation_penalty": 1.0,
+        "downside_penalty": 0.75,
+        "eligibility": "input_strategies_must_already_pass_individual_evidence_gates",
+        "growth_lookback": 126,
+        "hard_drawdown": -0.22,
+        "hard_scale": 0.5,
+        "max_weight": 0.55,
+        "min_history": 252,
+        "name": "causal_strategy_rotation_v1",
+        "periods_per_year": 252.0,
+        "rebalance_every": 21,
+        "risk_lookback": 63,
+        "soft_drawdown": -0.12,
+        "soft_scale": 0.75
+      }
+    },
+    "risk_scaled_result": {
+      "candidates_evaluated": 1,
+      "chosen": {
+        "bootstrap_cagr_q10_pct": 5.286959459822795,
+        "bootstrap_cagr_q25_pct": 8.20124290013865,
+        "bootstrap_dd_q95_pct": 31.74291522651594,
+        "bootstrap_median_cagr_pct": 11.687673362882279,
+        "cagr_pct": 10.751311561228306,
+        "cash_weight": 0.04398929074558766,
+        "effective_n": 1.0,
+        "gross_exposure": 0.9560107092544123,
+        "max_dd_pct": -18.122477698761475,
+        "score": 11.714356016510308,
+        "sharpe": 0.8341326814014716,
+        "weights": {
+          "causal_dynamic_allocator": 0.9560107092544123
+        }
+      },
+      "dd_cap_pct": 32.0,
+      "feasible_count": 1,
       "max_gross": 1.5,
       "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
     }
@@ -21533,6 +21593,81 @@
       "cross_asset_momentum_risk_budgeted"
     ]
   },
+  "portfolio_satellite": {
+    "risk_scaled_result": {
+      "candidates_evaluated": 1,
+      "chosen": {
+        "bootstrap_cagr_q10_pct": 20.21586234592559,
+        "bootstrap_cagr_q25_pct": 23.20624402995733,
+        "bootstrap_dd_q95_pct": 31.272617038988475,
+        "bootstrap_median_cagr_pct": 27.878387437856,
+        "cagr_pct": 27.449063945478123,
+        "cash_weight": 0.0,
+        "effective_n": 1.0,
+        "gross_exposure": 1.5,
+        "max_dd_pct": -18.932779521827293,
+        "score": 27.916701137393883,
+        "sharpe": 1.4156849768941298,
+        "weights": {
+          "satellite_0.20__continuous__qqe_proxy__btc__private": 1.5
+        }
+      },
+      "dd_cap_pct": 32.0,
+      "feasible_count": 1,
+      "max_gross": 1.5,
+      "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+    },
+    "sleeve": {
+      "candidate_count": 35,
+      "policy": "supplemental sleeve capped at 25% composition; pre-inception allocation held as cash",
+      "selected_candidate": "satellite_0.20__continuous__qqe_proxy__btc__private",
+      "spec": {
+        "inception_dates": {
+          "continuous__qqe_proxy__btc__private": "2017-08-17"
+        },
+        "name": "satellite_0.20__continuous__qqe_proxy__btc__private",
+        "satellite_weights": {
+          "continuous__qqe_proxy__btc__private": 1.0
+        },
+        "sleeve_weight": 0.2
+      }
+    }
+  },
+  "portfolio_selection": {
+    "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
+    "reason": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+    "selected": "staggered_satellite"
+  },
+  "portfolio_static": {
+    "candidates_evaluated": 1000,
+    "chosen": {
+      "bootstrap_cagr_q10_pct": 15.708588929931292,
+      "bootstrap_cagr_q25_pct": 19.624265847827534,
+      "bootstrap_dd_q95_pct": 31.97862966051833,
+      "bootstrap_median_cagr_pct": 23.718869997878798,
+      "cagr_pct": 23.103655635377287,
+      "cash_weight": 0.0,
+      "effective_n": 3.553361714835645,
+      "gross_exposure": 1.2280057755881095,
+      "max_dd_pct": -19.33074566260168,
+      "score": 23.779148990613823,
+      "sharpe": 1.237268779333454,
+      "weights": {
+        "cash_rotation_risk_budgeted": 0.04039335204020914,
+        "cash_rotation_vix_stress": 0.22373034608619374,
+        "continuous__ibs_deep_pullback__tqqq__private": 0.5770843225252623,
+        "defensive_rotation_risk_budgeted": 0.1097371826095189,
+        "long_history_cross_asset_trend": 0.1286308850545363,
+        "rotation_risk_budgeted": 0.004767873240552307,
+        "rotation_sma_hysteresis": 0.09110384883088317,
+        "rotation_walkforward_meta_filter": 0.05255796520095356
+      }
+    },
+    "dd_cap_pct": 32.0,
+    "feasible_count": 1000,
+    "max_gross": 1.5,
+    "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+  },
   "prior_work_diagnostics": {
     "hr_dual_alpha": {
       "authoritative_portfolio_eligible": false,
@@ -21543,18 +21678,18 @@
       "final_oos_opened": false,
       "hidden_validation_opened": false,
       "metrics_5bp": {
-        "cagr_pct": 29.766292977513785,
-        "cost_stress_cagr_pct": 28.146656715043395,
-        "cumulative_return_pct": 1605.5763905087997,
+        "cagr_pct": 29.76629805242279,
+        "cost_stress_cagr_pct": 28.146661725580934,
+        "cumulative_return_pct": 1605.5771166192565,
         "dsr": 1.0,
         "gross_exposure": 1.0,
-        "max_dd_pct": -59.883937242254405,
+        "max_dd_pct": -59.88393574699988,
         "pbo": null,
         "psr_zero": 1.0,
-        "sharpe": 0.9341543598567625,
-        "sortino": 1.304645054264783,
+        "sharpe": 0.9341543314297861,
+        "sortino": 1.3046450786871966,
         "trades": 204,
-        "turnover_per_year": 16.47661222988001,
+        "turnover_per_year": 16.476617251059675,
         "years": 10.885918259786306
       },
       "protocol": "alpha_generation_v4",
@@ -21578,7 +21713,7 @@
   },
   "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
-  "research_commit_sha": "199c9001c8274c16d5ef5e7f693e60d913749ac3",
+  "research_commit_sha": "526540c48c4233000fad37c080e8721e24249365",
   "reversal_parameter_optimizer": {
     "chosen": null,
     "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
