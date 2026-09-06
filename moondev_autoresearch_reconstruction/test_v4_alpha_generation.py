@@ -1508,6 +1508,86 @@ class V4AlphaGenerationTests(unittest.TestCase):
             set(full.columns) == {"BTCUSDT", "ETHUSDT"}
         )
 
+    def test_continuous_daily_signal_proxy_adapters_are_causal(self):
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=24 * 80,
+            freq="h",
+            tz="UTC",
+        )
+        close = 100.0 * (1.0008 ** np.arange(len(idx)))
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+                "Volume": 1.0,
+            },
+            index=idx,
+        )
+        data = {
+            "BTCUSDT": frame,
+            "ETHUSDT": frame * 0.9,
+        }
+        cases = [
+            {
+                "family": "continuous_daily_signal",
+                "source_family": "donchian_20_10",
+                "source_target": "BTCUSDT",
+                "entry_lookback": 5,
+                "exit_lookback": 3,
+                "sma_window": None,
+                "source_stop_transferred": False,
+                "transfer_exactness": "signal_only_proxy",
+            },
+            {
+                "family": "continuous_daily_signal",
+                "source_family": "donchian_sma50",
+                "source_target": "BTCUSDT",
+                "entry_lookback": 5,
+                "exit_lookback": 3,
+                "sma_window": 7,
+                "source_stop_transferred": False,
+                "transfer_exactness": "signal_only_proxy",
+            },
+            {
+                "family": "continuous_daily_signal",
+                "source_family": "swing_terminal_pullback_proxy",
+                "source_target": "ETHUSDT",
+                "ema_fast": 3,
+                "ema_slow": 7,
+                "atr_window": 3,
+                "adx_window": 3,
+                "pullback_atr_mult": 2.0,
+                "adx_min": 0.0,
+                "source_stop_transferred": False,
+                "transfer_exactness": "signal_only_proxy",
+            },
+        ]
+        for params in cases:
+            with self.subTest(params=params["source_family"]):
+                strat = hourly_continuous_daily_signal_strategy(
+                    params,
+                    tuple(sorted(data)),
+                )
+                full = strat(data)
+                shorter = {
+                    k: v.iloc[: 24 * 60].copy()
+                    for k, v in data.items()
+                }
+                prefix = strat(shorter)
+                pd.testing.assert_frame_equal(
+                    prefix.iloc[:-1],
+                    full.loc[prefix.index].iloc[:-1],
+                )
+                self.assertTrue(
+                    set(full.columns) == {"BTCUSDT", "ETHUSDT"}
+                )
+                self.assertTrue(
+                    np.isfinite(full.to_numpy(dtype=float)).all()
+                )
+
     def test_full_v4_integration_demo(self):
         out=run_integration_demo()
         self.assertEqual(out["protocol"],"alpha_generation_v4")
