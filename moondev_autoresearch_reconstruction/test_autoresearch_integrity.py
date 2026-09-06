@@ -241,6 +241,7 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertEqual(registry_row["status"], "phase2_runnable")
         self.assertEqual(len(continuous_runner.build_tracks()), 514)
 
+        import importlib.util
         dates = pd.date_range("2011-08-31", "2020-12-31", freq="ME", tz="UTC")
         close = pd.Series(
             100.0 * np.cumprod(1.0 + 0.01 * np.sin(np.arange(len(dates)))),
@@ -249,16 +250,31 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         high = close * 1.01
         low = close * 0.99
         volume = pd.Series(1_000.0, index=dates)
-        original = phase2_seed_factory.phase2_signal(
-            close.to_numpy(), high.to_numpy(), low.to_numpy(),
-            volume.to_numpy(), dates.to_numpy(),
-        )
-        changed = close.copy()
-        changed.loc[changed.index >= "2018-01-01"] *= 25.0
-        changed_signal = phase2_seed_factory.phase2_signal(
-            changed.to_numpy(), (changed * 1.01).to_numpy(),
-            (changed * 0.99).to_numpy(), volume.to_numpy(), dates.to_numpy(),
-        )
+        with tempfile.TemporaryDirectory() as td:
+            strategy_path = Path(td) / "monthly_strategy.py"
+            phase2_seed_factory.generate(
+                "bitcoin_cycle_monthly_causal",
+                strategy_path,
+                365,
+                0.08,
+                0.5,
+            )
+            spec = importlib.util.spec_from_file_location(
+                "monthly_strategy_test", strategy_path
+            )
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            original = module.phase2_signal(
+                close.to_numpy(), high.to_numpy(), low.to_numpy(),
+                volume.to_numpy(), dates.to_numpy(),
+            )
+            changed = close.copy()
+            changed.loc[changed.index >= "2018-01-01"] *= 25.0
+            changed_signal = module.phase2_signal(
+                changed.to_numpy(), (changed * 1.01).to_numpy(),
+                (changed * 0.99).to_numpy(),
+                volume.to_numpy(), dates.to_numpy(),
+            )
         cutoff = dates < pd.Timestamp("2018-01-01", tz="UTC")
         np.testing.assert_array_equal(original[cutoff], changed_signal[cutoff])
 
