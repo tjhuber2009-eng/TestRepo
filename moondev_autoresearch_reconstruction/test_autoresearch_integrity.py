@@ -179,6 +179,31 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         }
         self.assertNotIn("utbot_linreg_combo", runnable)
 
+    def test_phase2_prior_lane_is_isolated_and_large(self):
+        import phase2_prior_runner
+        import phase2_seed_factory
+        phase1_ids = {x["id"] for x in continuous_runner.build_tracks()}
+        phase2_tracks = phase2_prior_runner.build_tracks()
+        self.assertEqual(len(phase1_ids), 514)
+        self.assertGreaterEqual(len(phase2_tracks), 1000)
+        self.assertTrue(phase1_ids.isdisjoint({x["id"] for x in phase2_tracks}))
+        self.assertNotIn(
+            "macd_12_26_9",
+            {x["id"] for x in self.registry["families"] if x.get("status") == "runnable"},
+        )
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "strategy.py"
+            phase2_seed_factory.generate(
+                "macd_12_26_9", p, 252, 0.08, 0.5
+            )
+            compile(p.read_text(encoding="utf-8"), str(p), "exec")
+
+    def test_phase3_free_lane_is_finite_and_registry_isolated(self):
+        import phase3_free_runner
+        self.assertGreaterEqual(len(phase3_free_runner.QUERY_BATCHES), 4)
+        self.assertTrue(all(phase3_free_runner.QUERY_BATCHES))
+        self.assertFalse((HERE / "phase3_state" / "validation_data").exists())
+
     def test_crashes_and_duplicates_do_not_count_as_valid(self):
         body = (
             "ts\titer\tverdict\tscore\tbase_score\tret_pct\tsharpe\t"
