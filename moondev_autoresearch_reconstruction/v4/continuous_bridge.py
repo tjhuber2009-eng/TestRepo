@@ -57,6 +57,9 @@ PROP_SIGNAL_ADAPTERS = {
     "btc_rsi_adx": "daily_rsi_adx",
     "sentinel63": "daily_sentinel",
     "sentinel65": "daily_sentinel",
+    "donchian_20_10": "daily_donchian_signal_proxy",
+    "donchian_sma50": "daily_donchian_sma_signal_proxy",
+    "swing_terminal_pullback_proxy": "daily_swing_pullback_signal_proxy",
 }
 
 GRADE_RANK = {"A": 3, "B": 2, "C": 1, "D": 0}
@@ -334,6 +337,65 @@ def prop_transfer_candidates(
                 "entry_z": 0.5,
                 "exit_z": -0.5,
             })
+        elif c.family in {"donchian_20_10", "donchian_sma50"}:
+            params.update({
+                "entry_lookback": _parse_int(
+                    source,
+                    r"entry_lookback\s*=\s*(\d+)",
+                    _parse_int(
+                        source,
+                        r"self\.hh\s*=\s*self\.I\(_rolling_high,.*?,\s*(\d+)\)",
+                        20,
+                    ),
+                ),
+                "exit_lookback": _parse_int(
+                    source,
+                    r"exit_lookback\s*=\s*(\d+)",
+                    _parse_int(
+                        source,
+                        r"self\.ll\s*=\s*self\.I\(_rolling_low,.*?,\s*(\d+)\)",
+                        10,
+                    ),
+                ),
+                "sma_window": (
+                    None
+                    if c.family == "donchian_20_10"
+                    else _parse_int(
+                        source,
+                        r"self\.sma\d+\s*=\s*self\.I\(_sma,.*?,\s*(\d+)\)",
+                        50,
+                    )
+                ),
+                "source_stop_transferred": False,
+                "transfer_exactness": "signal_only_proxy",
+            })
+        elif c.family == "swing_terminal_pullback_proxy":
+            params.update({
+                "ema_fast": _parse_int(
+                    source,
+                    r"self\.ema20\s*=\s*self\.I\(_ema,.*?,\s*(\d+)\)",
+                    20,
+                ),
+                "ema_slow": _parse_int(
+                    source,
+                    r"self\.ema50\s*=\s*self\.I\(_ema,.*?,\s*(\d+)\)",
+                    50,
+                ),
+                "atr_window": _parse_int(
+                    source,
+                    r"self\.atr\s*=\s*self\.I\(_atr,.*?,\s*(\d+)\)",
+                    20,
+                ),
+                "adx_window": _parse_int(
+                    source,
+                    r"self\.adx\s*=\s*self\.I\(_adx,.*?,\s*(\d+)\)",
+                    14,
+                ),
+                "pullback_atr_mult": 0.40,
+                "adx_min": 20.0,
+                "source_stop_transferred": False,
+                "transfer_exactness": "signal_only_proxy",
+            })
         row["transfer_status"] = "supported"
         row["transfer_params"] = dict(params)
         audit.append(row)
@@ -343,8 +405,10 @@ def prop_transfer_candidates(
         "available": bool(candidates),
         "policy": (
             "continuous prop champions are pre-screened development hypotheses; "
-            "only explicitly adapted daily signal families enter the Prague-aligned "
-            "v4 simulator, with v4 exposure sizing and 3x cost stress"
+            "explicit daily signal adapters enter the Prague-aligned v4 simulator "
+            "with v4 exposure sizing and 3x cost stress; adapters that omit source "
+            "stop mechanics are labeled signal_only_proxy and are not represented "
+            "as exact execution parity"
         ),
         "candidate_count": len(candidates),
         "supported_count": len(supported),
