@@ -1714,6 +1714,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             if satellite_portfolio is None
             else {
                 "risk_scaled_result": satellite_portfolio.to_dict(),
+                "matched_static_gross_result": (
+                    None
+                    if satellite_matched_static_gross is None
+                    else satellite_matched_static_gross.to_dict()
+                ),
                 "sleeve": satellite_portfolio_summary,
             }
         ),
@@ -1722,6 +1727,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             if dynamic_portfolio is None
             else {
                 "risk_scaled_result": dynamic_portfolio.to_dict(),
+                "matched_static_gross_result": (
+                    None
+                    if dynamic_matched_static_gross is None
+                    else dynamic_matched_static_gross.to_dict()
+                ),
                 "allocator": dynamic_portfolio_summary,
             }
         ),
