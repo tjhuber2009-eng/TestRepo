@@ -1,6 +1,6 @@
 Atlas Forge V4 smoke
-Portfolio upgrade verification
-Source head: 526540c48c4233000fad37c080e8721e24249365
-Upgrades: guided search + causal dynamic allocator + staggered satellite sleeve
+Portfolio hardening verification
+Source head: f6d77888270eac5c44e87385b37fae0cc81e73e2
+Checks: common static Q10 floor + matched-gross diagnostics
 Hidden validation: sealed
 Final 2023+ OOS: sealed
