@@ -11,6 +11,7 @@ import pandas as pd
 from v4.account_profiles import FTMO_1STEP, FTMO_2STEP, PropStageRule
 from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, pareto_frontier
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
+from v4.conditional_risk import conditional_high_volatility_overlay
 from v4.continuous_bridge import (
     PROP_SIGNAL_ADAPTERS,
     _parse_float_required,
@@ -1120,6 +1121,47 @@ class V4AlphaGenerationTests(unittest.TestCase):
                 "anchor_0.80__partner+leader" in name
                 for name in candidates
             )
+        )
+
+    def test_conditional_high_volatility_overlay_is_causal_and_never_boosts(self):
+        rng = np.random.default_rng(20260906)
+        idx = pd.bdate_range("2017-01-02", periods=700)
+        values = np.concatenate([
+            rng.normal(0.0004, 0.004, 380),
+            rng.normal(0.0004, 0.025, 320),
+        ])
+        returns = pd.Series(values, index=idx, name="candidate")
+        gross = pd.Series(1.0, index=idx, name="candidate_gross")
+
+        full = conditional_high_volatility_overlay(
+            returns,
+            gross,
+            lookback=20,
+            min_history=252,
+            high_vol_quantile=0.80,
+            min_risk_scale=0.50,
+        )
+        prefix = conditional_high_volatility_overlay(
+            returns.iloc[:560],
+            gross.iloc[:560],
+            lookback=20,
+            min_history=252,
+            high_vol_quantile=0.80,
+            min_risk_scale=0.50,
+        )
+        pd.testing.assert_series_equal(
+            full.risk_scale.iloc[:560],
+            prefix.risk_scale,
+        )
+        self.assertLess(float(full.risk_scale.min()), 1.0)
+        self.assertGreaterEqual(float(full.risk_scale.min()), 0.50)
+        self.assertLessEqual(float(full.risk_scale.max()), 1.0)
+        self.assertTrue(
+            (full.gross_profile <= gross + 1e-12).all()
+        )
+        self.assertEqual(
+            int((full.risk_scale < 1.0 - 1e-12).sum()),
+            full.summary.scaled_observations,
         )
 
     def test_staggered_satellite_rejects_missing_returns_after_inception(self):
