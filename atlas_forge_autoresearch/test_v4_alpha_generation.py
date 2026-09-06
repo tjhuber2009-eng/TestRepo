@@ -968,6 +968,12 @@ class V4AlphaGenerationTests(unittest.TestCase):
             financing["charged_on"],
             "realized_time_varying_gross_above_1x_only",
         )
+        satellite = cfg["portfolio_optimizer"]["satellite_sleeve"]
+        self.assertEqual(satellite["max_composition_weight"], 0.35)
+        self.assertEqual(
+            satellite["sleeve_grid"],
+            [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35],
+        )
 
     def test_dynamic_portfolio_is_prefix_invariant_and_capped(self):
         rng = np.random.default_rng(444)
@@ -1049,6 +1055,28 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(
             specs[name].inception_dates["short_alpha"],
             idx[220].strftime("%Y-%m-%d"),
+        )
+
+    def test_staggered_satellite_default_grid_extends_boundary_to_35pct(self):
+        idx = pd.bdate_range("2018-01-01", periods=300)
+        core = pd.DataFrame({
+            "core_a": np.full(len(idx), 0.0004),
+            "core_b": np.full(len(idx), 0.0002),
+        }, index=idx)
+        short = pd.Series(0.0010, index=idx[200:])
+        candidates, specs = build_staggered_satellite_candidates(
+            core,
+            {"core_a": 0.5, "core_b": 0.5},
+            {"short_alpha": short},
+            max_satellite_weight=0.35,
+        )
+        self.assertIn("satellite_0.25__short_alpha", candidates)
+        self.assertIn("satellite_0.30__short_alpha", candidates)
+        self.assertIn("satellite_0.35__short_alpha", candidates)
+        self.assertAlmostEqual(
+            specs["satellite_0.35__short_alpha"].sleeve_weight,
+            0.35,
+            places=12,
         )
 
     def test_staggered_satellite_rejects_missing_returns_after_inception(self):
