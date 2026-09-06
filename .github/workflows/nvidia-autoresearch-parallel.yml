@@ -40,12 +40,12 @@ jobs:
 
     steps:
       - name: Check out research branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -260,7 +260,7 @@ jobs:
 
       - name: Upload profile artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: parallel-${{ matrix.profile }}-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/parallel_export/
@@ -285,19 +285,19 @@ jobs:
 
     steps:
       - name: Check out research branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
 
       - name: Download prop artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: parallel-prop-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/parallel_runs/${{ github.run_id }}/prop
 
       - name: Download private artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: parallel-private-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/parallel_runs/${{ github.run_id }}/private
