@@ -1,0 +1,18 @@
+{
+  "all_hydrated_or_attempted": true,
+  "attempted_no_text_count": 214,
+  "completion_pct": 100.0,
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "hydrated_count": 86,
+  "hydration_version": 2,
+  "lane": "phase3_source_hydration",
+  "next_stage": "reconstruct_with_hydrated_evidence",
+  "phase1_registry_mutated": false,
+  "processed_count": 300,
+  "protocol": "nested_chronological_v3",
+  "queue_count": 215,
+  "retry_pending_count": 0,
+  "stage": "hydration_complete",
+  "updated_at": "2026-09-06T15:22:04Z"
+}
