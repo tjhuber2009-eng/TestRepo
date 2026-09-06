@@ -31,6 +31,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REGISTRY = HERE / "strategy_library" / "registry.json"
 CONFIG = HERE / "continuous_config.json"
+UNIVERSE_PLAN = HERE / "strategy_library" / "universe_plan.json"
 STATE = HERE / "continuous_state"
 TRACKS = STATE / "tracks"
 CURSOR = STATE / "cursor.json"
@@ -122,6 +123,40 @@ def safe_harness_env(env):
     return out
 
 
+def load_universe_plan():
+    if not UNIVERSE_PLAN.exists():
+        return {
+            "current_stage": "legacy",
+            "hidden_validation_policy": "legacy",
+            "phases": [],
+        }
+    return load_json(UNIVERSE_PLAN)
+
+
+def current_universe_stage():
+    return str(load_universe_plan().get("current_stage", "legacy"))
+
+
+def hidden_validation_allowed_by_universe_plan():
+    return current_universe_stage() == "hidden_validation"
+
+
+def assert_universe_lock(tracks):
+    """Prevent phase-2/3 additions from silently inflating the fixed 514 universe."""
+    plan = load_universe_plan()
+    if plan.get("current_stage") != "phase1_fixed_514":
+        return
+    phase = next(
+        (x for x in plan.get("phases", []) if x.get("id") == "phase1_fixed_514"),
+        {},
+    )
+    expected = int(phase.get("expected_track_count", 514))
+    if len(tracks) != expected:
+        raise RuntimeError(
+            f"phase1 universe lock violated: expected {expected} tracks, got {len(tracks)}"
+        )
+
+
 def build_tracks():
     registry = load_json(REGISTRY)
     config = load_json(CONFIG)
@@ -142,6 +177,7 @@ def build_tracks():
                     "profile": profiles[profile_name],
                     "id": slug(family["id"], target["id"], profile_name),
                 })
+    assert_universe_lock(tracks)
     return tracks
 
 
@@ -1032,6 +1068,12 @@ def current_search_plan(
     if not all_reached(tracks, elite_ids, elite_target):
         return "elite", {x: elite_target for x in elite_ids}
 
+    # The user explicitly expanded the research universe after the original
+    # 514-track plan. Do not spend the one-look hidden validation until the
+    # prior-work expansion and free-source expansion are also complete/frozen.
+    if not hidden_validation_allowed_by_universe_plan():
+        return "expansion_pending", {}
+
     return "validation", {}
 
 
@@ -1300,6 +1342,9 @@ def write_progress(
         "updated_at": now(),
         "protocol": PROTOCOL,
         "phase": phase,
+        "universe_stage": current_universe_stage(),
+        "expansion_pending": phase == "expansion_pending",
+        "hidden_validation_allowed_by_universe_plan": hidden_validation_allowed_by_universe_plan(),
         "breadth_target": breadth_target,
         "depth_target": depth_target,
         "elite_target": elite_target,
@@ -1500,6 +1545,13 @@ def main():
             f"phase={phase} tracks={len(tracks)} valid_candidates="
             f"{progress['total_valid_candidates']} terminal={progress['terminal_track_count']}"
         )
+
+        if phase == "expansion_pending":
+            print(
+                "CURRENT DEVELOPMENT UNIVERSE FROZEN; hidden validation remains "
+                "SEALED pending the configured prior-work/free-source expansion."
+            )
+            break
 
         if phase == "validation":
             nxt = next_validation_track(tracks, cursor)
