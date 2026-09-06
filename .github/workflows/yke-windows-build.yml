@@ -2,11 +2,6 @@ name: YKE v3.1 Windows Native Build
 
 on:
   workflow_dispatch:
-  push:
-    branches: [yke-v3.1-windows-build]
-    paths:
-      - '.github/workflows/yke-windows-build.yml'
-      - 'youtube-knowledge-engine/**'
 
 permissions:
   contents: read
