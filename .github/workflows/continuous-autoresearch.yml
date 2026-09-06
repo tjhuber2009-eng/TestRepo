@@ -130,8 +130,8 @@ jobs:
       - name: Advance exhaustive nested research
         run: >
           python continuous_runner.py
-          --iters-per-visit 2
-          --max-visits 16
+          --iters-per-visit 4
+          --max-visits 8
           --max-seconds 2550
           --breadth-target 10
           --depth-target 30
@@ -178,6 +178,7 @@ jobs:
               f"Phase: **{progress.get('phase')}**",
               f"Runnable tracks: **{progress.get('runnable_track_count',0)}**",
               f"Valid model candidates accumulated: **{progress.get('total_valid_candidates',0)}**",
+              f"PBO-ready tracks: **{progress.get('pbo_ready_track_count',0)}/{progress.get('pbo_baselined_track_count',0)}** baselined tracks",
               f"Terminal tracks: **{progress.get('terminal_track_count',0)}**",
               f"Hidden validation pass/fail: **{progress.get('validation_pass_count',0)}/{progress.get('validation_fail_count',0)}**",
               f"Model crashes: **{progress.get('total_crashes',0)}**; duplicates: **{progress.get('total_duplicates',0)}**; parameter-only: **{progress.get('total_parameter_only',0)}**; too-broad: **{progress.get('total_too_broad',0)}**; sizing changes: **{progress.get('total_risk_control_changes',0)}**",
