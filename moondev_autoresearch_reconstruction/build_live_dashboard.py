@@ -85,6 +85,7 @@ progress=load(STATE/"progress.json",{}) or {}
 board=load(STATE/"leaderboard_latest.json",{}) or {}
 tour=load(TOURNAMENT/"tournament-summary.json",None)
 continuous=latest_run(RUNTIME/"continuous_runs.json")
+v4_run=latest_run(RUNTIME/"v4_runs.json")
 tournament_run=latest_run(RUNTIME/"tournament_runs.json")
 jobs=(load(RUNTIME/"tournament_jobs.json",{}) or {}).get("jobs",[])
 v4_private=load(V4_STATE/"development-bootstrap.json",{}) or {}
@@ -475,6 +476,17 @@ if continuous:
     )
 else:
     out.append("- ⚪ Continuous AUTORESEARCH — no run metadata")
+
+if v4_run:
+    s=v4_run.get("status")
+    c=v4_run.get("conclusion")
+    out.append(
+        f"- {status_badge(s,c)} **V4 promotion** — "
+        f"{c if s=='completed' else s} · run "
+        f"[#{v4_run.get('run_number',v4_run.get('id'))}]({v4_run.get('html_url')})"
+    )
+else:
+    out.append("- ⚪ V4 promotion — no run metadata")
 
 if tournament_run:
     s=tournament_run.get("status")
