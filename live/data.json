@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T16:23:18Z",
+  "generated_at": "2026-09-06T16:51:28Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -54450,7 +54450,7 @@
             "worst_score": -3.636685761722702
           },
           {
-            "adjusted_score": 9.837967942446195,
+            "adjusted_score": 9.806508163307882,
             "fold_scores": [
               21.54530486501569,
               5.646336571268851,
@@ -54471,7 +54471,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 16.15461703232814,
+            "plateau_score": 16.049751101867095,
             "primary_score": 14.799434469041728,
             "score_std": 15.1483133876243,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -54730,7 +54730,7 @@
             "worst_score": -2.685224606061154
           },
           {
-            "adjusted_score": 8.622433618566433,
+            "adjusted_score": 8.526787877264377,
             "fold_scores": [
               13.230842854895819,
               7.143423026575024,
@@ -54751,7 +54751,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 14.369981131323804,
+            "plateau_score": 14.05116199365029,
             "primary_score": 14.277582400344047,
             "score_std": 14.863326870309434,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -63075,6 +63075,56 @@
           }
         ]
       },
+      "phase2_private_transfer": {
+        "available": true,
+        "candidate_count": 1,
+        "candidates": [
+          {
+            "bars_per_year": 365,
+            "bootstrap_fdr_qvalue": 0.037589,
+            "cagr_pct": 92.002,
+            "candidate_pbo_when_selected": 0.078431,
+            "candidate_selection_share": 0.728571,
+            "cohort": "btc::private",
+            "cohort_pbo": 0.3,
+            "commission": 0.001,
+            "development_years": null,
+            "error": "ValueError: unsupported import in promoted strategy: math",
+            "evidence_grade": "A",
+            "extreme_stress_return_pct": 771.417,
+            "family": "bollinger_breakout_20_2",
+            "fdr_report_level": 0.1,
+            "final_oos_opened": false,
+            "harness_sha256": "f154e64ec7f3918cd663c490a5cf3d92f24fac57d855a1e8c3fdb02f27080b03",
+            "hidden_validation_opened": false,
+            "margin": 0.25,
+            "market": "crypto",
+            "max_dd_pct": -16.383,
+            "parameter_rescue_performed": false,
+            "pbo_limit": 0.55,
+            "pf": 5.696,
+            "profile": "private",
+            "program_sha256": "9798b229584964cbe8989ae8afc6a9d67f3dd92adb1e2d12df9826c9563fdec0",
+            "promotion_source_path": "moondev_autoresearch_reconstruction/phase2_state/promotion_sources/bollinger_breakout_20_2__btc__private.py",
+            "promotion_source_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
+            "provisional_reason": null,
+            "ready_for_v4_replay": true,
+            "replay_status": "error",
+            "research_survivor": true,
+            "score": 0.923533,
+            "sharpe": 1.895,
+            "strategy_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
+            "symbol": "BTCUSDT",
+            "target": "btc",
+            "track_id": "bollinger_breakout_20_2__btc__private",
+            "trades": 35
+          }
+        ],
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "policy": "consume only Phase-2 v2 frozen survivors with exact persisted source artifacts; require exact-source v4 replay, positive 3x-cost replay, private drawdown compliance, and both cohort/candidate PBO <= 0.55",
+        "portfolio_eligible_count": 0
+      },
       "portfolio": {
         "candidates_evaluated": 1000,
         "chosen": {
@@ -63086,7 +63136,7 @@
           "gross_exposure": 0.9024925363279448,
           "max_dd_pct": -17.292203507758387,
           "score": 16.18178187710505,
-          "sharpe": 1.0805640230289826,
+          "sharpe": 1.0805640230289828,
           "weights": {
             "cash_rotation_risk_budgeted": 0.0022245923798104284,
             "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63115,7 +63165,7 @@
             "gross_exposure": 0.7775924788539519,
             "max_dd_pct": -16.346811898542658,
             "score": 15.864395423773308,
-            "sharpe": 1.070208501908635,
+            "sharpe": 1.0702085019086347,
             "weights": {
               "cash_rotation_risk_budgeted": 0.009315446914387892,
               "cash_rotation_vix_stress": 0.0411487227259109,
@@ -63142,7 +63192,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63169,7 +63219,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63196,7 +63246,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63312,18 +63362,18 @@
           "final_oos_opened": false,
           "hidden_validation_opened": false,
           "metrics_5bp": {
-            "cagr_pct": 29.76629781416289,
-            "cost_stress_cagr_pct": 28.146661488575585,
-            "cumulative_return_pct": 1605.5770825293762,
+            "cagr_pct": 29.766326766911043,
+            "cost_stress_cagr_pct": 28.14669008160069,
+            "cumulative_return_pct": 1605.581225050939,
             "dsr": 1.0,
             "gross_exposure": 1.0,
-            "max_dd_pct": -59.88391683509467,
+            "max_dd_pct": -59.88393961852092,
             "pbo": null,
             "psr_zero": 1.0,
-            "sharpe": 0.9341542874690145,
-            "sortino": 1.3046451644677302,
+            "sharpe": 0.9341550972139266,
+            "sortino": 1.3046464341492057,
             "trades": 204,
-            "turnover_per_year": 16.476615825207485,
+            "turnover_per_year": 16.476646842567572,
             "years": 10.885918259786306
           },
           "protocol": "alpha_generation_v4",
@@ -70462,6 +70512,56 @@
           "research_source": "Binance spot 1h, monthly archive checksums verified",
           "venue_execution_verified": false
         }
+      },
+      "phase2_prop_transfer": {
+        "available": true,
+        "candidate_count": 1,
+        "candidates": [
+          {
+            "bars_per_year": 365,
+            "bootstrap_fdr_qvalue": 0.037589,
+            "cagr_pct": 23.469,
+            "candidate_pbo_when_selected": 0.125,
+            "candidate_selection_share": 0.571429,
+            "cohort": "btc::prop",
+            "cohort_pbo": 0.5,
+            "commission": 0.001,
+            "development_years": null,
+            "error": "ValueError: unsupported import in promoted strategy: math",
+            "evidence_grade": "A",
+            "extreme_stress_return_pct": 101.582,
+            "family": "bollinger_breakout_20_2",
+            "fdr_report_level": 0.1,
+            "final_oos_opened": false,
+            "harness_sha256": "f154e64ec7f3918cd663c490a5cf3d92f24fac57d855a1e8c3fdb02f27080b03",
+            "hidden_validation_opened": false,
+            "margin": 0.25,
+            "market": "crypto",
+            "max_dd_pct": -5.787,
+            "parameter_rescue_performed": false,
+            "pbo_limit": 0.55,
+            "pf": 5.933,
+            "profile": "prop",
+            "program_sha256": "9798b229584964cbe8989ae8afc6a9d67f3dd92adb1e2d12df9826c9563fdec0",
+            "promotion_source_path": "moondev_autoresearch_reconstruction/phase2_state/promotion_sources/bollinger_breakout_20_2__btc__prop.py",
+            "promotion_source_sha256": "3544e47f73e6e53f48c4bf69fa517d6c43e88402de2c5cc0dd91156c84d8467f",
+            "provisional_reason": null,
+            "ready_for_v4_replay": true,
+            "research_survivor": true,
+            "score": 0.269639,
+            "sharpe": 1.7826,
+            "strategy_sha256": "3544e47f73e6e53f48c4bf69fa517d6c43e88402de2c5cc0dd91156c84d8467f",
+            "symbol": "BTCUSDT",
+            "target": "btc",
+            "track_id": "bollinger_breakout_20_2__btc__prop",
+            "trades": 35,
+            "transfer_status": "error"
+          }
+        ],
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "policy": "consume only ready Phase-2 prop survivors whose exact source artifact passes execution audit and whose signed daily signal has an explicit causal v4 adapter; source sizing is replaced by the v4 prop exposure optimizer",
+        "supported_count": 0
       },
       "policy": "force flat for execution at each Prague midnight reset",
       "prague_day_brake_execution": {
@@ -117276,14 +117376,15 @@
         "reward_cycle_days": 14,
         "scaling_plan_upgrades_included": false
       },
-      "research_commit_sha": "e3ee02ee99d1ab0fa3f11976c45d5ae96ae0b1db",
+      "research_commit_sha": "6dd2afebad71c0fa80446e1fe33281c4f4daddd2",
       "reset_timezone": "Europe/Prague",
       "search_policy": {
         "broad_base_candidates": 120,
         "candidate_families": [
           "cross_sectional_long",
           "tsmom_long_short",
-          "continuous_daily_signal"
+          "continuous_daily_signal",
+          "phase2_daily_signal"
         ],
         "continuous_transfer_risk_candidates": 42,
         "continuous_transfer_source_candidates": 7,
@@ -117292,7 +117393,9 @@
         "frontier_structural_mutations": 49,
         "frontier_universe_mutations": 6,
         "independent_tsmom_candidates": 36,
-        "policy": "broad long-only alpha/risk search first; mutate only coarse frontier leaders for session/rebalance structure, asset-universe robustness, and causal Prague-day risk/profit smoothing; evaluate time-series momentum as an independent compact family",
+        "phase2_transfer_risk_candidates": 0,
+        "phase2_transfer_source_candidates": 0,
+        "policy": "broad long-only alpha/risk search first; mutate only coarse frontier leaders for session/rebalance structure, asset-universe robustness, and causal Prague-day risk/profit smoothing; evaluate time-series momentum as an independent compact family; replay frozen Phase-2 survivors only through exact signed adapters and V4 prop risk sizing",
         "structural_dimensions": {
           "day_loss_cap": [
             0.01,
@@ -117586,15 +117689,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T16:09:05Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34044523058",
         "id": 34044523058,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 25,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T16:23:10Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T16:51:20Z"
       },
       {
         "conclusion": "success",
