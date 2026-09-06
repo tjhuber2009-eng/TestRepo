@@ -82,6 +82,8 @@ def build_staggered_satellite_candidates(
     *,
     max_satellite_weight: float = 0.25,
     sleeve_steps: tuple[float, ...] = (0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35),
+    anchor_name: str | None = None,
+    anchor_weight: float = 0.80,
 ) -> tuple[dict[str, pd.Series], dict[str, SatelliteCandidateSpec]]:
     """Create deterministic core+satellite return streams on the full core index."""
     core = core_returns.apply(pd.to_numeric, errors="coerce").dropna(how="any")
@@ -89,6 +91,8 @@ def build_staggered_satellite_candidates(
         return {}, {}
     if not (0.0 < max_satellite_weight < 1.0):
         raise ValueError("max_satellite_weight must be in (0,1)")
+    if anchor_name is not None and not (0.5 < float(anchor_weight) < 1.0):
+        raise ValueError("anchor_weight must be in (0.5,1.0)")
 
     base = _normalized_core_stream(core, core_weights)
     padded: dict[str, pd.Series] = {}
@@ -109,6 +113,22 @@ def build_staggered_satellite_candidates(
         mixes.append((name, {name: 1.0}))
     for a, b in combinations(names, 2):
         mixes.append((f"{a}+{b}", {a: 0.5, b: 0.5}))
+
+    # Development-only local diversification around a previously established
+    # satellite leader. This is deliberately one-sided and finite: it tests
+    # whether a small partner allocation improves the leader's tail behavior
+    # without reopening a broad composition search or increasing the sleeve cap.
+    if anchor_name is not None and anchor_name in padded:
+        aw = float(anchor_weight)
+        partner_weight = 1.0 - aw
+        for partner in names:
+            if partner == anchor_name:
+                continue
+            mixes.append((
+                f"anchor_{aw:.2f}__{anchor_name}+{partner}",
+                {anchor_name: aw, partner: partner_weight},
+            ))
+
     if len(names) >= 2:
         eq = 1.0 / len(names)
         mixes.append(("equal_all", {name: eq for name in names}))
