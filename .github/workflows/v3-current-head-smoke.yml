@@ -66,6 +66,31 @@ jobs:
           --source binance --symbol BTCUSDT --id btc
           --start 2017-08-17 --end 2020-12-31
 
+      - name: Verify audited ES futures-proxy data
+        shell: bash
+        run: |
+          python prepare_market_data.py --source yahoo_futures_proxy --symbol 'ES=F' --id es --start 2010-01-01 --end 2020-12-31
+          python - <<'PY'
+          import json
+          import pandas as pd
+          from pathlib import Path
+          p=Path("data/es_1d.csv")
+          x=pd.read_csv(p)
+          assert len(x) >= 2000, len(x)
+          for col in ("Open","High","Low","Close"):
+              x[col]=pd.to_numeric(x[col],errors="raise")
+          assert (x["High"] >= x[["Open","Close","Low"]].max(axis=1)).all()
+          assert (x["Low"] <= x[["Open","Close","High"]].min(axis=1)).all()
+          m=json.loads(Path("data/es_1d.manifest.json").read_text())
+          assert m["source"] == "yahoo_futures_proxy"
+          assert "normalization" in m
+          print({
+              "rows":len(x),
+              "source":m["source"],
+              "normalized_rows":m["normalization"].get("changed_rows"),
+          })
+          PY
+
       - name: Run development-only robust harness smoke
         shell: bash
         env:
