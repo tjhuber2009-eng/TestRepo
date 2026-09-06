@@ -327,6 +327,19 @@ function renderV4(){
 
   const chosen=priv.portfolio?.chosen||null;
   const cap=Number(priv.portfolio_authoritative_concentration_cap||0.55);
+  const selection=priv.portfolio_selection||{};
+  const architecture=selection.selected||"static_robust";
+  const satellite=priv.portfolio_satellite||{};
+  const sleeve=satellite.sleeve||{};
+  const sleeveSpec=sleeve.spec||{};
+  const sleeveWeight=Number(sleeveSpec.sleeve_weight||0);
+  const satelliteNames=Object.keys(sleeveSpec.satellite_weights||{});
+  const satelliteName=satelliteNames[0]||"—";
+  const satelliteMatched=satellite.matched_static_gross_result?.chosen||null;
+  const dynamicMatched=priv.portfolio_dynamic?.matched_static_gross_result?.chosen||null;
+  const gross=Number(chosen?.gross_exposure||0);
+  const effectiveSatelliteGross=architecture==="staggered_satellite"?gross*sleeveWeight:0;
+  const effectiveCoreGross=architecture==="staggered_satellite"?gross*(1-sleeveWeight):gross;
   const weights=chosen?.weights||{};
   const weightRows=Object.entries(weights).sort((a,b)=>Number(b[1])-Number(a[1])).map(([name,w])=>`
     <tr><td><b>${esc(name)}</b></td><td class="num">${fmt(100*Number(w),2)}%</td></tr>`).join("");
@@ -444,19 +457,34 @@ function renderV4(){
     </tr>`;
   }).join("");
 
-  const privateHtml=chosen?`<div class="kpi-grid">
-      <article class="kpi-card accent-kpi"><span>Private CAGR</span><strong>${pct(chosen.cagr_pct,2)}</strong><small>55% authoritative cap</small></article>
+  const architectureLabel={
+    static_robust:"Static robust core",
+    staggered_satellite:"Staggered satellite",
+    causal_dynamic:"Causal dynamic allocator",
+  }[architecture]||architecture;
+  const satelliteDetail=architecture==="staggered_satellite"&&sleeveWeight>0
+    ? `<b>${esc(architectureLabel)}</b> · ${fmt(100*sleeveWeight,0)}% composition sleeve in <b>${esc(satelliteName)}</b> from ${esc((sleeveSpec.inception_dates||{})[satelliteName]||"its data inception")}. At ${fmt(gross,2)}× total gross this is ${pct(100*effectiveSatelliteGross,1)} account gross in the satellite and ${pct(100*effectiveCoreGross,1)} in the long-history core.`
+    : `<b>${esc(architectureLabel)}</b> · ${esc(selection.reason||"development-only architecture selection")}.`;
+  const matchedGrowth=architecture==="staggered_satellite"?satelliteMatched:architecture==="causal_dynamic"?dynamicMatched:null;
+  const privateHtml=chosen?`<div class="v4-explainer">
+      <b>Selected private architecture:</b> ${satelliteDetail}
+      ${matchedGrowth?`<br><b>Matched static gross:</b> ${pct(matchedGrowth.cagr_pct,2)} CAGR, ${pct(matchedGrowth.bootstrap_median_cagr_pct,2)} bootstrap median CAGR at ${fmt(matchedGrowth.gross_exposure,3)}× gross.`:""}
+    </div>
+    <div class="kpi-grid">
+      <article class="kpi-card accent-kpi"><span>Private CAGR</span><strong>${pct(chosen.cagr_pct,2)}</strong><small>selected development architecture</small></article>
       <article class="kpi-card"><span>Bootstrap median CAGR</span><strong>${pct(chosen.bootstrap_median_cagr_pct,2)}</strong><small>paired block bootstrap</small></article>
+      <article class="kpi-card"><span>Bootstrap Q10 CAGR</span><strong>${pct(chosen.bootstrap_cagr_q10_pct,2)}</strong><small>lower growth tail</small></article>
       <article class="kpi-card"><span>Observed max DD</span><strong>${pct(chosen.max_dd_pct,2)}</strong><small>cap 32%</small></article>
       <article class="kpi-card"><span>Bootstrap q95 DD</span><strong>${pct(chosen.bootstrap_dd_q95_pct,2)}</strong><small>stress drawdown</small></article>
       <article class="kpi-card"><span>Sharpe</span><strong>${fmt(chosen.sharpe,3)}</strong><small>development only</small></article>
       <article class="kpi-card"><span>Gross / cash</span><strong>${pct(100*Number(chosen.gross_exposure||0),1)} / ${pct(100*Number(chosen.cash_weight||0),1)}</strong><small>portfolio exposure</small></article>
     </div>
     <div class="dashboard-grid" style="margin-top:16px">
-      <article class="glass-card"><div class="card-title-row"><div><span class="kicker">PRIVATE ACCOUNT</span><h3>Authoritative weights</h3></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Strategy</th><th class="num">Weight</th></tr></thead><tbody>${weightRows}</tbody></table></div>
+      <article class="glass-card"><div class="card-title-row"><div><span class="kicker">PRIVATE ACCOUNT</span><h3>Selected architecture weights</h3></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Strategy / sleeve</th><th class="num">Weight</th></tr></thead><tbody>${weightRows}</tbody></table></div>
+        ${architecture==="staggered_satellite"?`<div class="v4-explainer" style="margin-top:10px">Static core concentration cap: ${pct(100*cap,0)}. Satellite composition cap: 25%. Gross risk scaling is evaluated separately under the 32% bootstrap drawdown ceiling.</div>`:""}
       </article>
-      <article class="glass-card"><div class="card-title-row"><div><span class="kicker">ROBUSTNESS</span><h3>Concentration sensitivity</h3></div></div>
+      <article class="glass-card"><div class="card-title-row"><div><span class="kicker">ROBUSTNESS</span><h3>Static-core concentration sensitivity</h3></div></div>
         <div class="table-wrap"><table><thead><tr><th>Cap</th><th class="num">CAGR</th><th class="num">Boot CAGR</th><th class="num">q95 DD</th><th class="num">DD</th><th class="num">Sharpe</th><th class="num">Gross</th><th class="num">Cash</th></tr></thead><tbody>${concentrationRows}</tbody></table></div>
       </article>
     </div>`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
