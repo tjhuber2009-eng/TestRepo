@@ -1637,11 +1637,12 @@ class MoonStrategy:
         with mock.patch(
             "v4.continuous_bridge.load_candidate_source",
             return_value=source,
-        ):
+        ) as loader:
             supported, audit = prop_transfer_candidates(
                 {"BTCUSDT"},
                 leaderboard=board,
             )
+        self.assertEqual(loader.call_count, 1)
         self.assertEqual(len(supported), 1)
         self.assertEqual(supported[0]["continuous_track_id"], "rsi")
         status = {r["track_id"]: r["transfer_status"] for r in audit["candidates"]}
