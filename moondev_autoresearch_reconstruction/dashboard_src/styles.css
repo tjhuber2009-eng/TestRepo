@@ -594,3 +594,19 @@ footer{
   .decision-number{font-size:30px}
   .frontier-metrics{grid-template-columns:1fr}
 }
+
+.detail-section{display:block}
+.detail-section>.section-summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:17px 18px;
+}
+.detail-section>.section-summary::-webkit-details-marker{display:none}
+.section-summary>span:first-child{display:block}
+.section-summary b{display:block;font-size:16px;margin-top:4px}
+.section-summary small{display:block;color:var(--soft);font-size:10px;margin-top:4px}
+.detail-section-body{padding:0 18px 18px}
