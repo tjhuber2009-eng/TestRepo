@@ -77,6 +77,7 @@ function render(){
 
   renderPhaseRail(phase,hiddenOpen);
   renderWorkflows();
+  renderDecisionSummary();
   renderV4();
   setupFilters();
   renderChampions();
@@ -144,6 +145,70 @@ function renderWorkflows(){
       <span class="pill ${cls}">${esc(text)}</span>
     </div>`;
   }).join("");
+}
+
+function renderDecisionSummary(){
+  const wrap=$("#decisionCards");
+  const next=$("#nextAction");
+  const badge=$("#maturityBadge");
+  if(!wrap||!next||!badge) return;
+
+  const p=DATA.progress||{};
+  const d=DATA.progress_derived||{};
+  const priv=DATA.v4?.private||{};
+  const prop=DATA.v4?.prop||{};
+  const chosen=priv.portfolio?.chosen||{};
+  const two=prop.programs?.ftmo_2step_2026?.refined_frontiers||{};
+  const repeat=two.max_repeat_payout_efficiency||{};
+  const repeatView=repeat.view||{};
+  const repeatFunded=repeatView.funded||{};
+  const balanced=two.balanced||{};
+  const balancedView=balanced.view||{};
+  const balancedFunded=balancedView.funded||{};
+  const hidden=!!DATA.safeguards?.hidden_validation_opened;
+  const finalOos=!!DATA.safeguards?.final_oos_opened;
+  const breadth=Number(d.breadth_pct||0);
+
+  badge.textContent=hidden||finalOos?"boundary opened":"development only";
+  badge.className=`pill ${hidden||finalOos?"bad":"warn"}`;
+
+  const repeatFamily=repeat.params?.continuous_track_id||repeat.params?.family||"—";
+  const balancedFamily=balanced.params?.continuous_track_id||balanced.params?.family||"—";
+
+  wrap.innerHTML=`
+    <article class="decision-card primary">
+      <span class="decision-label">PRIVATE ACCOUNT</span>
+      <h3>Authoritative V4 portfolio</h3>
+      <div class="decision-number">${pct(chosen.cagr_pct,2)}</div>
+      <p>Development CAGR with ${pct(Math.abs(Number(chosen.max_dd_pct||0)),2)} observed max drawdown and ${pct(chosen.bootstrap_dd_q95_pct,2)} bootstrap q95 drawdown.</p>
+      <small>Current concentration cap: ${pct(100*Number(priv.portfolio_authoritative_concentration_cap||0.55),0)}</small>
+    </article>
+    <article class="decision-card primary">
+      <span class="decision-label">PROP · BEST REPEAT ECONOMICS</span>
+      <h3>FTMO 2-Step · Max repeat payout</h3>
+      <div class="decision-number">${pct(repeatView.repeat_expected_reward_pct,2)}</div>
+      <p>Projected 12-cycle reward; ${repeatView.combined_evaluation_pass_probability==null?"—":pct(100*Number(repeatView.combined_evaluation_pass_probability),1)} evaluation pass and ${repeatFunded.survival_probability==null?"—":pct(100*Number(repeatFunded.survival_probability),1)} funded survival.</p>
+      <small>${esc(repeatFamily)} · development simulation</small>
+    </article>
+    <article class="decision-card">
+      <span class="decision-label">PROP · BALANCED</span>
+      <h3>Exact transferred signal</h3>
+      <div class="decision-number">${balancedView.combined_evaluation_pass_probability==null?"—":pct(100*Number(balancedView.combined_evaluation_pass_probability),1)}</div>
+      <p>Evaluation-pass estimate with ${balancedFunded.survival_probability==null?"—":pct(100*Number(balancedFunded.survival_probability),1)} funded survival and ${pct(balancedView.repeat_expected_reward_pct,2)} projected 12-cycle reward.</p>
+      <small>${esc(balancedFamily)}</small>
+    </article>
+    <article class="decision-card">
+      <span class="decision-label">RESEARCH MATURITY</span>
+      <h3>Still in breadth search</h3>
+      <div class="decision-number">${fmt(breadth,1)}%</div>
+      <p>${num(p.total_valid_candidates)} valid candidates out of ${num(d.breadth_total_candidates)} breadth slots. Hidden validation and final OOS remain sealed.</p>
+      <small>PBO appears only after enough unique variants exist.</small>
+    </article>`;
+
+  next.innerHTML=`
+    <strong>Next decision:</strong>
+    compare every exact prop adapter in V4, keep only genuine frontier winners, and continue breadth research until the candidate evidence is mature enough for valid PBO/CSCV. <b>Do not open hidden validation yet.</b>
+  `;
 }
 
 function renderV4(){
@@ -254,8 +319,9 @@ function renderV4(){
       };
       return `<tr><td><b>${esc(viewLabel[view])}</b></td>${cell(252)}${cell(365)}${cell(504)}</tr>`;
     }).join("");
-    return `<article class="glass-card" style="margin-top:16px">
-      <div class="card-title-row"><div><span class="kicker">PROP PROGRAM</span><h3>${esc(label)}</h3></div></div>
+    return `<details class="detail-panel">
+      <summary><span><b>${esc(label)}</b><small>All six frontiers + horizon sensitivity</small></span><span class="detail-hint">Show details</span></summary>
+      <article class="glass-card detail-body">
       <div class="table-wrap"><table>
         <thead><tr><th>Frontier</th><th>Family / source</th><th class="num">C / V / F</th><th class="num">Pass</th><th class="num">Eval days</th><th class="num">First eff.</th><th class="num">Repeat eff.</th><th class="num">12-cycle reward</th><th class="num">Survival</th><th class="num">Daily breach</th><th class="num">Max breach</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -265,7 +331,8 @@ function renderV4(){
         <thead><tr><th>Frontier</th><th>252 days</th><th>365 days</th><th>504 days</th></tr></thead>
         <tbody>${hrows}</tbody>
       </table></div>
-    </article>`;
+      </article>
+    </details>`;
   };
 
   const adapterRows=(prop.continuous_prop_transfer?.candidates||[]).map(c=>{
@@ -298,18 +365,60 @@ function renderV4(){
       </article>
     </div>`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
 
+  const repeat1=prop.programs?.ftmo_1step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
+  const repeat2=prop.programs?.ftmo_2step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
+  const balanced2=prop.programs?.ftmo_2step_2026?.refined_frontiers?.balanced||{};
+  const summaryCard=(label,row,tag)=>{
+    const x=row.view||{};
+    const funded=x.funded||{};
+    const source=row.params?.continuous_track_id||row.params?.family||"—";
+    return `<article class="frontier-card">
+      <span class="decision-label">${esc(tag)}</span>
+      <h3>${esc(label)}</h3>
+      <div class="frontier-metrics">
+        <div><span>Pass</span><strong>${x.combined_evaluation_pass_probability==null?"—":pct(100*Number(x.combined_evaluation_pass_probability),1)}</strong></div>
+        <div><span>12-cycle reward</span><strong>${pct(x.repeat_expected_reward_pct,2)}</strong></div>
+        <div><span>Survival</span><strong>${funded.survival_probability==null?"—":pct(100*Number(funded.survival_probability),1)}</strong></div>
+      </div>
+      <small>${esc(source)}</small>
+    </article>`;
+  };
+
   wrap.innerHTML=`
+    <div class="v4-explainer">
+      <b>How to read this section:</b> “Pass” is the simulated probability of completing the evaluation, “12-cycle reward” is the repeated-payout research projection, and “survival” is the simulated funded-account survival rate. These are development estimates, not live proof.
+    </div>
+    <div class="frontier-grid">
+      ${summaryCard("FTMO 2-Step","" && repeat2,"Best repeat economics")}
+    </div>
+  `;
+
+  // Avoid nested-template coercion by append via insertAdjacentHTML.
+  wrap.innerHTML=`
+    <div class="v4-explainer">
+      <b>How to read this section:</b> “Pass” = simulated evaluation completion; “12-cycle reward” = repeated-payout projection; “Survival” = simulated funded-account survival. Development estimates only.
+    </div>
+    <div class="frontier-grid">
+      ${summaryCard("FTMO 2-Step · Max repeat payout",repeat2,"BEST REPEAT ECONOMICS")}
+      ${summaryCard("FTMO 1-Step · Max repeat payout",repeat1,"SIMPLER PROGRAM")}
+      ${summaryCard("FTMO 2-Step · Balanced",balanced2,"BALANCED / EXACT TRANSFER")}
+    </div>
     ${privateHtml}
-    <article class="glass-card" style="margin-top:16px">
-      <div class="card-title-row"><div><span class="kicker">PRIVATE PROMOTION QUEUE</span><h3>PBO-gated continuous transfers</h3></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Track</th><th class="num">V4 CAGR</th><th class="num">3× cost CAGR</th><th class="num">DD</th><th class="num">Sharpe</th><th class="num">PBO</th><th>Gate</th></tr></thead><tbody>${privateTransfer||'<tr><td colspan="7">No candidates</td></tr>'}</tbody></table></div>
-    </article>
+    <details class="detail-panel">
+      <summary><span><b>Private promotion queue</b><small>Why high-return continuous candidates are still blocked</small></span><span class="detail-hint">Show details</span></summary>
+      <article class="glass-card detail-body">
+        <div class="table-wrap"><table><thead><tr><th>Track</th><th class="num">V4 CAGR</th><th class="num">3× cost CAGR</th><th class="num">DD</th><th class="num">Sharpe</th><th class="num">PBO</th><th>Gate</th></tr></thead><tbody>${privateTransfer||'<tr><td colspan="7">No candidates</td></tr>'}</tbody></table></div>
+      </article>
+    </details>
     ${programBlock("ftmo_1step_2026","FTMO 1-Step")}
     ${programBlock("ftmo_2step_2026","FTMO 2-Step")}
-    <article class="glass-card" style="margin-top:16px">
-      <div class="card-title-row"><div><span class="kicker">TRANSFER AUDIT</span><h3>Continuous → prop adapter exactness</h3></div></div>
-      <div class="table-wrap"><table><thead><tr><th>Track</th><th>Family</th><th>Adapter</th><th>Exactness</th><th>Source stop</th><th>Status</th></tr></thead><tbody>${adapterRows||'<tr><td colspan="6">No transferred candidates</td></tr>'}</tbody></table></div>
-    </article>`;
+    <details class="detail-panel">
+      <summary><span><b>Continuous → prop adapter audit</b><small>Exact adapters, blocked proxies, and transfer status</small></span><span class="detail-hint">Show details</span></summary>
+      <article class="glass-card detail-body">
+        <div class="table-wrap"><table><thead><tr><th>Track</th><th>Family</th><th>Adapter</th><th>Exactness</th><th>Source stop</th><th>Status</th></tr></thead><tbody>${adapterRows||'<tr><td colspan="6">No transferred candidates</td></tr>'}</tbody></table></div>
+      </article>
+    </details>`;
+
 }
 
 function setupFilters(){
