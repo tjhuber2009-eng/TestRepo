@@ -13,6 +13,7 @@ HERE = Path(__file__).resolve().parent
 STATE = HERE / "continuous_state"
 TOURNAMENT = HERE / "tournament_state"
 RUNTIME = HERE / "dashboard_runtime"
+V4_STATE = HERE / "v4_state"
 OUT = HERE / "live-dashboard.md"
 ACTIVE_PROTOCOL = "nested_chronological_v3"
 
@@ -86,6 +87,8 @@ tour=load(TOURNAMENT/"tournament-summary.json",None)
 continuous=latest_run(RUNTIME/"continuous_runs.json")
 tournament_run=latest_run(RUNTIME/"tournament_runs.json")
 jobs=(load(RUNTIME/"tournament_jobs.json",{}) or {}).get("jobs",[])
+v4_private=load(V4_STATE/"development-bootstrap.json",{}) or {}
+v4_prop=load(V4_STATE/"prop-intraday-bootstrap.json",{}) or {}
 
 stale_state=None
 state_is_active=(
@@ -128,7 +131,8 @@ v2=sum(int(r.get("valid_attempts",0) or 0)>=2 for r in rows)
 v10=sum(int(r.get("valid_attempts",0) or 0)>=10 for r in rows)
 hidden_pass=int(progress.get("validation_pass_count",0) or 0)
 hidden_fail=int(progress.get("validation_fail_count",0) or 0)
-hidden_open=(hidden_pass+hidden_fail)>0
+hidden_open=(hidden_pass+hidden_fail)>0 or bool(v4_private.get("hidden_validation_opened")) or bool(v4_prop.get("hidden_validation_opened"))
+final_oos_open=bool(v4_private.get("final_oos_opened")) or bool(v4_prop.get("final_oos_opened"))
 
 stamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -152,7 +156,7 @@ f"> **Phase:** **{str(progress.get('phase','—')).upper()}**",
 f"| Research phase | **{str(progress.get('phase','—')).upper()}** |",
 f"| Breadth progress | **{breadth_pct:.2f}%** |",
 f"| Hidden validation | **{'SEALED' if not hidden_open else 'OPEN'}** |",
-"| 2023+ final OOS | **SEALED** |",
+"| 2023+ final OOS | **" + ("OPEN" if final_oos_open else "SEALED") + "** |",
 "",
 "## Search progress",
 "",
@@ -170,10 +174,161 @@ f"| Terminal tracks | **{int(progress.get('terminal_track_count',0) or 0):,}** |
 "## Research integrity",
 "",
 f"- {'🟢' if not hidden_open else '🟡'} Hidden pre-OOS validation: **{'SEALED' if not hidden_open else f'OPEN — {hidden_pass} pass / {hidden_fail} fail'}**",
-"- 🟢 Final 2023+ OOS: **SEALED**",
+f"- {'🟡' if final_oos_open else '🟢'} Final 2023+ OOS: **{'OPEN' if final_oos_open else 'SEALED'}**",
 "- 🟢 Cost stress: **2×**",
 "- 🟢 Prop max DD: **10%**",
 "- 🟢 Private max DD: **32%**",
+"",
+"## AUTORESEARCH V4 — private account",
+"",
+*((
+    lambda chosen: [
+        "| Metric | Current |",
+        "|---|---:|",
+        f"| Authoritative concentration cap | **{pct(100*float(v4_private.get('portfolio_authoritative_concentration_cap',0.55)),0)}** |",
+        f"| Portfolio CAGR | **{pct(chosen.get('cagr_pct'),2)}** |",
+        f"| Bootstrap median CAGR | **{pct(chosen.get('bootstrap_median_cagr_pct'),2)}** |",
+        f"| Observed max DD | **{pct(chosen.get('max_dd_pct'),2)}** |",
+        f"| Bootstrap q95 DD | **{pct(chosen.get('bootstrap_dd_q95_pct'),2)}** |",
+        f"| Sharpe | **{f(chosen.get('sharpe'),3)}** |",
+        f"| Gross exposure | **{pct(100*float(chosen.get('gross_exposure',0)),1)}** |",
+        f"| Cash | **{pct(100*float(chosen.get('cash_weight',0)),1)}** |",
+        "",
+        "### Private portfolio weights",
+        "",
+        "| Strategy | Weight |",
+        "|---|---:|",
+        *[
+            f"| {name} | {pct(100*float(weight),2)} |"
+            for name,weight in sorted(
+                (chosen.get("weights") or {}).items(),
+                key=lambda kv: float(kv[1]),
+                reverse=True,
+            )
+        ],
+        "",
+        "### Private concentration sensitivity",
+        "",
+        "| Cap | CAGR | Bootstrap median CAGR | q95 DD | Observed DD | Sharpe |",
+        "|---:|---:|---:|---:|---:|---:|",
+        *[
+            f"| {pct(100*float(cap),0)}{' **AUTH**' if abs(float(cap)-float(v4_private.get('portfolio_authoritative_concentration_cap',0.55)))<1e-9 else ''} | "
+            f"{pct((row.get('chosen') or row).get('cagr_pct'),2)} | "
+            f"{pct((row.get('chosen') or row).get('bootstrap_median_cagr_pct'),2)} | "
+            f"{pct((row.get('chosen') or row).get('bootstrap_dd_q95_pct'),2)} | "
+            f"{pct((row.get('chosen') or row).get('max_dd_pct'),2)} | "
+            f"{f((row.get('chosen') or row).get('sharpe'),3)} |"
+            for cap,row in sorted(
+                (v4_private.get("portfolio_concentration_sensitivity") or {}).items(),
+                key=lambda kv: float(kv[0]),
+            )
+        ],
+    ]
+)( (v4_private.get("portfolio") or {}).get("chosen") )
+if (v4_private.get("portfolio") or {}).get("chosen")
+else ["V4 private portfolio state is not available in this snapshot."])),
+"",
+"### Continuous private promotion queue",
+"",
+"| Track | V4 CAGR | 3× cost CAGR | DD | Sharpe | PBO | Gate |",
+"|---|---:|---:|---:|---:|---:|---|",
+*[
+    f"| {(r.get('candidate') or {}).get('track_id','—')} | "
+    f"{pct((r.get('base') or {}).get('cagr_pct'),2)} | "
+    f"{pct((r.get('cost_stress') or {}).get('cagr_pct'),2)} | "
+    f"{pct((r.get('base') or {}).get('max_dd_pct'),2)} | "
+    f"{f((r.get('base') or {}).get('sharpe'),3)} | "
+    f"{pct(None if (r.get('candidate') or {}).get('pbo') is None else 100*float((r.get('candidate') or {}).get('pbo')),1)} | "
+    f"{r.get('portfolio_gate_reason') or '—'} |"
+    for r in (v4_private.get("continuous_private_transfer") or {}).get("candidates",[])
+],
+"",
+"## AUTORESEARCH V4 — prop-firm frontiers",
+"",
+*sum([
+    (
+        lambda pid,label,p: [
+            f"### {label}",
+            "",
+            "| Frontier | Family / source | C/V/F | Eval pass | Eval days | First eff. | Repeat eff. | 12-cycle reward | Funded survival | Daily breach | Max breach |",
+            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+            *[
+                (
+                    lambda r,params,x,funded,nonauth: (
+                        f"| {view.replace('_',' ')} | "
+                        f"{params.get('family','—')}"
+                        f"{' / '+str(params.get('continuous_track_id')) if params.get('continuous_track_id') else ''}"
+                        f"{' **NON-AUTH PROXY**' if nonauth else ''} | "
+                        f"{f(x.get('challenge_exposure_scale'),2)} / {f(x.get('verification_exposure_scale'),2)} / {f(x.get('funded_exposure_scale'),2)} | "
+                        f"{pct(None if x.get('combined_evaluation_pass_probability') is None else 100*float(x.get('combined_evaluation_pass_probability')),1)} | "
+                        f"{f(x.get('expected_evaluation_days_if_passed'),1)} | "
+                        f"{f(x.get('payout_efficiency_score'),6)} | "
+                        f"{f(x.get('repeat_payout_efficiency_score'),6)} | "
+                        f"{pct(x.get('repeat_expected_reward_pct'),2)} | "
+                        f"{pct(None if funded.get('survival_probability') is None else 100*float(funded.get('survival_probability')),1)} | "
+                        f"{pct(None if funded.get('daily_loss_breach_probability') is None else 100*float(funded.get('daily_loss_breach_probability')),1)} | "
+                        f"{pct(None if funded.get('max_loss_breach_probability') is None else 100*float(funded.get('max_loss_breach_probability')),1)} |"
+                    )
+                )(
+                    (p.get("refined_frontiers") or {}).get(view) or {},
+                    ((p.get("refined_frontiers") or {}).get(view) or {}).get("params") or {},
+                    ((p.get("refined_frontiers") or {}).get(view) or {}).get("view") or {},
+                    ((((p.get("refined_frontiers") or {}).get(view) or {}).get("view") or {}).get("funded") or {}),
+                    (
+                        (((p.get("refined_frontiers") or {}).get(view) or {}).get("params") or {}).get("transfer_exactness")=="signal_only_proxy"
+                        or (((p.get("refined_frontiers") or {}).get(view) or {}).get("params") or {}).get("source_stop_transferred") is False
+                    ),
+                )
+                for view in ["max_payout_efficiency","max_repeat_payout_efficiency","max_evaluation_pass","safest_funded","balanced","conservative"]
+            ],
+            "",
+            "#### 252 / 365 / 504-day sensitivity",
+            "",
+            "| Frontier | 252 days | 365 days | 504 days |",
+            "|---|---|---|---|",
+            *[
+                (
+                    lambda hs: f"| {view.replace('_',' ')} | " + " | ".join(
+                        (
+                            lambda x,fd: (
+                                f"pass {pct(None if x.get('combined_evaluation_pass_probability') is None else 100*float(x.get('combined_evaluation_pass_probability')),1)}; "
+                                f"repeat {f(x.get('repeat_payout_efficiency_score'),5)}; "
+                                f"reward {pct(x.get('repeat_expected_reward_pct'),1)}; "
+                                f"survival {pct(None if fd.get('survival_probability') is None else 100*float(fd.get('survival_probability')),1)}"
+                            )
+                        )(
+                            (hs.get(str(h)) or {}).get("view") or {},
+                            (((hs.get(str(h)) or {}).get("view") or {}).get("funded") or {}),
+                        )
+                        for h in (252,365,504)
+                    ) + " |"
+                )((((p.get("horizon_sensitivity") or {}).get(view) or {}).get("horizons") or {}))
+                for view in ["max_payout_efficiency","max_repeat_payout_efficiency","max_evaluation_pass","safest_funded","balanced","conservative"]
+            ],
+            "",
+        ]
+    )(pid,label,(v4_prop.get("programs") or {}).get(pid) or {})
+    for pid,label in [("ftmo_1step_2026","FTMO 1-Step"),("ftmo_2step_2026","FTMO 2-Step")]
+],[]),
+"### Continuous → prop adapter audit",
+"",
+"| Track | Family | Adapter | Exactness | Source stop | Status |",
+"|---|---|---|---|---|---|",
+*[
+    (
+        lambda p,nonauth: f"| {r.get('track_id','—')} | {r.get('family','—')} | {r.get('adapter') or '—'} | "
+        f"{p.get('transfer_exactness') or r.get('exactness') or '—'} | "
+        f"{p.get('source_stop_transferred','—')} | "
+        f"{'NON-AUTH PROXY' if nonauth else r.get('transfer_status','—')} |"
+    )(
+        r.get("transfer_params") or {},
+        (
+            (r.get("transfer_params") or {}).get("transfer_exactness")=="signal_only_proxy"
+            or (r.get("transfer_params") or {}).get("source_stop_transferred") is False
+        ),
+    )
+    for r in (v4_prop.get("continuous_prop_transfer") or {}).get("candidates",[])
+],
 "",
 "## Current development champions",
 "",
