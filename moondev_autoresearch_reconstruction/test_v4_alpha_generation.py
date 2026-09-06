@@ -30,6 +30,7 @@ from v4.hr_dual_locked import (
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
 from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
+from v4.phase2_bridge import load_promotion_source as load_phase2_promotion_source
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import (
     AssetCost,
@@ -59,6 +60,8 @@ from v4.prop_intraday_bootstrap import (
     _frontier_universe_mutations,
     _resolve_prop_symbols,
     _continuous_daily_state,
+    _phase2_daily_state,
+    hourly_phase2_daily_signal_strategy,
     aggregate_prague_days,
     aggregate_prague_days_scaled,
     hourly_continuous_daily_signal_strategy,
@@ -173,6 +176,87 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertEqual(hits, 1)
         self.assertIsNone(state["mom"]["held"])
         self.assertAlmostEqual(state["mom"]["eq"], 0.6 * 0.89 * 0.9995)
+
+    def test_phase2_promotion_source_hash_is_fail_closed(self):
+        source = (
+            'import numpy as np\n'
+            'import pandas as pd\n'
+            'from backtesting import Strategy\n'
+            'FAMILY = "bollinger_breakout_20_2"\n'
+            'class MoonStrategy(Strategy):\n'
+            '    def init(self): pass\n'
+            '    def next(self): pass\n'
+        )
+        import hashlib
+        digest = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        row = {
+            "track_id": "bollinger_breakout_20_2__btc__private",
+            "family": "bollinger_breakout_20_2",
+            "promotion_source_path": "phase2.py",
+            "promotion_source_sha256": digest,
+            "strategy_sha256": digest,
+        }
+        with mock.patch("v4.phase2_bridge._git_show", return_value=source):
+            self.assertEqual(load_phase2_promotion_source(row), source)
+        broken = dict(row)
+        broken["promotion_source_sha256"] = "0" * 64
+        with mock.patch("v4.phase2_bridge._git_show", return_value=source):
+            with self.assertRaises(RuntimeError):
+                load_phase2_promotion_source(broken)
+
+    def test_phase2_bollinger_signed_adapter_is_prefix_invariant(self):
+        days = 100
+        daily_close = 100.0 + np.sin(np.arange(days) / 3.0) * 3.0
+        for i, value in (
+            (45, 130.0), (50, 100.0), (60, 70.0), (66, 100.0),
+            (75, 135.0), (82, 65.0), (90, 100.0),
+        ):
+            daily_close[i] = value
+        idx = pd.date_range(
+            "2019-01-01", periods=days * 24, freq="h", tz="UTC"
+        )
+        values = np.repeat(daily_close, 24)
+        frame = pd.DataFrame(
+            {
+                "Open": values,
+                "High": values * 1.001,
+                "Low": values * 0.999,
+                "Close": values,
+                "Volume": 1000.0,
+            },
+            index=idx,
+        )
+        params = {
+            "source_family": "bollinger_breakout_20_2",
+            "source_target": "BTCUSDT",
+            "source_min_bars": 40,
+            "source_vol_lookback": 30,
+        }
+        full = _phase2_daily_state(frame, params)
+        prefix_frame = frame.iloc[: 80 * 24]
+        prefix = _phase2_daily_state(prefix_frame, params)
+        pd.testing.assert_series_equal(prefix, full.loc[prefix.index])
+        self.assertEqual(float(full.max()), 1.0)
+        self.assertEqual(float(full.min()), -1.0)
+
+        strategy = hourly_phase2_daily_signal_strategy(
+            params, ("BTCUSDT",)
+        )
+        weights = strategy({"BTCUSDT": frame})
+        self.assertGreater(float(weights["BTCUSDT"].max()), 0.0)
+        self.assertLess(float(weights["BTCUSDT"].min()), 0.0)
+        local_dates = pd.Series(
+            idx.tz_convert(PRAGUE).date,
+            index=idx,
+        )
+        reset = (
+            local_dates.shift(-1).notna()
+            & (local_dates.shift(-1) != local_dates)
+        )
+        self.assertTrue(
+            (weights.loc[reset, "BTCUSDT"].abs() <= 1e-12).all()
+        )
+        self.assertEqual(float(weights.iloc[-1]["BTCUSDT"]), 0.0)
 
     def test_family_pbo_gate_rejects_missing_diagnostic(self):
         self.assertFalse(pbo_gate(None, 0.25))
