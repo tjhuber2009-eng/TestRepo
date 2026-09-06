@@ -263,6 +263,62 @@ def _parse_float(source: str, pattern: str, default: float) -> float:
     return float(m.group(1)) if m else float(default)
 
 
+def _parse_int_required(source: str, pattern: str, name: str) -> int:
+    m = re.search(pattern, source, re.M)
+    if not m:
+        raise ValueError(f"required promoted parameter not found: {name}")
+    return int(m.group(1))
+
+
+def _parse_float_required(source: str, pattern: str, name: str) -> float:
+    m = re.search(pattern, source, re.M)
+    if not m:
+        raise ValueError(f"required promoted parameter not found: {name}")
+    return float(m.group(1))
+
+
+def source_execution_adapter_blocker(source: str) -> str | None:
+    """Return why a daily signal adapter cannot preserve source execution."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return "source_parse_failed"
+    next_fn = None
+    for node in tree.body:
+        if not isinstance(node, ast.ClassDef) or node.name != "MoonStrategy":
+            continue
+        next_fn = next(
+            (
+                child for child in node.body
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and child.name == "next"
+            ),
+            None,
+        )
+        break
+    if next_fn is None:
+        return "next_method_missing"
+    for node in ast.walk(next_fn):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if node.func.attr == "sell":
+                return "short_entry_not_transferred"
+            if node.func.attr == "_buy_with_stop":
+                return "source_stop_not_transferred"
+            if node.func.attr == "buy":
+                for kw in node.keywords:
+                    if kw.arg in {"sl", "tp"} and not (
+                        isinstance(kw.value, ast.Constant) and kw.value.value is None
+                    ):
+                        return "source_bracket_not_transferred"
+        if (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.ctx, ast.Store)
+            and node.attr in {"sl", "tp"}
+        ):
+            return "dynamic_stop_or_target_not_transferred"
+    return None
+
+
 def prop_transfer_candidates(
     available_symbols: Iterable[str],
     *,
@@ -290,6 +346,13 @@ def prop_transfer_candidates(
             audit.append(row)
             continue
 
+        blocker = source_execution_adapter_blocker(source)
+        if blocker is not None:
+            row["transfer_status"] = "adapter_required"
+            row["transfer_reason"] = blocker
+            audit.append(row)
+            continue
+
         params = {
             "family": "continuous_daily_signal",
             "source_family": c.family,
@@ -299,41 +362,63 @@ def prop_transfer_candidates(
             "source_vol_target": _parse_float(
                 source, r"^\s*vol_target\s*=\s*([0-9.]+)", 0.08
             ),
+            "transfer_exactness": "signal_logic_exact_v4_risk_resized",
+            "source_stop_required": False,
+            "source_stop_transferred": True,
         }
         if c.family == "btc_rsi_adx":
-            params.update({
-                "sma_window": _parse_int(
-                    source,
-                    r"self\.sma50\s*=\s*self\.I\(_sma_now,\s*self\.data\.Close,\s*(\d+)\)",
-                    50,
-                ),
-                "ema_window": _parse_int(
-                    source,
-                    r"self\.ema7\s*=\s*self\.I\(_ema_now,\s*self\.data\.Close,\s*(\d+)\)",
-                    7,
-                ),
-                "rsi_window": _parse_int(
-                    source,
-                    r"self\.rsi2\s*=\s*self\.I\(_rsi_now,\s*self\.data\.Close,\s*(\d+)\)",
-                    2,
-                ),
-                "adx_window": _parse_int(
-                    source,
-                    r"self\.adx2\s*=\s*self\.I\(_adx_now,.*?,\s*(\d+)\)",
-                    2,
-                ),
-            })
+            try:
+                params.update({
+                    "sma_window": _parse_int_required(
+                        source,
+                        r"self\.sma50\s*=\s*self\.I\(_sma_now,\s*self\.data\.Close,\s*(\d+)\)",
+                        "sma_window",
+                    ),
+                    "ema_window": _parse_int_required(
+                        source,
+                        r"self\.ema7\s*=\s*self\.I\(_ema_now,\s*self\.data\.Close,\s*(\d+)\)",
+                        "ema_window",
+                    ),
+                    "rsi_window": _parse_int_required(
+                        source,
+                        r"self\.rsi2\s*=\s*self\.I\(_rsi_now,\s*self\.data\.Close,\s*(\d+)\)",
+                        "rsi_window",
+                    ),
+                    "adx_window": _parse_int_required(
+                        source,
+                        r"self\.adx2\s*=\s*self\.I\(_adx_now,.*?,\s*(\d+)\)",
+                        "adx_window",
+                    ),
+                })
+            except ValueError as exc:
+                row["transfer_status"] = "adapter_required"
+                row["transfer_reason"] = str(exc)
+                audit.append(row)
+                continue
         elif c.family in {"sentinel63", "sentinel65"}:
-            default_window = 63 if c.family == "sentinel63" else 65
-            params.update({
-                "signal_window": _parse_int(
-                    source,
-                    r"self\.ema\d+\s*=\s*self\.I\(_ema_now,\s*self\.data\.Close,\s*(\d+)\)",
-                    default_window,
-                ),
-                "entry_z": 0.5,
-                "exit_z": -0.5,
-            })
+            try:
+                params.update({
+                    "signal_window": _parse_int_required(
+                        source,
+                        r"self\.ema\d+\s*=\s*self\.I\(_ema_now,\s*self\.data\.Close,\s*(\d+)\)",
+                        "signal_window",
+                    ),
+                    "entry_z": _parse_float_required(
+                        source,
+                        r"if\s+not\s+self\.position\s+and\s+z\s*>\s*([-+]?[0-9]*\.?[0-9]+)",
+                        "entry_z",
+                    ),
+                    "exit_z": _parse_float_required(
+                        source,
+                        r"elif\s+self\.position\s+and\s+z\s*<\s*([-+]?[0-9]*\.?[0-9]+)",
+                        "exit_z",
+                    ),
+                })
+            except ValueError as exc:
+                row["transfer_status"] = "adapter_required"
+                row["transfer_reason"] = str(exc)
+                audit.append(row)
+                continue
         elif c.family in {"donchian_20_10", "donchian_sma50"}:
             params.update({
                 "entry_lookback": _parse_int(
@@ -402,10 +487,10 @@ def prop_transfer_candidates(
         "available": bool(candidates),
         "policy": (
             "continuous prop champions are pre-screened development hypotheses; "
-            "explicit daily signal adapters enter the Prague-aligned v4 simulator "
-            "with v4 exposure sizing and 3x cost stress; adapters that omit source "
-            "stop mechanics are labeled signal_only_proxy and are not represented "
-            "as exact execution parity"
+            "only exact long-only daily signal/exit adapters enter the Prague-aligned "
+            "v4 simulator; required parameters are parsed from source, active source "
+            "stops/brackets/short entries fail closed, and v4 exposure sizing replaces "
+            "source sizing by design under 3x cost stress"
         ),
         "candidate_count": len(candidates),
         "supported_count": len(supported),
