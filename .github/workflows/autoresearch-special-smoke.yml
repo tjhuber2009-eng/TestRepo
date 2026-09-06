@@ -1,0 +1,49 @@
+name: AUTORESEARCH special-strategy smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autoresearch-special-strategy-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - name: Check out research source
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Compile and run integrity suite
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
+          python oos_guard.py
+
+      - name: Smoke audited Yahoo ES proxy
+        run: python phase2_prior_runner.py --track-id sma_10_50__es__private --smoke-only
+
+      - name: Smoke causal Bitcoin monthly seasonality
+        run: python phase2_prior_runner.py --track-id bitcoin_cycle_monthly_causal__btc_bitstamp_monthly__private --smoke-only
+
+      - name: Recheck sealed boundaries
+        run: python oos_guard.py
