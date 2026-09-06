@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .campaign import assert_v4_data_boundary, risk_policy
+from .conditional_risk import conditional_high_volatility_overlay
 from .feature_store import FeatureStoreBuilder
 from .meta_filter import walk_forward_probabilities
 from .multi_asset_engine import (
@@ -1350,6 +1351,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     satellite_portfolio = None
     satellite_portfolio_summary = None
     satellite_matched_static_gross = None
+    conditional_satellite_portfolio = None
+    conditional_satellite_summary = None
+    conditional_satellite_stream = None
+    conditional_satellite_gross_profile = None
+    conditional_satellite_matched_static_gross = None
     dynamic_portfolio = None
     dynamic_portfolio_summary = None
     dynamic_matched_static_gross = None
@@ -1558,6 +1564,91 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                             )
                         )
 
+            # Test one pre-registered conditional high-volatility overlay
+            # on the selected staggered satellite architecture. It can only
+            # reduce unit exposure in a causally identified top-quintile
+            # volatility state; it cannot raise the 35% sleeve or 1.5x gross
+            # limits and is therefore a risk-timing challenger, not a leverage
+            # boundary expansion.
+            conditional_base_name = (
+                None
+                if satellite_portfolio_summary is None
+                else satellite_portfolio_summary.get("selected_candidate")
+            )
+            if (
+                conditional_base_name is not None
+                and conditional_base_name in satellite_streams
+                and conditional_base_name in satellite_gross_profiles
+            ):
+                conditional = conditional_high_volatility_overlay(
+                    satellite_streams[conditional_base_name],
+                    satellite_gross_profiles[conditional_base_name],
+                    lookback=20,
+                    min_history=252,
+                    high_vol_quantile=0.80,
+                    min_risk_scale=0.50,
+                    periods_per_year=252.0,
+                )
+                conditional_name = (
+                    f"conditional_high_vol__{conditional_base_name}"
+                )
+                conditional_satellite_stream = conditional.returns.rename(
+                    conditional_name
+                )
+                conditional_satellite_gross_profile = (
+                    conditional.gross_profile.rename(conditional_name)
+                )
+                conditional_satellite_portfolio = RobustPortfolioOptimizer(
+                    dd_cap_pct=private.max_dd_pct,
+                    n_candidates=1,
+                    bootstrap_reps=120,
+                    block=20,
+                    max_weight=1.0,
+                    max_gross=1.5,
+                    min_gross=0.10,
+                    annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
+                    seed=20260905,
+                ).optimize(
+                    conditional_satellite_stream.to_frame(),
+                    gross_profiles=conditional_satellite_gross_profile.to_frame(),
+                )
+                conditional_satellite_summary = {
+                    "base_candidate": conditional_base_name,
+                    "overlay": conditional.summary.to_dict(),
+                    "policy": (
+                        "one pre-registered causal top-quintile high-volatility "
+                        "de-risking challenger; no low-vol leverage boost; "
+                        "35% satellite and 1.5x gross caps unchanged"
+                    ),
+                }
+                if (
+                    static_portfolio is not None
+                    and static_portfolio.chosen is not None
+                    and conditional_satellite_portfolio is not None
+                    and conditional_satellite_portfolio.chosen is not None
+                ):
+                    static_gross = float(
+                        static_portfolio.chosen.gross_exposure
+                    )
+                    conditional_satellite_matched_static_gross = (
+                        RobustPortfolioOptimizer(
+                            dd_cap_pct=private.max_dd_pct,
+                            n_candidates=1,
+                            bootstrap_reps=120,
+                            block=20,
+                            max_weight=1.0,
+                            max_gross=static_gross,
+                            min_gross=static_gross,
+                            annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
+                            seed=20260905,
+                        ).optimize(
+                            conditional_satellite_stream.to_frame(),
+                            gross_profiles=(
+                                conditional_satellite_gross_profile.to_frame()
+                            ),
+                        )
+                    )
+
             # Causal strategy-level rotation is evaluated as one additional
             # portfolio architecture, never as a bypass around individual
             # strategy evidence gates. Its weights at t use only returns < t.
@@ -1627,6 +1718,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     "staggered_satellite"
                 ] = satellite_portfolio
             if portfolio_challenger_wins(
+                conditional_satellite_portfolio, static_portfolio
+            ):
+                challengers[
+                    "conditional_satellite"
+                ] = conditional_satellite_portfolio
+            if portfolio_challenger_wins(
                 dynamic_portfolio, static_portfolio
             ):
                 challengers["causal_dynamic"] = dynamic_portfolio
@@ -1641,8 +1738,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 portfolio = selected_result
                 portfolio_selection = {
                     "method": (
-                        "static_vs_staggered_satellite_vs_"
-                        "causal_dynamic_v2"
+                        "static_vs_staggered_satellite_vs_conditional_"
+                        "satellite_vs_causal_dynamic_v3"
                     ),
                     "selected": selected_name,
                     "reason": (
@@ -1666,6 +1763,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                                 selected_candidate_name
                             ]
                         )
+                elif selected_name == "conditional_satellite":
+                    selected_stream = conditional_satellite_stream
+                    selected_gross_profile = (
+                        conditional_satellite_gross_profile
+                    )
                 elif selected_name == "causal_dynamic":
                     selected_stream = dynamic.returns
                     selected_gross_profile = dynamic_gross_profile
@@ -1830,6 +1932,21 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     else satellite_matched_static_gross.to_dict()
                 ),
                 "sleeve": satellite_portfolio_summary,
+            }
+        ),
+        "portfolio_conditional_satellite": (
+            None
+            if conditional_satellite_portfolio is None
+            else {
+                "risk_scaled_result": (
+                    conditional_satellite_portfolio.to_dict()
+                ),
+                "matched_static_gross_result": (
+                    None
+                    if conditional_satellite_matched_static_gross is None
+                    else conditional_satellite_matched_static_gross.to_dict()
+                ),
+                "allocator": conditional_satellite_summary,
             }
         ),
         "portfolio_dynamic": (
