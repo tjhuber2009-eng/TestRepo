@@ -19,12 +19,12 @@ jobs:
         working-directory: moondev_autoresearch_reconstruction
     steps:
       - name: Check out research source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
