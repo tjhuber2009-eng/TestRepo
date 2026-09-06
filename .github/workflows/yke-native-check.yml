@@ -1,0 +1,51 @@
+name: YKE Native Compile Check
+
+on:
+  push:
+    branches:
+      - yke-v3.1-native-build
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-check:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - macos-latest
+          - ubuntu-22.04
+
+    defaults:
+      run:
+        working-directory: youtube-knowledge-engine-native-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.88.0
+
+      - name: Linux Tauri prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Rust versions
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Compile exact v3.1 native shell
+        run: cargo check --locked
