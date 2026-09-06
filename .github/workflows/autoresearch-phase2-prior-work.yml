@@ -20,7 +20,7 @@ jobs:
         working-directory: moondev_autoresearch_reconstruction
     steps:
       - name: Check out research source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: echo "AUTORESEARCH_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -39,7 +39,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Restore development-only data cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: moondev_autoresearch_reconstruction/data
           key: phase2-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
@@ -94,7 +94,7 @@ jobs:
           git push --force-with-lease origin phase2-autoresearch-state
 
       - name: Upload Phase 2 snapshot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: autoresearch-phase2-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/phase2_state
