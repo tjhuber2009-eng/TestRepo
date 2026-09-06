@@ -1438,7 +1438,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         returns,
                         static_portfolio.chosen.weights,
                         supplemental_returns,
-                        max_satellite_weight=0.25,
+                        max_satellite_weight=0.35,
                     )
                 )
                 satellite_gross_profiles = {
@@ -1513,7 +1513,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                             eligible_satellite_results
                         ),
                         "policy": (
-                            "supplemental sleeve capped at 25% composition; "
+                            "supplemental sleeve capped at 35% composition; "
                             "pre-inception allocation held as cash; all sleeves "
                             "clear the same static-portfolio Q10 floor"
                         ),
