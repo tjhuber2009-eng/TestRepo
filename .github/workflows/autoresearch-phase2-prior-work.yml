@@ -48,7 +48,7 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase2-autoresearch-state:refs/remotes/origin/phase2-autoresearch-state || true
+          git fetch origin +refs/heads/phase2-autoresearch-state:refs/remotes/origin/phase2-autoresearch-state || true
           if git rev-parse --verify refs/remotes/origin/phase2-autoresearch-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/phase2-autoresearch-state -- moondev_autoresearch_reconstruction/phase2_state || true
           fi
