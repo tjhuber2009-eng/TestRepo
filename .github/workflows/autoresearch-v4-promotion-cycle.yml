@@ -1,0 +1,21 @@
+name: AUTORESEARCH v4 promotion cycle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: autoresearch-v4-promotion-cycle
+  cancel-in-progress: false
+
+jobs:
+  private-development:
+    uses: ./.github/workflows/autoresearch-v4-bootstrap.yml
+    secrets: inherit
+
+  prop-development:
+    needs: private-development
+    uses: ./.github/workflows/autoresearch-v4-prop-intraday.yml
+    secrets: inherit
