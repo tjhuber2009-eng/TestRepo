@@ -1,6 +1,6 @@
 Atlas Forge V4 profit benchmark
-Source head: f6d77888270eac5c44e87385b37fae0cc81e73e2
-Purpose: hardened static vs satellite vs dynamic comparison plus matched-static-gross diagnostics
+Source head: 4d30aadd0b9c3144811e34e9c92f89aaa9aa526f
+Purpose: financed private portfolio benchmark plus 6/10/14 percent leverage-cost sensitivity
 Persistent state: read only
 Hidden validation: sealed
 Final 2023+ OOS: sealed
