@@ -589,7 +589,7 @@
     {
       "id": "eurusd",
       "symbol": "EURUSD",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -599,14 +599,14 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     },
     {
       "id": "gbpusd",
       "symbol": "GBPUSD",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -616,14 +616,14 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     },
     {
       "id": "usdjpy",
       "symbol": "USDJPY",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -633,14 +633,14 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     },
     {
       "id": "audusd",
       "symbol": "AUDUSD",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -650,14 +650,14 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     },
     {
       "id": "usdcad",
       "symbol": "USDCAD",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -667,14 +667,14 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     },
     {
       "id": "usdchf",
       "symbol": "USDCHF",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -684,14 +684,14 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     },
     {
       "id": "nzdusd",
       "symbol": "NZDUSD",
-      "source": "stooq_fx",
+      "source": "dukascopy_bid_daily",
       "market": "forex",
       "enabled": true,
       "bars_per_year": 252,
@@ -701,9 +701,9 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
-      "data_quality_note": "Stooq daily currency snapshot with generated CSV SHA256; no provider archive checksum",
-      "instrument_fidelity": "daily_spot_proxy",
-      "volume_semantics": "not_required; volume-dependent families excluded"
+      "data_quality_note": "Dukascopy native yearly BID D1 candle archives with locally recorded per-year SHA256; provider publishes no archive checksum",
+      "instrument_fidelity": "dukascopy_native_bid_daily",
+      "volume_semantics": "native Dukascopy volume retained; volume-dependent strategy families excluded"
     }
   ]
 }
