@@ -107,7 +107,7 @@ def _git_show(ref: str, path: str) -> str | None:
         subprocess.run(
             [
                 "git", "fetch", "origin",
-                f"{ref}:refs/remotes/origin/{ref}",
+                f"+refs/heads/{ref}:refs/remotes/origin/{ref}",
             ],
             check=True,
             stdout=subprocess.DEVNULL,
