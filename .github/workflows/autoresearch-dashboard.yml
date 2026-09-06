@@ -17,7 +17,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
@@ -114,7 +114,7 @@ jobs:
             --body-file live-dashboard.md
 
       - name: Upload private dashboard artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: autoresearch-dashboard-${{ github.run_id }}
           path: moondev_autoresearch_reconstruction/dashboard_output
