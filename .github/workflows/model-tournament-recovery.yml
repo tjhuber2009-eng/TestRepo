@@ -116,7 +116,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Restore sealed development-only market-data cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: moondev_autoresearch_reconstruction/data
           key: autoresearch-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
