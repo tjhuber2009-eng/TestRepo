@@ -35,14 +35,14 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase3-engine-mapping-state:refs/remotes/origin/phase3-engine-mapping-state
+          git fetch origin +refs/heads/phase3-engine-mapping-state:refs/remotes/origin/phase3-engine-mapping-state
           git checkout refs/remotes/origin/phase3-engine-mapping-state -- moondev_autoresearch_reconstruction/phase3_state/hydration_queue.json
 
       - name: Restore prior hydration state
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
+          git fetch origin +refs/heads/phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
           if git rev-parse --verify refs/remotes/origin/phase3-hydration-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/phase3-hydration-state -- moondev_autoresearch_reconstruction/phase3_state/hydrated_sources.jsonl moondev_autoresearch_reconstruction/phase3_state/hydration_progress.json moondev_autoresearch_reconstruction/phase3_state/hydration_cursor.json 2>/dev/null || true
           fi
