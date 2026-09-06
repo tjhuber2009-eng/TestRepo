@@ -616,6 +616,73 @@ class MoonStrategy:
 
 
 
+    def test_opportunity_visit_schedule_preserves_majority_exploration(self):
+        slots = continuous_runner.opportunity_visit_indices(8, 0.30)
+        self.assertEqual(slots, {2, 5})
+        self.assertLessEqual(len(slots), 8 // 2)
+        self.assertEqual(
+            continuous_runner.opportunity_visit_indices(8, 0.0),
+            set(),
+        )
+
+    def test_track_allocator_prioritizes_strong_missing_pbo_without_replacing_round_robin(self):
+        tracks = continuous_runner.build_tracks()[:3]
+        plan = {track["id"]: 10 for track in tracks}
+        scores = {
+            tracks[0]["id"]: 0.95,
+            tracks[1]["id"]: 0.80,
+            tracks[2]["id"]: 0.30,
+        }
+        counts = {
+            track["id"]: {
+                "valid": 4,
+                "attempts": 4,
+                "guard_passed": 3,
+            }
+            for track in tracks
+        }
+
+        def count_for(track):
+            return counts[track["id"]]
+
+        def meta_for(track):
+            return {"baseline": {"guard_ok": True}}
+
+        def score_for(track):
+            return scores[track["id"]]
+
+        def pbo_for(track):
+            if track["id"] == tracks[0]["id"]:
+                return {"pbo": 0.20}
+            return None
+
+        with mock.patch.object(
+            continuous_runner, "is_terminal_block", return_value=False
+        ), mock.patch.object(
+            continuous_runner, "track_counts", side_effect=count_for
+        ), mock.patch.object(
+            continuous_runner, "track_meta", side_effect=meta_for
+        ), mock.patch.object(
+            continuous_runner, "development_selection_score", side_effect=score_for
+        ), mock.patch.object(
+            continuous_runner, "development_overfit", side_effect=pbo_for
+        ):
+            exploit = continuous_runner.next_search_track(
+                tracks,
+                plan,
+                0,
+                prefer_opportunity=True,
+            )
+            explore = continuous_runner.next_search_track(
+                tracks,
+                plan,
+                0,
+                prefer_opportunity=False,
+            )
+
+        self.assertEqual(exploit[1]["id"], tracks[1]["id"])
+        self.assertEqual(explore[1]["id"], tracks[0]["id"])
+
     def test_pbo_diagnostic_stays_in_probability_bounds(self):
         # Strategies alternate between excellent and poor halves, a pattern
         # that should look unstable under CSCV.
