@@ -285,6 +285,42 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             phase3_engine_map_runner.register_rule_hash(True, "same", seen)
         )
 
+    def test_phase3_evidence_versioning_terminates_retries(self):
+        import phase3_engine_map_runner
+        import phase3_reconstruct_runner
+
+        self.assertFalse(phase3_engine_map_runner.hydration_is_current(None))
+        self.assertFalse(
+            phase3_engine_map_runner.hydration_is_current(
+                {"hydration_status": "attempted_no_text", "hydration_version": 1}
+            )
+        )
+        self.assertTrue(
+            phase3_engine_map_runner.hydration_is_current(
+                {"hydration_status": "attempted_no_text", "hydration_version": 2}
+            )
+        )
+        self.assertTrue(
+            phase3_engine_map_runner.hydration_is_current(
+                {"hydration_status": "hydrated", "hydration_version": 1}
+            )
+        )
+        self.assertEqual(
+            phase3_reconstruct_runner.reconstruction_version_for(None), 1
+        )
+        self.assertEqual(
+            phase3_reconstruct_runner.reconstruction_version_for(
+                {"hydration_version": 1}
+            ),
+            2,
+        )
+        self.assertEqual(
+            phase3_reconstruct_runner.reconstruction_version_for(
+                {"hydration_version": 2}
+            ),
+            3,
+        )
+
     def test_yahoo_futures_proxy_normalization_is_explicit_and_conservative(self):
         import prepare_market_data
         with tempfile.TemporaryDirectory() as td:
