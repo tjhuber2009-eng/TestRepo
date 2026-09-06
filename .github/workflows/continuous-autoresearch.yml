@@ -67,7 +67,7 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state || true
+          git fetch origin +refs/heads/continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state || true
           if git rev-parse --verify refs/remotes/origin/continuous-autoresearch-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/continuous-autoresearch-state -- moondev_autoresearch_reconstruction/continuous_state || true
             echo "restored persistent state"
@@ -92,7 +92,7 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin model-tournament-state:refs/remotes/origin/model-tournament-state || true
+          git fetch origin +refs/heads/model-tournament-state:refs/remotes/origin/model-tournament-state || true
           if git rev-parse --verify refs/remotes/origin/model-tournament-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/model-tournament-state -- moondev_autoresearch_reconstruction/tournament_state || true
             echo "restored tournament state"
