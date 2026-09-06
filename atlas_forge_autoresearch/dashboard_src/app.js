@@ -338,6 +338,12 @@ function renderV4(){
   const satelliteMatched=satellite.matched_static_gross_result?.chosen||null;
   const dynamicMatched=priv.portfolio_dynamic?.matched_static_gross_result?.chosen||null;
   const gross=Number(chosen?.gross_exposure||0);
+  const financingPolicy=priv.portfolio_financing_policy||{};
+  const financingSensitivity=priv.portfolio_financing_sensitivity||{};
+  const financingRows=Object.entries(financingSensitivity).map(([rate,row])=>{
+    const x=row?.chosen||{};
+    return `<tr>\n      <td><b>${esc(rate)}</b></td>\n      <td class="num">${pct(x.cagr_pct,2)}</td>\n      <td class="num">${pct(x.bootstrap_median_cagr_pct,2)}</td>\n      <td class="num">${pct(x.bootstrap_cagr_q10_pct,2)}</td>\n      <td class="num">${pct(x.bootstrap_dd_q95_pct,2)}</td>\n      <td class="num">${fmt(x.gross_exposure,3)}×</td>\n      <td class="num">${pct(x.annual_financing_drag_pct,2)}</td>\n    </tr>`;
+  }).join("");
   const effectiveSatelliteGross=architecture==="staggered_satellite"?gross*sleeveWeight:0;
   const effectiveCoreGross=architecture==="staggered_satellite"?gross*(1-sleeveWeight):gross;
   const weights=chosen?.weights||{};
@@ -430,7 +436,7 @@ function renderV4(){
       return `<tr><td><b>${esc(viewLabel[view])}</b></td>${cell(252)}${cell(365)}${cell(504)}</tr>`;
     }).join("");
     return `<details class="detail-panel">
-      <summary><span><b>${esc(label)}</b><small>All six frontiers + horizon sensitivity</small></span><span class="detail-hint">Show details</span></summary>
+      <summary><span><b>${esc(label)}</b><small>All seven frontiers + horizon sensitivity</small></span><span class="detail-hint">Show details</span></summary>
       <article class="glass-card detail-body">
       <div class="table-wrap"><table>
         <thead><tr><th>Frontier</th><th>Family / source</th><th class="num">C / V / F</th><th class="num">Pass</th><th class="num">Eval days</th><th class="num">First eff.</th><th class="num">Repeat eff.</th><th class="num">12-cycle reward</th><th class="num">Survival</th><th class="num">Daily breach</th><th class="num">Max breach</th></tr></thead>
@@ -479,6 +485,8 @@ function renderV4(){
       <article class="kpi-card"><span>Bootstrap q95 DD</span><strong>${pct(chosen.bootstrap_dd_q95_pct,2)}</strong><small>stress drawdown</small></article>
       <article class="kpi-card"><span>Sharpe</span><strong>${fmt(chosen.sharpe,3)}</strong><small>development only</small></article>
       <article class="kpi-card"><span>Gross / cash</span><strong>${pct(100*Number(chosen.gross_exposure||0),1)} / ${pct(100*Number(chosen.cash_weight||0),1)}</strong><small>portfolio exposure</small></article>
+      <article class="kpi-card"><span>Financing rate</span><strong>${chosen.financing_rate_pct==null?"—":pct(chosen.financing_rate_pct,1)}</strong><small>borrowed gross above 1× only</small></article>
+      <article class="kpi-card"><span>Annual financing drag</span><strong>${chosen.annual_financing_drag_pct==null?"—":pct(chosen.annual_financing_drag_pct,2)}</strong><small>${chosen.borrowed_gross==null?"—":fmt(chosen.borrowed_gross,3)}× borrowed gross</small></article>
     </div>
     <div class="dashboard-grid" style="margin-top:16px">
       <article class="glass-card"><div class="card-title-row"><div><span class="kicker">PRIVATE ACCOUNT</span><h3>Selected architecture weights</h3></div></div>
@@ -488,7 +496,11 @@ function renderV4(){
       <article class="glass-card"><div class="card-title-row"><div><span class="kicker">ROBUSTNESS</span><h3>Static-core concentration sensitivity</h3></div></div>
         <div class="table-wrap"><table><thead><tr><th>Cap</th><th class="num">CAGR</th><th class="num">Boot CAGR</th><th class="num">q95 DD</th><th class="num">DD</th><th class="num">Sharpe</th><th class="num">Gross</th><th class="num">Cash</th></tr></thead><tbody>${concentrationRows}</tbody></table></div>
       </article>
-    </div>`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
+    </div>
+    ${financingRows?`<article class="glass-card" style="margin-top:16px"><div class="card-title-row"><div><span class="kicker">LEVERAGE REALISM</span><h3>Financing-rate sensitivity</h3></div></div>
+      <div class="v4-explainer">Base financing: ${pct(financingPolicy.base_annual_rate_pct,1)} annually. Charges apply only to gross exposure above 1×; no cash-yield credit is assumed.</div>
+      <div class="table-wrap"><table><thead><tr><th>Financing</th><th class="num">CAGR</th><th class="num">Boot median</th><th class="num">Boot Q10</th><th class="num">q95 DD</th><th class="num">Gross</th><th class="num">Annual drag</th></tr></thead><tbody>${financingRows}</tbody></table></div>
+    </article>`:""}`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
 
   const repeat1=prop.programs?.ftmo_1step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
   const repeat2=prop.programs?.ftmo_2step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
