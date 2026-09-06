@@ -2,6 +2,16 @@ name: AUTORESEARCH dashboard snapshot
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/autoresearch-dashboard.yml"
+  workflow_run:
+    workflows:
+      - Continuous NVIDIA AUTORESEARCH
+      - Stock + FX AUTORESEARCH
+      - AUTORESEARCH v4 promotion cycle
+      - Zero-fee AI strategy model tournament
+    types: [completed]
 
 permissions:
   actions: read
