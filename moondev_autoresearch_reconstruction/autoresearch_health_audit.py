@@ -30,6 +30,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--continuous-progress")
     ap.add_argument("--phase2-progress")
+    ap.add_argument("--phase2-followup-progress")
     ap.add_argument("--phase3-hydration")
     ap.add_argument("--phase3-reconstruction")
     ap.add_argument("--phase3-mapping")
@@ -89,6 +90,7 @@ def main():
     states = {
         "continuous": load(args.continuous_progress),
         "phase2": load(args.phase2_progress),
+        "phase2_followup": load(args.phase2_followup_progress),
         "phase3_hydration": load(args.phase3_hydration),
         "phase3_reconstruction": load(args.phase3_reconstruction),
         "phase3_mapping": load(args.phase3_mapping),
@@ -112,6 +114,7 @@ def main():
             errors.append("continuous state allows hidden validation before universe freeze")
 
     p2 = states["phase2"]
+    p2_follow = states["phase2_followup"]
     if p2:
         if int(p2.get("error_count", 0)) != 0:
             errors.append(f"phase2 has {p2.get('error_count')} recorded internal errors")
@@ -124,6 +127,29 @@ def main():
                 "screened": int(p2.get("screened_count", 0)),
                 "total": int(p2.get("track_count", 0)),
             })
+        elif p2_follow is None:
+            pending.append({
+                "type": "finite_lane_progress",
+                "id": "phase2_followup",
+                "processed": 0,
+                "total": int(p2.get("guard_pass_count", 0)),
+            })
+    if p2_follow:
+        if int(p2_follow.get("error_count", 0)) != 0:
+            errors.append(
+                f"phase2 follow-up has {p2_follow.get('error_count')} internal errors"
+            )
+        if not p2_follow.get("all_survivors_followed_up"):
+            pending.append({
+                "type": "finite_lane_progress",
+                "id": "phase2_followup",
+                "processed": int(p2_follow.get("processed_count", 0)),
+                "total": int(p2_follow.get("candidate_count", 0)),
+            })
+        if p2_follow.get("hidden_validation_opened") is True:
+            errors.append("phase2 follow-up unexpectedly opened hidden validation")
+        if p2_follow.get("final_oos_opened") is True:
+            errors.append("phase2 follow-up unexpectedly opened final OOS")
 
     h = states["phase3_hydration"]
     r = states["phase3_reconstruction"]
