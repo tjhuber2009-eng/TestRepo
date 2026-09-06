@@ -181,6 +181,10 @@ stock_fx_hidden_open=bool(
     int(stock_fx_progress.get("validation_pass_count",0) or 0)
     + int(stock_fx_progress.get("validation_fail_count",0) or 0)
 )
+stock_fx_top=(
+    (stock_fx_board.get("rows") or [None])[0]
+    if stock_fx_active else None
+)
 
 V4_VIEWS=[
     "max_payout_efficiency",
@@ -418,7 +422,7 @@ out += [
 "|---|---|",
 f"| Research phase | **{str(progress.get('phase','—')).upper()}** |",
 f"| Core breadth progress | **{breadth_pct:.2f}%** |",
-f"| Stock/FX breadth | **{stock_fx_breadth_pct:.2f}%** if persisted else **checkpoint pending** |" if stock_fx_active else "| Stock/FX breadth | **checkpoint pending** |",
+f"| Stock/FX breadth | **{stock_fx_breadth_pct:.2f}%** |" if stock_fx_active else "| Stock/FX breadth | **checkpoint pending** |",
 f"| Hidden validation | **{'OPEN' if hidden_open or stock_fx_hidden_open else 'SEALED'}** |",
 f"| 2023+ final OOS | **{'OPEN' if final_oos_open else 'SEALED'}** |",
 "",
@@ -449,10 +453,17 @@ f"| Tracks touched | **{stock_fx_touched:,}** |" if stock_fx_active else "| Trac
 f"| Breadth completion | **{stock_fx_breadth_pct:.2f}%** |" if stock_fx_active else "| Breadth completion | **—** |",
 f"| FX development | **{stock_fx_phase.get('forex_development_period') or '2020-01-01..2021-12-31'}** |",
 f"| FX hidden validation | **{stock_fx_phase.get('forex_hidden_validation_period') or '2022-01-01..2022-12-31'} · {'OPEN' if stock_fx_hidden_open else 'SEALED'}** |",
+(
+    f"| Current top expansion track | **{stock_fx_top.get('track_id','—')}** · "
+    f"K **{f(stock_fx_top.get('development_score'),6)}** · "
+    f"CAGR **{pct(stock_fx_top.get('development_cagr_pct'),1)}** · "
+    f"PBO **{pct(None if stock_fx_top.get('pbo') is None else 100*float(stock_fx_top.get('pbo')),1)}** |"
+    if stock_fx_top else "| Current top expansion track | **—** |"
+),
 "",
 "## Research integrity",
 "",
-f"- {'🟡' if hidden_open else '🟢'} Hidden pre-OOS validation: **{'OPEN' if hidden_open else 'SEALED'}**",
+f"- {'🟡' if hidden_open or stock_fx_hidden_open else '🟢'} Hidden pre-OOS validation: **{'OPEN' if hidden_open or stock_fx_hidden_open else 'SEALED'}**",
 f"- {'🟡' if final_oos_open else '🟢'} Final 2023+ OOS: **{'OPEN' if final_oos_open else 'SEALED'}**",
 "- 🟢 Cost stress: **2× / 3×**",
 "- 🟢 Prop max DD: **10%**",
@@ -575,7 +586,7 @@ out += [
 "## Data fidelity",
 "",
 "- **A:** checksum-verified Binance archive / exact spot instrument.",
-"- **B:** Yahoo adjusted daily stock/ETF snapshot; no archive checksum.",
+"- **B:** authenticated/provider daily snapshots, including Tiingo FX and Yahoo adjusted stock/ETF data.",
 "- **C:** Yahoo continuous futures proxy; **not contract-exact**.",
 "",
 "## Automation status",
