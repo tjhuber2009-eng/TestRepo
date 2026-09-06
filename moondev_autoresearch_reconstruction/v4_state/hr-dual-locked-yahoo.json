@@ -3,22 +3,22 @@
   "data_basis": "Yahoo chart OHLC scaled by AdjClose/Close to match yfinance auto_adjust=True semantics",
   "data_end": "2020-12-31",
   "data_start": "2010-02-11",
-  "eligibility_reason": "frozen prior strategy is replayed source-faithfully, but V4 authoritative portfolio remains Tiingo evidence-bearing",
+  "eligibility_reason": "frozen prior strategy is replayed source-faithfully on the sealed V4 development window; it remains non-authoritative because the portfolio requires Tiingo evidence and because its current V4 development hard-gate result is reported separately",
   "final_oos_opened": false,
   "hidden_validation_opened": false,
   "metrics_5bp": {
-    "cagr_pct": 29.766321345834367,
-    "cost_stress_cagr_pct": 28.146684715416104,
-    "cumulative_return_pct": 1605.5804494096435,
+    "cagr_pct": 29.76629714207153,
+    "cost_stress_cagr_pct": 28.146660818627602,
+    "cumulative_return_pct": 1605.5769863675246,
     "dsr": 1.0,
     "gross_exposure": 1.0,
-    "max_dd_pct": -59.8839255870289,
+    "max_dd_pct": -59.88393017523224,
     "pbo": null,
     "psr_zero": 1.0,
-    "sharpe": 0.9341549482624961,
-    "sortino": 1.30464603719254,
+    "sharpe": 0.9341544020447972,
+    "sortino": 1.304645347230745,
     "trades": 204,
-    "turnover_per_year": 16.476634374936875,
+    "turnover_per_year": 16.476617719685265,
     "years": 10.885918259786306
   },
   "protocol": "alpha_generation_v4",
@@ -33,5 +33,9 @@
     "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
   },
   "stage": "development_only",
-  "stop_count": 83
+  "stop_count": 83,
+  "v4_private_development_gate_ok": false,
+  "v4_private_development_gate_reasons": [
+    "drawdown_cap"
+  ]
 }
