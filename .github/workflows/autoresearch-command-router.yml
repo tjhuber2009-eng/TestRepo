@@ -78,6 +78,9 @@ jobs:
             /phase3-hydrate)
               gh workflow run autoresearch-phase3-hydrate.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /special-smoke)
+              gh workflow run autoresearch-special-smoke.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             *)
               echo "Not an AUTORESEARCH command; ignoring."
               ;;
