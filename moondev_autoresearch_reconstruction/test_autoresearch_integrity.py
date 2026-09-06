@@ -253,8 +253,23 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             self.assertFalse(
                 continuous_runner.hidden_validation_allowed_by_universe_plan()
             )
+            stock_tracks = [
+                t for t in tracks if t["target"]["market"] == "stock"
+            ]
+            fx_tracks = [
+                t for t in tracks if t["target"]["market"] == "forex"
+            ]
             self.assertTrue(
-                all(continuous_runner.development_end(t) <= "2020-12-31" for t in tracks)
+                all(
+                    continuous_runner.development_end(t) == "2020-12-31"
+                    for t in stock_tracks
+                )
+            )
+            self.assertTrue(
+                all(
+                    continuous_runner.development_end(t) == "2021-12-31"
+                    for t in fx_tracks
+                )
             )
         finally:
             continuous_runner.configure_paths(*default)
