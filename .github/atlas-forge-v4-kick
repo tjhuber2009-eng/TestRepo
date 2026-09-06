@@ -1,7 +1,8 @@
 Atlas Forge V4 promotion restart
 Requested: 2026-09-06
-Reason: persist hardened profit architecture after full smoke validation.
-V4 source head: f6d77888270eac5c44e87385b37fae0cc81e73e2
-Upgrades: common static Q10 architecture floor + matched-gross diagnostics + satellite portfolio
+Reason: persist latest profit architecture and max expected repeat reward prop frontier.
+V4 source head: d3be45636e016c05e0c1109c8285b509ac5669ae
+Private: common static Q10 floor + matched-gross diagnostics + staggered satellite
+Prop: max expected 12-cycle repeat reward frontier alongside efficiency and safety frontiers
 Hidden validation: sealed
 Final 2023+ OOS: sealed
