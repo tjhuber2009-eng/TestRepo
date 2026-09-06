@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
 
 concurrency:
@@ -19,3 +20,12 @@ jobs:
     needs: private-development
     uses: ./.github/workflows/autoresearch-v4-prop-intraday.yml
     secrets: inherit
+
+  dashboard-refresh:
+    needs: prop-development
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Refresh dashboard with completed V4 state
+        run: gh workflow run autoresearch-dashboard.yml --repo "$GITHUB_REPOSITORY" --ref main
