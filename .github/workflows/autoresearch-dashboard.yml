@@ -19,6 +19,10 @@ permissions:
   issues: write
   pull-requests: write
 
+concurrency:
+  group: autoresearch-dashboard
+  cancel-in-progress: true
+
 jobs:
   dashboard:
     runs-on: ubuntu-latest
