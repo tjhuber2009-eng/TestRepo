@@ -85,6 +85,19 @@ jobs:
           python prepare_market_data.py --source yahoo --symbol GLD  --id gld  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
           python prepare_market_data.py --source yahoo --symbol SHY  --id shy  --start 2010-01-01 --end 2020-12-31 --output-dir v4_data_yahoo
 
+      - name: Prepare Yahoo adjusted-source parity data for frozen HR-DUAL
+        shell: bash
+        run: |
+          python prepare_market_data.py --source yahoo --symbol QQQ  --id qqq  --start 2010-01-01 --end 2020-12-31 --yahoo-adjustment legacy_adjusted_close --output-dir v4_data_hr_dual_yahoo
+          python prepare_market_data.py --source yahoo --symbol TQQQ --id tqqq --start 2010-02-11 --end 2020-12-31 --yahoo-adjustment legacy_adjusted_close --output-dir v4_data_hr_dual_yahoo
+          python prepare_market_data.py --source yahoo --symbol TECL --id tecl --start 2010-02-11 --end 2020-12-31 --yahoo-adjustment legacy_adjusted_close --output-dir v4_data_hr_dual_yahoo
+          python prepare_market_data.py --source yahoo --symbol IEF  --id ief  --start 2010-01-01 --end 2020-12-31 --yahoo-adjustment legacy_adjusted_close --output-dir v4_data_hr_dual_yahoo
+          python prepare_market_data.py --source yahoo --symbol GLD  --id gld  --start 2010-01-01 --end 2020-12-31 --yahoo-adjustment legacy_adjusted_close --output-dir v4_data_hr_dual_yahoo
+          python prepare_market_data.py --source yahoo --symbol SHY  --id shy  --start 2010-01-01 --end 2020-12-31 --yahoo-adjustment legacy_adjusted_close --output-dir v4_data_hr_dual_yahoo
+
+      - name: Replay frozen HR-DUAL on development-only source-parity data
+        run: python -m v4.hr_dual_locked --data-dir v4_data_hr_dual_yahoo --output v4_state/hr-dual-locked-yahoo.json
+
       - name: Reconcile primary data against Yahoo shadow
         run: |
           python -m v4.reconcile_evidence_data \
@@ -116,9 +129,11 @@ jobs:
                   "dividends_explicit": row.get("dividends_explicit"),
                   "provider_adjusted_return_diagnostic": row.get("provider_adjusted_return_diagnostic"),
               }
+          hr_dual=json.loads(Path("v4_state/hr-dual-locked-yahoo.json").read_text())
           state["data_provider_policy"]="tiingo_equity_etf+cboe_vix+binance_crypto"
           state["data_provenance"]=provenance
           state["data_reconciliation"]=audit
+          state.setdefault("prior_work_diagnostics", {})["hr_dual_alpha"]=hr_dual
           state["promotion_blocked"]=bool(audit["promotion_blocked"])
           state["evidence_status"]=(
               "data_reconciled"
@@ -140,6 +155,12 @@ jobs:
           assert x["final_oos_opened"] is False
           assert x["data_reconciliation"]["hidden_validation_opened"] is False
           assert x["data_reconciliation"]["final_oos_opened"] is False
+          h=x["prior_work_diagnostics"]["hr_dual_alpha"]
+          assert h["stage"]=="development_only"
+          assert h["authoritative_portfolio_eligible"] is False
+          assert h["hidden_validation_opened"] is False
+          assert h["final_oos_opened"] is False
+          assert h["source_lock"]["implementation_blob_sha"]=="27a24f0bc1883c497af23ff3a27918e35f3f4c11"
 
       - name: Persist v4 development state
         shell: bash
@@ -151,11 +172,13 @@ jobs:
           mkdir -p ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state
           cp moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
           cp moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
+          cp moondev_autoresearch_reconstruction/v4_state/hr-dual-locked-yahoo.json ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state/hr-dual-locked-yahoo.json
           cd ../v4-state-wt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
           git add -f moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
+          git add -f moondev_autoresearch_reconstruction/v4_state/hr-dual-locked-yahoo.json
           if ! git diff --cached --quiet; then
             git commit -m "V4 Tiingo development bootstrap run $GITHUB_RUN_ID"
             git push origin HEAD:autoresearch-v4-state
@@ -167,6 +190,8 @@ jobs:
           path: |
             moondev_autoresearch_reconstruction/v4_state/development-bootstrap.json
             moondev_autoresearch_reconstruction/v4_state/data-reconciliation.json
+            moondev_autoresearch_reconstruction/v4_state/hr-dual-locked-yahoo.json
             moondev_autoresearch_reconstruction/v4_data/*.manifest.json
             moondev_autoresearch_reconstruction/v4_data_yahoo/*.manifest.json
+            moondev_autoresearch_reconstruction/v4_data_hr_dual_yahoo/*.manifest.json
           retention-days: 30
