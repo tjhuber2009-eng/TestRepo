@@ -2,7 +2,7 @@
 name = "youtube-intelligence-desktop-native-check"
 version = "3.1.0"
 edition = "2021"
-rust-version = "1.88"
+rust-version = "1.89"
 
 [build-dependencies]
 tauri-build = { version = "=2.6.3" }
