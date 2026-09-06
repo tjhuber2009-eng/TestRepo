@@ -33,6 +33,16 @@ from the research dataset entirely.
   formatting. The host fingerprints semantic ASTs and rejects duplicates.
 - Do not increase `vol_target`, `f_max`, leverage, cash fraction, or nominal
   position size merely to raise return.
+- **Host-owned risk controls are immutable.** Never edit, rename, delete, wrap,
+  shadow, or reimplement `_units`, `vol_target`, `f_max`,
+  `vol_lookback`, leverage/margin logic, position-sizing helpers, or the
+  host's sizing arguments. Do not introduce an alternate sizing path.
+- If testing a stop, trailing exit, volatility rule, or loss-control idea,
+  implement it strictly as **signal/exit logic** using existing host-owned
+  sizing. Do not resize positions as part of that idea.
+- Before returning a candidate, compare your edit against the current strategy
+  and verify the diff changes only strategy hypothesis logic, indicators,
+  entries, exits, or causal filters—not risk ownership.
 - The active profile DD cap is hard: prop <=10%, private <=32%.
 - Every candidate is also re-run at a higher transaction-cost assumption.
 - Weak full-period performance cannot be hidden by one good year: the host
