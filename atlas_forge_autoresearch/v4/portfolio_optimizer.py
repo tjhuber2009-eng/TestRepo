@@ -13,6 +13,8 @@ from .alpha_objective import annualized_sharpe, max_drawdown_pct
 class PortfolioCandidate:
     weights: dict[str, float]
     gross_exposure: float
+    average_gross_exposure: float
+    max_realized_gross_exposure: float
     cash_weight: float
     cagr_pct: float
     max_dd_pct: float
@@ -70,13 +72,24 @@ def _cagr(r: np.ndarray, periods_per_year: float) -> float:
 
 def _financing_drag_per_period(
     scale: float,
+    gross_profile: np.ndarray | None = None,
     *,
     annual_financing_rate_pct: float,
     periods_per_year: float,
-) -> float:
-    """Simple conservative carry charge on portfolio borrowing above 1x gross."""
-    borrowed = max(float(scale) - 1.0, 0.0)
-    return float(
+) -> np.ndarray:
+    """Carry charge on actual portfolio borrowing above 1x gross.
+
+    gross_profile is the unit-scale gross exposure through time. A staggered
+    sleeve can therefore hold cash before inception without paying financing
+    on capital that is not actually deployed.
+    """
+    if gross_profile is None:
+        gross = np.asarray(1.0, dtype=float)
+    else:
+        gross = np.asarray(gross_profile, dtype=float)
+    realized_gross = np.maximum(float(scale) * gross, 0.0)
+    borrowed = np.maximum(realized_gross - 1.0, 0.0)
+    return (
         borrowed
         * (float(annual_financing_rate_pct) / 100.0)
         / float(periods_per_year)
@@ -86,6 +99,7 @@ def _financing_drag_per_period(
 def _apply_gross_and_financing(
     returns: np.ndarray,
     scale: float,
+    gross_profile: np.ndarray | None = None,
     *,
     annual_financing_rate_pct: float,
     periods_per_year: float,
@@ -93,6 +107,7 @@ def _apply_gross_and_financing(
     arr = np.asarray(returns, dtype=float) * float(scale)
     drag = _financing_drag_per_period(
         scale,
+        gross_profile,
         annual_financing_rate_pct=annual_financing_rate_pct,
         periods_per_year=periods_per_year,
     )
@@ -303,6 +318,8 @@ class RobustPortfolioOptimizer:
         self,
         base_returns: np.ndarray,
         boot_base_returns: np.ndarray,
+        base_gross_profile: np.ndarray,
+        boot_gross_profile: np.ndarray,
     ) -> tuple[float | None, float | None]:
         """Find the largest gross scale satisfying both DD caps efficiently.
 
@@ -320,6 +337,7 @@ class RobustPortfolioOptimizer:
             pr = _apply_gross_and_financing(
                 base_returns,
                 float(scale),
+                base_gross_profile,
                 annual_financing_rate_pct=self.annual_financing_rate_pct,
                 periods_per_year=self.periods_per_year,
             )
@@ -327,6 +345,7 @@ class RobustPortfolioOptimizer:
             boot_scaled = _apply_gross_and_financing(
                 boot_base_returns,
                 float(scale),
+                boot_gross_profile,
                 annual_financing_rate_pct=self.annual_financing_rate_pct,
                 periods_per_year=self.periods_per_year,
             )
@@ -381,12 +400,31 @@ class RobustPortfolioOptimizer:
                 hi = mid
         return float(lo), float(q_lo)
 
-    def optimize(self, returns: pd.DataFrame) -> PortfolioOptimizationResult:
+    def optimize(
+        self,
+        returns: pd.DataFrame,
+        gross_profiles: pd.DataFrame | None = None,
+    ) -> PortfolioOptimizationResult:
         x = returns.apply(pd.to_numeric, errors="coerce").dropna(how="any")
         if len(x) < 50 or x.shape[1] < 1:
             raise ValueError("portfolio optimizer requires >=50 aligned rows")
         names = list(x.columns)
         arr = x.to_numpy(dtype=float)
+        if gross_profiles is None:
+            gross_df = pd.DataFrame(
+                1.0, index=x.index, columns=names, dtype=float
+            )
+        else:
+            gross_df = gross_profiles.reindex(
+                index=x.index, columns=names
+            ).apply(pd.to_numeric, errors="coerce")
+            if gross_df.isna().any().any():
+                raise ValueError(
+                    "gross_profiles must cover every aligned return row/column"
+                )
+            if (gross_df < 0.0).any().any():
+                raise ValueError("gross_profiles must be nonnegative")
+        gross_arr = gross_df.to_numpy(dtype=float)
         # Composition search and bootstrap resampling must have independent
         # deterministic RNG streams. Otherwise a different concentration cap
         # changes rejection-sampling consumption and silently changes the
@@ -414,6 +452,7 @@ class RobustPortfolioOptimizer:
             for _ in range(self.bootstrap_reps)
         ])
         boot_assets = arr[boot_idx]
+        boot_gross_assets = gross_arr[boot_idx]
 
         feasible: list[PortfolioCandidate] = []
         evaluated = 0
@@ -421,7 +460,16 @@ class RobustPortfolioOptimizer:
             evaluated += 1
             base = arr @ composition
             boot_base = np.einsum("rts,s->rt", boot_assets, composition)
-            scale, dd_q = self._max_feasible_scale(base, boot_base)
+            base_gross_profile = gross_arr @ composition
+            boot_gross_profile = np.einsum(
+                "rts,s->rt", boot_gross_assets, composition
+            )
+            scale, dd_q = self._max_feasible_scale(
+                base,
+                boot_base,
+                base_gross_profile,
+                boot_gross_profile,
+            )
             if scale is None:
                 continue
 
@@ -429,6 +477,7 @@ class RobustPortfolioOptimizer:
             pr = _apply_gross_and_financing(
                 base,
                 scale,
+                base_gross_profile,
                 annual_financing_rate_pct=self.annual_financing_rate_pct,
                 periods_per_year=self.periods_per_year,
             )
@@ -443,12 +492,13 @@ class RobustPortfolioOptimizer:
                         _apply_gross_and_financing(
                             row,
                             scale,
+                            boot_gross_profile[row_idx],
                             annual_financing_rate_pct=self.annual_financing_rate_pct,
                             periods_per_year=self.periods_per_year,
                         ),
                         self.periods_per_year,
                     )
-                    for row in boot_base
+                    for row_idx, row in enumerate(boot_base)
                 ],
                 dtype=float,
             )
@@ -456,6 +506,17 @@ class RobustPortfolioOptimizer:
             q25_cagr = float(np.nanquantile(boot_cagr, 0.25))
             q10_cagr = float(np.nanquantile(boot_cagr, 0.10))
             gross = float(np.sum(np.abs(actual_w)))
+            realized_gross = np.asarray(
+                base_gross_profile, dtype=float
+            ) * float(scale)
+            average_gross = float(np.mean(realized_gross))
+            max_realized_gross = float(np.max(realized_gross))
+            average_borrowed = float(
+                np.mean(np.maximum(realized_gross - 1.0, 0.0))
+            )
+            average_cash = float(
+                np.mean(np.maximum(1.0 - realized_gross, 0.0))
+            )
             norm = actual_w / gross if gross > 0 else actual_w
             effective_n = float(1.0 / np.sum(np.square(norm))) if gross > 0 else 0.0
 
@@ -474,7 +535,9 @@ class RobustPortfolioOptimizer:
                         if v > 1e-8
                     },
                     gross_exposure=gross,
-                    cash_weight=float(max(0.0, 1.0 - gross)),
+                    average_gross_exposure=average_gross,
+                    max_realized_gross_exposure=max_realized_gross,
+                    cash_weight=average_cash,
                     cagr_pct=float(cagr),
                     max_dd_pct=float(dd),
                     sharpe=float(sharpe),
@@ -484,10 +547,9 @@ class RobustPortfolioOptimizer:
                     bootstrap_dd_q95_pct=float(dd_q),
                     effective_n=effective_n,
                     financing_rate_pct=self.annual_financing_rate_pct,
-                    borrowed_gross=float(max(gross - 1.0, 0.0)),
+                    borrowed_gross=average_borrowed,
                     annual_financing_drag_pct=float(
-                        max(gross - 1.0, 0.0)
-                        * self.annual_financing_rate_pct
+                        average_borrowed * self.annual_financing_rate_pct
                     ),
                     score=score,
                 )
@@ -511,7 +573,8 @@ class RobustPortfolioOptimizer:
             financing_rate_pct=self.annual_financing_rate_pct,
             policy=(
                 "choose strategy composition and maximum feasible total gross exposure; "
-                "charge financing on gross exposure above 1x; maximize paired moving-"
+                "charge financing on realized time-varying gross exposure above 1x; "
+                "maximize paired moving-"
                 "block-bootstrap median CAGR subject to original and bootstrap drawdown "
                 "caps; cash is allowed and leverage is capped"
             ),
