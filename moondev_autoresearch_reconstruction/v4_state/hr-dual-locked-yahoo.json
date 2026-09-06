@@ -1,0 +1,37 @@
+{
+  "authoritative_portfolio_eligible": false,
+  "data_basis": "Yahoo chart OHLC scaled by AdjClose/Close to match yfinance auto_adjust=True semantics",
+  "data_end": "2020-12-31",
+  "data_start": "2010-02-11",
+  "eligibility_reason": "frozen prior strategy is replayed source-faithfully, but V4 authoritative portfolio remains Tiingo evidence-bearing",
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "metrics_5bp": {
+    "cagr_pct": 29.766321345834367,
+    "cost_stress_cagr_pct": 28.146684715416104,
+    "cumulative_return_pct": 1605.5804494096435,
+    "dsr": 1.0,
+    "gross_exposure": 1.0,
+    "max_dd_pct": -59.8839255870289,
+    "pbo": null,
+    "psr_zero": 1.0,
+    "sharpe": 0.9341549482624961,
+    "sortino": 1.30464603719254,
+    "trades": 204,
+    "turnover_per_year": 16.476634374936875,
+    "years": 10.885918259786306
+  },
+  "protocol": "alpha_generation_v4",
+  "provider_role": "Yahoo legacy_adjusted_close source-parity diagnostic",
+  "scheduled_rebalances": 121,
+  "source_lock": {
+    "branch": "research/hr-dual-alpha-001",
+    "commit": "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+    "implementation_blob_sha": "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+    "prior_classification": "SUPERIOR_PASS",
+    "repository": "tjhuber2009-eng/hr_mech",
+    "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
+  },
+  "stage": "development_only",
+  "stop_count": 83
+}
