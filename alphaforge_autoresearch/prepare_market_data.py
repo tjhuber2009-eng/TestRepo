@@ -27,7 +27,7 @@ import dukascopy_daily
 BASE = Path(__file__).resolve().parent
 OUT = BASE / "data"
 OUT.mkdir(exist_ok=True)
-UA = "moondev-cross-market-autoresearch/1.0"
+UA = "alphaforge-cross-market-autoresearch/1.0"
 
 
 def dt(s):

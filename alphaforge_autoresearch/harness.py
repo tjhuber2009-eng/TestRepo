@@ -1,5 +1,5 @@
 """
-Moon Dev AUTORESEARCH — reconstructed FROZEN harness.
+AlphaForge AUTORESEARCH — reconstructed FROZEN harness.
 """
 
 import argparse

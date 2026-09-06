@@ -4,10 +4,10 @@ name: V3 current-head smoke
 on:
   push:
     branches:
-      - moondev-nvidia-autoresearch
+      - alphaforge-autoresearch
     paths:
       - ".github/workflows/v3-current-head-smoke.yml"
-      - "moondev_autoresearch_reconstruction/**"
+      - "alphaforge_autoresearch/**"
   workflow_dispatch:
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: alphaforge_autoresearch
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: alphaforge_autoresearch/requirements.txt
 
       - run: python -m pip install -r requirements.txt
 

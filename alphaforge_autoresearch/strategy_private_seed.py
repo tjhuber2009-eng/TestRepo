@@ -1,7 +1,7 @@
 """
 Reconstructed MoonStrategy PRIVATE-ACCOUNT seed with volatility-targeted sizing.
 
-IMPORTANT: Moon Dev's exact original strategy.py was not visible in the supplied
+IMPORTANT: The predecessor project's exact original strategy.py was not visible in the supplied
 screenshots. The screenshots do, however, explicitly reference vol_target and
 f_max as sizing controls and say the frozen margin exists to allow
 volatility-targeted units. This seed therefore preserves the simple breakout
