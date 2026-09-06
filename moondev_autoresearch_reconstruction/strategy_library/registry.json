@@ -360,18 +360,15 @@
     },
     {
       "id": "calendar_monthly",
-      "status": "blocked",
-      "exactness": "unrecovered",
-      "origin": "Monthly seasonality research; exact frozen rule not yet recovered",
+      "status": "phase2_runnable",
+      "exactness": "causal_reconstruction",
+      "origin": "Recovered Bitcoin monthly cycle-seasonality methodology; AUTORESEARCH uses expanding-history causal table only",
       "markets": [
-        "etf",
-        "stock",
-        "crypto",
-        "futures_proxy"
+        "crypto"
       ],
-      "requires": [
-        "frozen monthly seasonality rule from prior project"
-      ]
+      "phase2_factory": "bitcoin_cycle_monthly_causal",
+      "provenance": "dual-signal-audit-2026-09 monthly_seasonality_repro.py + independent reconstruction",
+      "note": "The hindsight 2012-2024 frozen table is diagnostic only and is excluded from causal screening."
     },
     {
       "id": "donchian_sma50",
@@ -400,23 +397,43 @@
     },
     {
       "id": "zanger_exact",
-      "status": "blocked",
-      "exactness": "unrecovered",
-      "origin": "ZANGER-MECH exact chart-pattern implementation",
+      "status": "locked_translation_artifact_recovery",
+      "exactness": "frozen_translation",
+      "origin": "ZANGER-MECH-001B source-closer specification and outcome-blind signal runner were frozen in prior research",
       "requires": [
-        "exact mechanical pattern rules",
-        "curated universe reconstruction"
-      ]
+        "recover/import the locked package bytes matching the recorded hashes",
+        "point-in-time provider/universe inputs required by the frozen runner"
+      ],
+      "provenance": {
+        "state_file": "ZANGER_MECH_001B_CURRENT_STATE.md",
+        "source_closer_sha256": "ce70d6e71ca4e83278ff6bd398e3de8d74f5c8e66dd3f00800fc1699ba5108ff",
+        "signal_runner_sha256": "d6a2a80b9ec78cf1dae3b973a5e3cdbd029a4f804dab9d7cb1aed7350bfba217",
+        "outcome_evaluator_sha256": "e8e89d2fde49a8728fa440f25e1c85892d92439ae9079a84ac4bdf3f7f78eea9"
+      }
     },
     {
       "id": "nbe_volume_profile",
-      "status": "blocked",
-      "exactness": "provisional",
-      "origin": "NodeBreachEngine POC/POV volume-profile rejection",
+      "status": "spec_recovered_engine_blocked",
+      "exactness": "source_exact_plus_interpreted_parity",
+      "origin": "NodeBreachEngine official 5m forex settings + parity audit recovered",
       "requires": [
-        "intraday volume-profile engine",
-        "POC/POV parity"
-      ]
+        "intraday swing-profile volume engine with causal pivot confirmation",
+        "5-minute forex data/feed parity for the target broker/TradingView source"
+      ],
+      "recovered_settings": {
+        "profile_type": "Swing",
+        "swing_width": 60,
+        "histogram_rows": 65,
+        "value_area_pct": 68,
+        "atr_period": 14,
+        "atr_multiplier": 1.5,
+        "require_rejection_close": true,
+        "wick_confirmation": false,
+        "ema_length": 144,
+        "ema_smoothing_type": "EMA",
+        "ema_smoothing_length": 80,
+        "time_filter": false
+      }
     },
     {
       "id": "orb_twp",
@@ -495,29 +512,45 @@
     },
     {
       "id": "stat_arb_pairs",
-      "status": "blocked",
+      "status": "v4_engine_available_rules_pending",
       "exactness": "family",
-      "origin": "Cointegration/stat-arb pairs repositories researched previously",
+      "origin": "Cointegration/stat-arb family; synchronized v4 multi-asset engine now exists",
       "requires": [
-        "multi-asset synchronized engine"
-      ]
+        "freeze pair-universe/formation rule",
+        "freeze hedge-ratio, entry, exit and rebalance rules",
+        "synchronized source data for selected pairs"
+      ],
+      "v4_engine": "v4/multi_asset_engine.py"
     },
     {
       "id": "finlab_rotation_exact",
-      "status": "blocked",
-      "exactness": "documented",
-      "origin": "QQQ SMA200 + 126d momentum; leveraged risk-on and IEF/GLD/SHY defensive rotation",
+      "status": "v4_engine_available_spec_incomplete",
+      "exactness": "source_core_recovered",
+      "origin": "FinLab leveraged-ETF rotation core recovered; v4 multi-asset engine now exists",
       "requires": [
-        "multi-asset portfolio engine"
-      ]
+        "freeze exact 3m-minus-1m lookback convention",
+        "freeze monthly rebalance/holiday convention",
+        "freeze stop execution and re-entry behavior from source implementation"
+      ],
+      "v4_engine": "v4/multi_asset_engine.py"
     },
     {
       "id": "hr_dual_alpha",
-      "status": "blocked",
-      "exactness": "partially_documented",
-      "origin": "HR-DUAL-ALPHA-001 research",
+      "status": "rules_recovered_port_pending",
+      "exactness": "frozen_recovered",
+      "origin": "HR-DUAL-ALPHA-001 frozen rules recovered from prior HR-MECH handoff",
       "requires": [
-        "frozen exact implementation from prior project"
+        "port frozen implementation semantics without changing rules",
+        "recover exact stop/re-entry and defensive-selection execution details before claiming parity"
+      ],
+      "recovered_core": [
+        "QQQ close > SMA200 risk-on regime",
+        "60% sleeve: TQQQ/TECL winner by 63d-minus-21d momentum",
+        "40% sleeve: TQQQ/TECL 3-day laggard",
+        "10% momentum stop",
+        "8% reversal stop",
+        "monthly rebalance",
+        "defensive IEF/GLD/SHY rotation"
       ]
     },
     {
