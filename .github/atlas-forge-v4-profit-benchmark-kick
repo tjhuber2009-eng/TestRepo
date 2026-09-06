@@ -1,6 +1,6 @@
 Atlas Forge V4 profit benchmark
-Source head: 526540c48c4233000fad37c080e8721e24249365
-Purpose: compare static vs staggered satellite vs causal dynamic private portfolio
+Source head: f6d77888270eac5c44e87385b37fae0cc81e73e2
+Purpose: hardened static vs satellite vs dynamic comparison plus matched-static-gross diagnostics
 Persistent state: read only
 Hidden validation: sealed
 Final 2023+ OOS: sealed
