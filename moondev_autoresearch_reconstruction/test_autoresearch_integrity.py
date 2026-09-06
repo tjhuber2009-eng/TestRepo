@@ -544,12 +544,43 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         stocks = [x for x in cfg["targets"] if x["market"] == "stock"]
         self.assertEqual(len(fx), 7)
         self.assertEqual(len(stocks), 30)
-        self.assertTrue(all(x["source"] == "dukascopy_bid_daily" for x in fx))
-        self.assertTrue(all(x["validation_start"] == "2021-01-01" for x in fx))
+        self.assertTrue(all(x["source"] == "tiingo_fx" for x in fx))
+        self.assertTrue(all(x["validation_start"] == "2022-01-01" for x in fx))
         self.assertNotIn(
             "zanger_volume_breakout_proxy",
             cfg["family_allowlist_by_market"]["forex"],
         )
+
+    def test_tiingo_fx_parser_is_daily_bounded_and_ohlc_valid(self):
+        import prepare_market_data as pmd
+
+        start = pmd.dt("2020-01-01")
+        end = pmd.dt("2021-12-31").replace(
+            hour=23, minute=59, second=59
+        )
+        payload = [
+            {
+                "date": "2019-12-31T00:00:00Z",
+                "open": 1.10, "high": 1.11, "low": 1.09, "close": 1.105,
+            },
+            {
+                "date": "2020-01-02T00:00:00Z",
+                "open": 1.12, "high": 1.13, "low": 1.11, "close": 1.125,
+            },
+            {
+                "date": "2021-12-31T00:00:00Z",
+                "open": 1.13, "high": 1.14, "low": 1.12, "close": 1.135,
+            },
+            {
+                "date": "2022-01-03T00:00:00Z",
+                "open": 1.14, "high": 1.15, "low": 1.13, "close": 1.145,
+            },
+        ]
+        rows = pmd.tiingo_fx_rows(payload, start, end)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0][0][:10], "2020-01-02")
+        self.assertEqual(rows[-1][0][:10], "2021-12-31")
+        self.assertEqual(rows[0][1:5], [1.12, 1.13, 1.11, 1.125])
 
     def test_dukascopy_daily_decoder_is_scaled_and_filters_forward_fill(self):
         import lzma
