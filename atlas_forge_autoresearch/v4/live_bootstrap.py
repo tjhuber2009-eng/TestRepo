@@ -25,6 +25,7 @@ from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, v
 from .selection_diagnostics import optimizer_pbo
 from .continuous_bridge import replay_private_promotions
 from .dynamic_portfolio import causal_dynamic_allocation
+from .satellite_portfolio import build_staggered_satellite_candidates
 from .phase2_bridge import replay_private_promotions as replay_phase2_private_promotions
 from .strategy_examples import (
     cross_sectional_momentum_rotation,
@@ -491,6 +492,21 @@ def pbo_gate(diagnostic, max_pbo):
     return (
         diagnostic is not None
         and float(diagnostic["pbo"]) <= float(max_pbo)
+    )
+
+
+def portfolio_challenger_wins(challenger, incumbent, *, q10_tolerance_pct=5.0):
+    """Require better bootstrap growth without materially worse lower tail."""
+    if challenger is None or challenger.chosen is None:
+        return False
+    if incumbent is None or incumbent.chosen is None:
+        return True
+    c = challenger.chosen
+    i = incumbent.chosen
+    return bool(
+        c.bootstrap_median_cagr_pct > i.bootstrap_median_cagr_pct + 1e-12
+        and c.bootstrap_cagr_q10_pct
+        >= i.bootstrap_cagr_q10_pct - float(q10_tolerance_pct)
     )
 
 
@@ -1287,10 +1303,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
 
     portfolio = None
     static_portfolio = None
+    satellite_portfolio = None
+    satellite_portfolio_summary = None
     dynamic_portfolio = None
     dynamic_portfolio_summary = None
     portfolio_selection = {
-        "method": "static_vs_causal_dynamic_bootstrap_growth_v1",
+        "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
         "selected": None,
         "reason": "insufficient_eligible_portfolio_history",
     }
@@ -1347,6 +1365,87 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 authoritative_cap
             ]
             portfolio = static_portfolio
+            portfolio_selection = {
+                "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
+                "selected": "static_robust",
+                "reason": "baseline_architecture",
+            }
+
+            # Qualified shorter-history strategies may enter only as a capped
+            # staggered-inception satellite sleeve. Before each strategy's
+            # first development observation, its sleeve allocation is cash.
+            supplemental_names = portfolio_history_policy.get(
+                "supplemental_strategy_names", []
+            )
+            supplemental_returns = {
+                name: eligible_returns[name]
+                for name in supplemental_names
+                if name in eligible_returns
+            }
+            if (
+                static_portfolio is not None
+                and static_portfolio.chosen is not None
+                and supplemental_returns
+            ):
+                satellite_streams, satellite_specs = (
+                    build_staggered_satellite_candidates(
+                        returns,
+                        static_portfolio.chosen.weights,
+                        supplemental_returns,
+                        max_satellite_weight=0.25,
+                    )
+                )
+                satellite_results = {}
+                for candidate_name, stream in satellite_streams.items():
+                    result = RobustPortfolioOptimizer(
+                        dd_cap_pct=private.max_dd_pct,
+                        n_candidates=1,
+                        bootstrap_reps=120,
+                        block=20,
+                        max_weight=1.0,
+                        max_gross=1.5,
+                        min_gross=0.10,
+                        seed=20260905,
+                    ).optimize(stream.to_frame(candidate_name))
+                    if result.chosen is not None:
+                        satellite_results[candidate_name] = result
+
+                if satellite_results:
+                    best_satellite_name, satellite_portfolio = max(
+                        satellite_results.items(),
+                        key=lambda item: (
+                            item[1].chosen.bootstrap_median_cagr_pct,
+                            item[1].chosen.bootstrap_cagr_q10_pct,
+                            item[1].chosen.cagr_pct,
+                            item[0],
+                        ),
+                    )
+                    satellite_portfolio_summary = {
+                        "selected_candidate": best_satellite_name,
+                        "spec": satellite_specs[
+                            best_satellite_name
+                        ].to_dict(),
+                        "candidate_count": len(satellite_results),
+                        "policy": (
+                            "supplemental sleeve capped at 25% composition; "
+                            "pre-inception allocation held as cash"
+                        ),
+                    }
+                    if portfolio_challenger_wins(
+                        satellite_portfolio, portfolio
+                    ):
+                        portfolio = satellite_portfolio
+                        portfolio_selection = {
+                            "method": (
+                                "static_vs_staggered_satellite_vs_"
+                                "causal_dynamic_v1"
+                            ),
+                            "selected": "staggered_satellite",
+                            "reason": (
+                                "higher_bootstrap_median_cagr_with_q10_not_"
+                                "more_than_5pct_points_worse"
+                            ),
+                        }
 
             # Causal strategy-level rotation is evaluated as one additional
             # portfolio architecture, never as a bypass around individual
@@ -1375,52 +1474,25 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     max_weight=1.0,
                     max_gross=1.5,
                     min_gross=0.10,
-                    seed=20260906,
+                    seed=20260905,
                 ).optimize(
                     dynamic.returns.to_frame("causal_dynamic_allocator")
                 )
                 dynamic_portfolio_summary = dynamic.summary()
 
-                static_chosen = (
-                    None if static_portfolio is None else static_portfolio.chosen
-                )
-                dynamic_chosen = (
-                    None if dynamic_portfolio is None else dynamic_portfolio.chosen
-                )
-                choose_dynamic = False
-                if dynamic_chosen is not None:
-                    if static_chosen is None:
-                        choose_dynamic = True
-                    else:
-                        median_improves = (
-                            dynamic_chosen.bootstrap_median_cagr_pct
-                            > static_chosen.bootstrap_median_cagr_pct
-                        )
-                        downside_not_materially_worse = (
-                            dynamic_chosen.bootstrap_cagr_q10_pct
-                            >= static_chosen.bootstrap_cagr_q10_pct - 5.0
-                        )
-                        choose_dynamic = (
-                            median_improves and downside_not_materially_worse
-                        )
-
-                if choose_dynamic:
+                if portfolio_challenger_wins(
+                    dynamic_portfolio, portfolio
+                ):
                     portfolio = dynamic_portfolio
                     portfolio_selection = {
-                        "method": "static_vs_causal_dynamic_bootstrap_growth_v1",
+                        "method": (
+                            "static_vs_staggered_satellite_vs_"
+                            "causal_dynamic_v1"
+                        ),
                         "selected": "causal_dynamic",
                         "reason": (
                             "higher_bootstrap_median_cagr_with_q10_not_more_"
                             "than_5pct_points_worse"
-                        ),
-                    }
-                elif static_chosen is not None:
-                    portfolio_selection = {
-                        "method": "static_vs_causal_dynamic_bootstrap_growth_v1",
-                        "selected": "static_robust",
-                        "reason": (
-                            "dynamic_did_not_clear_growth_and_downside_"
-                            "improvement_rule"
                         ),
                     }
 
@@ -1525,6 +1597,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "portfolio_selection": portfolio_selection,
         "portfolio_static": (
             None if static_portfolio is None else static_portfolio.to_dict()
+        ),
+        "portfolio_satellite": (
+            None
+            if satellite_portfolio is None
+            else {
+                "risk_scaled_result": satellite_portfolio.to_dict(),
+                "sleeve": satellite_portfolio_summary,
+            }
         ),
         "portfolio_dynamic": (
             None
