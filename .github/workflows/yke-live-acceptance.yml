@@ -1,0 +1,54 @@
+name: YKE live YouTube acceptance
+
+on:
+  push:
+    branches:
+      - yke-live-acceptance-20260905
+  workflow_dispatch:
+
+jobs:
+  live-youtube:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Runtime
+        run: |
+          node --version
+          python3 --version
+      - name: Install pinned yt-dlp
+        run: |
+          python3 -m pip install --disable-pip-version-check --no-cache-dir 'yt-dlp[default]==2026.8.19'
+          yt-dlp --version
+      - name: Discover real OpenAI channel videos
+        run: |
+          set -euo pipefail
+          yt-dlp --ignore-config --js-runtimes node \
+            --flat-playlist --playlist-end 5 \
+            --print '%(id)s\t%(title)s' \
+            'https://www.youtube.com/@OpenAI/videos' | tee /tmp/videos.tsv
+          test "$(wc -l < /tmp/videos.tsv)" -ge 1
+      - name: Retrieve a real public caption track
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/captions && mkdir -p /tmp/captions
+          found=0
+          while IFS=$'\t' read -r id title; do
+            [ -n "$id" ] || continue
+            echo "Trying captions for $id — $title"
+            rm -f /tmp/captions/*
+            if yt-dlp --ignore-config --js-runtimes node --no-playlist --skip-download \
+              --write-subs --write-auto-subs --sub-langs 'en.*,en' \
+              --sub-format 'vtt/best' --convert-subs vtt \
+              --quiet --no-warnings \
+              -o '/tmp/captions/caption.%(ext)s' \
+              "https://www.youtube.com/watch?v=$id"; then
+              file="$(find /tmp/captions -maxdepth 1 -type f -name '*.vtt' | head -1 || true)"
+              if [ -n "$file" ] && [ -s "$file" ]; then
+                echo "CAPTION_OK video_id=$id bytes=$(wc -c < "$file")"
+                head -20 "$file"
+                found=1
+                break
+              fi
+            fi
+          done < /tmp/videos.tsv
+          test "$found" -eq 1
