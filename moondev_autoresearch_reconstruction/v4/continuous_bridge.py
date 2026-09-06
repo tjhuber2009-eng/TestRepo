@@ -616,7 +616,7 @@ def prop_transfer_candidates(
     }
 
 
-_ALLOWED_IMPORT_ROOTS = {"numpy", "pandas", "backtesting"}
+_ALLOWED_IMPORT_ROOTS = {"math", "numpy", "pandas", "backtesting"}
 _BANNED_CALLS = {"eval", "exec", "open", "compile", "__import__", "input"}
 
 
