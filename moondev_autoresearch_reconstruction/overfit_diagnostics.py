@@ -18,6 +18,7 @@ def load_experiment_fold_matrix(path, baseline_path=None):
     rows=[]
     ids=[]
     seen=set()
+    seen_sources=set()
     baseline=None
     if baseline_path is not None:
         bp=Path(baseline_path)
@@ -36,6 +37,7 @@ def load_experiment_fold_matrix(path, baseline_path=None):
                     rows.append(arr)
                     ids.append(baseline["id"])
                     seen.add(baseline["id"])
+                    seen_sources.add(baseline["id"])
             except Exception:
                 baseline=None
     if path.exists():
@@ -61,14 +63,17 @@ def load_experiment_fold_matrix(path, baseline_path=None):
                     continue
                 if not np.all(np.isfinite(arr)):
                     continue
+                source_ident=x.get("candidate_source_sha256")
                 ident=str(
                     x.get("candidate_ast_sha256")
-                    or x.get("candidate_source_sha256")
+                    or source_ident
                     or f"iter-{x.get('iteration')}"
                 )
-                if ident in seen:
+                if ident in seen or (source_ident and source_ident in seen_sources):
                     continue
                 seen.add(ident)
+                if source_ident:
+                    seen_sources.add(source_ident)
                 rows.append(arr)
                 ids.append(ident)
     if not rows:
@@ -123,9 +128,11 @@ def cscv_pbo(matrix, max_splits=252):
         train_perf=np.mean(x[:,train],axis=1)
         best=int(np.argmax(train_perf))
         test_perf=np.mean(x[:,test],axis=1)
-        order=np.argsort(test_perf)
-        rank=int(np.where(order==best)[0][0])+1  # 1=worst, n=best
-        percentile=(rank-0.5)/n_strat
+        selected=float(test_perf[best])
+        less=int(np.sum(test_perf < selected))
+        equal=int(np.sum(test_perf == selected))
+        # Mid-rank ties so candidate array order cannot bias PBO.
+        percentile=(less + 0.5*equal)/n_strat
         percentile=min(max(percentile,1e-9),1-1e-9)
         logits.append(math.log(percentile/(1-percentile)))
         below += percentile < 0.5
