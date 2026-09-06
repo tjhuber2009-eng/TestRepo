@@ -1,0 +1,6 @@
+Atlas Forge V4 profit benchmark
+Source head: 526540c48c4233000fad37c080e8721e24249365
+Purpose: compare static vs staggered satellite vs causal dynamic private portfolio
+Persistent state: read only
+Hidden validation: sealed
+Final 2023+ OOS: sealed
