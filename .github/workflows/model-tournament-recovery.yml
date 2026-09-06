@@ -27,11 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -42,7 +42,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Download preserved source-run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -101,12 +101,12 @@ jobs:
       run:
         working-directory: moondev_autoresearch_reconstruction
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -116,7 +116,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Restore sealed development-only market-data cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: moondev_autoresearch_reconstruction/data
           key: autoresearch-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
@@ -154,7 +154,7 @@ jobs:
         run: mv model_tournament_result.json tournament_nemotron-lightning.json
 
       - name: Upload recovered Lightning result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tournament-nemotron-lightning
           path: moondev_autoresearch_reconstruction/tournament_nemotron-lightning.json
@@ -166,11 +166,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: moondev-nvidia-autoresearch
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -181,7 +181,7 @@ jobs:
         run: python -m pip install -r requirements.txt
 
       - name: Download preserved source-run artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -192,7 +192,7 @@ jobs:
 
       - name: Download recovered Lightning artifact
         if: needs.lightning.result == 'success'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: tournament-nemotron-lightning
           path: tournament_results
@@ -243,7 +243,7 @@ jobs:
           fi
 
       - name: Upload recovered aggregate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tournament-recovery-summary
           path: |
