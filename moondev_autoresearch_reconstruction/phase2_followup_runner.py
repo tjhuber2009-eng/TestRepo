@@ -90,12 +90,30 @@ def baseline_survivors():
     return survivors
 
 
+def baseline_fingerprint(row):
+    keys = (
+        "track_id", "family", "target", "profile", "score", "cagr_pct",
+        "return_pct", "sharpe", "pf", "max_dd_pct", "trades",
+        "evidence_grade", "stress_return_pct", "extreme_stress_return_pct",
+    )
+    return {key: row.get(key) for key in keys}
+
+
 def freeze_selection():
     survivors = baseline_survivors()
     ids = [x["track_id"] for x in survivors]
+    fingerprints = {
+        row["track_id"]: baseline_fingerprint(row)
+        for row in survivors
+    }
+    frozen_material = {
+        "candidate_ids": ids,
+        "baseline_fingerprints": fingerprints,
+    }
     payload = {
         "protocol": PROTOCOL,
         "lane": LANE,
+        "selection_version": 2,
         "selection_policy": (
             "all baseline strategies passing development robustness and "
             "lookahead audit; no performance top-N truncation"
@@ -103,16 +121,24 @@ def freeze_selection():
         "candidate_ids": ids,
         "candidate_count": len(ids),
         "baseline_track_count": int(load_json(BASELINE_PROGRESS)["track_count"]),
-        "selection_hash": json_hash(ids),
+        "baseline_fingerprints": fingerprints,
+        "selection_hash": json_hash(frozen_material),
         "hidden_validation_opened": False,
         "final_oos_opened": False,
         "phase1_registry_mutated": False,
     }
     if SELECTION.exists():
         prior = load_json(SELECTION)
+        if int(prior.get("selection_version", 1) or 1) < 2:
+            if prior.get("candidate_ids") != ids:
+                raise RuntimeError(
+                    "Phase-2 frozen follow-up survivor IDs changed during selection upgrade"
+                )
+            save_json(SELECTION, payload)
+            return payload
         if prior.get("selection_hash") != payload["selection_hash"]:
             raise RuntimeError(
-                "Phase-2 frozen follow-up survivor set changed after freeze"
+                "Phase-2 frozen follow-up survivor evidence changed after freeze"
             )
         return prior
     save_json(SELECTION, payload)
@@ -123,9 +149,57 @@ def track_lookup():
     return {x["id"]: x for x in p2.build_tracks()}
 
 
-def rerun_detail(track):
+def rerun_detail(track, baseline_row):
     summary = p2.screen_track(track)
     detail = load_json(HERE / "last_run.json")
+    replay_keys = (
+        "score", "cagr_pct", "return_pct", "sharpe", "pf",
+        "max_dd_pct", "trades", "evidence_grade",
+        "stress_return_pct", "extreme_stress_return_pct",
+    )
+    replay_now = {
+        **summary,
+        "stress_return_pct": p2.safe_number(
+            (detail.get("stress") or {}).get("return_pct")
+        ),
+        "extreme_stress_return_pct": p2.safe_number(
+            (detail.get("extreme_stress") or {}).get("return_pct")
+        ),
+    }
+    mismatches = {}
+    for key in replay_keys:
+        before = baseline_row.get(key)
+        after = replay_now.get(key)
+        if before == after:
+            continue
+        try:
+            same = (
+                before is not None
+                and after is not None
+                and abs(float(before) - float(after)) <= 1e-9
+            )
+        except Exception:
+            same = False
+        if not same:
+            mismatches[key] = {"baseline": before, "replay": after}
+    if mismatches:
+        return {
+            "ts": p2.now(),
+            "protocol": PROTOCOL,
+            "lane": LANE,
+            "stage": "development_survivor_followup",
+            "track_id": track["id"],
+            "family": track["family"],
+            "target": track["target"]["id"],
+            "market": track["target"]["market"],
+            "profile": track["profile_name"],
+            "status": "baseline_replay_mismatch",
+            "mismatches": mismatches,
+            "parameter_rescue_performed": False,
+            "hidden_validation_opened": False,
+            "final_oos_opened": False,
+            "phase1_registry_mutated": False,
+        }
     if detail.get("hidden_validation_opened") is True:
         raise RuntimeError("Phase-2 follow-up unexpectedly opened hidden validation")
     if detail.get("final_oos_opened") is True or detail.get("oos_opened") is True:
@@ -228,7 +302,12 @@ def cohort_cscv(rows):
         train = np.asarray(train_tuple, dtype=int)
         test = np.asarray(sorted(all_idx - set(train_tuple)), dtype=int)
         train_perf = np.mean(matrix[:, train], axis=1)
-        best = int(np.argmax(train_perf))
+        best_value = float(np.max(train_perf))
+        tied = [
+            i for i, value in enumerate(train_perf)
+            if math.isclose(float(value), best_value, rel_tol=0.0, abs_tol=1e-12)
+        ]
+        best = min(tied, key=lambda i: keep[i]["track_id"])
         test_perf = np.mean(matrix[:, test], axis=1)
         selected = float(test_perf[best])
         less = int(np.sum(test_perf < selected))
@@ -336,11 +415,13 @@ def build_promotion(rows, selection):
         )
         pbo_ok = pbo is not None and float(pbo) <= PBO_LIMIT
         candidate_pbo_ok = (
-            candidate_pbo is None or float(candidate_pbo) <= PBO_LIMIT
+            candidate_pbo is not None and float(candidate_pbo) <= PBO_LIMIT
         )
         ready = bool(
             row.get("guard_ok")
             and row.get("lookahead_pass")
+            and candidate_diag is not None
+            and int(candidate_diag.get("selected_count", 0)) > 0
             and evidence_ok
             and stress_ok
             and pbo_ok
@@ -416,7 +497,10 @@ def write_progress(selection, results):
     done_ids = {x.get("track_id") for x in results if x.get("track_id")}
     total = len(selection["candidate_ids"])
     done = len(done_ids.intersection(selection["candidate_ids"]))
-    errors = sum(1 for x in results if x.get("status") == "error")
+    errors = sum(
+        1 for x in results
+        if x.get("status") in {"error", "baseline_replay_mismatch"}
+    )
     complete = done >= total
     promotion = None
     if complete and errors == 0:
@@ -497,7 +581,8 @@ def main():
                 }
             else:
                 try:
-                    row = rerun_detail(track)
+                    baseline_row = selection["baseline_fingerprints"][track_id]
+                    row = rerun_detail(track, baseline_row)
                 except Exception as exc:
                     row = {
                         "ts": p2.now(),
