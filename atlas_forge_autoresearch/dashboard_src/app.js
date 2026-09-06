@@ -470,7 +470,7 @@ function renderV4(){
     causal_dynamic:"Causal dynamic allocator",
   }[architecture]||architecture;
   const satelliteDetail=architecture==="staggered_satellite"&&sleeveWeight>0
-    ? `<b>${esc(architectureLabel)}</b> · ${fmt(100*sleeveWeight,0)}% composition sleeve in <b>${esc(satelliteName)}</b> from ${esc((sleeveSpec.inception_dates||{})[satelliteName]||"its data inception")}. At ${fmt(gross,2)}× total gross this is ${pct(100*effectiveSatelliteGross,1)} account gross in the satellite and ${pct(100*effectiveCoreGross,1)} in the long-history core.`
+    ? `<b>${esc(architectureLabel)}</b> · ${fmt(100*sleeveWeight,0)}% composition sleeve in <b>${esc(satelliteName)}</b> from ${esc((sleeveSpec.inception_dates||{})[satelliteName]||"its data inception")}. At ${fmt(gross,2)}× scale after satellite inception this is ${pct(100*effectiveSatelliteGross,1)} account gross in the satellite and ${pct(100*effectiveCoreGross,1)} in the long-history core.`
     : `<b>${esc(architectureLabel)}</b> · ${esc(selection.reason||"development-only architecture selection")}.`;
   const matchedGrowth=architecture==="staggered_satellite"?satelliteMatched:architecture==="causal_dynamic"?dynamicMatched:null;
   const privateHtml=chosen?`<div class="v4-explainer">
@@ -499,7 +499,7 @@ function renderV4(){
     </div>
     ${financingRows?`<article class="glass-card" style="margin-top:16px"><div class="card-title-row"><div><span class="kicker">LEVERAGE REALISM</span><h3>Financing-rate sensitivity</h3></div></div>
       <div class="v4-explainer">Base financing: ${pct(financingPolicy.base_annual_rate_pct,1)} annually. Charges apply only to realized time-varying gross above 1×; no cash-yield credit is assumed.</div>
-      <div class="table-wrap"><table><thead><tr><th>Financing</th><th class="num">CAGR</th><th class="num">Boot median</th><th class="num">Boot Q10</th><th class="num">q95 DD</th><th class="num">Gross</th><th class="num">Annual drag</th></tr></thead><tbody>${financingRows}</tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Financing</th><th class="num">CAGR</th><th class="num">Boot median</th><th class="num">Boot Q10</th><th class="num">q95 DD</th><th class="num">Scale / avg gross</th><th class="num">Annual drag</th></tr></thead><tbody>${financingRows}</tbody></table></div>
     </article>`:""}`:'<div class="empty">Private V4 portfolio state unavailable.</div>';
 
   const repeat1=prop.programs?.ftmo_1step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
