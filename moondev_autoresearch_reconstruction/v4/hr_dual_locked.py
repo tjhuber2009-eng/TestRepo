@@ -19,7 +19,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .alpha_objective import metrics_from_equity
+from .alpha_objective import hard_gate, metrics_from_equity
+from .config import risk_policy
 
 SOURCE_LOCK = {
     "repository": "tjhuber2009-eng/hr_mech",
@@ -274,6 +275,8 @@ def replay(data_dir, output=None):
             num_trials=1,
         ).cagr_pct,
     )
+    private = risk_policy("private")
+    gate_ok, gate_reasons = hard_gate(metrics, private)
     payload = {
         "protocol": "alpha_generation_v4",
         "stage": "development_only",
@@ -281,9 +284,13 @@ def replay(data_dir, output=None):
         "provider_role": "Yahoo legacy_adjusted_close source-parity diagnostic",
         "data_basis": "Yahoo chart OHLC scaled by AdjClose/Close to match yfinance auto_adjust=True semantics",
         "authoritative_portfolio_eligible": False,
+        "v4_private_development_gate_ok": bool(gate_ok),
+        "v4_private_development_gate_reasons": list(gate_reasons),
         "eligibility_reason": (
-            "frozen prior strategy is replayed source-faithfully, but V4 "
-            "authoritative portfolio remains Tiingo evidence-bearing"
+            "frozen prior strategy is replayed source-faithfully on the sealed "
+            "V4 development window; it remains non-authoritative because the "
+            "portfolio requires Tiingo evidence and because its current V4 "
+            "development hard-gate result is reported separately"
         ),
         "data_start": data["QQQ"].index.min().strftime("%Y-%m-%d"),
         "data_end": data["QQQ"].index.max().strftime("%Y-%m-%d"),
