@@ -35,21 +35,21 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state
+          git fetch origin +refs/heads/phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state
           git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state/candidate_queue.json
 
       - name: Restore reconstruction state
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase3-reconstruction-state:refs/remotes/origin/phase3-reconstruction-state
+          git fetch origin +refs/heads/phase3-reconstruction-state:refs/remotes/origin/phase3-reconstruction-state
           git checkout refs/remotes/origin/phase3-reconstruction-state -- moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json
 
       - name: Restore hydration attempts
         shell: bash
         working-directory: .
         run: |
-          git fetch origin phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
+          git fetch origin +refs/heads/phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
           if git rev-parse --verify refs/remotes/origin/phase3-hydration-state >/dev/null 2>&1; then
             git checkout refs/remotes/origin/phase3-hydration-state -- moondev_autoresearch_reconstruction/phase3_state/hydrated_sources.jsonl 2>/dev/null || true
           fi
