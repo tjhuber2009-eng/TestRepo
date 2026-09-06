@@ -84,6 +84,10 @@ def build_tracks():
 def read_results():
     out={}
     quality=load_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
+    expected_sources={}
+    for track in build_tracks():
+        target=track["target"]
+        expected_sources[target["id"]]=(target.get("source"),target.get("symbol"))
     blocked_targets=set()
     for key,row in quality.items():
         if not isinstance(row,dict) or row.get("status")!="blocked":
@@ -99,11 +103,28 @@ def read_results():
     for line in RESULTS.read_text(encoding="utf-8").splitlines():
         try: row=json.loads(line)
         except Exception: continue
-        override=PHASE2_SOURCE_OVERRIDES.get(row.get("target"))
-        if override and (
-            row.get("data_source")!=override["source"]
-            or row.get("data_symbol")!=override["symbol"]
+        expected=expected_sources.get(row.get("target"))
+        # Any row that explicitly records a provider belongs only to that
+        # provider version of the track. This removes stale failed migrations
+        # (for example the abandoned Stooq futures attempt) without discarding
+        # older valid rows that predate provider tagging.
+        if (
+            expected
+            and row.get("data_source") is not None
+            and (
+                row.get("data_source")!=expected[0]
+                or row.get("data_symbol")!=expected[1]
+            )
         ):
+            continue
+        override=PHASE2_SOURCE_OVERRIDES.get(row.get("target"))
+        if (
+            override
+            and row.get("data_source") is None
+            and row.get("status") in {"error","data_blocked"}
+        ):
+            # Untagged failures on an overridden target came from its former
+            # provider and must be retried on the current source.
             continue
         if row.get("status")=="error" and row.get("target") in blocked_targets:
             row=dict(row)
