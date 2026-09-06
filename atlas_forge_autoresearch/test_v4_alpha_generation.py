@@ -33,6 +33,7 @@ from v4.live_bootstrap import (
     build_rsi2_pullback_strategy,
     json_safe,
     pbo_gate,
+    portfolio_challenger_wins,
     read_market_csv,
     research_commit_sha as live_research_commit_sha,
     select_portfolio_history_cohort,
@@ -48,6 +49,7 @@ from v4.multi_asset_engine import (
 )
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
+from v4.satellite_portfolio import build_staggered_satellite_candidates
 from v4.prop_firm_engine import (
     FundedSimulation,
     PropOptimizationCandidate,
@@ -850,6 +852,89 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreater(
             float(full.weights.iloc[-1]["B"]),
             float(full.weights.iloc[-1]["A"]),
+        )
+
+    def test_staggered_satellite_preserves_core_history_with_cash_before_inception(self):
+        idx = pd.bdate_range("2018-01-01", periods=320)
+        core = pd.DataFrame({
+            "core_a": np.full(len(idx), 0.0005),
+            "core_b": np.full(len(idx), 0.0003),
+        }, index=idx)
+        short = pd.Series(
+            0.0010,
+            index=idx[220:],
+            name="short_alpha",
+        )
+        candidates, specs = build_staggered_satellite_candidates(
+            core,
+            {"core_a": 0.6, "core_b": 0.4},
+            {"short_alpha": short},
+            max_satellite_weight=0.25,
+            sleeve_steps=(0.25,),
+        )
+        self.assertEqual(len(candidates), 1)
+        name = next(iter(candidates))
+        stream = candidates[name]
+        base = 0.6 * core["core_a"] + 0.4 * core["core_b"]
+        pd.testing.assert_series_equal(
+            stream.iloc[:220],
+            (0.75 * base.iloc[:220]).rename(name),
+        )
+        pd.testing.assert_series_equal(
+            stream.iloc[220:],
+            (0.75 * base.iloc[220:] + 0.25 * short).rename(name),
+        )
+        self.assertEqual(specs[name].sleeve_weight, 0.25)
+        self.assertEqual(
+            specs[name].inception_dates["short_alpha"],
+            idx[220].strftime("%Y-%m-%d"),
+        )
+
+    def test_staggered_satellite_rejects_missing_returns_after_inception(self):
+        idx = pd.bdate_range("2018-01-01", periods=300)
+        core = pd.DataFrame({
+            "core_a": np.full(len(idx), 0.0004),
+            "core_b": np.full(len(idx), 0.0002),
+        }, index=idx)
+        short = pd.Series(0.0010, index=idx[200:])
+        short.iloc[20] = np.nan
+        candidates, specs = build_staggered_satellite_candidates(
+            core,
+            {"core_a": 0.5, "core_b": 0.5},
+            {"short_alpha": short},
+            max_satellite_weight=0.25,
+            sleeve_steps=(0.25,),
+        )
+        self.assertEqual(candidates, {})
+        self.assertEqual(specs, {})
+
+    def test_portfolio_challenger_requires_growth_and_tail_control(self):
+        incumbent = mock.Mock()
+        incumbent.chosen = mock.Mock(
+            bootstrap_median_cagr_pct=20.0,
+            bootstrap_cagr_q10_pct=5.0,
+        )
+        better = mock.Mock()
+        better.chosen = mock.Mock(
+            bootstrap_median_cagr_pct=22.0,
+            bootstrap_cagr_q10_pct=1.0,
+        )
+        too_fragile = mock.Mock()
+        too_fragile.chosen = mock.Mock(
+            bootstrap_median_cagr_pct=24.0,
+            bootstrap_cagr_q10_pct=-1.0,
+        )
+        lower_growth = mock.Mock()
+        lower_growth.chosen = mock.Mock(
+            bootstrap_median_cagr_pct=19.0,
+            bootstrap_cagr_q10_pct=8.0,
+        )
+        self.assertTrue(portfolio_challenger_wins(better, incumbent))
+        self.assertFalse(
+            portfolio_challenger_wins(too_fragile, incumbent)
+        )
+        self.assertFalse(
+            portfolio_challenger_wins(lower_growth, incumbent)
         )
 
     def test_meta_filter_label_delay_blocks_unavailable_previous_outcome(self):
