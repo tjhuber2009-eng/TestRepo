@@ -34,6 +34,10 @@ from .strategy_examples import (
 )
 
 
+PRIVATE_PORTFOLIO_FINANCING_RATE_PCT = 6.0
+PRIVATE_PORTFOLIO_FINANCING_STRESS_RATES_PCT = (6.0, 10.0, 14.0)
+
+
 def research_commit_sha() -> str | None:
     """Return the exact checked-out research commit for result provenance."""
     try:
@@ -1344,6 +1348,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     dynamic_portfolio = None
     dynamic_portfolio_summary = None
     dynamic_matched_static_gross = None
+    portfolio_financing_sensitivity = {}
     portfolio_selection = {
         "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
         "selected": None,
@@ -1386,6 +1391,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     bootstrap_reps=120,
                     block=20,
                     max_weight=weight_cap,
+                    annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                 ).optimize(returns)
                 portfolio_concentration_sensitivity[
                     f"{weight_cap:.2f}"
@@ -1442,6 +1448,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         max_weight=1.0,
                         max_gross=1.5,
                         min_gross=0.10,
+                        annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                         seed=20260905,
                     ).optimize(stream.to_frame(candidate_name))
                     if result.chosen is not None:
@@ -1511,6 +1518,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                                 max_weight=1.0,
                                 max_gross=static_gross,
                                 min_gross=static_gross,
+                                annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                                 seed=20260905,
                             ).optimize(
                                 satellite_streams[
@@ -1548,6 +1556,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     max_weight=1.0,
                     max_gross=1.5,
                     min_gross=0.10,
+                    annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                     seed=20260905,
                 ).optimize(
                     dynamic.returns.to_frame("causal_dynamic_allocator")
@@ -1565,6 +1574,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         max_weight=1.0,
                         max_gross=static_gross,
                         min_gross=static_gross,
+                        annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                         seed=20260905,
                     ).optimize(
                         dynamic.returns.to_frame(
@@ -1606,6 +1616,52 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         "clearing_common_static_q10_floor"
                     ),
                 }
+
+                selected_stream = None
+                if selected_name == "staggered_satellite":
+                    selected_candidate_name = (
+                        satellite_portfolio_summary or {}
+                    ).get("selected_candidate")
+                    if selected_candidate_name in satellite_streams:
+                        selected_stream = satellite_streams[
+                            selected_candidate_name
+                        ]
+                elif selected_name == "causal_dynamic":
+                    selected_stream = dynamic.returns
+                elif selected_name == "static_robust":
+                    chosen = static_portfolio.chosen
+                    if chosen is not None and chosen.gross_exposure > 0.0:
+                        comp = pd.Series(
+                            chosen.weights,
+                            dtype=float,
+                        ).reindex(returns.columns).fillna(0.0)
+                        comp = comp / float(chosen.gross_exposure)
+                        selected_stream = returns.mul(
+                            comp, axis=1
+                        ).sum(axis=1)
+
+                if selected_stream is not None:
+                    for financing_rate in (
+                        PRIVATE_PORTFOLIO_FINANCING_STRESS_RATES_PCT
+                    ):
+                        stressed = RobustPortfolioOptimizer(
+                            dd_cap_pct=private.max_dd_pct,
+                            n_candidates=1,
+                            bootstrap_reps=120,
+                            block=20,
+                            max_weight=1.0,
+                            max_gross=1.5,
+                            min_gross=0.10,
+                            annual_financing_rate_pct=financing_rate,
+                            seed=20260905,
+                        ).optimize(
+                            selected_stream.rename(
+                                f"selected_architecture_{financing_rate:.0f}pct"
+                            ).to_frame()
+                        )
+                        portfolio_financing_sensitivity[
+                            f"{financing_rate:.0f}%"
+                        ] = stressed
 
     strategies = {
         "rotation_raw_diagnostic": rotation_raw.summary(),
@@ -1735,6 +1791,22 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "allocator": dynamic_portfolio_summary,
             }
         ),
+        "portfolio_financing_policy": {
+            "base_annual_rate_pct": PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
+            "stress_rates_pct": list(
+                PRIVATE_PORTFOLIO_FINANCING_STRESS_RATES_PCT
+            ),
+            "charged_on": "gross_exposure_above_1x_only",
+            "cash_yield_credit": False,
+            "purpose": (
+                "prevent leverage from creating artificial CAGR under "
+                "zero-cost borrowing"
+            ),
+        },
+        "portfolio_financing_sensitivity": {
+            rate: result.to_dict()
+            for rate, result in portfolio_financing_sensitivity.items()
+        },
         "portfolio_authoritative_concentration_cap": (
             None
             if not portfolio_concentration_sensitivity
