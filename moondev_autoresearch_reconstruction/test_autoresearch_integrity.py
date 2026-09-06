@@ -219,6 +219,49 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             )
             compile(p.read_text(encoding="utf-8"), str(p), "exec")
 
+    def test_causal_monthly_seed_is_phase2_only_and_future_invariant(self):
+        import phase2_prior_runner
+        import phase2_seed_factory
+
+        monthly_tracks = [
+            x for x in phase2_prior_runner.build_tracks()
+            if x["family"] == "bitcoin_cycle_monthly_causal"
+        ]
+        self.assertEqual(len(monthly_tracks), 2)
+        self.assertTrue(
+            all(x["target"]["source"] == "bitstamp" for x in monthly_tracks)
+        )
+        self.assertTrue(
+            all(x["target"]["symbol"] == "BTCUSD" for x in monthly_tracks)
+        )
+        registry_row = next(
+            x for x in self.registry["families"]
+            if x["id"] == "calendar_monthly"
+        )
+        self.assertEqual(registry_row["status"], "phase2_runnable")
+        self.assertEqual(len(continuous_runner.build_tracks()), 514)
+
+        dates = pd.date_range("2011-08-31", "2020-12-31", freq="ME", tz="UTC")
+        close = pd.Series(
+            100.0 * np.cumprod(1.0 + 0.01 * np.sin(np.arange(len(dates)))),
+            index=dates,
+        )
+        high = close * 1.01
+        low = close * 0.99
+        volume = pd.Series(1_000.0, index=dates)
+        original = phase2_seed_factory.phase2_signal(
+            close.to_numpy(), high.to_numpy(), low.to_numpy(),
+            volume.to_numpy(), dates.to_numpy(),
+        )
+        changed = close.copy()
+        changed.loc[changed.index >= "2018-01-01"] *= 25.0
+        changed_signal = phase2_seed_factory.phase2_signal(
+            changed.to_numpy(), (changed * 1.01).to_numpy(),
+            (changed * 0.99).to_numpy(), volume.to_numpy(), dates.to_numpy(),
+        )
+        cutoff = dates < pd.Timestamp("2018-01-01", tz="UTC")
+        np.testing.assert_array_equal(original[cutoff], changed_signal[cutoff])
+
     def test_phase3_free_lane_is_finite_and_registry_isolated(self):
         import phase3_free_runner
         self.assertGreaterEqual(len(phase3_free_runner.QUERY_BATCHES), 4)
