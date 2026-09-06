@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T07:48:21Z",
+  "generated_at": "2026-09-06T07:56:55Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -70245,7 +70245,7 @@
             "extreme_stress_return_pct": 31.513,
             "family": "btc_rsi_adx",
             "market": "crypto",
-            "multiple_test_qvalue": 0.032772,
+            "multiple_test_qvalue": 0.032335,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.123171,
@@ -70284,7 +70284,7 @@
             "extreme_stress_return_pct": 28.394,
             "family": "qqe_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.038864,
+            "multiple_test_qvalue": 0.038494,
             "pbo": 0.242857,
             "profile": "prop",
             "selection_score": 0.08467,
@@ -70346,7 +70346,7 @@
             "extreme_stress_return_pct": 41.621,
             "family": "atr_channel_trend",
             "market": "crypto",
-            "multiple_test_qvalue": 0.032772,
+            "multiple_test_qvalue": 0.032335,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.070394,
@@ -70385,7 +70385,7 @@
             "extreme_stress_return_pct": 36.469,
             "family": "swing_terminal_pullback_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.038864,
+            "multiple_test_qvalue": 0.038494,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.065624,
@@ -70408,7 +70408,7 @@
             "extreme_stress_return_pct": 37.932,
             "family": "sentinel65",
             "market": "crypto",
-            "multiple_test_qvalue": 0.034399,
+            "multiple_test_qvalue": 0.034037,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.05418,
@@ -70530,7 +70530,7 @@
             "extreme_stress_return_pct": 33.154,
             "family": "swing_terminal_breakout_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.034399,
+            "multiple_test_qvalue": 0.034037,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.035579,
@@ -117559,19 +117559,19 @@
         "id": 34020124306,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 89,
-        "status": "pending",
-        "updated_at": "2026-09-06T07:48:16Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T07:49:30Z"
       },
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T07:34:08Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34019500172",
         "id": 34019500172,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 88,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T07:34:14Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T07:48:20Z"
       },
       {
         "conclusion": "success",
@@ -117813,8 +117813,8 @@
         "id": 34020121518,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 13,
-        "status": "pending",
-        "updated_at": "2026-09-06T07:48:11Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T07:56:48Z"
       },
       {
         "conclusion": "cancelled",
@@ -117828,15 +117828,15 @@
         "updated_at": "2026-09-06T07:48:11Z"
       },
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T07:27:45Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34019210169",
         "id": 34019210169,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 11,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T07:38:47Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T07:56:45Z"
       },
       {
         "conclusion": "success",
