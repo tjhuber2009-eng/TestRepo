@@ -120,37 +120,6 @@ def freeze_selection():
         "candidate_ids": ids,
         "baseline_fingerprints": fingerprints,
     }
-    lookup = track_lookup()
-    PROMOTION_SOURCES.mkdir(parents=True, exist_ok=True)
-    for item in queue:
-        if not item["ready_for_v4_replay"]:
-            continue
-        track = lookup.get(item["track_id"])
-        if track is None:
-            raise RuntimeError(
-                f"ready Phase-2 promotion track disappeared: {item['track_id']}"
-            )
-        source_path = PROMOTION_SOURCES / f"{item['track_id']}.py"
-        p2.generate(
-            track["family"],
-            source_path,
-            int(track["target"]["bars_per_year"]),
-            float(track["profile"]["starting_vol_target"]),
-            float(track["profile"]["f_max"]),
-        )
-        source_sha = sha256_file(source_path)
-        expected_sha = str(item.get("strategy_sha256") or "")
-        if not expected_sha or source_sha != expected_sha:
-            raise RuntimeError(
-                f"Phase-2 promotion source hash mismatch for {item['track_id']}: "
-                f"{source_sha} != {expected_sha}"
-            )
-        item["promotion_source_path"] = (
-            f"moondev_autoresearch_reconstruction/phase2_state/"
-            f"promotion_sources/{item['track_id']}.py"
-        )
-        item["promotion_source_sha256"] = source_sha
-
     payload = {
         "protocol": PROTOCOL,
         "lane": LANE,
@@ -523,6 +492,41 @@ def build_promotion(rows, selection):
             "hidden_validation_opened": False,
             "final_oos_opened": False,
         })
+
+    lookup = track_lookup()
+    PROMOTION_SOURCES.mkdir(parents=True, exist_ok=True)
+    for item in queue:
+        track = lookup.get(item["track_id"])
+        if track is not None:
+            item["bars_per_year"] = int(track["target"]["bars_per_year"])
+            item["commission"] = float(track["target"]["commission"])
+            item["margin"] = float(track["target"]["margin"])
+        if not item["ready_for_v4_replay"]:
+            continue
+        if track is None:
+            raise RuntimeError(
+                f"ready Phase-2 promotion track disappeared: {item['track_id']}"
+            )
+        source_path = PROMOTION_SOURCES / f"{item['track_id']}.py"
+        p2.generate(
+            track["family"],
+            source_path,
+            int(track["target"]["bars_per_year"]),
+            float(track["profile"]["starting_vol_target"]),
+            float(track["profile"]["f_max"]),
+        )
+        source_sha = sha256_file(source_path)
+        expected_sha = str(item.get("strategy_sha256") or "")
+        if not expected_sha or source_sha != expected_sha:
+            raise RuntimeError(
+                f"Phase-2 promotion source hash mismatch for {item['track_id']}: "
+                f"{source_sha} != {expected_sha}"
+            )
+        item["promotion_source_path"] = (
+            f"moondev_autoresearch_reconstruction/phase2_state/"
+            f"promotion_sources/{item['track_id']}.py"
+        )
+        item["promotion_source_sha256"] = source_sha
 
     payload = {
         "protocol": PROTOCOL,
