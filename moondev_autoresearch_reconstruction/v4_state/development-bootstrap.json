@@ -12618,7 +12618,7 @@
         "worst_score": -3.636685761722702
       },
       {
-        "adjusted_score": 9.806508163307882,
+        "adjusted_score": 9.837967942446195,
         "fold_scores": [
           21.54530486501569,
           5.646336571268851,
@@ -12639,7 +12639,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 16.049751101867095,
+        "plateau_score": 16.15461703232814,
         "primary_score": 14.799434469041728,
         "score_std": 15.1483133876243,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -12898,7 +12898,7 @@
         "worst_score": -2.685224606061154
       },
       {
-        "adjusted_score": 8.526787877264377,
+        "adjusted_score": 8.622433618566433,
         "fold_scores": [
           13.230842854895819,
           7.143423026575024,
@@ -12919,7 +12919,7 @@
           "target_vol": 0.16,
           "vol_lookback": 60
         },
-        "plateau_score": 14.05116199365029,
+        "plateau_score": 14.369981131323804,
         "primary_score": 14.277582400344047,
         "score_std": 14.863326870309434,
         "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -17639,6 +17639,7 @@
     "cross_asset_momentum_risk_budgeted",
     "defensive_rotation_risk_budgeted",
     "long_history_cross_asset_trend",
+    "phase2__bollinger_breakout_20_2__btc__private",
     "rotation_risk_budgeted",
     "rotation_sma_hysteresis",
     "rotation_walkforward_meta_filter"
@@ -21248,50 +21249,58 @@
     "candidate_count": 1,
     "candidates": [
       {
-        "bars_per_year": 365,
-        "bootstrap_fdr_qvalue": 0.037589,
-        "cagr_pct": 92.002,
-        "candidate_pbo_when_selected": 0.078431,
-        "candidate_selection_share": 0.728571,
-        "cohort": "btc::private",
-        "cohort_pbo": 0.3,
-        "commission": 0.001,
-        "development_years": null,
-        "error": "ValueError: unsupported import in promoted strategy: math",
-        "evidence_grade": "A",
-        "extreme_stress_return_pct": 771.417,
-        "family": "bollinger_breakout_20_2",
-        "fdr_report_level": 0.1,
+        "base": {
+          "cagr_pct": 91.81726962649739,
+          "max_dd_pct": -16.3829688728649,
+          "sharpe": 1.8934316108613922,
+          "trades": 35
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 92.002,
+          "development_max_dd_pct": -16.383,
+          "development_pf": 5.696,
+          "development_sharpe": 1.895,
+          "development_trades": 35,
+          "development_years": 0.0,
+          "evidence_grade": "A",
+          "exactness": "phase2_frozen_exact_source",
+          "extreme_stress_return_pct": 771.417,
+          "family": "bollinger_breakout_20_2",
+          "market": "crypto",
+          "multiple_test_qvalue": 0.037589,
+          "pbo": 0.3,
+          "profile": "private",
+          "selection_score": 0.923533,
+          "symbol": "BTCUSDT",
+          "target": "btc",
+          "track_id": "bollinger_breakout_20_2__btc__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 89.81536358126168,
+          "max_dd_pct": -16.74758830204549,
+          "sharpe": 1.8643357673230398,
+          "trades": 35
+        },
         "final_oos_opened": false,
-        "harness_sha256": "f154e64ec7f3918cd663c490a5cf3d92f24fac57d855a1e8c3fdb02f27080b03",
         "hidden_validation_opened": false,
-        "margin": 0.25,
-        "market": "crypto",
-        "max_dd_pct": -16.383,
-        "parameter_rescue_performed": false,
-        "pbo_limit": 0.55,
-        "pf": 5.696,
-        "profile": "private",
-        "program_sha256": "9798b229584964cbe8989ae8afc6a9d67f3dd92adb1e2d12df9826c9563fdec0",
-        "promotion_source_path": "moondev_autoresearch_reconstruction/phase2_state/promotion_sources/bollinger_breakout_20_2__btc__private.py",
-        "promotion_source_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
-        "provisional_reason": null,
-        "ready_for_v4_replay": true,
-        "replay_status": "error",
-        "research_survivor": true,
-        "score": 0.923533,
-        "sharpe": 1.895,
-        "strategy_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
-        "symbol": "BTCUSDT",
-        "target": "btc",
-        "track_id": "bollinger_breakout_20_2__btc__private",
-        "trades": 35
+        "phase2_evidence": {
+          "bootstrap_fdr_qvalue": 0.037589,
+          "candidate_pbo_when_selected": 0.078431,
+          "cohort_pbo": 0.3,
+          "promotion_source_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
+          "strict_pbo": 0.3
+        },
+        "portfolio_eligible": true,
+        "portfolio_gate_reason": "eligible",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
       }
     ],
     "final_oos_opened": false,
     "hidden_validation_opened": false,
     "policy": "consume only Phase-2 v2 frozen survivors with exact persisted source artifacts; require exact-source v4 replay, positive 3x-cost replay, private drawdown compliance, and both cohort/candidate PBO <= 0.55",
-    "portfolio_eligible_count": 0
+    "portfolio_eligible_count": 1
   },
   "portfolio": {
     "candidates_evaluated": 1000,
@@ -21304,7 +21313,7 @@
       "gross_exposure": 0.9024925363279448,
       "max_dd_pct": -17.292203507758387,
       "score": 16.18178187710505,
-      "sharpe": 1.0805640230289828,
+      "sharpe": 1.0805640230289826,
       "weights": {
         "cash_rotation_risk_budgeted": 0.0022245923798104284,
         "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21333,7 +21342,7 @@
         "gross_exposure": 0.7775924788539519,
         "max_dd_pct": -16.346811898542658,
         "score": 15.864395423773308,
-        "sharpe": 1.0702085019086347,
+        "sharpe": 1.070208501908635,
         "weights": {
           "cash_rotation_risk_budgeted": 0.009315446914387892,
           "cash_rotation_vix_stress": 0.0411487227259109,
@@ -21360,7 +21369,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289828,
+        "sharpe": 1.0805640230289826,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21387,7 +21396,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289828,
+        "sharpe": 1.0805640230289826,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21414,7 +21423,7 @@
         "gross_exposure": 0.9024925363279448,
         "max_dd_pct": -17.292203507758387,
         "score": 16.18178187710505,
-        "sharpe": 1.0805640230289828,
+        "sharpe": 1.0805640230289826,
         "weights": {
           "cash_rotation_risk_budgeted": 0.0022245923798104284,
           "cash_rotation_vix_stress": 0.03587022293645198,
@@ -21489,6 +21498,12 @@
         "start": "2010-01-04",
         "years": 10.984126984126984
       },
+      "phase2__bollinger_breakout_20_2__btc__private": {
+        "end": "2020-12-31",
+        "observations": 1233,
+        "start": "2017-08-17",
+        "years": 4.892857142857143
+      },
       "rotation_risk_budgeted": {
         "end": "2020-12-30",
         "observations": 2741,
@@ -21517,7 +21532,8 @@
     "supplemental_strategy_names": [
       "continuous__btc_rsi_adx__eth__private",
       "continuous__qqe_proxy__btc__private",
-      "cross_asset_momentum_risk_budgeted"
+      "cross_asset_momentum_risk_budgeted",
+      "phase2__bollinger_breakout_20_2__btc__private"
     ]
   },
   "prior_work_diagnostics": {
@@ -21530,18 +21546,18 @@
       "final_oos_opened": false,
       "hidden_validation_opened": false,
       "metrics_5bp": {
-        "cagr_pct": 29.766320817630778,
-        "cost_stress_cagr_pct": 28.146684214215377,
-        "cumulative_return_pct": 1605.5803738349077,
+        "cagr_pct": 29.766305434768636,
+        "cost_stress_cagr_pct": 28.146669008814307,
+        "cumulative_return_pct": 1605.5781728748514,
         "dsr": 1.0,
         "gross_exposure": 1.0,
-        "max_dd_pct": -59.8839429994952,
+        "max_dd_pct": -59.88394334364933,
         "pbo": null,
         "psr_zero": 1.0,
-        "sharpe": 0.934154887806254,
-        "sortino": 1.3046459752055715,
+        "sharpe": 0.9341545040941449,
+        "sortino": 1.3046454211769052,
         "trades": 204,
-        "turnover_per_year": 16.476639091218658,
+        "turnover_per_year": 16.47661881814422,
         "years": 10.885918259786306
       },
       "protocol": "alpha_generation_v4",
@@ -21565,6 +21581,7 @@
   },
   "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
+  "research_commit_sha": "03be055804cd58d10a7f0eab8c30f1c308671800",
   "reversal_parameter_optimizer": {
     "chosen": null,
     "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
