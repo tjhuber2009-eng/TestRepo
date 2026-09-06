@@ -1,0 +1,481 @@
+{
+  "version": 1,
+  "policy": "prior_work_phase2_backlog_v1",
+  "note": "These items are outside the current runnable 514-track universe or require a revisit after phase 1. Existing registry entries are referenced rather than duplicated. Prior terminal negatives remain terminal unless materially new evidence changes the hypothesis.",
+  "items": [
+    {
+      "id": "utbot_linreg_combo",
+      "origin": "Prior TradingView project: UT Bot Alerts + Humble LinReg Candles",
+      "status": "needs_reconstruction",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily_or_intraday",
+      "requirements": [
+        "freeze exact causal UT Bot ATR-trailing-stop rules",
+        "freeze LinReg candle confirmation rules",
+        "map next-bar execution"
+      ]
+    },
+    {
+      "id": "utbot_standalone",
+      "origin": "Prior UT Bot Alerts research",
+      "status": "needs_reconstruction",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily_or_intraday",
+      "requirements": [
+        "freeze exact sensitivity/ATR-period rule",
+        "next-bar execution parity"
+      ]
+    },
+    {
+      "id": "macd_12_26_9",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze signal convention"
+      ]
+    },
+    {
+      "id": "ppo_12_26_9",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze signal convention"
+      ]
+    },
+    {
+      "id": "roc12_zero",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze entry/exit convention"
+      ]
+    },
+    {
+      "id": "momentum10",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze entry/exit convention"
+      ]
+    },
+    {
+      "id": "rsi14_momentum_55_45",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze long/flat versus long/short convention"
+      ]
+    },
+    {
+      "id": "rsi14_reversion_30_70",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze entry/exit convention"
+      ]
+    },
+    {
+      "id": "stochastic_14_3_3",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze crossover/threshold rules"
+      ]
+    },
+    {
+      "id": "stochrsi_14",
+      "origin": "Prior TradingView indicator tournament",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "crypto",
+        "etf",
+        "stock",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze crossover/threshold rules"
+      ]
+    },
+    {
+      "id": "turn_of_month",
+      "origin": "Prior seasonality research",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze calendar window",
+        "next-open execution"
+      ]
+    },
+    {
+      "id": "turnaround_tuesday",
+      "origin": "Prior seasonality research",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze weekday and prior-day condition"
+      ]
+    },
+    {
+      "id": "first_trading_day_month",
+      "origin": "Prior seasonality research",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze holding window"
+      ]
+    },
+    {
+      "id": "end_of_month_variants",
+      "origin": "Prior seasonality research",
+      "status": "daily_engine_candidate",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "timeframe": "daily",
+      "requirements": [
+        "freeze calendar window"
+      ]
+    },
+    {
+      "id": "pead",
+      "origin": "Prior PEAD academic/mechanical project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "pead",
+      "requirements": [
+        "point-in-time earnings announcement data",
+        "surprise measure",
+        "event engine"
+      ]
+    },
+    {
+      "id": "nbe_volume_profile",
+      "origin": "NodeBreachEngine POC/POV research",
+      "status": "registry_blocked_revisit",
+      "registry_id": "nbe_volume_profile",
+      "requirements": [
+        "intraday volume-profile engine",
+        "POC/POV parity"
+      ]
+    },
+    {
+      "id": "orb_twp",
+      "origin": "TWP ORB EA / OE-ORB-FM-001 project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "orb_twp",
+      "requirements": [
+        "intraday session data",
+        "broker/session execution model"
+      ]
+    },
+    {
+      "id": "opening_reversal_futures",
+      "origin": "Prior futures opening-reversal project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "opening_reversal_futures",
+      "requirements": [
+        "intraday futures data",
+        "contract calendar"
+      ]
+    },
+    {
+      "id": "overnight_intraday_reversal",
+      "origin": "Prior overnight-to-intraday reversal project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "overnight_intraday_reversal",
+      "requirements": [
+        "overnight/intraday session decomposition"
+      ]
+    },
+    {
+      "id": "intraday_residual_reversal",
+      "origin": "Prior intraday residual-reversal project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "intraday_residual_reversal",
+      "requirements": [
+        "intraday cross-sectional data"
+      ]
+    },
+    {
+      "id": "bounded_vrp",
+      "origin": "Prior bounded volatility-risk-premium project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "bounded_vrp",
+      "requirements": [
+        "options/volatility surface data"
+      ]
+    },
+    {
+      "id": "fx_futures_mean_reversion",
+      "origin": "Prior FX/futures mean-reversion research",
+      "status": "registry_blocked_revisit",
+      "registry_id": "fx_futures_mean_reversion",
+      "requirements": [
+        "clean futures/FX data",
+        "contract model"
+      ]
+    },
+    {
+      "id": "liquidation_mean_reversion",
+      "origin": "Prior crypto liquidation mean-reversion project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "liquidation_mean_reversion",
+      "requirements": [
+        "historical liquidation feed"
+      ]
+    },
+    {
+      "id": "funding_basis",
+      "origin": "Prior Coinbase/Bitnomial funding-basis project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "funding_basis",
+      "requirements": [
+        "historical funding",
+        "mark/index/basis data"
+      ]
+    },
+    {
+      "id": "stat_arb_pairs",
+      "origin": "Prior cointegration/stat-arb repository research",
+      "status": "registry_blocked_revisit",
+      "registry_id": "stat_arb_pairs",
+      "requirements": [
+        "multi-asset synchronized engine"
+      ]
+    },
+    {
+      "id": "finlab_rotation_exact",
+      "origin": "Prior FinLab leveraged-ETF rotation research",
+      "status": "registry_blocked_revisit",
+      "registry_id": "finlab_rotation_exact",
+      "requirements": [
+        "multi-asset portfolio engine"
+      ]
+    },
+    {
+      "id": "hr_dual_alpha",
+      "origin": "HR-DUAL-ALPHA-001 project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "hr_dual_alpha",
+      "requirements": [
+        "recover frozen exact implementation"
+      ]
+    },
+    {
+      "id": "copy_trader_signal_replication",
+      "origin": "Prior copy-trader research project",
+      "status": "registry_blocked_revisit",
+      "registry_id": "copy_trader_signal_replication",
+      "requirements": [
+        "historical timestamped source signals",
+        "execution mapping"
+      ]
+    },
+    {
+      "id": "variance_risk_premium",
+      "origin": "Prior academic/external backlog",
+      "status": "covered_by_blocked_family",
+      "registry_id": "bounded_vrp"
+    },
+    {
+      "id": "currency_momentum",
+      "origin": "Prior academic/external backlog",
+      "status": "needs_reconstruction",
+      "markets": [
+        "forex",
+        "futures_proxy"
+      ],
+      "requirements": [
+        "restore clean FX/futures data"
+      ]
+    },
+    {
+      "id": "momentum_factor_style_rotation",
+      "origin": "Prior academic/external backlog",
+      "status": "needs_reconstruction",
+      "markets": [
+        "etf",
+        "stock"
+      ],
+      "requirements": [
+        "define point-in-time factor/style universe"
+      ]
+    },
+    {
+      "id": "consistent_momentum",
+      "origin": "Prior academic/external backlog",
+      "status": "needs_reconstruction",
+      "markets": [
+        "etf",
+        "stock",
+        "crypto",
+        "futures_proxy"
+      ],
+      "requirements": [
+        "freeze published consistency rule"
+      ]
+    },
+    {
+      "id": "tickeron_strategy_research",
+      "origin": "Prior bot-platform research",
+      "status": "source_revisit",
+      "requirements": [
+        "obtain reproducible rule-level strategies; platform claims alone are not evidence"
+      ]
+    },
+    {
+      "id": "trutrade_strategy_research",
+      "origin": "Prior bot-platform research",
+      "status": "source_revisit",
+      "requirements": [
+        "obtain reproducible rule-level strategies; platform claims alone are not evidence"
+      ]
+    },
+    {
+      "id": "moondev_channel_strategy_research",
+      "origin": "Prior Moon Dev YouTube strategy-mining project",
+      "status": "source_revisit",
+      "requirements": [
+        "recover mechanical rules for additional strategies not already in registry"
+      ]
+    },
+    {
+      "id": "boto_pumpdump_30m",
+      "origin": "Prior bot research",
+      "status": "prior_terminal",
+      "registry_id": "boto_pumpdump_30m"
+    },
+    {
+      "id": "supertrend_10x3_1h",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "supertrend_10x3_1h"
+    },
+    {
+      "id": "macd_30_63_30_30m",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "macd_30_63_30_30m"
+    },
+    {
+      "id": "donchian_doubleconfirm_1h",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "donchian_doubleconfirm_1h"
+    },
+    {
+      "id": "bollinger_42_2p5_1h",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "bollinger_42_2p5_1h"
+    },
+    {
+      "id": "heiken_ashi_supertrend",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "heiken_ashi_supertrend"
+    },
+    {
+      "id": "qqe_ssl_wae",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "qqe_ssl_wae"
+    },
+    {
+      "id": "lazybear_squeeze",
+      "origin": "Prior indicator research",
+      "status": "prior_terminal",
+      "registry_id": "lazybear_squeeze"
+    },
+    {
+      "id": "eight_rule_post_sweep",
+      "origin": "Prior strategy sweep",
+      "status": "prior_terminal_overfit",
+      "registry_id": "eight_rule_post_sweep"
+    },
+    {
+      "id": "crazy_sma",
+      "origin": "Prior strategy research",
+      "status": "prior_terminal_overfit",
+      "registry_id": "crazy_sma"
+    }
+  ]
+}
