@@ -544,12 +544,43 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         stocks = [x for x in cfg["targets"] if x["market"] == "stock"]
         self.assertEqual(len(fx), 7)
         self.assertEqual(len(stocks), 30)
-        self.assertTrue(all(x["source"] == "stooq_fx" for x in fx))
+        self.assertTrue(all(x["source"] == "dukascopy_bid_daily" for x in fx))
         self.assertTrue(all(x["validation_start"] == "2021-01-01" for x in fx))
         self.assertNotIn(
             "zanger_volume_breakout_proxy",
             cfg["family_allowlist_by_market"]["forex"],
         )
+
+    def test_dukascopy_daily_decoder_is_scaled_and_filters_forward_fill(self):
+        import lzma
+        import struct
+        import dukascopy_daily
+
+        candle = struct.Struct("!IIIIIf")
+        raw = b"".join([
+            candle.pack(0, 110000, 110100, 109900, 110200, 12.5),
+            candle.pack(86400, 110000, 110100, 109900, 110200, 12.5),
+            candle.pack(172800, 110200, 110300, 110100, 110400, 15.0),
+        ])
+        rows, audit = dukascopy_daily.decode_daily_blob(
+            lzma.compress(raw), "EURUSD", 2020
+        )
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(audit["filtered_forward_fill_records"], 1)
+        self.assertEqual(rows[0][0][:10], "2020-01-01")
+        self.assertAlmostEqual(rows[0][1], 1.10)
+        self.assertAlmostEqual(rows[0][2], 1.102)
+        self.assertAlmostEqual(rows[0][3], 1.099)
+        self.assertAlmostEqual(rows[0][4], 1.101)
+
+        jpy_raw = candle.pack(
+            0, 109500, 109600, 109400, 109700, 9.0
+        )
+        jpy_rows, _ = dukascopy_daily.decode_daily_blob(
+            lzma.compress(jpy_raw), "USDJPY", 2020
+        )
+        self.assertAlmostEqual(jpy_rows[0][1], 109.5)
+        self.assertAlmostEqual(jpy_rows[0][4], 109.6)
 
     def test_yahoo_futures_proxy_normalization_is_explicit_and_conservative(self):
         import prepare_market_data
