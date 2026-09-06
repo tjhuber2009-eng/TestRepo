@@ -131,9 +131,9 @@ jobs:
           --config stock_fx_config.json
           --state-dir stock_fx_state
           --universe-plan strategy_library/stock_fx_universe_plan.json
-          --iters-per-visit 4
+          --iters-per-visit 2
           --max-visits 6
-          --max-seconds 2400
+          --max-seconds 1800
           --breadth-target 10
           --depth-target 30
           --elite-target 60
