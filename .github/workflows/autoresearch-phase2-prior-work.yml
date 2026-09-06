@@ -61,7 +61,7 @@ jobs:
           python oos_guard.py
 
       - name: Advance prior-work baseline screening
-        run: python phase2_prior_runner.py --max-tracks 24
+        run: python phase2_prior_runner.py --max-tracks 96
 
       - name: Post-run contamination guard
         run: python oos_guard.py
