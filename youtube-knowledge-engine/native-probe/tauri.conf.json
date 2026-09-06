@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "YouTube Intelligence Desktop",
+  "version": "3.1.0",
+  "identifier": "com.youtubeintelligence.desktop",
+  "app": {
+    "windows": []
+  },
+  "bundle": {
+    "active": false
+  }
+}
