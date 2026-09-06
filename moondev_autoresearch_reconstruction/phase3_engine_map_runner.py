@@ -92,6 +92,16 @@ def classify(text):
     return max(scores)[1] if scores else "unclassified"
 
 
+def register_rule_hash(admitted, rules_hash, seen_rule_hashes):
+    """Return duplicate status and register only admitted complete rule sets."""
+    duplicate = bool(
+        admitted and rules_hash and rules_hash in seen_rule_hashes
+    )
+    if admitted and rules_hash:
+        seen_rule_hashes.add(rules_hash)
+    return duplicate
+
+
 def source_targets(candidate):
     text = "\n".join([
         str(candidate.get("url") or ""),
@@ -145,11 +155,9 @@ def main():
         # Deduplicate only complete/admitted mechanical specifications.
         # Incomplete specs commonly hash to the same sparse structure and must
         # still receive independent source-hydration attempts.
-        duplicate_rules = bool(
-            admitted and rules_hash and rules_hash in seen_rule_hashes
+        duplicate_rules = register_rule_hash(
+            admitted, rules_hash, seen_rule_hashes
         )
-        if admitted and rules_hash:
-            seen_rule_hashes.add(rules_hash)
 
         if admitted and engine["support"] == "supported" and not duplicate_rules:
             status = "ready_for_development_adapter"
