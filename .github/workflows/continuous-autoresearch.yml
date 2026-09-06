@@ -75,6 +75,19 @@ jobs:
             echo "no prior state branch; starting clean"
           fi
 
+      - name: Capture pre-cycle V4 promotion counters
+        id: promotion_before
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+
+          p=Path("continuous_state/progress.json")
+          x=json.loads(p.read_text()) if p.exists() else {}
+          kept=int(x.get("total_kept_candidates",0) or 0)
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"kept={kept}\n")
+
       - name: Restore latest tournament snapshot
         shell: bash
         working-directory: .
@@ -196,6 +209,30 @@ jobs:
           Path("cycle-report.md").write_text("\n".join(out)+"\n")
           print("\n".join(out))
 
+      - name: Detect V4 promotion opportunity
+        id: v4_promotion
+        shell: python
+        env:
+          KEPT_BEFORE: ${{ steps.promotion_before.outputs.kept }}
+        run: |
+          import json, os
+          from pathlib import Path
+
+          x=json.loads(Path("continuous_state/progress.json").read_text())
+          before=int(os.environ.get("KEPT_BEFORE","0") or 0)
+          after=int(x.get("total_kept_candidates",0) or 0)
+          terminal=bool(x.get("all_runnable_tracks_terminal"))
+          trigger=(after > before) or terminal
+          reason=(
+              f"new_keepers:{after-before}"
+              if after > before
+              else ("final_frozen_pass" if terminal else "none")
+          )
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"trigger={'true' if trigger else 'false'}\n")
+              f.write(f"reason={reason}\n")
+              f.write(f"kept_after={after}\n")
+
       - name: Build private project dashboard
         run: >
           python build_dashboard.py
@@ -248,6 +285,16 @@ jobs:
             git commit -m "Continuous autoresearch state run $GITHUB_RUN_ID"
           fi
           git push --force-with-lease origin continuous-autoresearch-state
+
+      - name: Trigger sequential V4 promotion cycle
+        if: success() && steps.v4_promotion.outputs.trigger == 'true'
+        shell: bash
+        working-directory: .
+        run: |
+          echo "Dispatching V4 promotion cycle: ${{ steps.v4_promotion.outputs.reason }}"
+          gh workflow run autoresearch-v4-promotion-cycle.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
 
       - name: Refresh stable live dashboard
         shell: bash
