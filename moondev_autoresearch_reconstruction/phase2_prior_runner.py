@@ -66,10 +66,29 @@ def build_tracks():
                 "not contract-exact"
             )
         targets.append(target)
+    btc_base=next(x for x in targets if x["id"]=="btc")
+    btc_monthly=dict(btc_base)
+    btc_monthly.update({
+        "id":"btc_bitstamp_monthly",
+        "source":"bitstamp",
+        "symbol":"BTCUSD",
+        "start":"2011-08-18",
+        "data_quality_grade":"B",
+        "instrument_fidelity":"spot_exact",
+        "data_quality_note":(
+            "Bitstamp BTCUSD daily OHLC for causal expanding-history "
+            "monthly-seasonality reconstruction"
+        ),
+    })
     profiles=cfg["profiles"]
     out=[]
     for family in runnable_families():
-        for target in sorted(targets,key=lambda x:x["id"]):
+        family_targets=(
+            [btc_monthly]
+            if family=="bitcoin_cycle_monthly_causal"
+            else targets
+        )
+        for target in sorted(family_targets,key=lambda x:x["id"]):
             for profile_name in ("private","prop"):
                 out.append({
                     "id":slug(family,target["id"],profile_name),
