@@ -81,7 +81,7 @@ def build_staggered_satellite_candidates(
     supplemental_returns: dict[str, pd.Series],
     *,
     max_satellite_weight: float = 0.25,
-    sleeve_steps: tuple[float, ...] = (0.05, 0.10, 0.15, 0.20, 0.25),
+    sleeve_steps: tuple[float, ...] = (0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35),
 ) -> tuple[dict[str, pd.Series], dict[str, SatelliteCandidateSpec]]:
     """Create deterministic core+satellite return streams on the full core index."""
     core = core_returns.apply(pd.to_numeric, errors="coerce").dropna(how="any")
