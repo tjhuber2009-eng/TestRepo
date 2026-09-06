@@ -26,6 +26,7 @@ from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate,
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import (
+    AssetCost,
     MultiAssetBacktester,
     PortfolioLimits,
     leveraged_hysteresis_rotation,
@@ -1556,6 +1557,23 @@ class MoonStrategy:
             ),
             "source_bracket_not_transferred",
         )
+        self.assertIsNone(
+            source_execution_adapter_blocker(
+                "class MoonStrategy:\n"
+                "    def next(self):\n"
+                "        self.buy(size=1, sl=99)\n",
+                allow_source_stop=True,
+            )
+        )
+        self.assertEqual(
+            source_execution_adapter_blocker(
+                "class MoonStrategy:\n"
+                "    def next(self):\n"
+                "        self.buy(size=1, tp=101)\n",
+                allow_source_stop=True,
+            ),
+            "source_bracket_not_transferred",
+        )
 
     def test_exact_prop_adapter_required_parameter_parsers_fail_closed(self):
         source = "self.ema63 = self.I(_ema_now, self.data.Close, 63)\n"
@@ -1579,13 +1597,108 @@ class MoonStrategy:
             _parse_int_required(source, r"missing=(\d+)", "missing")
 
     def test_signal_only_prop_proxies_are_not_authoritative_adapters(self):
-        for family in (
-            "donchian_20_10",
-            "donchian_sma50",
-            "swing_terminal_pullback_proxy",
+        self.assertNotIn("swing_terminal_pullback_proxy", PROP_SIGNAL_ADAPTERS)
+
+    def test_donchian_prop_adapter_transfers_source_atr_stop(self):
+        self.assertEqual(
+            PROP_SIGNAL_ADAPTERS["donchian_20_10"],
+            "daily_donchian_atr_stop",
+        )
+        source = """
+class MoonStrategy:
+    vol_lookback = 30
+    vol_target = 0.08
+    entry_lookback = 20
+    exit_lookback = 10
+    def init(self):
+        self.hh = self.I(_rolling_high, self.data.High, self.entry_lookback)
+        self.ll = self.I(_rolling_low, self.data.Low, self.exit_lookback)
+        self.atr = self.I(_atr, self.data.High, self.data.Low, self.data.Close, 20)
+    def _buy_with_stop(self, px, atr, stop_mult=3.0):
+        self.buy(size=1, sl=px - stop_mult * atr)
+    def next(self):
+        if len(self.data.Close) < 40:
+            return
+        px = float(self.data.Close[-1])
+        atr = float(self.atr[-1])
+        if not self.position:
+            self._buy_with_stop(px, atr, 3.0)
+        else:
+            self.position.close()
+"""
+        board = {
+            "protocol": "nested_chronological_v3",
+            "rows": [{
+                "track_id": "don",
+                "profile": "prop",
+                "family": "donchian_20_10",
+                "target": "btc",
+                "market": "crypto",
+                "exactness": "canonical_family",
+                "evidence_grade": "A",
+                "development_guard_ok": True,
+                "development_cagr_pct": 40.0,
+                "development_max_dd_pct": -8.0,
+                "development_sharpe": 1.5,
+                "development_pf": 2.0,
+                "development_years": 3.0,
+                "development_trades": 20,
+                "selection_score": 1.0,
+                "multiple_test_qvalue": 0.05,
+                "pbo": None,
+                "extreme_stress_return_pct": 30.0,
+            }],
+        }
+        with mock.patch(
+            "v4.continuous_bridge.load_candidate_source",
+            return_value=source,
         ):
-            with self.subTest(family=family):
-                self.assertNotIn(family, PROP_SIGNAL_ADAPTERS)
+            supported, audit = prop_transfer_candidates(
+                {"BTCUSDT"},
+                leaderboard=board,
+            )
+        self.assertEqual(len(supported), 1)
+        params = supported[0]
+        self.assertTrue(params["source_stop_required"])
+        self.assertTrue(params["source_stop_transferred"])
+        self.assertEqual(params["entry_lookback"], 20)
+        self.assertEqual(params["exit_lookback"], 10)
+        self.assertEqual(params["atr_window"], 20)
+        self.assertAlmostEqual(params["stop_mult"], 3.0)
+        self.assertEqual(
+            params["transfer_exactness"],
+            "signal_and_atr_stop_logic_exact_v4_risk_resized",
+        )
+        self.assertEqual(audit["supported_count"], 1)
+
+    def test_multi_asset_engine_executes_long_stop_fill_inside_bar(self):
+        idx = pd.date_range("2020-01-01", periods=4, freq="h", tz="UTC")
+        frame = pd.DataFrame({
+            "Open": [100.0, 100.0, 100.0, 100.0],
+            "High": [101.0, 101.0, 101.0, 101.0],
+            "Low": [99.0, 99.0, 90.0, 99.0],
+            "Close": [100.0, 100.0, 100.0, 100.0],
+        }, index=idx)
+        targets = pd.DataFrame(
+            {"X": [1.0, 1.0, 0.0, 0.0]},
+            index=idx,
+        )
+        stops = pd.DataFrame(
+            {"X": [95.0, 95.0, np.nan, np.nan]},
+            index=idx,
+        )
+        engine = MultiAssetBacktester(
+            {"X": frame},
+            costs={"X": AssetCost(commission_bps=0.0, slippage_bps=0.0)},
+            periods_per_year=365.0 * 24.0,
+        )
+        result = engine.run(
+            lambda data, features=None: targets,
+            long_stop_prices=stops,
+        )
+        self.assertAlmostEqual(float(result.returns.loc[idx[2]]), -0.05)
+        self.assertEqual(float(result.execution_weights.loc[idx[2], "X"]), 1.0)
+        self.assertEqual(float(result.target_weights.loc[idx[2], "X"]), 0.0)
 
     def test_unsupported_prop_leaders_do_not_block_lower_exact_adapter(self):
         def row(track, family, score):
