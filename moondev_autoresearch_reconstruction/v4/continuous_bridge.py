@@ -357,7 +357,6 @@ def prop_transfer_candidates(
         leaderboard=leaderboard,
     )
     supported = []
-    supported_per_target: dict[str, int] = {}
     audit = []
     for c in candidates:
         row = c.to_dict()
@@ -523,31 +522,18 @@ def prop_transfer_candidates(
                 "source_stop_transferred": False,
                 "transfer_exactness": "signal_only_proxy",
             })
-        if supported_per_target.get(c.target, 0) >= 2:
-            row["transfer_status"] = "supported_not_selected"
-            row["transfer_reason"] = "per_target_exact_adapter_limit"
-            row["transfer_params"] = dict(params)
-            audit.append(row)
-            continue
-        if len(supported) >= 12:
-            row["transfer_status"] = "supported_not_selected"
-            row["transfer_reason"] = "total_exact_adapter_limit"
-            row["transfer_params"] = dict(params)
-            audit.append(row)
-            continue
         row["transfer_status"] = "supported"
         row["transfer_params"] = dict(params)
         audit.append(row)
         supported.append(params)
-        supported_per_target[c.target] = supported_per_target.get(c.target, 0) + 1
 
     return supported, {
         "available": bool(candidates),
         "policy": (
             "continuous prop champions are pre-screened development hypotheses; "
-            "scan beyond unsupported leaders so only exact long-only daily signal/exit "
-            "adapters consume diversification slots and enter the Prague-aligned "
-            "v4 simulator; required parameters are parsed from source, active source "
+            "scan the full eligible queue and evaluate every exact long-only daily "
+            "signal/exit adapter in the Prague-aligned v4 simulator before frontier "
+            "selection; required parameters are parsed from source, active source "
             "stops/brackets/short entries fail closed, and v4 exposure sizing replaces "
             "source sizing by design under 3x cost stress"
         ),
