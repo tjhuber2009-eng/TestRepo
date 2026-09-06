@@ -1,0 +1,99 @@
+name: AUTORESEARCH Phase 3 free discovery lane
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: autoresearch-phase3-free-discovery
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - name: Check out research source
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore isolated Phase 3 state
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state || true
+          if git rev-parse --verify refs/remotes/origin/phase3-free-discovery-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state || true
+          fi
+
+      - name: Compile isolated free-source lane
+        run: python -m py_compile free_source_pipeline.py phase3_free_runner.py
+
+      - name: Advance finite free-source discovery
+        run: python phase3_free_runner.py --batches-per-run 1
+
+      - name: Verify sealed-boundary flags
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          x=json.loads(Path("phase3_state/progress.json").read_text())
+          assert x["phase1_registry_mutated"] is False
+          assert x["hidden_validation_opened"] is False
+          assert x["final_oos_opened"] is False
+
+      - name: Determine continuation
+        id: progress
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          x=json.loads(Path("phase3_state/progress.json").read_text())
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"complete={'true' if x.get('discovery_complete') else 'false'}\n")
+              f.write(f"batch={int(x.get('next_batch',0))}\n")
+              f.write(f"discoveries={int(x.get('unique_discoveries',0))}\n")
+
+      - name: Persist isolated Phase 3 state
+        shell: bash
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C phase3-free-discovery-state
+          git add -f moondev_autoresearch_reconstruction/phase3_state
+          if git diff --cached --quiet; then
+            echo "no Phase 3 state changes"
+          else
+            git commit -m "Phase 3 free-discovery state run $GITHUB_RUN_ID"
+          fi
+          git push --force-with-lease origin phase3-free-discovery-state
+
+      - name: Upload Phase 3 snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-phase3-${{ github.run_id }}
+          path: moondev_autoresearch_reconstruction/phase3_state
+          retention-days: 14
+
+      - name: Chain next Phase 3 batch
+        if: success() && steps.progress.outputs.complete != 'true'
+        shell: bash
+        working-directory: .
+        run: |
+          echo "Phase 3 batch ${{ steps.progress.outputs.batch }}; discoveries ${{ steps.progress.outputs.discoveries }}"
+          gh workflow run autoresearch-phase3-free.yml --repo "$GITHUB_REPOSITORY" --ref main
