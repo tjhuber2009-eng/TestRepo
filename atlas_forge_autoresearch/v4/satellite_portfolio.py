@@ -57,6 +57,24 @@ def _normalized_core_stream(
     return core_returns.mul(w, axis=1).sum(axis=1).rename("long_history_core")
 
 
+def satellite_gross_profile(
+    index: pd.Index,
+    spec: SatelliteCandidateSpec,
+) -> pd.Series:
+    """Unit-scale realized gross: core plus only satellites whose data exist."""
+    sleeve = float(spec.sleeve_weight)
+    gross = pd.Series(1.0 - sleeve, index=index, dtype=float)
+    for name, weight in spec.satellite_weights.items():
+        first = pd.Timestamp(spec.inception_dates[name])
+        active = pd.Series(
+            (pd.DatetimeIndex(index) >= first).astype(float),
+            index=index,
+            dtype=float,
+        )
+        gross = gross + sleeve * float(weight) * active
+    return gross.rename(spec.name)
+
+
 def build_staggered_satellite_candidates(
     core_returns: pd.DataFrame,
     core_weights: dict[str, float],
