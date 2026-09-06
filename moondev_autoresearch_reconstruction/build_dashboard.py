@@ -251,6 +251,9 @@ def main():
     continuous_runs = workflow_runs(
         load_json(runtime / "continuous_runs.json", {}) or {}
     )
+    v4_runs = workflow_runs(
+        load_json(runtime / "v4_runs.json", {}) or {}
+    )
     tournament_runs = workflow_runs(
         load_json(runtime / "tournament_runs.json", {}) or {}
     )
@@ -294,6 +297,7 @@ def main():
         },
         "workflow": {
             "continuous_runs": continuous_runs,
+            "v4_runs": v4_runs,
             "tournament_runs": tournament_runs,
             "tournament_jobs": jobs,
         },
