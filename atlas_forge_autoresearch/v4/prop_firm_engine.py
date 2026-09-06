@@ -555,6 +555,7 @@ def _candidate_views(
         return {
             "max_payout_efficiency": None,
             "max_repeat_payout_efficiency": None,
+            "max_repeat_expected_reward": None,
             "max_evaluation_pass": None,
             "safest_funded": None,
             "balanced": None,
@@ -574,6 +575,15 @@ def _candidate_views(
             x.repeat_payout_efficiency_score,
             x.funded.survival_probability,
             x.combined_evaluation_pass_probability,
+        ),
+    )
+    max_repeat_reward = max(
+        candidates,
+        key=lambda x: (
+            x.repeat_expected_reward_pct,
+            x.funded.survival_probability,
+            x.combined_evaluation_pass_probability,
+            x.repeat_payout_efficiency_score,
         ),
     )
     max_pass = max(
@@ -641,6 +651,7 @@ def _candidate_views(
     return {
         "max_payout_efficiency": max_payout,
         "max_repeat_payout_efficiency": max_repeat,
+        "max_repeat_expected_reward": max_repeat_reward,
         "max_evaluation_pass": max_pass,
         "safest_funded": safest,
         "balanced": balanced,
@@ -1167,7 +1178,8 @@ def optimize_prop_exposure(
         objective=(
             "independently optimize Challenge, Verification, and funded exposure; "
             "use common bootstrap paths across scales; report first-reward payout, "
-            "12-cycle survival-discounted repeat-payout, pass-probability, "
+            "maximum 12-cycle expected repeat reward, survival-discounted repeat-payout "
+            "efficiency, pass-probability, "
             "safest-funded, balanced, and conservative risk views"
         ),
         views=views,
