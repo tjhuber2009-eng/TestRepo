@@ -481,29 +481,29 @@ def prop_transfer_candidates(
             try:
                 entry_lookback = _parse_int_required(
                     source,
-                    r"(?:entry_lookback\\s*=\\s*|_rolling_high,.*?,\\s*)(\\d+)",
+                    r"(?:entry_lookback\s*=\s*|_rolling_high,.*?,\s*)(\d+)",
                     "entry_lookback",
                 )
                 exit_lookback = _parse_int_required(
                     source,
-                    r"(?:exit_lookback\\s*=\\s*|_rolling_low,.*?,\\s*)(\\d+)",
+                    r"(?:exit_lookback\s*=\s*|_rolling_low,.*?,\s*)(\d+)",
                     "exit_lookback",
                 )
                 atr_window = _parse_int_required(
                     source,
-                    r"self\\.atr\\s*=\\s*self\\.I\\(_atr,.*?,\\s*(\\d+)\\)",
+                    r"self\.atr\s*=\s*self\.I\(_atr,.*?,\s*(\d+)\)",
                     "atr_window",
                 )
                 stop_mult = _parse_float_required(
                     source,
-                    r"_buy_with_stop\\(px,\\s*atr,\\s*([0-9]*\\.?[0-9]+)\\)",
+                    r"_buy_with_stop\(px,\s*atr,\s*([0-9]*\.?[0-9]+)\)",
                     "stop_mult",
                 )
                 sma_window = None
                 if c.family == "donchian_sma50":
                     sma_window = _parse_int_required(
                         source,
-                        r"self\\.sma\\d+\\s*=\\s*self\\.I\\(_sma,.*?,\\s*(\\d+)\\)",
+                        r"self\.sma\d+\s*=\s*self\.I\(_sma,.*?,\s*(\d+)\)",
                         "sma_window",
                     )
                 params.update({
