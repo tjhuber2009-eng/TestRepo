@@ -1,0 +1,119 @@
+name: AUTORESEARCH Phase 3 rule reconstruction
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: autoresearch-phase3-reconstruction
+  cancel-in-progress: false
+
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - name: Check out research source
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore Phase 3 discovery state
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state
+          git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state
+
+      - name: Restore prior reconstruction state
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-reconstruction-state:refs/remotes/origin/phase3-reconstruction-state || true
+          if git rev-parse --verify refs/remotes/origin/phase3-reconstruction-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/phase3-reconstruction-state -- moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json moondev_autoresearch_reconstruction/phase3_state/reconstruction_cursor.json 2>/dev/null || true
+          fi
+
+      - name: Compile and verify sealed inputs
+        shell: bash
+        run: |
+          test -n "$NVIDIA_API_KEY"
+          python -m py_compile phase3_reconstruct_runner.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path("phase3_state/progress.json").read_text())
+          assert x["discovery_complete"] is True
+          assert x["phase1_registry_mutated"] is False
+          assert x["hidden_validation_opened"] is False
+          assert x["final_oos_opened"] is False
+          PY
+
+      - name: Reconstruct explicit public rules
+        run: python phase3_reconstruct_runner.py --max-candidates 12
+
+      - name: Verify isolation
+        id: progress
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          x=json.loads(Path("phase3_state/reconstruction_progress.json").read_text())
+          assert x["phase1_registry_mutated"] is False
+          assert x["hidden_validation_opened"] is False
+          assert x["final_oos_opened"] is False
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"complete={'true' if x.get('all_reconstructed') else 'false'}\n")
+              f.write(f"processed={int(x.get('processed_count',0))}\n")
+              f.write(f"total={int(x.get('queue_count',0))}\n")
+
+      - name: Persist isolated reconstruction state
+        shell: bash
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C phase3-reconstruction-state
+          git add -f moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json moondev_autoresearch_reconstruction/phase3_state/reconstruction_cursor.json
+          if git diff --cached --quiet; then
+            echo "no reconstruction state changes"
+          else
+            git commit -m "Phase 3 reconstruction state run $GITHUB_RUN_ID"
+          fi
+          git push --force-with-lease origin phase3-reconstruction-state
+
+      - name: Upload reconstruction snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-phase3-reconstruction-${{ github.run_id }}
+          path: |
+            moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json
+            moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl
+          retention-days: 14
+
+      - name: Chain reconstruction batch
+        if: success() && steps.progress.outputs.complete != 'true'
+        shell: bash
+        working-directory: .
+        run: |
+          echo "Phase 3 reconstruction: ${{ steps.progress.outputs.processed }}/${{ steps.progress.outputs.total }}"
+          gh workflow run autoresearch-phase3-reconstruct.yml --repo "$GITHUB_REPOSITORY" --ref main
