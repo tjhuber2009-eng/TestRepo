@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T13:08:58Z",
+  "generated_at": "2026-09-06T13:39:29Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -54466,7 +54466,7 @@
             "worst_score": -3.636685761722702
           },
           {
-            "adjusted_score": 9.806508163307882,
+            "adjusted_score": 9.837967942446195,
             "fold_scores": [
               21.54530486501569,
               5.646336571268851,
@@ -54487,7 +54487,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 16.049751101867095,
+            "plateau_score": 16.15461703232814,
             "primary_score": 14.799434469041728,
             "score_std": 15.1483133876243,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -54746,7 +54746,7 @@
             "worst_score": -2.685224606061154
           },
           {
-            "adjusted_score": 8.526787877264377,
+            "adjusted_score": 8.622433618566433,
             "fold_scores": [
               13.230842854895819,
               7.143423026575024,
@@ -54767,7 +54767,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 14.05116199365029,
+            "plateau_score": 14.369981131323804,
             "primary_score": 14.277582400344047,
             "score_std": 14.863326870309434,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -63102,7 +63102,7 @@
           "gross_exposure": 0.9024925363279448,
           "max_dd_pct": -17.292203507758387,
           "score": 16.18178187710505,
-          "sharpe": 1.0805640230289828,
+          "sharpe": 1.0805640230289826,
           "weights": {
             "cash_rotation_risk_budgeted": 0.0022245923798104284,
             "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63131,7 +63131,7 @@
             "gross_exposure": 0.7775924788539519,
             "max_dd_pct": -16.346811898542658,
             "score": 15.864395423773308,
-            "sharpe": 1.0702085019086347,
+            "sharpe": 1.070208501908635,
             "weights": {
               "cash_rotation_risk_budgeted": 0.009315446914387892,
               "cash_rotation_vix_stress": 0.0411487227259109,
@@ -63158,7 +63158,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289828,
+            "sharpe": 1.0805640230289826,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63185,7 +63185,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289828,
+            "sharpe": 1.0805640230289826,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63212,7 +63212,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289828,
+            "sharpe": 1.0805640230289826,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -69918,7 +69918,7 @@
             "extreme_stress_return_pct": 99.117,
             "family": "donchian_20_10",
             "market": "crypto",
-            "multiple_test_qvalue": 0.032335,
+            "multiple_test_qvalue": 0.032772,
             "pbo": 0.114286,
             "profile": "prop",
             "selection_score": 0.262525,
@@ -69946,45 +69946,22 @@
             "transfer_status": "supported"
           },
           {
-            "adapter": null,
-            "development_cagr_pct": 10.914,
-            "development_max_dd_pct": -7.573,
-            "development_pf": 2.869,
-            "development_sharpe": 1.5425,
-            "development_trades": 75,
-            "development_years": 3.3731,
-            "evidence_grade": "A",
-            "exactness": "proxy",
-            "extreme_stress_return_pct": 39.001,
-            "family": "qqe_proxy",
-            "market": "crypto",
-            "multiple_test_qvalue": 0.05445,
-            "pbo": 0.014286,
-            "profile": "prop",
-            "selection_score": 0.126989,
-            "symbol": "BTCUSDT",
-            "target": "btc",
-            "track_id": "qqe_proxy__btc__prop",
-            "transfer_reason": "missing_authoritative_adapter",
-            "transfer_status": "adapter_required"
-          },
-          {
             "adapter": "daily_rsi_adx",
-            "development_cagr_pct": 9.405,
-            "development_max_dd_pct": -3.468,
-            "development_pf": 2.786,
-            "development_sharpe": 1.6747,
-            "development_trades": 101,
+            "development_cagr_pct": 13.065,
+            "development_max_dd_pct": -4.907,
+            "development_pf": 3.269,
+            "development_sharpe": 1.816,
+            "development_trades": 91,
             "development_years": 3.3731,
             "evidence_grade": "A",
             "exactness": "substantially_specified",
-            "extreme_stress_return_pct": 31.513,
+            "extreme_stress_return_pct": 47.527,
             "family": "btc_rsi_adx",
             "market": "crypto",
-            "multiple_test_qvalue": 0.032335,
-            "pbo": null,
+            "multiple_test_qvalue": 0.028871,
+            "pbo": 0.071429,
             "profile": "prop",
-            "selection_score": 0.123171,
+            "selection_score": 0.189706,
             "symbol": "BTCUSDT",
             "target": "btc",
             "track_id": "btc_rsi_adx__btc__prop",
@@ -70009,6 +69986,29 @@
           },
           {
             "adapter": null,
+            "development_cagr_pct": 10.914,
+            "development_max_dd_pct": -7.573,
+            "development_pf": 2.869,
+            "development_sharpe": 1.5425,
+            "development_trades": 75,
+            "development_years": 3.3731,
+            "evidence_grade": "A",
+            "exactness": "proxy",
+            "extreme_stress_return_pct": 39.001,
+            "family": "qqe_proxy",
+            "market": "crypto",
+            "multiple_test_qvalue": 0.05445,
+            "pbo": 0.014286,
+            "profile": "prop",
+            "selection_score": 0.126989,
+            "symbol": "BTCUSDT",
+            "target": "btc",
+            "track_id": "qqe_proxy__btc__prop",
+            "transfer_reason": "missing_authoritative_adapter",
+            "transfer_status": "adapter_required"
+          },
+          {
+            "adapter": null,
             "development_cagr_pct": 8.182,
             "development_max_dd_pct": -4.47,
             "development_pf": 2.365,
@@ -70021,7 +70021,7 @@
             "family": "qqe_proxy",
             "market": "crypto",
             "multiple_test_qvalue": 0.038494,
-            "pbo": 0.242857,
+            "pbo": 0.157143,
             "profile": "prop",
             "selection_score": 0.08467,
             "symbol": "ETHUSDT",
@@ -70044,7 +70044,7 @@
             "family": "btc_rsi_adx",
             "market": "crypto",
             "multiple_test_qvalue": 0.046382,
-            "pbo": 0.371429,
+            "pbo": 0.342857,
             "profile": "prop",
             "selection_score": 0.077214,
             "symbol": "ETHUSDT",
@@ -70082,7 +70082,7 @@
             "extreme_stress_return_pct": 41.621,
             "family": "atr_channel_trend",
             "market": "crypto",
-            "multiple_test_qvalue": 0.032335,
+            "multiple_test_qvalue": 0.032772,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.070394,
@@ -117335,8 +117335,8 @@
         "id": 34035203985,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 100,
-        "status": "queued",
-        "updated_at": "2026-09-06T13:08:53Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T13:08:57Z"
       },
       {
         "conclusion": "success",
@@ -117582,15 +117582,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T13:08:47Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34035201546",
         "id": 34035201546,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 22,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T13:08:52Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T13:39:21Z"
       },
       {
         "conclusion": "success",
