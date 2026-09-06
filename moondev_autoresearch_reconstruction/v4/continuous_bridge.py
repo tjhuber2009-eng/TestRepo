@@ -57,9 +57,6 @@ PROP_SIGNAL_ADAPTERS = {
     "btc_rsi_adx": "daily_rsi_adx",
     "sentinel63": "daily_sentinel",
     "sentinel65": "daily_sentinel",
-    "donchian_20_10": "daily_donchian_signal_proxy",
-    "donchian_sma50": "daily_donchian_sma_signal_proxy",
-    "swing_terminal_pullback_proxy": "daily_swing_pullback_signal_proxy",
 }
 
 GRADE_RANK = {"A": 3, "B": 2, "C": 1, "D": 0}
