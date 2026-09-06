@@ -21862,7 +21862,7 @@
     "stock_track_count": 900,
     "target_count": 37
   },
-  "generated_at": "2026-09-06T21:36:08Z",
+  "generated_at": "2026-09-06T21:41:49Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -140326,7 +140326,7 @@
         "reward_cycle_days": 14,
         "scaling_plan_upgrades_included": false
       },
-      "research_commit_sha": "199c9001c8274c16d5ef5e7f693e60d913749ac3",
+      "research_commit_sha": "f6d77888270eac5c44e87385b37fae0cc81e73e2",
       "reset_timezone": "Europe/Prague",
       "search_policy": {
         "broad_base_candidates": 120,
@@ -140475,15 +140475,15 @@
     ],
     "stock_fx_runs": [
       {
-        "conclusion": null,
+        "conclusion": "cancelled",
         "created_at": "2026-09-06T20:45:12Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34058956435",
         "id": 34058956435,
         "name": "Atlas Forge Stock + FX AUTORESEARCH",
         "run_number": 9,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T20:45:20Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T21:40:36Z"
       },
       {
         "conclusion": "success",
@@ -140736,8 +140736,8 @@
         "id": 34061562734,
         "name": "Atlas Forge V4 promotion cycle",
         "run_number": 35,
-        "status": "pending",
-        "updated_at": "2026-09-06T21:35:56Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T21:41:36Z"
       },
       {
         "conclusion": "cancelled",
@@ -140751,15 +140751,15 @@
         "updated_at": "2026-09-06T21:35:57Z"
       },
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T20:56:46Z",
         "event": "push",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34059532514",
         "id": 34059532514,
         "name": "Atlas Forge V4 promotion cycle",
         "run_number": 33,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T21:22:56Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T21:41:34Z"
       },
       {
         "conclusion": "success",
