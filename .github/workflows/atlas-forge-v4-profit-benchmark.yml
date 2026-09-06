@@ -92,7 +92,23 @@ jobs:
               "authoritative": chosen(x.get("portfolio")),
               "static": chosen(x.get("portfolio_static")),
               "satellite": chosen(x.get("portfolio_satellite")),
+              "satellite_matched_static_gross": (
+                  None if not x.get("portfolio_satellite")
+                  else chosen(
+                      x["portfolio_satellite"].get(
+                          "matched_static_gross_result"
+                      )
+                  )
+              ),
               "dynamic": chosen(x.get("portfolio_dynamic")),
+              "dynamic_matched_static_gross": (
+                  None if not x.get("portfolio_dynamic")
+                  else chosen(
+                      x["portfolio_dynamic"].get(
+                          "matched_static_gross_result"
+                      )
+                  )
+              ),
               "satellite_sleeve": (
                   None if not x.get("portfolio_satellite")
                   else x["portfolio_satellite"].get("sleeve")
