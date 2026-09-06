@@ -3,15 +3,15 @@
     {
       "candidate": "bgsully111",
       "key": "bgsully111::missing",
-      "message": "Candidate could not be resolved for 2 consecutive observations by the configured public data sources. Latest lookup: per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days. This does not by itself prove the eToro account is unavailable to copy.",
+      "message": "Candidate could not be resolved for 3 consecutive observations by the configured public data sources. Latest lookup: per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/bgsully111; census fallback throttled to every 7 days. This does not by itself prove the eToro account is unavailable to copy.",
       "type": "missing"
     },
     {
       "candidate": "WilEscobar",
       "key": "wilescobar::missing",
-      "message": "Candidate could not be resolved for 2 consecutive observations by the configured public data sources. Latest lookup: per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days. This does not by itself prove the eToro account is unavailable to copy.",
+      "message": "Candidate could not be resolved for 3 consecutive observations by the configured public data sources. Latest lookup: per-user lookup failed: 500 Server Error: Internal Server Error for url: https://etoro-census.vercel.app/api/public/WilEscobar; census fallback throttled to every 7 days. This does not by itself prove the eToro account is unavailable to copy.",
       "type": "missing"
     }
   ],
-  "date": "2026-09-04"
+  "date": "2026-09-06"
 }
