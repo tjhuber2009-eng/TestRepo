@@ -189,11 +189,12 @@ jobs:
 
           $msi = Get-ChildItem (Join-Path $bundle 'msi') -Filter '*.msi' -File | Select-Object -First 1
           if (-not $msi) { throw 'MSI installer missing before smoke test.' }
-          & msiexec.exe /i $msi.FullName /qn /norestart
-          if ($LASTEXITCODE -notin 0, 3010) { throw "MSI install failed with exit code $LASTEXITCODE" }
+          $msiQuoted = '"' + $msi.FullName + '"'
+          $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList @('/i', $msiQuoted, '/qn', '/norestart') -Wait -PassThru
+          if ($p.ExitCode -notin 0, 3010) { throw "MSI install failed with exit code $($p.ExitCode)" }
           $null = Assert-AppInstalled -Kind 'MSI'
-          & msiexec.exe /x $msi.FullName /qn /norestart
-          if ($LASTEXITCODE -notin 0, 3010) { throw "MSI uninstall failed with exit code $LASTEXITCODE" }
+          $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList @('/x', $msiQuoted, '/qn', '/norestart') -Wait -PassThru
+          if ($p.ExitCode -notin 0, 3010) { throw "MSI uninstall failed with exit code $($p.ExitCode)" }
           Assert-AppRemoved -Kind 'MSI'
 
           $nsis = Get-ChildItem (Join-Path $bundle 'nsis') -Filter '*.exe' -File | Select-Object -First 1
