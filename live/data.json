@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T05:10:24Z",
+  "generated_at": "2026-09-06T05:37:05Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 76.139,
@@ -46002,42 +46002,42 @@
         "candidates": [
           {
             "base": {
-              "cagr_pct": 77.54440735653611,
-              "max_dd_pct": -23.389980437993064,
-              "sharpe": 1.9854702109565157,
-              "trades": 14
+              "cagr_pct": 42.27232004482659,
+              "max_dd_pct": -25.218163711836162,
+              "sharpe": 1.5529561640496896,
+              "trades": 75
             },
             "candidate": {
-              "adapter": "daily_donchian_atr_stop",
-              "development_cagr_pct": 77.695,
-              "development_max_dd_pct": -23.39,
-              "development_pf": 22.825,
-              "development_sharpe": 1.9871,
-              "development_trades": 14,
+              "adapter": null,
+              "development_cagr_pct": 42.346,
+              "development_max_dd_pct": -25.218,
+              "development_pf": 2.76,
+              "development_sharpe": 1.5542,
+              "development_trades": 75,
               "development_years": 3.3731,
-              "evidence_grade": "B",
-              "exactness": "family",
-              "extreme_stress_return_pct": 586.445,
-              "family": "donchian_sma50",
+              "evidence_grade": "A",
+              "exactness": "proxy",
+              "extreme_stress_return_pct": 205.018,
+              "family": "qqe_proxy",
               "market": "crypto",
-              "multiple_test_qvalue": 0.026077,
-              "pbo": null,
+              "multiple_test_qvalue": 0.051599,
+              "pbo": 0.014286,
               "profile": "private",
-              "selection_score": 0.600738,
+              "selection_score": 0.470091,
               "symbol": "BTCUSDT",
               "target": "btc",
-              "track_id": "donchian_sma50__btc__private"
+              "track_id": "qqe_proxy__btc__private"
             },
             "cost_stress": {
-              "cagr_pct": 76.87116596570868,
-              "max_dd_pct": -23.760206121328153,
-              "sharpe": 1.9716593489320926,
-              "trades": 14
+              "cagr_pct": 39.114626496772885,
+              "max_dd_pct": -26.42152317776817,
+              "sharpe": 1.4612515741380707,
+              "trades": 75
             },
             "final_oos_opened": false,
             "hidden_validation_opened": false,
-            "portfolio_eligible": false,
-            "portfolio_gate_reason": "pbo_missing_or_above_limit",
+            "portfolio_eligible": true,
+            "portfolio_gate_reason": "eligible",
             "replay_gate_ok": true,
             "replay_status": "completed"
           },
@@ -46209,7 +46209,7 @@
         "final_oos_opened": false,
         "hidden_validation_opened": false,
         "policy": "replay top diversified continuous private champions on v4 development data; require positive 3x-cost replay plus actual PBO <= 0.55 before portfolio eligibility",
-        "portfolio_eligible_count": 0
+        "portfolio_eligible_count": 1
       },
       "data_end": "2020-12-31",
       "data_provenance": {
@@ -59843,6 +59843,7 @@
       "eligible_strategy_names": [
         "cash_rotation_risk_budgeted",
         "cash_rotation_vix_stress",
+        "continuous__qqe_proxy__btc__private",
         "cross_asset_momentum_risk_budgeted",
         "defensive_rotation_risk_budgeted",
         "long_history_cross_asset_trend",
@@ -63616,6 +63617,12 @@
             "start": "2010-02-11",
             "years": 10.876984126984127
           },
+          "continuous__qqe_proxy__btc__private": {
+            "end": "2020-12-31",
+            "observations": 1233,
+            "start": "2017-08-17",
+            "years": 4.892857142857143
+          },
           "cross_asset_momentum_risk_budgeted": {
             "end": "2020-12-30",
             "observations": 849,
@@ -63660,6 +63667,7 @@
         "periods_per_year": 252.0,
         "policy": "long_history_core_v1",
         "supplemental_strategy_names": [
+          "continuous__qqe_proxy__btc__private",
           "cross_asset_momentum_risk_budgeted"
         ]
       },
@@ -70343,7 +70351,7 @@
             "extreme_stress_return_pct": 39.001,
             "family": "qqe_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.056073,
+            "multiple_test_qvalue": 0.05575,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.126989,
@@ -70428,7 +70436,7 @@
             "extreme_stress_return_pct": 28.649,
             "family": "btc_rsi_adx",
             "market": "crypto",
-            "multiple_test_qvalue": 0.047552,
+            "multiple_test_qvalue": 0.047156,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.077214,
@@ -70567,7 +70575,7 @@
             "extreme_stress_return_pct": 38.182,
             "family": "sentinel63",
             "market": "crypto",
-            "multiple_test_qvalue": 0.049367,
+            "multiple_test_qvalue": 0.048993,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.048502,
@@ -70628,7 +70636,7 @@
             "extreme_stress_return_pct": 31.937,
             "family": "vol_contraction_breakout",
             "market": "crypto",
-            "multiple_test_qvalue": 0.051967,
+            "multiple_test_qvalue": 0.051599,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.038557,
@@ -117927,15 +117935,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T05:10:10Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34013305793",
         "id": 34013305793,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 8,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T05:10:15Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T05:36:55Z"
       },
       {
         "conclusion": "success",
