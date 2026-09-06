@@ -29,6 +29,7 @@
       "f_max": 2
     }
   },
+  "balanced_market_scheduling": true,
   "universe_metadata": {
     "id": "stock_fx_seed_v1",
     "purpose": "parallel stock and forex alpha discovery without modifying frozen phase1_fixed_514",
