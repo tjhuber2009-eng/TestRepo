@@ -21,9 +21,12 @@ def load(path):
     if not path:
         return None
     p = Path(path)
-    if not p.exists():
+    if not p.exists() or p.stat().st_size == 0:
         return None
-    return json.loads(p.read_text(encoding="utf-8"))
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 def main():
