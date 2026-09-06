@@ -24,6 +24,7 @@ from v4.feature_store import FeatureStoreBuilder
 from v4.hr_dual_locked import (
     SOURCE_LOCK as HR_DUAL_SOURCE_LOCK,
     build_targets as hr_dual_build_targets,
+    load_adjusted_data as hr_dual_load_adjusted_data,
     mark_day as hr_dual_mark_day,
 )
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
@@ -119,6 +120,40 @@ class V4AlphaGenerationTests(unittest.TestCase):
         for date, row in prefix_targets.items():
             self.assertIn(date, full_targets)
             self.assertEqual(row, full_targets[date])
+
+    def test_hr_dual_rejects_non_adjusted_shadow_basis(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            idx = pd.date_range("2019-01-02", periods=320, freq="B")
+            for symbol, ident in (
+                ("QQQ", "qqq"), ("TQQQ", "tqqq"), ("TECL", "tecl"),
+                ("IEF", "ief"), ("GLD", "gld"), ("SHY", "shy"),
+            ):
+                frame = pd.DataFrame(
+                    {
+                        "Date": idx,
+                        "Open": 100.0,
+                        "High": 101.0,
+                        "Low": 99.0,
+                        "Close": 100.0,
+                    }
+                )
+                csv_path = root / f"{ident}_1d.csv"
+                frame.to_csv(csv_path, index=False)
+                manifest = {
+                    "source": "yahoo",
+                    "symbol": symbol,
+                    "id": ident,
+                    "adjustment_method": "provider_split_adjusted_v3",
+                    "oos_included": False,
+                }
+                csv_path.with_suffix(".manifest.json").write_text(
+                    json.dumps(manifest), encoding="utf-8"
+                )
+            with self.assertRaisesRegex(
+                RuntimeError, "adjusted-close-equivalent"
+            ):
+                hr_dual_load_adjusted_data(root)
 
     def test_hr_dual_gap_and_touched_stop_are_source_faithful(self):
         d = pd.Timestamp("2020-01-02")
