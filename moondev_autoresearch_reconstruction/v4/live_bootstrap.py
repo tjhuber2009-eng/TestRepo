@@ -23,6 +23,7 @@ from .portfolio_optimizer import RobustPortfolioOptimizer
 from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, vix_stress_overlay, volatility_target_overlay
 from .selection_diagnostics import optimizer_pbo
 from .continuous_bridge import replay_private_promotions
+from .phase2_bridge import replay_private_promotions as replay_phase2_private_promotions
 from .strategy_examples import (
     cross_sectional_momentum_rotation,
     independent_trend_basket,
@@ -1258,6 +1259,18 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
     )
     eligible_returns.update(continuous_eligible)
 
+    # Phase 2 is the finite prior-work lane. Consume only its frozen v2
+    # promotion artifacts; exact source hashes and both PBO diagnostics are
+    # rechecked by the bridge before any strategy can reach this portfolio.
+    phase2_eligible, phase2_private_transfer = (
+        replay_phase2_private_promotions(
+            data,
+            max_dd_pct=private.max_dd_pct,
+            cost_stress_multiplier=cost_stress,
+        )
+    )
+    eligible_returns.update(phase2_eligible)
+
     portfolio = None
     portfolio_concentration_sensitivity = {}
     portfolio_core_returns, portfolio_history_policy = (
@@ -1420,6 +1433,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         },
         "portfolio_history_policy": portfolio_history_policy,
         "continuous_private_transfer": continuous_private_transfer,
+        "phase2_private_transfer": phase2_private_transfer,
         "eligible_strategy_names": sorted(eligible_returns),
     }
     safe = json_safe(payload)
