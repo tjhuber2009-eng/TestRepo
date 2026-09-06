@@ -21473,6 +21473,14 @@
         "soft_scale": 0.75
       }
     },
+    "matched_static_gross_result": {
+      "candidates_evaluated": 1,
+      "chosen": null,
+      "dd_cap_pct": 32.0,
+      "feasible_count": 0,
+      "max_gross": 1.2280057755881095,
+      "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+    },
     "risk_scaled_result": {
       "candidates_evaluated": 1,
       "chosen": {
@@ -21594,6 +21602,29 @@
     ]
   },
   "portfolio_satellite": {
+    "matched_static_gross_result": {
+      "candidates_evaluated": 1,
+      "chosen": {
+        "bootstrap_cagr_q10_pct": 16.565371599400933,
+        "bootstrap_cagr_q25_pct": 18.938959877394645,
+        "bootstrap_dd_q95_pct": 26.29654866234814,
+        "bootstrap_median_cagr_pct": 22.61896731256561,
+        "cagr_pct": 22.27216834163317,
+        "cash_weight": 0.0,
+        "effective_n": 1.0,
+        "gross_exposure": 1.2280057755881095,
+        "max_dd_pct": -15.69684226584086,
+        "score": 22.657281012103493,
+        "sharpe": 1.4156849768941295,
+        "weights": {
+          "satellite_0.20__continuous__qqe_proxy__btc__private": 1.2280057755881095
+        }
+      },
+      "dd_cap_pct": 32.0,
+      "feasible_count": 1,
+      "max_gross": 1.2280057755881095,
+      "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
+    },
     "risk_scaled_result": {
       "candidates_evaluated": 1,
       "chosen": {
@@ -21618,8 +21649,10 @@
       "policy": "choose strategy composition and maximum feasible total gross exposure; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
     },
     "sleeve": {
+      "best_raw_candidate": "satellite_0.20__continuous__qqe_proxy__btc__private",
       "candidate_count": 35,
-      "policy": "supplemental sleeve capped at 25% composition; pre-inception allocation held as cash",
+      "eligible_candidate_count": 22,
+      "policy": "supplemental sleeve capped at 25% composition; pre-inception allocation held as cash; all sleeves clear the same static-portfolio Q10 floor",
       "selected_candidate": "satellite_0.20__continuous__qqe_proxy__btc__private",
       "spec": {
         "inception_dates": {
@@ -21634,8 +21667,8 @@
     }
   },
   "portfolio_selection": {
-    "method": "static_vs_staggered_satellite_vs_causal_dynamic_v1",
-    "reason": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+    "method": "static_vs_staggered_satellite_vs_causal_dynamic_v2",
+    "reason": "highest_bootstrap_median_cagr_among_architectures_clearing_common_static_q10_floor",
     "selected": "staggered_satellite"
   },
   "portfolio_static": {
@@ -21678,18 +21711,18 @@
       "final_oos_opened": false,
       "hidden_validation_opened": false,
       "metrics_5bp": {
-        "cagr_pct": 29.76629805242279,
-        "cost_stress_cagr_pct": 28.146661725580934,
-        "cumulative_return_pct": 1605.5771166192565,
+        "cagr_pct": 29.766277783369777,
+        "cost_stress_cagr_pct": 28.14664170576977,
+        "cumulative_return_pct": 1605.5742165548868,
         "dsr": 1.0,
         "gross_exposure": 1.0,
-        "max_dd_pct": -59.88393574699988,
+        "max_dd_pct": -59.883937373147056,
         "pbo": null,
         "psr_zero": 1.0,
-        "sharpe": 0.9341543314297861,
-        "sortino": 1.3046450786871966,
+        "sharpe": 0.9341540474881505,
+        "sortino": 1.3046446248201573,
         "trades": 204,
-        "turnover_per_year": 16.476617251059675,
+        "turnover_per_year": 16.476597253625588,
         "years": 10.885918259786306
       },
       "protocol": "alpha_generation_v4",
@@ -21713,7 +21746,7 @@
   },
   "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
-  "research_commit_sha": "526540c48c4233000fad37c080e8721e24249365",
+  "research_commit_sha": "d3be45636e016c05e0c1109c8285b509ac5669ae",
   "reversal_parameter_optimizer": {
     "chosen": null,
     "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
