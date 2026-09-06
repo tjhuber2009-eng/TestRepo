@@ -139,6 +139,54 @@ def prepare_yahoo(symbol, start, end, out):
     print(f"Yahoo {symbol}: {len(rows)} adjusted daily bars -> {out}")
 
 
+def prepare_stooq(symbol, start, end, out):
+    enc = urllib.parse.quote(symbol.lower(), safe="")
+    d1 = start.strftime("%Y%m%d")
+    d2 = end.strftime("%Y%m%d")
+    url = f"https://stooq.com/q/d/l/?s={enc}&i=d&d1={d1}&d2={d2}"
+    text = request_bytes(url).decode("utf-8", errors="replace").strip()
+    if not text or "Date" not in text.splitlines()[0]:
+        raise RuntimeError(f"Stooq returned no CSV data for {symbol}")
+    reader = csv.DictReader(io.StringIO(text))
+    rows = []
+    seen = set()
+    for raw in reader:
+        date = (raw.get("Date") or raw.get("date") or "").strip()
+        if not date or date in seen:
+            continue
+        vals = []
+        for key in ("Open","High","Low","Close"):
+            value = raw.get(key)
+            if value is None or str(value).strip() in {"", "-"}:
+                vals = []
+                break
+            vals.append(float(value))
+        if not vals:
+            continue
+        o,h,l,cl = vals
+        if h < max(o,l,cl) or l > min(o,h,cl):
+            raise RuntimeError(
+                f"Stooq {symbol}: malformed OHLC row {date}; refusing silent repair"
+            )
+        vol_raw = raw.get("Volume")
+        try:
+            vol = 0.0 if vol_raw in (None, "", "-") else float(vol_raw)
+        except Exception:
+            vol = 0.0
+        stamp = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        if start <= stamp <= end:
+            rows.append([stamp.isoformat(), o, h, l, cl, vol])
+            seen.add(date)
+    rows.sort(key=lambda x: x[0])
+    if len(rows) < 100:
+        raise RuntimeError(f"Stooq {symbol}: insufficient daily rows ({len(rows)})")
+    with out.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["Date","Open","High","Low","Close","Volume"])
+        w.writerows(rows)
+    print(f"Stooq {symbol}: {len(rows)} continuous-futures proxy bars -> {out}")
+
+
 def sha256_path(path):
     h = hashlib.sha256()
     with Path(path).open("rb") as f:
@@ -166,7 +214,12 @@ def write_manifest(out, source, symbol, ident, start, end):
         "provider_integrity": (
             "published monthly archive SHA256 verified"
             if source == "binance"
-            else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+            else (
+                "provider response snapshotted by generated CSV SHA256; "
+                "Stooq continuous-futures proxy has no archive checksum"
+                if source == "stooq"
+                else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+            )
         ),
         "oos_included": False,
     }
@@ -178,7 +231,7 @@ def write_manifest(out, source, symbol, ident, start, end):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", choices=["binance","yahoo"], required=True)
+    ap.add_argument("--source", choices=["binance","yahoo","stooq"], required=True)
     ap.add_argument("--symbol", required=True)
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
@@ -200,6 +253,8 @@ def main():
     out = out_dir / f"{args.id}_1d.csv"
     if args.source == "binance":
         prepare_binance(args.symbol, start, end, out)
+    elif args.source == "stooq":
+        prepare_stooq(args.symbol, start, end, out)
     else:
         prepare_yahoo(args.symbol, start, end, out)
     write_manifest(out, args.source, args.symbol, args.id, start, end)
