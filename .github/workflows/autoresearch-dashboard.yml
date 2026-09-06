@@ -1,4 +1,4 @@
-name: AUTORESEARCH dashboard snapshot
+name: Atlas Forge dashboard snapshot
 
 on:
   workflow_dispatch:
@@ -7,10 +7,10 @@ on:
       - ".github/workflows/autoresearch-dashboard.yml"
   workflow_run:
     workflows:
-      - Continuous NVIDIA AUTORESEARCH
-      - Stock + FX AUTORESEARCH
-      - AUTORESEARCH v4 promotion cycle
-      - Zero-fee AI strategy model tournament
+      - Atlas Forge Continuous AUTORESEARCH
+      - Atlas Forge Stock + FX AUTORESEARCH
+      - Atlas Forge V4 promotion cycle
+      - Atlas Forge model tournament
     types: [completed]
 
 permissions:
@@ -33,21 +33,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - name: Restore current research state
         shell: bash
         run: |
           git fetch origin +refs/heads/continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state
-          git checkout refs/remotes/origin/continuous-autoresearch-state -- moondev_autoresearch_reconstruction/continuous_state
+          git checkout refs/remotes/origin/continuous-autoresearch-state -- atlas_forge_autoresearch/continuous_state
 
       - name: Restore current stock/FX expansion state
         shell: bash
         run: |
           git fetch origin +refs/heads/stock-fx-autoresearch-state:refs/remotes/origin/stock-fx-autoresearch-state || true
           if git rev-parse --verify refs/remotes/origin/stock-fx-autoresearch-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/stock-fx-autoresearch-state -- moondev_autoresearch_reconstruction/stock_fx_state || true
+            git checkout refs/remotes/origin/stock-fx-autoresearch-state -- atlas_forge_autoresearch/stock_fx_state || true
           fi
 
       - name: Restore current V4 development state
@@ -55,7 +55,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/autoresearch-v4-state:refs/remotes/origin/autoresearch-v4-state || true
           if git rev-parse --verify refs/remotes/origin/autoresearch-v4-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/autoresearch-v4-state -- moondev_autoresearch_reconstruction/v4_state || true
+            git checkout refs/remotes/origin/autoresearch-v4-state -- atlas_forge_autoresearch/v4_state || true
           fi
 
       - name: Restore tournament state if available
@@ -63,12 +63,12 @@ jobs:
         run: |
           git fetch origin +refs/heads/model-tournament-state:refs/remotes/origin/model-tournament-state || true
           if git rev-parse --verify refs/remotes/origin/model-tournament-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/model-tournament-state -- moondev_autoresearch_reconstruction/tournament_state || true
+            git checkout refs/remotes/origin/model-tournament-state -- atlas_forge_autoresearch/tournament_state || true
           fi
 
       - name: Capture workflow runtime metadata
         shell: bash
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: |
           mkdir -p dashboard_runtime
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/continuous-autoresearch.yml/runs?per_page=8" > dashboard_runtime/continuous_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/continuous_runs.json
@@ -92,11 +92,11 @@ jobs:
           fi
 
       - name: Validate dashboard JavaScript
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: node --check dashboard_src/app.js
 
       - name: Build dashboard
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: |
           python -m py_compile build_dashboard.py build_live_dashboard.py
           node --check dashboard_src/app.js
@@ -116,7 +116,7 @@ jobs:
           rm -rf ../autoresearch-dashboard-state-wt
           git worktree add -B autoresearch-dashboard-state ../autoresearch-dashboard-state-wt refs/remotes/origin/autoresearch-dashboard-state
           mkdir -p ../autoresearch-dashboard-state-wt/live
-          cp moondev_autoresearch_reconstruction/dashboard_output/data.json ../autoresearch-dashboard-state-wt/live/data.json
+          cp atlas_forge_autoresearch/dashboard_output/data.json ../autoresearch-dashboard-state-wt/live/data.json
           cd ../autoresearch-dashboard-state-wt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -130,7 +130,7 @@ jobs:
 
       - name: Update stable live dashboard issue
         shell: bash
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: |
           gh issue edit 20 \
             --repo "$GITHUB_REPOSITORY" \
@@ -140,6 +140,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: autoresearch-dashboard-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/dashboard_output
+          path: atlas_forge_autoresearch/dashboard_output
           retention-days: 30
 

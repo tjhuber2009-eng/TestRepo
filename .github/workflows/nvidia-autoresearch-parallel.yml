@@ -36,20 +36,20 @@ jobs:
       PROFILE: ${{ matrix.profile }}
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - name: Check out research branch
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
 
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -263,7 +263,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: parallel-${{ matrix.profile }}-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/parallel_export/
+          path: atlas_forge_autoresearch/parallel_export/
           if-no-files-found: error
           retention-days: 30
 
@@ -287,23 +287,23 @@ jobs:
       - name: Check out research branch
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - name: Download prop artifact
         uses: actions/download-artifact@v8
         with:
           name: parallel-prop-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/parallel_runs/${{ github.run_id }}/prop
+          path: atlas_forge_autoresearch/parallel_runs/${{ github.run_id }}/prop
 
       - name: Download private artifact
         uses: actions/download-artifact@v8
         with:
           name: parallel-private-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/parallel_runs/${{ github.run_id }}/private
+          path: atlas_forge_autoresearch/parallel_runs/${{ github.run_id }}/private
 
       - name: Build comparison report
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         shell: python
         run: |
           import json, os
@@ -352,7 +352,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add "moondev_autoresearch_reconstruction/parallel_runs/${RUN_ID}"
+          git add "atlas_forge_autoresearch/parallel_runs/${RUN_ID}"
           git commit -m "Archive parallel AUTORESEARCH run ${RUN_ID}"
           git push origin "$BRANCH"
           echo "RESULT_BRANCH=$BRANCH" >> "$GITHUB_ENV"
@@ -361,7 +361,7 @@ jobs:
         shell: bash
         run: |
           {
-            cat moondev_autoresearch_reconstruction/parallel-comment.md
+            cat atlas_forge_autoresearch/parallel-comment.md
             echo
             echo "Archived branch: \`$RESULT_BRANCH\`"
           } > /tmp/comment.md

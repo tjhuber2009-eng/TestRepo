@@ -1,4 +1,4 @@
-name: AUTORESEARCH v4 promotion cycle
+name: Atlas Forge V4 promotion cycle
 
 on:
   workflow_dispatch:

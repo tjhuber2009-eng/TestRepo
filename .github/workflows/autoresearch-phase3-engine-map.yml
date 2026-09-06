@@ -19,12 +19,12 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
     steps:
       - name: Check out research source
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - uses: actions/setup-python@v7
@@ -36,14 +36,14 @@ jobs:
         working-directory: .
         run: |
           git fetch origin +refs/heads/phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state
-          git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state/candidate_queue.json
+          git checkout refs/remotes/origin/phase3-free-discovery-state -- atlas_forge_autoresearch/phase3_state/candidate_queue.json
 
       - name: Restore reconstruction state
         shell: bash
         working-directory: .
         run: |
           git fetch origin +refs/heads/phase3-reconstruction-state:refs/remotes/origin/phase3-reconstruction-state
-          git checkout refs/remotes/origin/phase3-reconstruction-state -- moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json
+          git checkout refs/remotes/origin/phase3-reconstruction-state -- atlas_forge_autoresearch/phase3_state/reconstructions.jsonl atlas_forge_autoresearch/phase3_state/reconstruction_progress.json
 
       - name: Restore hydration attempts
         shell: bash
@@ -51,7 +51,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
           if git rev-parse --verify refs/remotes/origin/phase3-hydration-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/phase3-hydration-state -- moondev_autoresearch_reconstruction/phase3_state/hydrated_sources.jsonl 2>/dev/null || true
+            git checkout refs/remotes/origin/phase3-hydration-state -- atlas_forge_autoresearch/phase3_state/hydrated_sources.jsonl 2>/dev/null || true
           fi
 
       - name: Compile and map candidates
@@ -80,7 +80,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C phase3-engine-mapping-state
-          git add -f moondev_autoresearch_reconstruction/phase3_state/engine_mapping.json moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json moondev_autoresearch_reconstruction/phase3_state/hydration_queue.json
+          git add -f atlas_forge_autoresearch/phase3_state/engine_mapping.json atlas_forge_autoresearch/phase3_state/engine_mapping_progress.json atlas_forge_autoresearch/phase3_state/hydration_queue.json
           if git diff --cached --quiet; then
             echo "no engine-mapping state changes"
           else
@@ -93,9 +93,9 @@ jobs:
         with:
           name: autoresearch-phase3-engine-mapping-${{ github.run_id }}
           path: |
-            moondev_autoresearch_reconstruction/phase3_state/engine_mapping_progress.json
-            moondev_autoresearch_reconstruction/phase3_state/engine_mapping.json
-            moondev_autoresearch_reconstruction/phase3_state/hydration_queue.json
+            atlas_forge_autoresearch/phase3_state/engine_mapping_progress.json
+            atlas_forge_autoresearch/phase3_state/engine_mapping.json
+            atlas_forge_autoresearch/phase3_state/hydration_queue.json
           retention-days: 14
 
       - name: Start public-source hydration

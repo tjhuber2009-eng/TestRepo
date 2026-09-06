@@ -14,7 +14,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,5 +40,5 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: autoresearch-v4-harvest-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/v4_state/external-source-candidates.json
+          path: atlas_forge_autoresearch/v4_state/external-source-candidates.json
           retention-days: 14

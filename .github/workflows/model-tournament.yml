@@ -1,4 +1,4 @@
-name: Zero-fee AI strategy model tournament
+name: Atlas Forge model tournament
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - name: Freeze continuous-state snapshot
@@ -75,19 +75,19 @@ jobs:
 
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -95,8 +95,8 @@ jobs:
       - name: Restore sealed development-only market-data cache
         uses: actions/cache@v6
         with:
-          path: moondev_autoresearch_reconstruction/data
-          key: autoresearch-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
+          path: atlas_forge_autoresearch/data
+          key: autoresearch-development-v3-sealed-${{ hashFiles('atlas_forge_autoresearch/continuous_config.json') }}
 
 
       - name: Restore exact frozen research-state snapshot
@@ -106,7 +106,7 @@ jobs:
           STATE_SHA: ${{ needs.freeze.outputs.state_sha }}
         run: |
           git fetch origin "$STATE_SHA"
-          git checkout "$STATE_SHA" -- moondev_autoresearch_reconstruction/continuous_state
+          git checkout "$STATE_SHA" -- atlas_forge_autoresearch/continuous_state
           echo "Using frozen state $STATE_SHA"
 
       - name: Integrity and OOS guards
@@ -136,7 +136,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: tournament-${{ matrix.tag }}
-          path: moondev_autoresearch_reconstruction/tournament_${{ matrix.tag }}.json
+          path: atlas_forge_autoresearch/tournament_${{ matrix.tag }}.json
           retention-days: 30
 
   aggregate:
@@ -150,16 +150,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install aggregation dependencies
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: python -m pip install -r requirements.txt
 
       - name: Download all model results
@@ -170,7 +170,7 @@ jobs:
           merge-multiple: true
 
       - name: Aggregate matched tournament
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: >
           python aggregate_model_tournament.py
           --folder ../tournament_results
@@ -181,9 +181,9 @@ jobs:
       - name: Prepare persistent tournament state
         shell: bash
         run: |
-          mkdir -p moondev_autoresearch_reconstruction/tournament_state
-          cp tournament-summary.json moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json
-          cp tournament-report.md moondev_autoresearch_reconstruction/tournament_state/tournament-report.md
+          mkdir -p atlas_forge_autoresearch/tournament_state
+          cp tournament-summary.json atlas_forge_autoresearch/tournament_state/tournament-summary.json
+          cp tournament-report.md atlas_forge_autoresearch/tournament_state/tournament-report.md
 
       - name: Persist tournament state branch
         shell: bash
@@ -192,7 +192,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C model-tournament-state
-          git add -f moondev_autoresearch_reconstruction/tournament_state
+          git add -f atlas_forge_autoresearch/tournament_state
           if git diff --cached --quiet; then
             echo "no tournament state changes"
           else

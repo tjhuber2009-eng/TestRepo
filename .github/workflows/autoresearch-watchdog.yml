@@ -31,7 +31,7 @@ jobs:
           git fetch origin +refs/heads/continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state || true
           terminal=false
           if git rev-parse --verify refs/remotes/origin/continuous-autoresearch-state >/dev/null 2>&1; then
-            if git show refs/remotes/origin/continuous-autoresearch-state:moondev_autoresearch_reconstruction/continuous_state/progress.json > /tmp/progress.json 2>/dev/null; then
+            if git show refs/remotes/origin/continuous-autoresearch-state:atlas_forge_autoresearch/continuous_state/progress.json > /tmp/progress.json 2>/dev/null; then
               terminal="$(python - <<'PY'
           import json
           try:

@@ -1,4 +1,4 @@
-name: Stock + FX AUTORESEARCH
+name: Atlas Forge Stock + FX AUTORESEARCH
 
 on:
   workflow_dispatch:
@@ -25,13 +25,13 @@ jobs:
 
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - name: Check out research source
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - name: Record research source SHA
@@ -43,7 +43,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -51,8 +51,8 @@ jobs:
       - name: Restore development-only expansion data cache
         uses: actions/cache@v6
         with:
-          path: moondev_autoresearch_reconstruction/data
-          key: stock-fx-development-v1-${{ hashFiles('moondev_autoresearch_reconstruction/stock_fx_config.json') }}
+          path: atlas_forge_autoresearch/data
+          key: stock-fx-development-v1-${{ hashFiles('atlas_forge_autoresearch/stock_fx_config.json') }}
 
       - name: Restore persistent stock/FX state
         shell: bash
@@ -60,7 +60,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/stock-fx-autoresearch-state:refs/remotes/origin/stock-fx-autoresearch-state || true
           if git rev-parse --verify refs/remotes/origin/stock-fx-autoresearch-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/stock-fx-autoresearch-state -- moondev_autoresearch_reconstruction/stock_fx_state || true
+            git checkout refs/remotes/origin/stock-fx-autoresearch-state -- atlas_forge_autoresearch/stock_fx_state || true
             echo "restored stock/FX state"
           else
             echo "no prior stock/FX state; starting clean"
@@ -72,7 +72,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/model-tournament-state:refs/remotes/origin/model-tournament-state || true
           if git rev-parse --verify refs/remotes/origin/model-tournament-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/model-tournament-state -- moondev_autoresearch_reconstruction/tournament_state || true
+            git checkout refs/remotes/origin/model-tournament-state -- atlas_forge_autoresearch/tournament_state || true
           fi
 
       - name: Integrity and universe-lock checks
@@ -153,7 +153,7 @@ jobs:
           b=json.loads(Path("stock_fx_state/leaderboard_latest.json").read_text())
           rows=b.get("rows",[])[:20]
           out=[
-              "# Stock + FX AUTORESEARCH",
+              "# Atlas Forge Stock + FX AUTORESEARCH",
               "",
               f"Source SHA: **{__import__('os').environ.get('AUTORESEARCH_SOURCE_SHA','')}**",
               f"Phase: **{p.get('phase')}**",
@@ -188,7 +188,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C stock-fx-autoresearch-state
-          git add -f moondev_autoresearch_reconstruction/stock_fx_state
+          git add -f atlas_forge_autoresearch/stock_fx_state
           if git diff --cached --quiet; then
             echo "no state changes"
           else
@@ -201,11 +201,11 @@ jobs:
         with:
           name: stock-fx-autoresearch-${{ github.run_id }}
           path: |
-            moondev_autoresearch_reconstruction/stock_fx_state/progress.json
-            moondev_autoresearch_reconstruction/stock_fx_state/leaderboard_latest.json
-            moondev_autoresearch_reconstruction/stock_fx_state/search_selections.json
-            moondev_autoresearch_reconstruction/stock_fx_state/cycles.jsonl
-            moondev_autoresearch_reconstruction/stock-fx-report.md
+            atlas_forge_autoresearch/stock_fx_state/progress.json
+            atlas_forge_autoresearch/stock_fx_state/leaderboard_latest.json
+            atlas_forge_autoresearch/stock_fx_state/search_selections.json
+            atlas_forge_autoresearch/stock_fx_state/cycles.jsonl
+            atlas_forge_autoresearch/stock-fx-report.md
           if-no-files-found: warn
           retention-days: 14
 
@@ -217,7 +217,7 @@ jobs:
           phase="$(python - <<'PY'
           import json
           from pathlib import Path
-          print(json.loads(Path("moondev_autoresearch_reconstruction/stock_fx_state/progress.json").read_text()).get("phase",""))
+          print(json.loads(Path("atlas_forge_autoresearch/stock_fx_state/progress.json").read_text()).get("phase",""))
           PY
           )"
           if test "$phase" != "expansion_pending" && test "$phase" != "complete" && test "$phase" != "validation"; then

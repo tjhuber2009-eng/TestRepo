@@ -23,20 +23,20 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - name: Check out research branch
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
 
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: "pip"
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -220,16 +220,16 @@ jobs:
         with:
           name: nvidia-autoresearch-shakedown-${{ github.run_id }}
           path: |
-            moondev_autoresearch_reconstruction/SHAKEDOWN_REPORT.md
-            moondev_autoresearch_reconstruction/*.log
-            moondev_autoresearch_reconstruction/baseline.json
-            moondev_autoresearch_reconstruction/last_run.json
-            moondev_autoresearch_reconstruction/results.tsv
-            moondev_autoresearch_reconstruction/strategy.py
-            moondev_autoresearch_reconstruction/strategy_best.py
-            moondev_autoresearch_reconstruction/proposal.txt
-            moondev_autoresearch_reconstruction/keepers/
-            moondev_autoresearch_reconstruction/logs/
+            atlas_forge_autoresearch/SHAKEDOWN_REPORT.md
+            atlas_forge_autoresearch/*.log
+            atlas_forge_autoresearch/baseline.json
+            atlas_forge_autoresearch/last_run.json
+            atlas_forge_autoresearch/results.tsv
+            atlas_forge_autoresearch/strategy.py
+            atlas_forge_autoresearch/strategy_best.py
+            atlas_forge_autoresearch/proposal.txt
+            atlas_forge_autoresearch/keepers/
+            atlas_forge_autoresearch/logs/
           if-no-files-found: warn
           retention-days: 14
 

@@ -5,7 +5,7 @@ on:
     branches:
       - model-tournament-state
     paths:
-      - "moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json"
+      - "atlas_forge_autoresearch/tournament_state/tournament-summary.json"
 
 permissions:
   actions: write
@@ -28,7 +28,7 @@ jobs:
         run: |
           import json, os
           from pathlib import Path
-          p=Path("moondev_autoresearch_reconstruction/tournament_state/tournament-summary.json")
+          p=Path("atlas_forge_autoresearch/tournament_state/tournament-summary.json")
           x=json.loads(p.read_text())
           ready=(
               x.get("protocol")=="nested_chronological_v3"

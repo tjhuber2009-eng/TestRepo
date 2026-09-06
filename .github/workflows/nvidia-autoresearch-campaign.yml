@@ -24,13 +24,13 @@ jobs:
       RUN_ID: ${{ github.run_id }}
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - name: Check out research branch
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - name: Set up Python
@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -290,9 +290,9 @@ jobs:
         with:
           name: nvidia-autoresearch-campaign-${{ github.run_id }}
           path: |
-            moondev_autoresearch_reconstruction/CAMPAIGN_REPORT.md
-            moondev_autoresearch_reconstruction/campaigns/${{ github.run_id }}/
-            moondev_autoresearch_reconstruction/logs/
+            atlas_forge_autoresearch/CAMPAIGN_REPORT.md
+            atlas_forge_autoresearch/campaigns/${{ github.run_id }}/
+            atlas_forge_autoresearch/logs/
           if-no-files-found: warn
           retention-days: 30
 
@@ -305,7 +305,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add "moondev_autoresearch_reconstruction/campaigns/${RUN_ID}"
+          git add "atlas_forge_autoresearch/campaigns/${RUN_ID}"
           if git diff --cached --quiet; then
             echo "No campaign artifacts to commit."
           else

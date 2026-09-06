@@ -1,4 +1,4 @@
-name: Continuous NVIDIA AUTORESEARCH
+name: Atlas Forge Continuous AUTORESEARCH
 
 on:
   workflow_dispatch:
@@ -24,13 +24,13 @@ jobs:
 
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - name: Check out research branch
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - name: Record checked-out research source SHA
@@ -42,7 +42,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -50,8 +50,8 @@ jobs:
       - name: Restore sealed development-only market-data cache
         uses: actions/cache@v6
         with:
-          path: moondev_autoresearch_reconstruction/data
-          key: autoresearch-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
+          path: atlas_forge_autoresearch/data
+          key: autoresearch-development-v3-sealed-${{ hashFiles('atlas_forge_autoresearch/continuous_config.json') }}
 
 
       - name: Integrity checks
@@ -69,7 +69,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/continuous-autoresearch-state:refs/remotes/origin/continuous-autoresearch-state || true
           if git rev-parse --verify refs/remotes/origin/continuous-autoresearch-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/continuous-autoresearch-state -- moondev_autoresearch_reconstruction/continuous_state || true
+            git checkout refs/remotes/origin/continuous-autoresearch-state -- atlas_forge_autoresearch/continuous_state || true
             echo "restored persistent state"
           else
             echo "no prior state branch; starting clean"
@@ -94,7 +94,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/model-tournament-state:refs/remotes/origin/model-tournament-state || true
           if git rev-parse --verify refs/remotes/origin/model-tournament-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/model-tournament-state -- moondev_autoresearch_reconstruction/tournament_state || true
+            git checkout refs/remotes/origin/model-tournament-state -- atlas_forge_autoresearch/tournament_state || true
             echo "restored tournament state"
           else
             echo "no tournament state branch yet"
@@ -102,7 +102,7 @@ jobs:
 
       - name: Capture workflow runtime metadata
         shell: bash
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
         run: |
           mkdir -p dashboard_runtime
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/continuous-autoresearch.yml/runs?per_page=8" > dashboard_runtime/continuous_runs.json || echo '{"workflow_runs":[]}' > dashboard_runtime/continuous_runs.json
@@ -282,7 +282,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C continuous-autoresearch-state
-          git add -f moondev_autoresearch_reconstruction/continuous_state
+          git add -f atlas_forge_autoresearch/continuous_state
           if git diff --cached --quiet; then
             echo "no state changes to commit"
           else
@@ -313,16 +313,16 @@ jobs:
         with:
           name: continuous-autoresearch-${{ github.run_id }}
           path: |
-            moondev_autoresearch_reconstruction/continuous_state/leaderboard_latest.json
-            moondev_autoresearch_reconstruction/continuous_state/progress.json
-            moondev_autoresearch_reconstruction/continuous_state/search_selections.json
-            moondev_autoresearch_reconstruction/continuous_state/cycles.jsonl
-            moondev_autoresearch_reconstruction/cycle-report.md
-            moondev_autoresearch_reconstruction/continuous_state/dashboard/index.html
-            moondev_autoresearch_reconstruction/continuous_state/dashboard/dashboard.html
-            moondev_autoresearch_reconstruction/continuous_state/dashboard/styles.css
-            moondev_autoresearch_reconstruction/continuous_state/dashboard/app.js
-            moondev_autoresearch_reconstruction/continuous_state/dashboard/data.json
+            atlas_forge_autoresearch/continuous_state/leaderboard_latest.json
+            atlas_forge_autoresearch/continuous_state/progress.json
+            atlas_forge_autoresearch/continuous_state/search_selections.json
+            atlas_forge_autoresearch/continuous_state/cycles.jsonl
+            atlas_forge_autoresearch/cycle-report.md
+            atlas_forge_autoresearch/continuous_state/dashboard/index.html
+            atlas_forge_autoresearch/continuous_state/dashboard/dashboard.html
+            atlas_forge_autoresearch/continuous_state/dashboard/styles.css
+            atlas_forge_autoresearch/continuous_state/dashboard/app.js
+            atlas_forge_autoresearch/continuous_state/dashboard/data.json
           if-no-files-found: warn
           retention-days: 14
 
@@ -333,7 +333,7 @@ jobs:
         run: >
           gh pr comment 13
           --repo tjhuber2009-eng/TestRepo
-          --body-file moondev_autoresearch_reconstruction/completion-note.md
+          --body-file atlas_forge_autoresearch/completion-note.md
 
       - name: Chain next cycle until exhaustive completion
         if: success() && steps.completion.outputs.terminal != 'true' && steps.completion.outputs.expansion_pending != 'true'

@@ -19,12 +19,12 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
     steps:
       - name: Check out research source
         uses: actions/checkout@v7
         with:
-          ref: moondev-nvidia-autoresearch
+          ref: atlas-forge-autoresearch
           fetch-depth: 0
 
       - uses: actions/setup-python@v7
@@ -37,7 +37,7 @@ jobs:
         run: |
           git fetch origin +refs/heads/phase3-free-discovery-state:refs/remotes/origin/phase3-free-discovery-state || true
           if git rev-parse --verify refs/remotes/origin/phase3-free-discovery-state >/dev/null 2>&1; then
-            git checkout refs/remotes/origin/phase3-free-discovery-state -- moondev_autoresearch_reconstruction/phase3_state || true
+            git checkout refs/remotes/origin/phase3-free-discovery-state -- atlas_forge_autoresearch/phase3_state || true
           fi
 
       - name: Compile isolated free-source lane
@@ -75,7 +75,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C phase3-free-discovery-state
-          git add -f moondev_autoresearch_reconstruction/phase3_state
+          git add -f atlas_forge_autoresearch/phase3_state
           if git diff --cached --quiet; then
             echo "no Phase 3 state changes"
           else
@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: autoresearch-phase3-${{ github.run_id }}
-          path: moondev_autoresearch_reconstruction/phase3_state
+          path: atlas_forge_autoresearch/phase3_state
           retention-days: 14
 
       - name: Chain next Phase 3 batch

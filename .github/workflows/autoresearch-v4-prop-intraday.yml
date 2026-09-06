@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 120
     defaults:
       run:
-        working-directory: moondev_autoresearch_reconstruction
+        working-directory: atlas_forge_autoresearch
 
     steps:
       - uses: actions/checkout@v7
@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
 
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
@@ -109,12 +109,12 @@ jobs:
           git fetch origin +refs/heads/autoresearch-v4-state:refs/remotes/origin/autoresearch-v4-state
           rm -rf ../v4-prop-intraday-state-wt
           git worktree add -B autoresearch-v4-state ../v4-prop-intraday-state-wt refs/remotes/origin/autoresearch-v4-state
-          mkdir -p ../v4-prop-intraday-state-wt/moondev_autoresearch_reconstruction/v4_state
-          cp moondev_autoresearch_reconstruction/v4_state/prop-intraday-bootstrap.json ../v4-prop-intraday-state-wt/moondev_autoresearch_reconstruction/v4_state/prop-intraday-bootstrap.json
+          mkdir -p ../v4-prop-intraday-state-wt/atlas_forge_autoresearch/v4_state
+          cp atlas_forge_autoresearch/v4_state/prop-intraday-bootstrap.json ../v4-prop-intraday-state-wt/atlas_forge_autoresearch/v4_state/prop-intraday-bootstrap.json
           cd ../v4-prop-intraday-state-wt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f moondev_autoresearch_reconstruction/v4_state/prop-intraday-bootstrap.json
+          git add -f atlas_forge_autoresearch/v4_state/prop-intraday-bootstrap.json
           if ! git diff --cached --quiet; then
             git commit -m "V4 prop intraday bootstrap run $GITHUB_RUN_ID"
             git push origin HEAD:autoresearch-v4-state
@@ -124,6 +124,6 @@ jobs:
         with:
           name: autoresearch-v4-prop-intraday-${{ github.run_id }}
           path: |
-            moondev_autoresearch_reconstruction/v4_state/prop-intraday-bootstrap.json
-            moondev_autoresearch_reconstruction/v4_prop_intraday_data/*.manifest.json
+            atlas_forge_autoresearch/v4_state/prop-intraday-bootstrap.json
+            atlas_forge_autoresearch/v4_prop_intraday_data/*.manifest.json
           retention-days: 30
