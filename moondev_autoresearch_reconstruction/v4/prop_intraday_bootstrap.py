@@ -2015,6 +2015,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             ),
         },
         "continuous_prop_transfer": continuous_prop_transfer,
+        "phase2_prop_transfer": phase2_prop_transfer,
         "search_policy": {
             "broad_base_candidates": len(params_grid),
             "frontier_seed_parameter_sets": len(seed_params),
@@ -2024,10 +2025,13 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "independent_tsmom_candidates": len(tsmom_params),
             "continuous_transfer_source_candidates": len(transfer_seeds),
             "continuous_transfer_risk_candidates": len(transfer_params),
+            "phase2_transfer_source_candidates": len(phase2_transfer_seeds),
+            "phase2_transfer_risk_candidates": len(phase2_transfer_params),
             "candidate_families": [
                 "cross_sectional_long",
                 "tsmom_long_short",
                 "continuous_daily_signal",
+                "phase2_daily_signal",
             ],
             "structural_dimensions": {
                 "execution_session": [
@@ -2049,7 +2053,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 "frontier leaders for session/rebalance structure, asset-"
                 "universe robustness, and causal Prague-day risk/profit "
                 "smoothing; evaluate time-series momentum as an "
-                "independent compact family"
+                "independent compact family; replay frozen Phase-2 survivors "
+                "only through exact signed adapters and V4 prop risk sizing"
             ),
         },
         "data_end": max(
