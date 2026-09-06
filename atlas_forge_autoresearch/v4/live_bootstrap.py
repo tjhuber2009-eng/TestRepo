@@ -25,7 +25,10 @@ from .risk_overlays import drawdown_brake_overlay, probability_filter_overlay, v
 from .selection_diagnostics import optimizer_pbo
 from .continuous_bridge import replay_private_promotions
 from .dynamic_portfolio import causal_dynamic_allocation
-from .satellite_portfolio import build_staggered_satellite_candidates
+from .satellite_portfolio import (
+    build_staggered_satellite_candidates,
+    satellite_gross_profile,
+)
 from .phase2_bridge import replay_private_promotions as replay_phase2_private_promotions
 from .strategy_examples import (
     cross_sectional_momentum_rotation,
@@ -1438,6 +1441,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         max_satellite_weight=0.25,
                     )
                 )
+                satellite_gross_profiles = {
+                    name: satellite_gross_profile(
+                        stream.index, satellite_specs[name]
+                    )
+                    for name, stream in satellite_streams.items()
+                }
                 satellite_results = {}
                 for candidate_name, stream in satellite_streams.items():
                     result = RobustPortfolioOptimizer(
@@ -1450,7 +1459,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         min_gross=0.10,
                         annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                         seed=20260905,
-                    ).optimize(stream.to_frame(candidate_name))
+                    ).optimize(
+                        stream.to_frame(candidate_name),
+                        gross_profiles=satellite_gross_profiles[
+                            candidate_name
+                        ].to_frame(candidate_name),
+                    )
                     if result.chosen is not None:
                         satellite_results[candidate_name] = result
 
@@ -1525,7 +1539,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                                     selected_satellite_name
                                 ].to_frame(
                                     selected_satellite_name
-                                )
+                                ),
+                                gross_profiles=satellite_gross_profiles[
+                                    selected_satellite_name
+                                ].to_frame(
+                                    selected_satellite_name
+                                ),
                             )
                         )
 
@@ -1548,6 +1567,9 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     soft_scale=0.75,
                     hard_scale=0.50,
                 )
+                dynamic_gross_profile = (
+                    dynamic.weights.abs().sum(axis=1)
+                ).rename("causal_dynamic_allocator")
                 dynamic_portfolio = RobustPortfolioOptimizer(
                     dd_cap_pct=private.max_dd_pct,
                     n_candidates=1,
@@ -1559,7 +1581,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     annual_financing_rate_pct=PRIVATE_PORTFOLIO_FINANCING_RATE_PCT,
                     seed=20260905,
                 ).optimize(
-                    dynamic.returns.to_frame("causal_dynamic_allocator")
+                    dynamic.returns.to_frame("causal_dynamic_allocator"),
+                    gross_profiles=dynamic_gross_profile.to_frame(),
                 )
                 dynamic_portfolio_summary = dynamic.summary()
                 if static_portfolio is not None and static_portfolio.chosen is not None:
@@ -1579,7 +1602,8 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                     ).optimize(
                         dynamic.returns.to_frame(
                             "causal_dynamic_allocator"
-                        )
+                        ),
+                        gross_profiles=dynamic_gross_profile.to_frame(),
                     )
 
             challengers = {}
@@ -1618,6 +1642,7 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                 }
 
                 selected_stream = None
+                selected_gross_profile = None
                 if selected_name == "staggered_satellite":
                     selected_candidate_name = (
                         satellite_portfolio_summary or {}
@@ -1626,8 +1651,14 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         selected_stream = satellite_streams[
                             selected_candidate_name
                         ]
+                        selected_gross_profile = (
+                            satellite_gross_profiles[
+                                selected_candidate_name
+                            ]
+                        )
                 elif selected_name == "causal_dynamic":
                     selected_stream = dynamic.returns
+                    selected_gross_profile = dynamic_gross_profile
                 elif selected_name == "static_robust":
                     chosen = static_portfolio.chosen
                     if chosen is not None and chosen.gross_exposure > 0.0:
@@ -1639,6 +1670,11 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         selected_stream = returns.mul(
                             comp, axis=1
                         ).sum(axis=1)
+                        selected_gross_profile = pd.Series(
+                            1.0,
+                            index=selected_stream.index,
+                            name=selected_stream.name,
+                        )
 
                 if selected_stream is not None:
                     for financing_rate in (
@@ -1654,10 +1690,18 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                             min_gross=0.10,
                             annual_financing_rate_pct=financing_rate,
                             seed=20260905,
+                        stress_name = (
+                            f"selected_architecture_{financing_rate:.0f}pct"
+                        )
                         ).optimize(
-                            selected_stream.rename(
-                                f"selected_architecture_{financing_rate:.0f}pct"
-                            ).to_frame()
+                            selected_stream.rename(stress_name).to_frame(),
+                            gross_profiles=(
+                                selected_gross_profile.rename(
+                                    stress_name
+                                ).to_frame()
+                                if selected_gross_profile is not None
+                                else None
+                            ),
                         )
                         portfolio_financing_sensitivity[
                             f"{financing_rate:.0f}%"
