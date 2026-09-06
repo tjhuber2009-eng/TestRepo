@@ -524,34 +524,46 @@
     },
     {
       "id": "finlab_rotation_exact",
-      "status": "v4_engine_available_spec_incomplete",
-      "exactness": "source_core_recovered",
-      "origin": "FinLab leveraged-ETF rotation core recovered; v4 multi-asset engine now exists",
-      "requires": [
-        "freeze exact 3m-minus-1m lookback convention",
-        "freeze monthly rebalance/holiday convention",
-        "freeze stop execution and re-entry behavior from source implementation"
-      ],
-      "v4_engine": "v4/multi_asset_engine.py"
+      "status": "prior_rejected",
+      "exactness": "frozen_independent_translation",
+      "origin": "FL-ETFROT-A-001 frozen independent FinLab aggressive ETF-rotation replication",
+      "source_lock": {
+        "repository": "tjhuber2009-eng/hr_mech",
+        "branch": "research/finlab-etfrot-independent-001",
+        "commit": "09dcfe3e2c4f298205534eed9fec6038b0f479e3",
+        "prereg_blob_sha": "e58cd03f3022aaa58d8a6a9219c652cde824af38",
+        "implementation_blob_sha": "4403592e398b67584b17968f9728ab802f4f36e1",
+        "result_blob_sha": "ac8222e877ef75de6f80efdb3a6eba8455c8aa03"
+      },
+      "evidence": "Frozen independent replication classified FAIL because the preregistered 2022+ CAGR and Sharpe gates failed; retain as terminal negative evidence.",
+      "prior_classification": "FAIL"
     },
     {
       "id": "hr_dual_alpha",
-      "status": "rules_recovered_port_pending",
-      "exactness": "frozen_recovered",
-      "origin": "HR-DUAL-ALPHA-001 frozen rules recovered from prior HR-MECH handoff",
-      "requires": [
-        "port frozen implementation semantics without changing rules",
-        "recover exact stop/re-entry and defensive-selection execution details before claiming parity"
-      ],
+      "status": "prior_frozen_superior_pass",
+      "exactness": "frozen_exact_recovered",
+      "origin": "HR-DUAL-ALPHA-001 frozen-before-result implementation recovered from tjhuber2009-eng/hr_mech",
       "recovered_core": [
-        "QQQ close > SMA200 risk-on regime",
-        "60% sleeve: TQQQ/TECL winner by 63d-minus-21d momentum",
-        "40% sleeve: TQQQ/TECL 3-day laggard",
-        "10% momentum stop",
-        "8% reversal stop",
-        "monthly rebalance",
-        "defensive IEF/GLD/SHY rotation"
-      ]
+        "month-end QQQ close > SMA200 risk-on; execute next common session adjusted close",
+        "60% TQQQ/TECL winner by 63d return minus 21d return",
+        "40% TQQQ/TECL 3-session laggard",
+        "momentum sleeve fixed 10% monthly-basis stop",
+        "reversal sleeve fixed 8% monthly-basis stop",
+        "gap-aware stop: open if through stop, otherwise stop threshold on low touch",
+        "stopped sleeve remains cash until next scheduled monthly execution",
+        "risk-off selects IEF/GLD/SHY by 63d return minus 21d return",
+        "no intramonth defensive stop"
+      ],
+      "source_lock": {
+        "repository": "tjhuber2009-eng/hr_mech",
+        "branch": "research/hr-dual-alpha-001",
+        "commit": "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+        "prereg_blob_sha": "8cf531021a29d57e468d074d0a1b4d0ea9e14270",
+        "implementation_blob_sha": "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+        "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
+      },
+      "prior_classification": "SUPERIOR_PASS",
+      "note": "Prior historical evidence is known and must not be re-optimized. Any AUTORESEARCH reuse must preserve this source lock and use only development-safe data."
     },
     {
       "id": "copy_trader_signal_replication",
