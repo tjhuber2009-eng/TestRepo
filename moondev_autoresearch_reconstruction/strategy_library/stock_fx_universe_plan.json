@@ -29,7 +29,7 @@
   "notes": [
     "This lane is isolated from phase1_fixed_514 and cannot change its track count.",
     "The 30-stock basket is a fixed 2026-selected seed basket, not point-in-time historical membership.",
-    "FX uses Stooq daily snapshots; volume-dependent strategy families are excluded.",
+    "FX uses Dukascopy native BID daily archives with per-year local SHA256; volume-dependent strategy families are excluded.",
     "2023+ final OOS remains absent until explicit authorization."
   ]
 }
