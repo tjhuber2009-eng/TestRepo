@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from .alpha_objective import hard_gate, metrics_from_equity
-from .config import risk_policy
+from .campaign import risk_policy
 
 SOURCE_LOCK = {
     "repository": "tjhuber2009-eng/hr_mech",
