@@ -1231,6 +1231,9 @@ def write_progress(
     tracks, phase, breadth_target, depth_target, elite_target,
 ):
     registry = load_json(REGISTRY)
+    unresolved_status_tokens = (
+        "blocked", "pending", "recovery", "incomplete",
+    )
     blocked_families = [
         {
             "id": x["id"],
@@ -1240,7 +1243,21 @@ def write_progress(
             "requires": x.get("requires", []),
         }
         for x in registry["families"]
-        if x.get("status") == "blocked"
+        if any(
+            token in str(x.get("status", "")).lower()
+            for token in unresolved_status_tokens
+        )
+    ]
+    prior_positive_families = [
+        {
+            "id": x["id"],
+            "status": x.get("status"),
+            "origin": x.get("origin"),
+            "prior_classification": x.get("prior_classification"),
+            "source_lock": x.get("source_lock"),
+        }
+        for x in registry["families"]
+        if str(x.get("status", "")).startswith("prior_frozen")
     ]
     prior_terminal_families = [
         {
@@ -1374,6 +1391,8 @@ def write_progress(
         "all_runnable_tracks_terminal": terminal == len(tracks),
         "blocked_family_count": len(blocked_families),
         "blocked_families": blocked_families,
+        "prior_positive_family_count": len(prior_positive_families),
+        "prior_positive_families": prior_positive_families,
         "prior_terminal_family_count": len(prior_terminal_families),
         "prior_terminal_families": prior_terminal_families,
         "model_performance": aggregate_model_performance(tracks),
