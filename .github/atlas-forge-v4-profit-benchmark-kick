@@ -1,9 +1,10 @@
 Atlas Forge V4 profit benchmark
-Source head: 5f8546e0bf761b11d5d582d8b6e71f42b8bd25db
-Purpose: controlled 30/35 percent satellite boundary benchmark against financed 25 percent incumbent
+Source head: e6e979b97f8a2ad1a23415d209e8dbe8bb60fe3d
+Purpose: targeted 80/20 BTC QQE satellite diversification benchmark against 35 percent incumbent
 Financing: 6% base, 10% and 14% stress; realized time-varying gross above 1x only
-Satellite sleeve grid: 5/10/15/20/25/30/35%; same bootstrap median, Q10, drawdown, and evidence gates
-Scale selection: maximize development geometric growth within drawdown-feasible range
+Satellite sleeve cap: 35%; gross cap: 1.5x; no boundary expansion
+Local search: prior BTC QQE winner at 80% of satellite mix plus 20% one partner at a time
+Selection: same bootstrap median, Q10, financing, drawdown, and evidence gates
 Persistent state: read only
 Hidden validation: sealed
 Final 2023+ OOS: sealed
