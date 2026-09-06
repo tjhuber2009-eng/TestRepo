@@ -71,7 +71,7 @@ jobs:
           x=json.loads(Path("phase2_state/progress.json").read_text())
           if x.get("all_tracks_screened"):
               subprocess.run(
-                  [sys.executable, "phase2_followup_runner.py", "--max-candidates", "24"],
+                  [sys.executable, "phase2_followup_runner.py", "--max-candidates", "48"],
                   check=True,
               )
 
