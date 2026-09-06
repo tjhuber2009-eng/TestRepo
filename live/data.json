@@ -21862,7 +21862,7 @@
     "stock_track_count": 900,
     "target_count": 37
   },
-  "generated_at": "2026-09-06T22:56:08Z",
+  "generated_at": "2026-09-06T23:03:41Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -40239,17 +40239,17 @@
     },
     "model_performance": [
       {
-        "admission_rate": 0.7541,
-        "attempts": 1586,
+        "admission_rate": 0.7484,
+        "attempts": 1598,
         "backtested": 1196,
-        "crash_rate": 0.046,
-        "crashes": 73,
+        "crash_rate": 0.0463,
+        "crashes": 74,
         "guard_pass": 730,
-        "keeper_rate": 0.0467,
+        "keeper_rate": 0.0463,
         "kept": 74,
         "mean_delta_k": -0.027098,
         "model": "nvidia/nemotron-3-super-120b-a12b",
-        "unique_ideas": 1459
+        "unique_ideas": 1470
       }
     ],
     "pbo_baselined_track_count": 405,
@@ -43215,7 +43215,7 @@
         "valid_attempts": 10
       },
       {
-        "attempts": 16,
+        "attempts": 18,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 90.698,
@@ -43272,7 +43272,7 @@
         "valid_attempts": 10
       },
       {
-        "attempts": 26,
+        "attempts": 34,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 22.77,
@@ -43291,7 +43291,7 @@
         "valid_attempts": 6
       },
       {
-        "attempts": 14,
+        "attempts": 16,
         "data_quality_grade": "A",
         "depth_selected": false,
         "development_cagr_pct": 73.712,
@@ -50116,18 +50116,18 @@
     "searching_count": 513,
     "seed_blocked_count": 1,
     "terminal_track_count": 1,
-    "total_crashes": 73,
-    "total_duplicates": 10,
+    "total_crashes": 74,
+    "total_duplicates": 12,
     "total_guard_passed_candidates": 730,
     "total_kept_candidates": 74,
-    "total_model_attempt_rows": 1586,
+    "total_model_attempt_rows": 1598,
     "total_parameter_only": 97,
-    "total_risk_control_changes": 185,
+    "total_risk_control_changes": 194,
     "total_too_broad": 25,
     "total_valid_candidates": 1196,
     "universe_metadata": {},
     "universe_stage": "phase1_fixed_514",
-    "updated_at": "2026-09-06T22:36:41Z",
+    "updated_at": "2026-09-06T23:03:25Z",
     "validation_fail_count": 0,
     "validation_pass_count": 0,
     "validation_pending_count": 0
@@ -50147,82 +50147,6 @@
   "project": "Atlas Forge AUTORESEARCH reconstruction",
   "protocol": "nested_chronological_v3",
   "recent_cycles": [
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "turtle_55_20__gold__private",
-      "ts": "2026-09-06T14:19:02Z"
-    },
-    {
-      "attempts_after": 12,
-      "bandit_reward": 0,
-      "family": "turtle_55_20",
-      "kept_after": 1,
-      "kept_before": 1,
-      "max_dd_pct": -6.853,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 5.351,
-      "profile": "private",
-      "return_pct": 37.812,
-      "score": 0.061669,
-      "sharpe": 1.2894,
-      "status": "active",
-      "target": "eth",
-      "track_id": "turtle_55_20__eth__private",
-      "ts": "2026-09-06T14:19:38Z",
-      "valid_after": 10,
-      "valid_before": 9
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "turtle_55_20__gold__prop",
-      "ts": "2026-09-06T14:19:40Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "turtle_55_20__gold__private",
-      "ts": "2026-09-06T14:19:42Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "turtle_55_20__nq__prop",
-      "ts": "2026-09-06T14:20:57Z"
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "turtle_55_20__nq__private",
-      "ts": "2026-09-06T14:20:59Z"
-    },
-    {
-      "attempts_after": 6,
-      "bandit_reward": 0,
-      "family": "halftrend_proxy",
-      "kept_after": 0,
-      "kept_before": 0,
-      "max_dd_pct": -30.823,
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "pf": 7.402,
-      "profile": "private",
-      "return_pct": 69.46,
-      "score": 0.058311,
-      "sharpe": 0.9433,
-      "status": "active",
-      "target": "eth",
-      "track_id": "halftrend_proxy__eth__private",
-      "ts": "2026-09-06T14:32:10Z",
-      "valid_after": 5,
-      "valid_before": 1
-    },
-    {
-      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
-      "status": "runner_error",
-      "track_id": "halftrend_proxy__gold__prop",
-      "ts": "2026-09-06T14:32:13Z"
-    },
     {
       "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
       "status": "runner_error",
@@ -51998,6 +51922,138 @@
       "target": "btc",
       "track_id": "donchian_20_10__btc__private",
       "ts": "2026-09-06T22:36:40Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "donchian_20_10__es__prop",
+      "ts": "2026-09-06T22:37:20Z"
+    },
+    {
+      "reason": "CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', 'robust_harness.py', '--is']' returned non-zero exit status 1.",
+      "status": "runner_error",
+      "track_id": "donchian_20_10__es__private",
+      "ts": "2026-09-06T22:37:21Z"
+    },
+    {
+      "attempts_after": 17,
+      "bandit_reward": 0,
+      "family": "btc_rsi_adx",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -13.291,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 3.872,
+      "profile": "private",
+      "return_pct": 144.994,
+      "score": 1.122375,
+      "sharpe": 2.4245,
+      "status": "active",
+      "target": "sol",
+      "track_id": "btc_rsi_adx__sol__private",
+      "ts": "2026-09-06T22:42:59Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "attempts_after": 30,
+      "bandit_reward": 0,
+      "family": "donchian_20_10",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -7.541,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 23.006,
+      "profile": "prop",
+      "return_pct": 99.762,
+      "score": 0.262525,
+      "sharpe": 1.8596,
+      "status": "active",
+      "target": "btc",
+      "track_id": "donchian_20_10__btc__prop",
+      "ts": "2026-09-06T22:49:41Z",
+      "valid_after": 6,
+      "valid_before": 6
+    },
+    {
+      "attempts_after": 15,
+      "bandit_reward": 0,
+      "family": "donchian_20_10",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -24.473,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 22.224,
+      "profile": "private",
+      "return_pct": 544.124,
+      "score": 0.785482,
+      "sharpe": 1.9969,
+      "status": "active",
+      "target": "btc",
+      "track_id": "donchian_20_10__btc__private",
+      "ts": "2026-09-06T22:50:23Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "attempts_after": 18,
+      "bandit_reward": 0,
+      "family": "btc_rsi_adx",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -13.291,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 3.872,
+      "profile": "private",
+      "return_pct": 144.994,
+      "score": 1.122375,
+      "sharpe": 2.4245,
+      "status": "active",
+      "target": "sol",
+      "track_id": "btc_rsi_adx__sol__private",
+      "ts": "2026-09-06T22:51:52Z",
+      "valid_after": 9,
+      "valid_before": 9
+    },
+    {
+      "attempts_after": 34,
+      "bandit_reward": 0,
+      "family": "donchian_20_10",
+      "kept_after": 1,
+      "kept_before": 1,
+      "max_dd_pct": -7.541,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 23.006,
+      "profile": "prop",
+      "return_pct": 99.762,
+      "score": 0.262525,
+      "sharpe": 1.8596,
+      "status": "active",
+      "target": "btc",
+      "track_id": "donchian_20_10__btc__prop",
+      "ts": "2026-09-06T23:02:16Z",
+      "valid_after": 6,
+      "valid_before": 6
+    },
+    {
+      "attempts_after": 16,
+      "bandit_reward": 0,
+      "family": "donchian_20_10",
+      "kept_after": 0,
+      "kept_before": 0,
+      "max_dd_pct": -24.473,
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "pf": 22.224,
+      "profile": "private",
+      "return_pct": 544.124,
+      "score": 0.785482,
+      "sharpe": 1.9969,
+      "status": "active",
+      "target": "btc",
+      "track_id": "donchian_20_10__btc__private",
+      "ts": "2026-09-06T23:03:24Z",
       "valid_after": 9,
       "valid_before": 9
     }
@@ -55846,7 +55902,7 @@
       "valid_attempts": 10
     },
     {
-      "attempts": 16,
+      "attempts": 18,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -55912,7 +55968,7 @@
       "valid_attempts": 10
     },
     {
-      "attempts": 26,
+      "attempts": 34,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -55934,7 +55990,7 @@
       "valid_attempts": 6
     },
     {
-      "attempts": 14,
+      "attempts": 16,
       "data_quality_grade": "A",
       "depth_selected": false,
       "development_cagr_pct": null,
@@ -143106,14 +143162,25 @@
     "continuous_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-06T23:03:33Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34065783171",
+        "id": 34065783171,
+        "name": "Atlas Forge Continuous AUTORESEARCH",
+        "run_number": 121,
+        "status": "queued",
+        "updated_at": "2026-09-06T23:03:37Z"
+      },
+      {
+        "conclusion": "success",
         "created_at": "2026-09-06T22:36:47Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34064528332",
         "id": 34064528332,
         "name": "Atlas Forge Continuous AUTORESEARCH",
         "run_number": 120,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T22:36:53Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T23:03:37Z"
       },
       {
         "conclusion": "success",
@@ -143180,17 +143247,6 @@
         "run_number": 114,
         "status": "completed",
         "updated_at": "2026-09-06T20:05:22Z"
-      },
-      {
-        "conclusion": "cancelled",
-        "created_at": "2026-09-06T19:38:52Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34055552584",
-        "id": 34055552584,
-        "name": "Continuous NVIDIA AUTORESEARCH",
-        "run_number": 113,
-        "status": "completed",
-        "updated_at": "2026-09-06T20:05:38Z"
       }
     ],
     "stock_fx_runs": [
