@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T16:09:19Z",
+  "generated_at": "2026-09-06T16:23:18Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -45643,7 +45643,7 @@
               "extreme_stress_return_pct": 399.598,
               "family": "qqe_proxy",
               "market": "crypto",
-              "multiple_test_qvalue": 0.025262,
+              "multiple_test_qvalue": 0.026077,
               "pbo": 0.071429,
               "profile": "private",
               "selection_score": 0.898301,
@@ -45725,7 +45725,7 @@
               "extreme_stress_return_pct": 345.325,
               "family": "ibs_deep_pullback",
               "market": "etf",
-              "multiple_test_qvalue": 0.025262,
+              "multiple_test_qvalue": 0.026077,
               "pbo": null,
               "profile": "private",
               "selection_score": 0.040563,
@@ -45766,7 +45766,7 @@
               "extreme_stress_return_pct": 97.397,
               "family": "ibs_deep_pullback",
               "market": "etf",
-              "multiple_test_qvalue": 0.025262,
+              "multiple_test_qvalue": 0.026077,
               "pbo": null,
               "profile": "private",
               "selection_score": 0.033798,
@@ -63312,18 +63312,18 @@
           "final_oos_opened": false,
           "hidden_validation_opened": false,
           "metrics_5bp": {
-            "cagr_pct": 29.76629714207153,
-            "cost_stress_cagr_pct": 28.146660818627602,
-            "cumulative_return_pct": 1605.5769863675246,
+            "cagr_pct": 29.76629781416289,
+            "cost_stress_cagr_pct": 28.146661488575585,
+            "cumulative_return_pct": 1605.5770825293762,
             "dsr": 1.0,
             "gross_exposure": 1.0,
-            "max_dd_pct": -59.88393017523224,
+            "max_dd_pct": -59.88391683509467,
             "pbo": null,
             "psr_zero": 1.0,
-            "sharpe": 0.9341544020447972,
-            "sortino": 1.304645347230745,
+            "sharpe": 0.9341542874690145,
+            "sortino": 1.3046451644677302,
             "trades": 204,
-            "turnover_per_year": 16.476617719685265,
+            "turnover_per_year": 16.476615825207485,
             "years": 10.885918259786306
           },
           "protocol": "alpha_generation_v4",
@@ -69930,7 +69930,7 @@
     "prop": {
       "continuous_prop_transfer": {
         "available": true,
-        "candidate_count": 17,
+        "candidate_count": 16,
         "candidates": [
           {
             "adapter": "daily_donchian_atr_stop",
@@ -70149,7 +70149,7 @@
             "family": "swing_terminal_pullback_proxy",
             "market": "crypto",
             "multiple_test_qvalue": 0.038131,
-            "pbo": null,
+            "pbo": 0.257143,
             "profile": "prop",
             "selection_score": 0.065624,
             "symbol": "ETHUSDT",
@@ -70271,35 +70271,12 @@
             "family": "vol_contraction_breakout",
             "market": "crypto",
             "multiple_test_qvalue": 0.050877,
-            "pbo": null,
+            "pbo": 0.485714,
             "profile": "prop",
             "selection_score": 0.038557,
             "symbol": "BTCUSDT",
             "target": "btc",
             "track_id": "vol_contraction_breakout__btc__prop",
-            "transfer_reason": "missing_authoritative_adapter",
-            "transfer_status": "adapter_required"
-          },
-          {
-            "adapter": null,
-            "development_cagr_pct": 8.941,
-            "development_max_dd_pct": -9.22,
-            "development_pf": 14.92,
-            "development_sharpe": 1.2168,
-            "development_trades": 13,
-            "development_years": 3.3731,
-            "evidence_grade": "B",
-            "exactness": "proxy",
-            "extreme_stress_return_pct": 33.154,
-            "family": "swing_terminal_breakout_proxy",
-            "market": "crypto",
-            "multiple_test_qvalue": 0.034037,
-            "pbo": null,
-            "profile": "prop",
-            "selection_score": 0.035579,
-            "symbol": "BTCUSDT",
-            "target": "btc",
-            "track_id": "swing_terminal_breakout_proxy__btc__prop",
             "transfer_reason": "missing_authoritative_adapter",
             "transfer_status": "adapter_required"
           },
@@ -117299,7 +117276,7 @@
         "reward_cycle_days": 14,
         "scaling_plan_upgrades_included": false
       },
-      "research_commit_sha": "b16e8e473f06f95dd25f1a175f1d5adfb2a38e48",
+      "research_commit_sha": "e3ee02ee99d1ab0fa3f11976c45d5ae96ae0b1db",
       "reset_timezone": "Europe/Prague",
       "search_policy": {
         "broad_base_candidates": 120,
@@ -117616,19 +117593,19 @@
         "id": 34044523058,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 25,
-        "status": "pending",
-        "updated_at": "2026-09-06T16:09:07Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T16:23:10Z"
       },
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T15:47:56Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34043430701",
         "id": 34043430701,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 24,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T15:56:47Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T16:23:07Z"
       },
       {
         "conclusion": "success",
