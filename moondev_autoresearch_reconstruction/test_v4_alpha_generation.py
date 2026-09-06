@@ -179,6 +179,7 @@ class V4AlphaGenerationTests(unittest.TestCase):
 
     def test_phase2_promotion_source_hash_is_fail_closed(self):
         source = (
+            'import math\n'
             'import numpy as np\n'
             'import pandas as pd\n'
             'from backtesting import Strategy\n'
@@ -203,6 +204,20 @@ class V4AlphaGenerationTests(unittest.TestCase):
         with mock.patch("v4.phase2_bridge._git_show", return_value=source):
             with self.assertRaises(RuntimeError):
                 load_phase2_promotion_source(broken)
+
+        unsafe_source = source.replace("import math\\n", "import os\\n")
+        unsafe_digest = hashlib.sha256(
+            unsafe_source.encode("utf-8")
+        ).hexdigest()
+        unsafe = dict(row)
+        unsafe["promotion_source_sha256"] = unsafe_digest
+        unsafe["strategy_sha256"] = unsafe_digest
+        with mock.patch(
+            "v4.phase2_bridge._git_show",
+            return_value=unsafe_source,
+        ):
+            with self.assertRaises(ValueError):
+                load_phase2_promotion_source(unsafe)
 
     def test_phase2_bollinger_signed_adapter_is_prefix_invariant(self):
         days = 100
