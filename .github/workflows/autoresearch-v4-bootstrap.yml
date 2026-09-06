@@ -166,7 +166,7 @@ jobs:
         shell: bash
         working-directory: .
         run: |
-          git fetch origin autoresearch-v4-state:refs/remotes/origin/autoresearch-v4-state
+          git fetch origin +refs/heads/autoresearch-v4-state:refs/remotes/origin/autoresearch-v4-state
           rm -rf ../v4-state-wt
           git worktree add -B autoresearch-v4-state ../v4-state-wt refs/remotes/origin/autoresearch-v4-state
           mkdir -p ../v4-state-wt/moondev_autoresearch_reconstruction/v4_state
