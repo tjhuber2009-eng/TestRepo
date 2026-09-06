@@ -304,6 +304,48 @@ def prop_adapter_lines():
     lines.append("")
     return lines
 
+def source_label(row):
+    params=(row or {}).get("params") or {}
+    return (
+        params.get("continuous_track_id")
+        or params.get("family")
+        or "—"
+    )
+
+def start_here_lines():
+    chosen=(v4_private.get("portfolio") or {}).get("chosen") or {}
+    programs=v4_prop.get("programs") or {}
+    one=((programs.get("ftmo_1step_2026") or {}).get("refined_frontiers") or {}).get("max_repeat_payout_efficiency") or {}
+    two=((programs.get("ftmo_2step_2026") or {}).get("refined_frontiers") or {}).get("max_repeat_payout_efficiency") or {}
+    balanced=((programs.get("ftmo_2step_2026") or {}).get("refined_frontiers") or {}).get("balanced") or {}
+    one_v=one.get("view") or {}
+    two_v=two.get("view") or {}
+    two_f=two_v.get("funded") or {}
+    bal_v=balanced.get("view") or {}
+    bal_f=bal_v.get("funded") or {}
+    cap=float(v4_private.get("portfolio_authoritative_concentration_cap",0.55))
+    lines=[
+        "## Start here — current answers",
+        "",
+        "| Question | Current answer | Key numbers |",
+        "|---|---|---|",
+        f"| **Private account** | V4 authoritative portfolio at **{pct(100*cap,0)} max concentration** | CAGR **{pct(chosen.get('cagr_pct'),2)}** · observed DD **{pct(chosen.get('max_dd_pct'),2)}** · bootstrap q95 DD **{pct(chosen.get('bootstrap_dd_q95_pct'),2)}** |",
+        f"| **Best repeated prop economics** | **FTMO 2-Step · Max repeat payout** | pass **{probability_pct(two_v.get('combined_evaluation_pass_probability'),1)}** · 12-cycle reward **{pct(two_v.get('repeat_expected_reward_pct'),2)}** · funded survival **{probability_pct(two_f.get('survival_probability'),1)}** |",
+        f"| **Simpler prop alternative** | **FTMO 1-Step · Max repeat payout** | pass **{probability_pct(one_v.get('combined_evaluation_pass_probability'),1)}** · 12-cycle reward **{pct(one_v.get('repeat_expected_reward_pct'),2)}** |",
+        f"| **Balanced exact transfer** | **{source_label(balanced)}** | pass **{probability_pct(bal_v.get('combined_evaluation_pass_probability'),1)}** · reward **{pct(bal_v.get('repeat_expected_reward_pct'),2)}** · survival **{probability_pct(bal_f.get('survival_probability'),1)}** |",
+        f"| **Research maturity** | **{str(progress.get('phase','—')).upper()}** · development only | breadth **{breadth_pct:.2f}%** ({valid:,}/{breadth_total:,}) · hidden validation **{'OPEN' if hidden_open else 'SEALED'}** |",
+        "",
+        "### What happens next",
+        "",
+        "1. Let every exact prop adapter compete in V4; keep only genuine frontier winners.",
+        "2. Continue breadth research until enough unique variants exist for valid CSCV/PBO.",
+        "3. Keep hidden validation and 2023+ final OOS sealed until development is genuinely frozen.",
+        "",
+        "> **Plain-English rule:** high backtest return alone is not promotion. A candidate must survive the evidence, cost, drawdown, exact-transfer, and overfitting gates.",
+        "",
+    ]
+    return lines
+
 stamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 out=[
@@ -321,6 +363,7 @@ if stale_state:
         "leaderboard rows are historical only and are intentionally hidden until a v3 cycle initializes fresh state.",
         "",
     ]
+out += start_here_lines()
 out += [
 "| Live status | Value |",
 "|---|---|",
@@ -329,7 +372,7 @@ f"| Breadth progress | **{breadth_pct:.2f}%** |",
 f"| Hidden validation | **{'OPEN' if hidden_open else 'SEALED'}** |",
 f"| 2023+ final OOS | **{'OPEN' if final_oos_open else 'SEALED'}** |",
 "",
-"## Search progress",
+"## Research progress",
 "",
 "| Metric | Current |",
 "|---|---:|",
@@ -350,18 +393,25 @@ f"- {'🟡' if final_oos_open else '🟢'} Final 2023+ OOS: **{'OPEN' if final_o
 "- 🟢 Prop max DD: **10%**",
 "- 🟢 Private max DD: **32%**",
 ]
+out += [
+    "",
+    "<details>",
+    "<summary><b>Detailed V4 evidence — portfolio weights, all prop frontiers, sensitivity, and adapter audit</b></summary>",
+    "",
+]
 out += private_v4_lines()
-out += ["","## AUTORESEARCH V4 — prop-firm frontiers",""]
+out += ["","## AUTORESEARCH V4 — prop-firm frontiers", ""]
 out += prop_program_lines("ftmo_1step_2026","FTMO 1-Step")
 out += prop_program_lines("ftmo_2step_2026","FTMO 2-Step")
 out += prop_adapter_lines()
+out += ["</details>", ""]
 out += [
-"## Current development champions",
+"## Top development champions",
 "",
 "| # | Family | Target | Profile | Eligible | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence | Data | Trades/yr |",
 "|---:|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---:|",
 ]
-for i,r in enumerate((board.get("rows",[]) or [])[:15],1):
+for i,r in enumerate((board.get("rows",[]) or [])[:8],1):
     _start,_end,_years,_cagr=development_period(
         r.get("track_id"),
         r.get("development_return_pct"),
@@ -401,12 +451,12 @@ for r in (board.get("rows",[]) or []):
 _cagr_rows.sort(key=lambda x:x[0],reverse=True)
 out += [
 "",
-"## Equal-time return leaderboard (CAGR)",
+"## Top equal-time returns (CAGR)",
 "",
 "| # | Track | Profile | CAGR | Robust K | DD | Years | Evidence |",
 "|---:|---|---|---:|---:|---:|---:|---|",
 ]
-for i,(cg,r) in enumerate(_cagr_rows[:12],1):
+for i,(cg,r) in enumerate(_cagr_rows[:8],1):
     _,_,yrs,_=development_period(r.get("track_id"),r.get("development_return_pct"))
     out.append(
         f"| {i} | {r.get('family')} / {str(r.get('target','')).upper()} | "
