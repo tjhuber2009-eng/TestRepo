@@ -78,7 +78,7 @@ jobs:
           PY
 
       - name: Reconstruct explicit public rules
-        run: python phase3_reconstruct_runner.py --max-candidates 24
+        run: python phase3_reconstruct_runner.py --max-candidates 48
 
       - name: Verify isolation
         id: progress
