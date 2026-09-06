@@ -361,13 +361,15 @@ def prop_transfer_candidates(
     audit = []
     for c in candidates:
         row = c.to_dict()
-        source = load_candidate_source(c.track_id)
         if c.adapter is None:
             row["transfer_status"] = "adapter_required"
+            row["transfer_reason"] = "missing_authoritative_adapter"
             audit.append(row)
             continue
+        source = load_candidate_source(c.track_id)
         if not source:
             row["transfer_status"] = "source_unavailable"
+            row["transfer_reason"] = "candidate_source_unavailable"
             audit.append(row)
             continue
 
