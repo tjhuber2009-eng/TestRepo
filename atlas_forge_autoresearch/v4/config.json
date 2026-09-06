@@ -181,7 +181,7 @@
     "satellite_sleeve": {
       "enabled": true,
       "role": "challenger_to_long_history_core",
-      "max_composition_weight": 0.25,
+      "max_composition_weight": 0.35,
       "eligible_inputs": "qualified supplemental strategies excluded only by long-history cohort coverage",
       "pre_inception_policy": "cash",
       "post_inception_missing_data_policy": "reject_candidate",
@@ -190,9 +190,12 @@
         0.1,
         0.15,
         0.2,
-        0.25
+        0.25,
+        0.3,
+        0.35
       ],
       "selection": "higher_bootstrap_median_cagr_with_q10_not_more_than_5pct_points_worse",
+      "boundary_expansion_reason": "the prior development winner used the full 0.25 sleeve cap; test only the next two sleeve steps without opening hidden validation",
       "purpose": "monetize strong shorter-history alpha without truncating the 2010-2020 core evidence window"
     },
     "financing": {
