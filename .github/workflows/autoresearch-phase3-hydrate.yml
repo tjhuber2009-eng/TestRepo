@@ -50,7 +50,7 @@ jobs:
       - name: Hydrate public source evidence
         run: |
           python -m py_compile phase3_source_hydrate_runner.py
-          python phase3_source_hydrate_runner.py --max-candidates 30
+          python phase3_source_hydrate_runner.py --max-candidates 75
 
       - name: Verify sealed boundaries
         id: progress
