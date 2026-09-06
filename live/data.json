@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T10:39:11Z",
+  "generated_at": "2026-09-06T11:06:31Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -69942,7 +69942,7 @@
             "extreme_stress_return_pct": 39.001,
             "family": "qqe_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.055021,
+            "multiple_test_qvalue": 0.054734,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.126989,
@@ -70204,7 +70204,7 @@
             "extreme_stress_return_pct": 24.824,
             "family": "swing_terminal_pullback_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.08593,
+            "multiple_test_qvalue": 0.085593,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.039254,
@@ -70273,7 +70273,7 @@
             "extreme_stress_return_pct": 17.261,
             "family": "turtle_55_20",
             "market": "crypto",
-            "multiple_test_qvalue": 0.078783,
+            "multiple_test_qvalue": 0.07845,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.01616,
@@ -70296,7 +70296,7 @@
             "extreme_stress_return_pct": 23.366,
             "family": "swing_terminal_breakout_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.076657,
+            "multiple_test_qvalue": 0.076328,
             "pbo": 0.157143,
             "profile": "prop",
             "selection_score": 0.014347,
@@ -70319,7 +70319,7 @@
             "extreme_stress_return_pct": 16.594,
             "family": "zanger_volume_breakout_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.094409,
+            "multiple_test_qvalue": 0.094066,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.012309,
@@ -70342,7 +70342,7 @@
             "extreme_stress_return_pct": 9.56,
             "family": "donchian_20_10",
             "market": "crypto",
-            "multiple_test_qvalue": 0.055021,
+            "multiple_test_qvalue": 0.054734,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.006688,
@@ -70382,7 +70382,7 @@
             "extreme_stress_return_pct": 17.847,
             "family": "roc126_regime",
             "market": "crypto",
-            "multiple_test_qvalue": 0.091515,
+            "multiple_test_qvalue": 0.091171,
             "pbo": null,
             "profile": "prop",
             "selection_score": -0.022371,
@@ -118159,8 +118159,8 @@
         "id": 34028014133,
         "name": "Continuous NVIDIA AUTORESEARCH",
         "run_number": 96,
-        "status": "queued",
-        "updated_at": "2026-09-06T10:39:06Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-06T10:39:09Z"
       },
       {
         "conclusion": "success",
@@ -118406,15 +118406,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T10:39:00Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34028012188",
         "id": 34028012188,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 18,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T10:39:04Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T11:06:25Z"
       },
       {
         "conclusion": "success",
