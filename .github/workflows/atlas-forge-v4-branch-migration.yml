@@ -1,0 +1,83 @@
+name: Atlas Forge V4 branch migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/atlas-forge-v4-branch-migration.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: atlas-forge-v4-branch-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: autoresearch-v4-alpha-generation
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Migrate V4 source path and branding
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -d moondev_autoresearch_reconstruction && ! test -e atlas_forge_autoresearch; then
+            git mv moondev_autoresearch_reconstruction atlas_forge_autoresearch
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          root=Path("atlas_forge_autoresearch")
+          replacements=[
+              ("MOON DEV AUTORESEARCH","ATLAS FORGE AUTORESEARCH"),
+              ("Moon Dev AUTORESEARCH","Atlas Forge AUTORESEARCH"),
+              ("MOON DEV","ATLAS FORGE"),
+              ("Moon Dev","Atlas Forge"),
+              ("MoonDev","AtlasForge"),
+              ("MOONDEV","ATLASFORGE"),
+              ("moondev_autoresearch_reconstruction","atlas_forge_autoresearch"),
+              ("moondev-nvidia-autoresearch","atlas-forge-autoresearch"),
+          ]
+          if root.exists():
+              for p in root.rglob("*"):
+                  if not p.is_file():
+                      continue
+                  try:
+                      data=p.read_text(encoding="utf-8")
+                  except (UnicodeDecodeError,OSError):
+                      continue
+                  new=data
+                  for old,repl in replacements:
+                      new=new.replace(old,repl)
+                  if new != data:
+                      p.write_text(new,encoding="utf-8")
+          PY
+          test -d atlas_forge_autoresearch
+          test ! -e moondev_autoresearch_reconstruction
+          if git grep -IniE 'moon[ _-]?dev|moondev' -- atlas_forge_autoresearch ':!*.ipynb'; then
+            echo "Legacy branding remains in V4 source"
+            exit 1
+          fi
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Migrate V4 source to Atlas Forge"
+            git push origin HEAD:autoresearch-v4-alpha-generation
+          fi
+
+      - name: Restart V4 promotion cycle
+        run: gh workflow run autoresearch-v4-promotion-cycle.yml --repo "$GITHUB_REPOSITORY" --ref main
