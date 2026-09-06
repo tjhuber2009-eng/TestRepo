@@ -11,6 +11,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 STATE = HERE / "continuous_state"
+STOCK_FX_STATE = HERE / "stock_fx_state"
 TOURNAMENT = HERE / "tournament_state"
 RUNTIME = HERE / "dashboard_runtime"
 V4_STATE = HERE / "v4_state"
@@ -83,8 +84,13 @@ def bar(value, total, width=24):
 
 progress=load(STATE/"progress.json",{}) or {}
 board=load(STATE/"leaderboard_latest.json",{}) or {}
+stock_fx_progress=load(STOCK_FX_STATE/"progress.json",{}) or {}
+stock_fx_board=load(STOCK_FX_STATE/"leaderboard_latest.json",{}) or {}
+stock_fx_config=load(HERE/"stock_fx_config.json",{}) or {}
+stock_fx_plan=load(HERE/"strategy_library"/"stock_fx_universe_plan.json",{}) or {}
 tour=load(TOURNAMENT/"tournament-summary.json",None)
 continuous=latest_run(RUNTIME/"continuous_runs.json")
+stock_fx_run=latest_run(RUNTIME/"stock_fx_runs.json")
 v4_run=latest_run(RUNTIME/"v4_runs.json")
 tournament_run=latest_run(RUNTIME/"tournament_runs.json")
 jobs=(load(RUNTIME/"tournament_jobs.json",{}) or {}).get("jobs",[])
@@ -134,6 +140,47 @@ hidden_pass=int(progress.get("validation_pass_count",0) or 0)
 hidden_fail=int(progress.get("validation_fail_count",0) or 0)
 hidden_open=(hidden_pass+hidden_fail)>0 or bool(v4_private.get("hidden_validation_opened")) or bool(v4_prop.get("hidden_validation_opened"))
 final_oos_open=bool(v4_private.get("final_oos_opened")) or bool(v4_prop.get("final_oos_opened"))
+
+stock_fx_active=(
+    stock_fx_progress.get("protocol")==ACTIVE_PROTOCOL
+    and stock_fx_board.get("protocol")==ACTIVE_PROTOCOL
+)
+stock_fx_phase=next(
+    (
+        x for x in (stock_fx_plan.get("phases") or [])
+        if x.get("id")==stock_fx_plan.get("current_stage")
+    ),
+    {},
+)
+stock_fx_targets=stock_fx_config.get("targets") or []
+stock_fx_expected=int(
+    stock_fx_phase.get(
+        "expected_track_count",
+        (stock_fx_config.get("universe_metadata") or {}).get(
+            "expected_track_count",0
+        ),
+    ) or 0
+)
+stock_fx_valid=int(stock_fx_progress.get("total_valid_candidates",0) or 0)
+stock_fx_runnable=int(
+    stock_fx_progress.get("runnable_track_count",stock_fx_expected) or 0
+)
+stock_fx_breadth_target=int(
+    stock_fx_progress.get("breadth_target",10) or 10
+)
+stock_fx_breadth_total=stock_fx_runnable*stock_fx_breadth_target
+stock_fx_breadth_pct=(
+    100*stock_fx_valid/stock_fx_breadth_total
+    if stock_fx_breadth_total else 0
+)
+stock_fx_touched=sum(
+    int(r.get("attempts",0) or 0)>0
+    for r in (stock_fx_progress.get("rows") or [])
+)
+stock_fx_hidden_open=bool(
+    int(stock_fx_progress.get("validation_pass_count",0) or 0)
+    + int(stock_fx_progress.get("validation_fail_count",0) or 0)
+)
 
 V4_VIEWS=[
     "max_payout_efficiency",
@@ -333,13 +380,15 @@ def start_here_lines():
         f"| **Best repeated prop economics** | **FTMO 2-Step · Max repeat payout** | pass **{probability_pct(two_v.get('combined_evaluation_pass_probability'),1)}** · 12-cycle reward **{pct(two_v.get('repeat_expected_reward_pct'),2)}** · funded survival **{probability_pct(two_f.get('survival_probability'),1)}** |",
         f"| **Simpler prop alternative** | **FTMO 1-Step · Max repeat payout** | pass **{probability_pct(one_v.get('combined_evaluation_pass_probability'),1)}** · 12-cycle reward **{pct(one_v.get('repeat_expected_reward_pct'),2)}** |",
         f"| **Balanced exact transfer** | **{source_label(balanced)}** | pass **{probability_pct(bal_v.get('combined_evaluation_pass_probability'),1)}** · reward **{pct(bal_v.get('repeat_expected_reward_pct'),2)}** · survival **{probability_pct(bal_f.get('survival_probability'),1)}** |",
-        f"| **Research maturity** | **{str(progress.get('phase','—')).upper()}** · development only | breadth **{breadth_pct:.2f}%** ({valid:,}/{breadth_total:,}) · PBO-ready **{int(progress.get('pbo_ready_track_count',0) or 0)}/{int(progress.get('pbo_baselined_track_count',0) or 0)}** · hidden validation **{'OPEN' if hidden_open else 'SEALED'}** |",
+        f"| **Research maturity** | **{str(progress.get('phase','—')).upper()}** · development only | core breadth **{breadth_pct:.2f}%** ({valid:,}/{breadth_total:,}) · PBO-ready **{int(progress.get('pbo_ready_track_count',0) or 0)}/{int(progress.get('pbo_baselined_track_count',0) or 0)}** · hidden validation **{'OPEN' if hidden_open else 'SEALED'}** |",
+        f"| **Market expansion** | **30 stocks + 7 FX** · isolated lane | **{stock_fx_expected:,} tracks** · {'breadth '+format(stock_fx_breadth_pct,'.2f')+'%' if stock_fx_active else 'first checkpoint pending'} · FX development **2020–2021** · 2022 hidden validation **{'OPEN' if stock_fx_hidden_open else 'SEALED'}** |",
         "",
         "### What happens next",
         "",
         "1. Let every exact prop adapter compete in V4; keep only genuine frontier winners.",
-        "2. Continue breadth research until enough unique variants exist for valid CSCV/PBO.",
-        "3. Keep hidden validation and 2023+ final OOS sealed until development is genuinely frozen.",
+        "2. Continue core breadth research until enough unique variants exist for valid CSCV/PBO.",
+        "3. Let the isolated 30-stock/7-FX lane accumulate its own breadth evidence without changing the frozen 514-track core.",
+        "4. Keep every hidden validation period and 2023+ final OOS sealed until development is genuinely frozen.",
         "",
         "> **Plain-English rule:** high backtest return alone is not promotion. A candidate must survive the evidence, cost, drawdown, exact-transfer, and overfitting gates.",
         "",
@@ -368,8 +417,9 @@ out += [
 "| Live status | Value |",
 "|---|---|",
 f"| Research phase | **{str(progress.get('phase','—')).upper()}** |",
-f"| Breadth progress | **{breadth_pct:.2f}%** |",
-f"| Hidden validation | **{'OPEN' if hidden_open else 'SEALED'}** |",
+f"| Core breadth progress | **{breadth_pct:.2f}%** |",
+f"| Stock/FX breadth | **{stock_fx_breadth_pct:.2f}%** if persisted else **checkpoint pending** |" if stock_fx_active else "| Stock/FX breadth | **checkpoint pending** |",
+f"| Hidden validation | **{'OPEN' if hidden_open or stock_fx_hidden_open else 'SEALED'}** |",
 f"| 2023+ final OOS | **{'OPEN' if final_oos_open else 'SEALED'}** |",
 "",
 "## Research progress",
@@ -385,6 +435,20 @@ f"| Tracks with ≥1 valid | **{v1:,}** |",
 f"| Tracks with ≥2 valid | **{v2:,}** |",
 f"| Breadth-complete tracks | **{v10:,}** |",
 f"| Terminal tracks | **{int(progress.get('terminal_track_count',0) or 0):,}** |",
+"",
+"## Stock + FX market expansion",
+"",
+"| Metric | Current |",
+"|---|---:|",
+f"| Configured tracks | **{stock_fx_expected:,}** |",
+f"| New stock targets | **{int(stock_fx_phase.get('stock_target_count',30) or 30):,}** |",
+f"| FX targets | **{int(stock_fx_phase.get('forex_target_count',7) or 7):,}** |",
+f"| Persisted state | **{'YES' if stock_fx_active else 'NO — first checkpoint pending'}** |",
+f"| Valid candidates | **{stock_fx_valid:,}** |" if stock_fx_active else "| Valid candidates | **—** |",
+f"| Tracks touched | **{stock_fx_touched:,}** |" if stock_fx_active else "| Tracks touched | **—** |",
+f"| Breadth completion | **{stock_fx_breadth_pct:.2f}%** |" if stock_fx_active else "| Breadth completion | **—** |",
+f"| FX development | **{stock_fx_phase.get('forex_development_period') or '2020-01-01..2021-12-31'}** |",
+f"| FX hidden validation | **{stock_fx_phase.get('forex_hidden_validation_period') or '2022-01-01..2022-12-31'} · {'OPEN' if stock_fx_hidden_open else 'SEALED'}** |",
 "",
 "## Research integrity",
 "",
@@ -527,6 +591,17 @@ if continuous:
     )
 else:
     out.append("- ⚪ Continuous AUTORESEARCH — no run metadata")
+
+if stock_fx_run:
+    s=stock_fx_run.get("status")
+    c_run=stock_fx_run.get("conclusion")
+    out.append(
+        f"- {status_badge(s,c_run)} **Stock + FX AUTORESEARCH** — "
+        f"{c_run if s=='completed' else s} · run "
+        f"[#{stock_fx_run.get('run_number',stock_fx_run.get('id'))}]({stock_fx_run.get('html_url')})"
+    )
+else:
+    out.append("- ⚪ Stock + FX AUTORESEARCH — no run metadata")
 
 if v4_run:
     s=v4_run.get("status")
