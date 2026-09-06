@@ -144,7 +144,7 @@
     {
       "id": "es",
       "symbol": "ES=F",
-      "source": "yahoo",
+      "source": "yahoo_futures_proxy",
       "market": "futures_proxy",
       "enabled": true,
       "bars_per_year": 252,
@@ -154,13 +154,13 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
-      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
       "instrument_fidelity": "proxy"
     },
     {
       "id": "nq",
       "symbol": "NQ=F",
-      "source": "yahoo",
+      "source": "yahoo_futures_proxy",
       "market": "futures_proxy",
       "enabled": true,
       "bars_per_year": 252,
@@ -170,13 +170,13 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
-      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
       "instrument_fidelity": "proxy"
     },
     {
       "id": "gold",
       "symbol": "GC=F",
-      "source": "yahoo",
+      "source": "yahoo_futures_proxy",
       "market": "futures_proxy",
       "enabled": true,
       "bars_per_year": 252,
@@ -186,13 +186,13 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
-      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
       "instrument_fidelity": "proxy"
     },
     {
       "id": "oil",
       "symbol": "CL=F",
-      "source": "yahoo",
+      "source": "yahoo_futures_proxy",
       "market": "futures_proxy",
       "enabled": true,
       "bars_per_year": 252,
@@ -202,7 +202,7 @@
       "validation_start": "2021-01-01",
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
-      "data_quality_note": "Yahoo adjusted continuous futures proxy; not contract-exact",
+      "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
       "instrument_fidelity": "proxy"
     },
     {
