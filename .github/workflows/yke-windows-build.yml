@@ -1,0 +1,67 @@
+name: YKE v3.1 Windows Native Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [yke-v3.1-windows-build]
+    paths:
+      - '.github/workflows/yke-windows-build.yml'
+      - 'youtube-knowledge-engine/**'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.88.0'
+
+      - name: Reconstruct certified source package
+        shell: pwsh
+        run: |
+          $parts = Get-ChildItem 'youtube-knowledge-engine/source.b64.part*' | Sort-Object Name
+          if ($parts.Count -lt 1) { throw 'No source package chunks found.' }
+          $b64 = ($parts | ForEach-Object { Get-Content -Raw $_.FullName }) -join ''
+          $bytes = [Convert]::FromBase64String($b64)
+          [IO.File]::WriteAllBytes('youtube-knowledge-engine-v3.1.0-secure-desktop-source.zip', $bytes)
+          $hash = (Get-FileHash 'youtube-knowledge-engine-v3.1.0-secure-desktop-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '5afad97f474df7a63fde3d98d38a7da952ffaab188ac0ce555ae3d630ccf2298') {
+            throw "Certified source SHA-256 mismatch: $hash"
+          }
+          Expand-Archive 'youtube-knowledge-engine-v3.1.0-secure-desktop-source.zip' -DestinationPath 'yke-src'
+
+      - name: Verify certified source on Windows
+        working-directory: yke-src
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+
+      - name: Build Windows MSI and NSIS installers
+        working-directory: yke-src
+        run: npm run desktop:build
+
+      - name: Upload Windows installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-intelligence-desktop-v3.1.0-windows
+          if-no-files-found: error
+          path: |
+            yke-src/src-tauri/target/release/bundle/msi/*.msi
+            yke-src/src-tauri/target/release/bundle/nsis/*-setup.exe
+
+      - name: Upload native executable for diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: youtube-intelligence-desktop-v3.1.0-windows-executable
+          if-no-files-found: error
+          path: yke-src/src-tauri/target/release/youtube-intelligence-desktop.exe
