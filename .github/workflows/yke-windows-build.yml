@@ -63,7 +63,7 @@ jobs:
         working-directory: build/yke-v3.1.0
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Run source syntax, tests, and release security audit
+      - name: Run source syntax tests and release security audit
         working-directory: build/yke-v3.1.0
         run: |
           npm run check
@@ -86,69 +86,18 @@ jobs:
           }
 
           foreach ($line in $lines) {
-            if ($line -notmatch '^([0-9a-f]{64})  (.+)
-      - name: Prepare exact Node sidecar
-        working-directory: build/yke-v3.1.0
-        run: npm run desktop:prepare-sidecar
-
-      - name: Verify native Tauri shell
-        working-directory: build/yke-v3.1.0
-        run: cargo check --manifest-path src-tauri/Cargo.toml --locked
-
-      - name: Build Windows Tauri installers
-        working-directory: build/yke-v3.1.0
-        run: npm run desktop:build
-
-      - name: Require installers and generate SHA-256 checksums
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $bundle = Join-Path $PWD 'build/yke-v3.1.0/src-tauri/target/release/bundle'
-          if (-not (Test-Path $bundle)) { throw "Tauri bundle directory was not created: $bundle" }
-
-          $installers = Get-ChildItem $bundle -Recurse -File |
-            Where-Object { $_.Extension -in '.msi', '.exe' }
-
-          if (-not $installers -or $installers.Count -lt 1) {
-            throw 'Tauri completed without producing a Windows MSI or EXE installer.'
-          }
-
-          $checksumPath = Join-Path $bundle 'SHA256SUMS.txt'
-          $lines = foreach ($file in $installers) {
-            $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            $relative = [IO.Path]::GetRelativePath($bundle, $file.FullName).Replace('\','/')
-            "$hash  $relative"
-          }
-          $lines | Set-Content -Path $checksumPath -Encoding ascii
-
-          "Installer outputs:"
-          $installers | ForEach-Object {
-            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$($_.FullName) | $($_.Length) bytes | $hash"
-          }
-          Get-Content $checksumPath
-
-      - name: Upload verified Windows installers
-        uses: actions/upload-artifact@v4
-        with:
-          name: youtube-intelligence-desktop-v3.1.0-windows-installers
-          path: |
-            build/yke-v3.1.0/src-tauri/target/release/bundle/**
-            build/yke-v3.1.0/src-tauri/target/release/youtube-intelligence-desktop.exe
-          if-no-files-found: error
-          retention-days: 30
-) {
+            if ($line -notmatch '^([0-9a-f]{64})  (.+)$') {
               throw "Malformed manifest line: $line"
             }
-            $expected = $Matches[1]
+            $expectedHash = $Matches[1]
             $relative = $Matches[2]
-            $file = Join-Path (Get-Location) ($relative -replace '/', '\\')
+            $file = Join-Path (Get-Location) ($relative -replace '/', '\')
             if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
               throw "Manifest file is missing: $relative"
             }
-            $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($actual -ne $expected) {
-              throw "Manifest hash mismatch for ${relative}: $actual"
+            $actualHash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actualHash -ne $expectedHash) {
+              throw "Manifest hash mismatch for $relative : $actualHash"
             }
           }
 
@@ -173,20 +122,20 @@ jobs:
           $bundle = Join-Path $PWD 'build/yke-v3.1.0/src-tauri/target/release/bundle'
           if (-not (Test-Path $bundle)) { throw "Tauri bundle directory was not created: $bundle" }
 
-          $installers = Get-ChildItem $bundle -Recurse -File |
-            Where-Object { $_.Extension -in '.msi', '.exe' }
+          $installers = @(Get-ChildItem $bundle -Recurse -File |
+            Where-Object { $_.Extension -in '.msi', '.exe' })
 
-          if (-not $installers -or $installers.Count -lt 1) {
+          if ($installers.Count -lt 1) {
             throw 'Tauri completed without producing a Windows MSI or EXE installer.'
           }
 
           $checksumPath = Join-Path $bundle 'SHA256SUMS.txt'
-          $lines = foreach ($file in $installers) {
+          $checksumLines = foreach ($file in $installers) {
             $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             $relative = [IO.Path]::GetRelativePath($bundle, $file.FullName).Replace('\','/')
             "$hash  $relative"
           }
-          $lines | Set-Content -Path $checksumPath -Encoding ascii
+          $checksumLines | Set-Content -Path $checksumPath -Encoding ascii
 
           "Installer outputs:"
           $installers | ForEach-Object {
