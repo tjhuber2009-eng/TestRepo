@@ -3834,42 +3834,42 @@
       },
       {
         "base": {
-          "cagr_pct": 42.846487582745226,
-          "max_dd_pct": -25.55384861649482,
-          "sharpe": 1.3571832090323437,
-          "trades": 16
+          "cagr_pct": 32.92343189080589,
+          "max_dd_pct": -12.77406535835236,
+          "sharpe": 1.517773662731498,
+          "trades": 104
         },
         "candidate": {
-          "adapter": null,
-          "development_cagr_pct": 42.922,
-          "development_max_dd_pct": -25.554,
-          "development_pf": 8.745,
-          "development_sharpe": 1.3583,
-          "development_trades": 16,
+          "adapter": "daily_rsi_adx",
+          "development_cagr_pct": 32.979,
+          "development_max_dd_pct": -12.774,
+          "development_pf": 2.243,
+          "development_sharpe": 1.519,
+          "development_trades": 104,
           "development_years": 3.3731,
-          "evidence_grade": "B",
-          "exactness": "proxy",
-          "extreme_stress_return_pct": 230.019,
-          "family": "swing_terminal_pullback_proxy",
+          "evidence_grade": "A",
+          "exactness": "substantially_specified",
+          "extreme_stress_return_pct": 140.729,
+          "family": "btc_rsi_adx",
           "market": "crypto",
           "multiple_test_qvalue": 0.042923,
-          "pbo": null,
+          "pbo": 0.2,
           "profile": "private",
-          "selection_score": 0.347313,
+          "selection_score": 0.272222,
           "symbol": "ETHUSDT",
           "target": "eth",
-          "track_id": "swing_terminal_pullback_proxy__eth__private"
+          "track_id": "btc_rsi_adx__eth__private"
         },
         "cost_stress": {
-          "cagr_pct": 42.39710733286064,
-          "max_dd_pct": -25.73509510136338,
-          "sharpe": 1.3458278264546344,
-          "trades": 16
+          "cagr_pct": 29.700631502406914,
+          "max_dd_pct": -13.9619514423986,
+          "sharpe": 1.3970537188878218,
+          "trades": 104
         },
         "final_oos_opened": false,
         "hidden_validation_opened": false,
-        "portfolio_eligible": false,
-        "portfolio_gate_reason": "pbo_missing_or_above_limit",
+        "portfolio_eligible": true,
+        "portfolio_gate_reason": "eligible",
         "replay_gate_ok": true,
         "replay_status": "completed"
       },
@@ -4000,7 +4000,7 @@
     "final_oos_opened": false,
     "hidden_validation_opened": false,
     "policy": "replay top diversified continuous private champions on v4 development data; require positive 3x-cost replay plus actual PBO <= 0.55 before portfolio eligibility",
-    "portfolio_eligible_count": 1
+    "portfolio_eligible_count": 2
   },
   "data_end": "2020-12-31",
   "data_provenance": {
@@ -17634,6 +17634,7 @@
   "eligible_strategy_names": [
     "cash_rotation_risk_budgeted",
     "cash_rotation_vix_stress",
+    "continuous__btc_rsi_adx__eth__private",
     "continuous__qqe_proxy__btc__private",
     "cross_asset_momentum_risk_budgeted",
     "defensive_rotation_risk_budgeted",
@@ -21408,6 +21409,12 @@
         "start": "2010-02-11",
         "years": 10.876984126984127
       },
+      "continuous__btc_rsi_adx__eth__private": {
+        "end": "2020-12-31",
+        "observations": 1233,
+        "start": "2017-08-17",
+        "years": 4.892857142857143
+      },
       "continuous__qqe_proxy__btc__private": {
         "end": "2020-12-31",
         "observations": 1233,
@@ -21458,6 +21465,7 @@
     "periods_per_year": 252.0,
     "policy": "long_history_core_v1",
     "supplemental_strategy_names": [
+      "continuous__btc_rsi_adx__eth__private",
       "continuous__qqe_proxy__btc__private",
       "cross_asset_momentum_risk_budgeted"
     ]
