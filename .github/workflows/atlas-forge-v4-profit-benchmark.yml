@@ -113,6 +113,13 @@ jobs:
                   None if not x.get("portfolio_satellite")
                   else x["portfolio_satellite"].get("sleeve")
               ),
+              "financing_policy": x.get("portfolio_financing_policy"),
+              "financing_sensitivity": {
+                  rate: chosen(result)
+                  for rate, result in (
+                      x.get("portfolio_financing_sensitivity") or {}
+                  ).items()
+              },
               "eligible_strategy_names": x.get("eligible_strategy_names"),
               "hidden_validation_opened": x["hidden_validation_opened"],
               "final_oos_opened": x["final_oos_opened"],
