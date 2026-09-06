@@ -3,7 +3,7 @@ name: Runner allocator diagnostic
 on:
   push:
     branches:
-      - moondev-nvidia-autoresearch
+      - atlas-forge-autoresearch
     paths:
       - ".github/workflows/runner-allocator-diagnostic.yml"
   workflow_dispatch:
