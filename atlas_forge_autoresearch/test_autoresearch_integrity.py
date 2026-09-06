@@ -587,13 +587,17 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             3,
         )
 
-    def test_stock_fx_config_uses_non_yahoo_fx_source_and_no_volume_families(self):
+    def test_stock_fx_config_uses_authenticated_primary_sources_and_no_volume_families(self):
         cfg = json.loads((HERE / "stock_fx_config.json").read_text(encoding="utf-8"))
         fx = [x for x in cfg["targets"] if x["market"] == "forex"]
         stocks = [x for x in cfg["targets"] if x["market"] == "stock"]
         self.assertEqual(len(fx), 7)
         self.assertEqual(len(stocks), 30)
         self.assertTrue(all(x["source"] == "tiingo_fx" for x in fx))
+        self.assertTrue(all(x["source"] == "tiingo_eod" for x in stocks))
+        self.assertTrue(
+            all(x["instrument_fidelity"] == "tiingo_adjusted_eod" for x in stocks)
+        )
         self.assertTrue(all(x["validation_start"] == "2022-01-01" for x in fx))
         self.assertNotIn(
             "zanger_volume_breakout_proxy",
@@ -630,6 +634,42 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertEqual(rows[0][0][:10], "2020-01-02")
         self.assertEqual(rows[-1][0][:10], "2021-12-31")
         self.assertEqual(rows[0][1:5], [1.12, 1.13, 1.11, 1.125])
+
+    def test_tiingo_eod_parser_uses_adjusted_prices_and_is_bounded(self):
+        import prepare_market_data as pmd
+
+        start = pmd.dt("2010-01-01")
+        end = pmd.dt("2020-12-31").replace(
+            hour=23, minute=59, second=59
+        )
+        payload = [
+            {
+                "date": "2009-12-31T00:00:00Z",
+                "adjOpen": 49.0, "adjHigh": 51.0, "adjLow": 48.0,
+                "adjClose": 50.0, "adjVolume": 900.0,
+            },
+            {
+                "date": "2010-01-04T00:00:00Z",
+                "open": 100.0, "high": 104.0, "low": 98.0, "close": 102.0,
+                "adjOpen": 50.0, "adjHigh": 52.0, "adjLow": 49.0,
+                "adjClose": 51.0, "adjVolume": 2000.0,
+            },
+            {
+                "date": "2020-12-31T00:00:00Z",
+                "adjOpen": 75.0, "adjHigh": 77.0, "adjLow": 74.0,
+                "adjClose": 76.0, "adjVolume": 3000.0,
+            },
+            {
+                "date": "2021-01-04T00:00:00Z",
+                "adjOpen": 77.0, "adjHigh": 79.0, "adjLow": 76.0,
+                "adjClose": 78.0, "adjVolume": 3100.0,
+            },
+        ]
+        rows = pmd.tiingo_eod_rows(payload, start, end)
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0][0][:10], "2010-01-04")
+        self.assertEqual(rows[-1][0][:10], "2020-12-31")
+        self.assertEqual(rows[0][1:6], [50.0, 52.0, 49.0, 51.0, 2000.0])
 
     def test_dukascopy_daily_decoder_is_scaled_and_filters_forward_fill(self):
         import lzma
