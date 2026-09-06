@@ -253,6 +253,18 @@ def _rsi_now_daily(close: pd.Series, n: int) -> pd.Series:
     return 100.0 - 100.0 / (1.0 + rs)
 
 
+def _atr_shifted_daily(frame: pd.DataFrame, n: int) -> pd.Series:
+    h = frame["High"].astype(float)
+    l = frame["Low"].astype(float)
+    cl = frame["Close"].astype(float)
+    pc = cl.shift(1)
+    tr = pd.concat(
+        [(h - l), (h - pc).abs(), (l - pc).abs()],
+        axis=1,
+    ).max(axis=1)
+    return tr.rolling(int(n)).mean().shift(1)
+
+
 def _adx_now_daily(frame: pd.DataFrame, n: int) -> pd.Series:
     h = frame["High"].astype(float)
     l = frame["Low"].astype(float)
@@ -315,6 +327,38 @@ def _continuous_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
         z = (close - ema) / sd.replace(0.0, np.nan)
         entry = z > float(params.get("entry_z", 0.5))
         exit_ = z < float(params.get("exit_z", -0.5))
+    elif family in {"donchian_20_10", "donchian_sma50"}:
+        entry_lb = int(params.get("entry_lookback", 20))
+        exit_lb = int(params.get("exit_lookback", 10))
+        hh = daily["High"].rolling(entry_lb).max().shift(1)
+        ll = daily["Low"].rolling(exit_lb).min().shift(1)
+        entry = close > hh
+        exit_ = close < ll
+        sma_window = params.get("sma_window")
+        if sma_window is not None:
+            sma = close.rolling(int(sma_window)).mean().shift(1)
+            entry = entry & (close > sma)
+            exit_ = exit_ | (close < sma)
+    elif family == "swing_terminal_pullback_proxy":
+        fast = int(params.get("ema_fast", 20))
+        slow = int(params.get("ema_slow", 50))
+        atr_n = int(params.get("atr_window", 20))
+        adx_n = int(params.get("adx_window", 14))
+        efast = close.ewm(span=fast, adjust=False).mean().shift(1)
+        eslow = close.ewm(span=slow, adjust=False).mean().shift(1)
+        atr = _atr_shifted_daily(daily, atr_n)
+        adx = _adx_now_daily(daily, adx_n).shift(1)
+        trend = (efast > eslow) & (close > eslow)
+        pullback = (
+            (close - efast).abs()
+            <= float(params.get("pullback_atr_mult", 0.40)) * atr
+        )
+        entry = (
+            trend
+            & pullback
+            & (adx > float(params.get("adx_min", 20.0)))
+        )
+        exit_ = close < eslow
     else:
         raise ValueError(
             f"unsupported continuous daily signal family: {family}"
@@ -342,6 +386,8 @@ def hourly_continuous_daily_signal_strategy(params, all_symbols):
 
     Source position sizing is intentionally not copied: V4's volatility target
     and prop exposure optimizer own sizing, daily-loss rails, and payout risk.
+    For signal_only_proxy adapters, source ATR stop execution is not claimed to
+    be reproduced; the state records that limitation explicitly.
     """
     target = str(params["source_target"])
     if target not in all_symbols:
