@@ -2,6 +2,11 @@ name: AUTORESEARCH v4 alpha-generation smoke
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/atlas-forge-v4-smoke-kick"
 
 permissions:
   contents: read
