@@ -15,6 +15,8 @@ import os
 import subprocess
 import sys
 
+import pandas as pd
+
 from phase2_seed_factory import runnable_families, generate
 
 HERE=Path(__file__).resolve().parent
@@ -22,6 +24,7 @@ STATE=HERE/"phase2_state"
 RESULTS=STATE/"results.jsonl"
 PROGRESS=STATE/"progress.json"
 CURSOR=STATE/"cursor.json"
+TARGET_QUALITY=STATE/"target_quality.json"
 CONFIG=HERE/"continuous_config.json"
 PROTOCOL="nested_chronological_v3"
 LANE="phase2_prior_work"
@@ -78,9 +81,57 @@ def append_result(row):
         f.write(json.dumps(row,sort_keys=True,allow_nan=False)+"\n")
 
 
+class DataQualificationBlocked(RuntimeError):
+    pass
+
+
 def development_end(target):
     start=datetime.strptime(target.get("validation_start","2021-01-01"),"%Y-%m-%d")
     return (start-timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def qualify_data(target, path):
+    quality=read_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
+    prior=quality.get(target["id"])
+    if prior:
+        if prior.get("status")=="blocked":
+            raise DataQualificationBlocked(prior.get("reason","target data blocked"))
+        return prior
+
+    df=pd.read_csv(path)
+    rename={col:col.title() for col in df.columns if col.lower() in {"open","high","low","close"}}
+    df=df.rename(columns=rename)
+    need=["Open","High","Low","Close"]
+    missing=[x for x in need if x not in df.columns]
+    if missing:
+        row={"status":"blocked","reason":f"missing OHLC columns: {missing}","checked_at":now()}
+    else:
+        for col in need:
+            df[col]=pd.to_numeric(df[col],errors="coerce")
+        df=df.dropna(subset=need)
+        bad=(df["High"]<df[["Open","Close","Low"]].max(axis=1)) | (df["Low"]>df[["Open","Close","High"]].min(axis=1))
+        nbad=int(bad.sum())
+        if nbad:
+            row={
+                "status":"blocked",
+                "reason":f"data integrity failure: {nbad} malformed OHLC rows; do not silently clean",
+                "checked_at":now(),
+                "data_quality_grade":target.get("data_quality_grade"),
+                "instrument_fidelity":target.get("instrument_fidelity"),
+            }
+        else:
+            row={
+                "status":"qualified",
+                "reason":"OHLC integrity passed",
+                "checked_at":now(),
+                "data_quality_grade":target.get("data_quality_grade"),
+                "instrument_fidelity":target.get("instrument_fidelity"),
+            }
+    quality[target["id"]]=row
+    save_json(TARGET_QUALITY,quality)
+    if row["status"]=="blocked":
+        raise DataQualificationBlocked(row["reason"])
+    return row
 
 
 def prepare_data(track):
@@ -99,6 +150,7 @@ def prepare_data(track):
         "--source",t["source"],"--symbol",t["symbol"],"--id",t["id"],
         "--start",t["start"],"--end",wanted_end,
     ],cwd=HERE,check=True)
+    qualify_data(t,data)
     return data
 
 
@@ -144,7 +196,13 @@ def screen_track(track):
         "AUTORESEARCH_VALIDATION_END":str(t["validation_end"]),
         "AUTORESEARCH_SOURCE_SHA":os.environ.get("AUTORESEARCH_SOURCE_SHA",""),
     })
-    subprocess.run([sys.executable,"robust_harness.py","--is"],cwd=HERE,env=env,check=True,stdout=subprocess.DEVNULL)
+    proc=subprocess.run(
+        [sys.executable,"robust_harness.py","--is"],
+        cwd=HERE,env=env,text=True,capture_output=True,
+    )
+    if proc.returncode:
+        detail=(proc.stdout+"\n"+proc.stderr).strip()[-2400:]
+        raise RuntimeError(detail or f"robust_harness exit {proc.returncode}")
     x=load_json(HERE/"last_run.json")
     lookahead=None
     if bool(x.get("guard_ok")):
@@ -187,6 +245,7 @@ def write_progress(tracks,results):
     guards=sum(1 for x in results.values() if x.get("guard_ok"))
     lookahead=sum(1 for x in results.values() if x.get("lookahead_pass") is True)
     errors=sum(1 for x in results.values() if x.get("status")=="error")
+    data_blocked=sum(1 for x in results.values() if x.get("status")=="data_blocked")
     ranked=[
         x for x in results.values()
         if x.get("status")=="ok" and x.get("guard_ok") and x.get("score") is not None
@@ -201,6 +260,7 @@ def write_progress(tracks,results):
         "screened_count":done,
         "success_count":ok,
         "error_count":errors,
+        "data_blocked_count":data_blocked,
         "guard_pass_count":guards,
         "lookahead_pass_count":lookahead,
         "completion_pct":round(100.0*done/max(len(tracks),1),2),
@@ -234,13 +294,22 @@ def main():
         if track["id"] not in results:
             try:
                 row=screen_track(track); row["status"]="ok"
+            except DataQualificationBlocked as exc:
+                row={
+                    "ts":now(),"lane":LANE,"protocol":PROTOCOL,
+                    "stage":"development_baseline_screen","track_id":track["id"],
+                    "family":track["family"],"target":track["target"]["id"],
+                    "profile":track["profile_name"],"status":"data_blocked",
+                    "block_reason":str(exc)[:1000],
+                    "hidden_validation_opened":False,"final_oos_opened":False,
+                }
             except Exception as exc:
                 row={
                     "ts":now(),"lane":LANE,"protocol":PROTOCOL,
                     "stage":"development_baseline_screen","track_id":track["id"],
                     "family":track["family"],"target":track["target"]["id"],
                     "profile":track["profile_name"],"status":"error",
-                    "error":f"{type(exc).__name__}: {str(exc)[:800]}",
+                    "error":f"{type(exc).__name__}: {str(exc)[:1800]}",
                     "hidden_validation_opened":False,"final_oos_opened":False,
                 }
             append_result(row); results[track["id"]]=row; processed+=1
