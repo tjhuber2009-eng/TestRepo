@@ -385,18 +385,39 @@ def write_progress(tracks,results):
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--max-tracks",type=int,default=6)
+    ap.add_argument("--track-id")
+    ap.add_argument(
+        "--smoke-only",
+        action="store_true",
+        help="screen one explicit development-only track without persisting state",
+    )
     args=ap.parse_args()
     STATE.mkdir(parents=True,exist_ok=True)
     tracks=build_tracks()
+    if args.smoke_only and not args.track_id:
+        raise SystemExit("--smoke-only requires --track-id")
+    if args.track_id:
+        matches=[x for x in tracks if x["id"]==args.track_id]
+        if len(matches)!=1:
+            raise SystemExit(f"unknown/non-unique Phase-2 track: {args.track_id}")
+        if args.smoke_only:
+            row=screen_track(matches[0])
+            row["status"]="ok"
+            row["smoke_only"]=True
+            print(json.dumps(row,indent=2,sort_keys=True))
+            return
     results=read_results()
     start=0
-    if CURSOR.exists():
+    if args.track_id:
+        start=next(i for i,x in enumerate(tracks) if x["id"]==args.track_id)
+    elif CURSOR.exists():
         try: start=int(load_json(CURSOR).get("next_index",0))%max(len(tracks),1)
         except Exception: start=0
     processed=0
     idx=start
     visited=0
-    while processed<args.max_tracks and visited<len(tracks):
+    max_to_process=1 if args.track_id else args.max_tracks
+    while processed<max_to_process and visited<len(tracks):
         track=tracks[idx]
         if track["id"] not in results:
             try:
