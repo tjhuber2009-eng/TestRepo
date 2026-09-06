@@ -1,6 +1,6 @@
 Atlas Forge V4 smoke
-Financing realism verification
-Source head: 48d14ce69705078d7599da279b5adf273b340d4b
-Checks: leverage financing + 6/10/14 percent stress + max expected prop reward frontier
+Financing + prop frontier integration verification
+Source head: 4d30aadd0b9c3144811e34e9c92f89aaa9aa526f
+Checks: leverage financing, 6/10/14 percent stress, unified max expected repeat reward registry
 Hidden validation: sealed
 Final 2023+ OOS: sealed
