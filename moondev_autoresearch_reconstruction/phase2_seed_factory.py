@@ -63,6 +63,7 @@ FAMILIES = [
     "elder_impulse",
     "utbot_ema200",
     "trend_magic_cci20",
+    "bitcoin_cycle_monthly_causal",
 ]
 
 SOURCE_TEMPLATE = r'''
@@ -346,9 +347,33 @@ def _cross_dn(a,b):
     return (a<b)&(a.shift(1)>=b.shift(1))
 
 
-def phase2_signal(close, high, low, volume):
+def phase2_signal(close, high, low, volume, dates=None):
     c=pd.Series(close,dtype=float); h=pd.Series(high,dtype=float); l=pd.Series(low,dtype=float); v=pd.Series(volume,dtype=float)
     idx=c.index
+    if FAMILY=="bitcoin_cycle_monthly_causal":
+        if dates is None:
+            raise RuntimeError("bitcoin_cycle_monthly_causal requires dates")
+        dti=pd.DatetimeIndex(pd.to_datetime(np.asarray(dates),utc=True))
+        s=pd.Series(c.to_numpy(),index=dti,dtype=float)
+        monthly_close=s.resample("ME").last()
+        monthly_ret=monthly_close.pct_change()
+        out=pd.Series(0.0,index=dti)
+        cached={}
+        for i,dt in enumerate(dti):
+            key=(dt.year,dt.month)
+            if key not in cached:
+                month_start=pd.Timestamp(
+                    year=dt.year,month=dt.month,day=1,tz="UTC"
+                )
+                hist=monthly_ret[monthly_ret.index < month_start].dropna()
+                mask=(
+                    (hist.index.year % 4 == dt.year % 4)
+                    & (hist.index.month == dt.month)
+                )
+                avg=float(hist[mask].mean()) if mask.any() else float("nan")
+                cached[key]=1.0 if np.isfinite(avg) and avg>0 else 0.0
+            out.iloc[i]=cached[key]
+        return out.to_numpy()
     if FAMILY.startswith("sma_"):
         _,a,b=FAMILY.split("_"); return np.sign(sma(c,int(a))-sma(c,int(b))).fillna(0).to_numpy()
     if FAMILY.startswith("ema_"):
@@ -461,7 +486,14 @@ class MoonStrategy(Strategy):
         return max(0,int((float(self.equity)*exposure)/px))
 
     def init(self):
-        self.sig=self.I(phase2_signal,self.data.Close,self.data.High,self.data.Low,self.data.Volume)
+        self.sig=self.I(
+            phase2_signal,
+            self.data.Close,
+            self.data.High,
+            self.data.Low,
+            self.data.Volume,
+            np.asarray(self.data.index),
+        )
         self.rv=self.I(realized_vol,self.data.Close,self.vol_lookback)
 
     def next(self):
