@@ -2,6 +2,11 @@ name: Continuous AUTORESEARCH smoke
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/atlas-forge-source-smoke-kick"
 
 permissions:
   contents: read
@@ -14,15 +19,46 @@ jobs:
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
+      TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
 
     defaults:
       run:
         working-directory: atlas_forge_autoresearch
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout smoke request
+        uses: actions/checkout@v7
         with:
-          ref: atlas-forge-autoresearch
+          fetch-depth: 1
+
+      - id: source
+        name: Resolve immutable Atlas Forge source
+        shell: bash
+        working-directory: .
+        run: |
+          source_ref="$(sed -n 's/^Source head: \([0-9a-fA-F]\{40\}\)$/\1/p' .github/atlas-forge-source-smoke-kick | head -1)"
+          if [[ ! "$source_ref" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "::error::Smoke kick must contain a 40-hex 'Source head:' value"
+            exit 1
+          fi
+          echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned Atlas Forge source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.source.outputs.source_ref }}
+          fetch-depth: 0
+
+      - name: Verify pinned source
+        shell: bash
+        working-directory: .
+        run: |
+          resolved="$(git rev-parse HEAD)"
+          requested="${{ steps.source.outputs.source_ref }}"
+          test "$resolved" = "$requested" || {
+            echo "::error::Source mismatch: requested $requested, resolved $resolved"
+            exit 1
+          }
 
       - uses: actions/setup-python@v7
         with:
@@ -55,6 +91,32 @@ jobs:
               ],check=True)
               subprocess.run([sys.executable,"-m","py_compile","strategy.py"],check=True)
           print(f"runnable_families={len(runnable)}")
+
+      - name: Verify authenticated Tiingo EOD stock primary
+        shell: bash
+        run: |
+          test -n "$TIINGO_API_TOKEN"
+          python prepare_market_data.py \
+            --source tiingo_eod --symbol MSFT --id msft_smoke \
+            --start 2019-01-01 --end 2020-12-31
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path("data/msft_smoke_1d.manifest.json").read_text())
+          assert m["source"]=="tiingo_eod", m
+          assert m["requested_end"]=="2020-12-31", m
+          assert m["oos_included"] is False, m
+          assert m["source_audit"]["price_basis"]=="dividend_and_split_adjusted_ohlcv", m
+          assert len(m["csv_sha256"])==64
+          assert len(m["source_audit"]["response_sha256"])==64
+          print(json.dumps({
+              "source":m["source"],
+              "rows":m["rows"],
+              "first":m["first"],
+              "last":m["last"],
+              "csv_sha256":m["csv_sha256"],
+          },indent=2))
+          PY
 
       - name: Prepare BTC development-only data
         run: >
