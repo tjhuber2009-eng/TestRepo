@@ -1222,6 +1222,68 @@ class AtlasStrategy:
         self.assertEqual(exploit[1]["id"], tracks[0]["id"])
         self.assertEqual(explore[1]["id"], tracks[0]["id"])
 
+    def test_opportunity_allocator_cannot_cross_market_slot(self):
+        tracks = [
+            {"id": "stock_a", "target": {"market": "stock"}},
+            {"id": "fx_a", "target": {"market": "forex"}},
+            {"id": "stock_b", "target": {"market": "stock"}},
+        ]
+        plan = {t["id"]: 10 for t in tracks}
+        scores = {"stock_a": 0.4, "fx_a": 0.3, "stock_b": 0.9}
+
+        with mock.patch.object(
+            continuous_runner, "is_terminal_block", return_value=False
+        ), mock.patch.object(
+            continuous_runner, "track_counts",
+            return_value={"valid": 2, "attempts": 2, "guard_passed": 2},
+        ), mock.patch.object(
+            continuous_runner, "track_meta",
+            return_value={
+                "baseline": {
+                    "guard_ok": True,
+                    "cagr_pct": 40.0,
+                    "calmar": 2.0,
+                    "evidence_grade": "A",
+                    "extreme_stress": {"cagr_pct": 35.0},
+                }
+            },
+        ), mock.patch.object(
+            continuous_runner, "development_selection_score",
+            side_effect=lambda t: scores[t["id"]],
+        ), mock.patch.object(
+            continuous_runner, "development_overfit",
+            return_value={"pbo": 0.10},
+        ):
+            chosen = continuous_runner.next_search_track(
+                tracks,
+                plan,
+                0,
+                prefer_opportunity=True,
+                opportunity_market="forex",
+            )
+
+        self.assertEqual(chosen[1]["id"], "fx_a")
+
+    def test_opportunity_visit_preserves_exploration_cursor(self):
+        self.assertEqual(
+            continuous_runner.next_cursor_after_visit(
+                99,
+                120,
+                prefer_opportunity=True,
+                scheduled_cursor_next=6,
+            ),
+            6,
+        )
+        self.assertEqual(
+            continuous_runner.next_cursor_after_visit(
+                99,
+                120,
+                prefer_opportunity=False,
+                scheduled_cursor_next=6,
+            ),
+            100,
+        )
+
     def test_money_opportunity_rewards_stress_surviving_growth(self):
         tracks = continuous_runner.build_tracks()[:2]
         metas = {
