@@ -1,4 +1,4 @@
-name: AUTORESEARCH command router
+name: Atlas Forge command router
 
 on:
   issue_comment:
@@ -13,8 +13,8 @@ permissions:
 jobs:
   route:
     if: >
-      github.event.issue.pull_request &&
-      github.event.issue.number == 13 &&
+      !github.event.issue.pull_request &&
+      github.event.issue.number == 39 &&
       github.event.comment.user.login == 'tjhuber2009-eng'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -88,6 +88,6 @@ jobs:
               gh workflow run autoresearch-health-audit.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
             *)
-              echo "Not an AUTORESEARCH command; ignoring."
+              echo "Not an Atlas Forge command; ignoring."
               ;;
           esac
