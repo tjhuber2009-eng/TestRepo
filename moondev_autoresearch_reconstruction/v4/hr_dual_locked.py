@@ -52,6 +52,20 @@ def load_adjusted_data(root):
         "GLD": "gld_1d.csv",
         "SHY": "shy_1d.csv",
     }
+    for symbol, name in mapping.items():
+        csv_path = root / name
+        manifest_path = csv_path.with_suffix(".manifest.json")
+        if not manifest_path.exists():
+            raise RuntimeError(f"HR-DUAL missing source manifest: {manifest_path}")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("source") != "yahoo":
+            raise RuntimeError(f"HR-DUAL requires Yahoo source parity: {symbol}")
+        if manifest.get("adjustment_method") != "legacy_adjusted_close":
+            raise RuntimeError(
+                f"HR-DUAL requires Yahoo adjusted-close-equivalent OHLC: {symbol}"
+            )
+        if manifest.get("oos_included") is not False:
+            raise RuntimeError(f"HR-DUAL source manifest is not development-only: {symbol}")
     data = {s: read_adjusted_csv(root / name) for s, name in mapping.items()}
     idx = data[TICKERS[0]].index
     for symbol in TICKERS[1:]:
@@ -264,7 +278,8 @@ def replay(data_dir, output=None):
         "protocol": "alpha_generation_v4",
         "stage": "development_only",
         "source_lock": SOURCE_LOCK,
-        "provider_role": "Yahoo adjusted shadow source-parity diagnostic",
+        "provider_role": "Yahoo legacy_adjusted_close source-parity diagnostic",
+        "data_basis": "Yahoo chart OHLC scaled by AdjClose/Close to match yfinance auto_adjust=True semantics",
         "authoritative_portfolio_eligible": False,
         "eligibility_reason": (
             "frozen prior strategy is replayed source-faithfully, but V4 "
