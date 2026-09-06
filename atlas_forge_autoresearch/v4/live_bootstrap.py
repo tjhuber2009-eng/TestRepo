@@ -39,6 +39,8 @@ from .strategy_examples import (
 
 PRIVATE_PORTFOLIO_FINANCING_RATE_PCT = 6.0
 PRIVATE_PORTFOLIO_FINANCING_STRESS_RATES_PCT = (6.0, 10.0, 14.0)
+PRIVATE_SATELLITE_ANCHOR = "continuous__qqe_proxy__btc__private"
+PRIVATE_SATELLITE_ANCHOR_WEIGHT = 0.80
 
 
 def research_commit_sha() -> str | None:
@@ -1439,6 +1441,12 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         static_portfolio.chosen.weights,
                         supplemental_returns,
                         max_satellite_weight=0.35,
+                        anchor_name=(
+                            PRIVATE_SATELLITE_ANCHOR
+                            if PRIVATE_SATELLITE_ANCHOR in supplemental_returns
+                            else None
+                        ),
+                        anchor_weight=PRIVATE_SATELLITE_ANCHOR_WEIGHT,
                     )
                 )
                 satellite_gross_profiles = {
@@ -1514,8 +1522,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         ),
                         "policy": (
                             "supplemental sleeve capped at 35% composition; "
-                            "pre-inception allocation held as cash; all sleeves "
-                            "clear the same static-portfolio Q10 floor"
+                            "includes one finite 80/20 local diversification "
+                            "neighborhood around the prior BTC QQE satellite "
+                            "winner; pre-inception allocation held as cash; "
+                            "all sleeves clear the same static-portfolio Q10 floor"
                         ),
                     }
 
