@@ -412,6 +412,14 @@ class MoonStrategy:
             rows += [
                 dict(rows[-1]),
                 {
+                    "candidate_ast_sha256": "baseline-different-ast",
+                    "candidate_source_sha256": "baseline",
+                    "selection_eligible": True,
+                    "harness_sha256": "h1",
+                    "program_sha256": "p1",
+                    "cscv_slice_k": [8.0] * 8,
+                },
+                {
                     "candidate_ast_sha256": "wrong-harness",
                     "selection_eligible": True,
                     "harness_sha256": "other",
@@ -438,6 +446,13 @@ class MoonStrategy:
             diag["candidate_pool"],
             "frozen_baseline_plus_unique_selection_eligible_backtests",
         )
+
+    def test_cscv_midrank_ties_are_order_invariant(self):
+        tied = np.ones((5, 8), dtype=float)
+        out = overfit_diagnostics.cscv_pbo(tied)
+        self.assertIsNotNone(out)
+        self.assertEqual(out["pbo"], 0.0)
+        self.assertAlmostEqual(out["median_oos_logit"], 0.0, places=12)
 
     def test_cscv_requires_even_symmetric_partition(self):
         self.assertIsNone(overfit_diagnostics.cscv_pbo(np.ones((6, 7))))
