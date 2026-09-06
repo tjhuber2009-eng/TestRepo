@@ -139,6 +139,77 @@ def prepare_yahoo(symbol, start, end, out):
     print(f"Yahoo {symbol}: {len(rows)} adjusted daily bars -> {out}")
 
 
+def normalize_yahoo_futures_proxy(out):
+    """Make Yahoo continuous-futures proxy OHLC internally coherent.
+
+    Yahoo continuous futures occasionally publish settlement-like Close/Open
+    values outside the reported High/Low envelope around contract rolls or
+    provider anomalies. For development-only proxy screening, preserve Open
+    and Close exactly and widen High/Low to contain all four OHLC values.
+    Every changed row is recorded; no value is silently dropped or clipped.
+    """
+    rows = []
+    changed = []
+    with out.open(encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            o = float(row["Open"])
+            h = float(row["High"])
+            l = float(row["Low"])
+            cl = float(row["Close"])
+            new_h = max(h, o, l, cl)
+            new_l = min(l, o, h, cl)
+            if new_h != h or new_l != l:
+                changed.append({
+                    "Date": row["Date"],
+                    "original_high": h,
+                    "original_low": l,
+                    "normalized_high": new_h,
+                    "normalized_low": new_l,
+                    "open": o,
+                    "close": cl,
+                })
+                row["High"] = repr(new_h)
+                row["Low"] = repr(new_l)
+            rows.append(row)
+    if len(changed) > max(50, int(len(rows) * 0.02)):
+        raise RuntimeError(
+            f"Yahoo futures proxy requires excessive OHLC normalization: "
+            f"{len(changed)}/{len(rows)} rows"
+        )
+    fields = ["Date","Open","High","Low","Close","Volume"]
+    with out.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows({k: row.get(k, "") for k in fields} for row in rows)
+    meta = {
+        "policy": "explicit_settlement_envelope_v1",
+        "changed_rows": len(changed),
+        "total_rows": len(rows),
+        "changed_fraction": 0.0 if not rows else len(changed) / len(rows),
+        "changes": changed,
+        "interpretation": (
+            "Open and Close are preserved exactly; High/Low are widened only "
+            "where required to contain provider-reported OHLC. Development-only "
+            "continuous-futures proxy, not contract-exact evidence."
+        ),
+    }
+    out.with_suffix(".normalization.json").write_text(
+        json.dumps(meta, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        f"Yahoo futures proxy normalization: {len(changed)}/{len(rows)} "
+        f"OHLC envelopes widened -> {out}"
+    )
+    return meta
+
+
+def prepare_yahoo_futures_proxy(symbol, start, end, out):
+    prepare_yahoo(symbol, start, end, out)
+    return normalize_yahoo_futures_proxy(out)
+
+
 def prepare_stooq(symbol, start, end, out):
     enc = urllib.parse.quote(symbol.lower(), safe="")
     d1 = start.strftime("%Y%m%d")
@@ -223,6 +294,13 @@ def write_manifest(out, source, symbol, ident, start, end):
         ),
         "oos_included": False,
     }
+    if source == "yahoo_futures_proxy":
+        norm_path = out.with_suffix(".normalization.json")
+        if not norm_path.exists():
+            raise RuntimeError("futures-proxy normalization audit missing")
+        manifest["normalization"] = json.loads(
+            norm_path.read_text(encoding="utf-8")
+        )
     path = out.with_suffix(".manifest.json")
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"manifest -> {path} sha256={manifest['csv_sha256']}")
@@ -231,7 +309,7 @@ def write_manifest(out, source, symbol, ident, start, end):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", choices=["binance","yahoo","stooq"], required=True)
+    ap.add_argument("--source", choices=["binance","yahoo","yahoo_futures_proxy","stooq"], required=True)
     ap.add_argument("--symbol", required=True)
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
@@ -255,6 +333,8 @@ def main():
         prepare_binance(args.symbol, start, end, out)
     elif args.source == "stooq":
         prepare_stooq(args.symbol, start, end, out)
+    elif args.source == "yahoo_futures_proxy":
+        prepare_yahoo_futures_proxy(args.symbol, start, end, out)
     else:
         prepare_yahoo(args.symbol, start, end, out)
     write_manifest(out, args.source, args.symbol, args.id, start, end)
