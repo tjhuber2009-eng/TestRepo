@@ -20,6 +20,8 @@ QUEUE = STATE / "candidate_queue.json"
 RESULTS = STATE / "reconstructions.jsonl"
 PROGRESS = STATE / "reconstruction_progress.json"
 CURSOR = STATE / "reconstruction_cursor.json"
+HYDRATED = STATE / "hydrated_sources.jsonl"
+RECONSTRUCTION_VERSION = 2
 LANE = "phase3_free_reconstruction"
 PROTOCOL = "nested_chronological_v3"
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
@@ -71,6 +73,21 @@ def prior_results():
     return rows
 
 
+def prior_hydration():
+    rows = {}
+    if not HYDRATED.exists():
+        return rows
+    for line in HYDRATED.read_text(encoding="utf-8").splitlines():
+        try:
+            row = json.loads(line)
+        except Exception:
+            continue
+        key = (row.get("source_url") or row.get("source_title") or "").strip().lower()
+        if key:
+            rows[key] = row
+    return rows
+
+
 def append_result(row):
     STATE.mkdir(parents=True, exist_ok=True)
     with RESULTS.open("a", encoding="utf-8") as fh:
@@ -92,7 +109,7 @@ def rule_hash(spec):
     return sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
-def reconstruct(row, model):
+def reconstruct(row, model, hydrated_text=""):
     key = os.environ.get("NVIDIA_API_KEY")
     if not key:
         raise RuntimeError("NVIDIA_API_KEY missing")
@@ -106,6 +123,9 @@ def reconstruct(row, model):
         "SOURCE SNIPPET/ABSTRACT:",
         str(row.get("snippet") or "")[:14000],
     ])
+    if hydrated_text:
+        evidence += "\n\nHYDRATED PUBLIC SOURCE TEXT:\n" + str(hydrated_text)[:50000]
+
     schema = {
         "spec_status": "complete_spec|incomplete_spec|not_a_strategy",
         "title": "",
@@ -162,6 +182,7 @@ def main():
 
     queue = load_json(QUEUE).get("candidates", [])
     results = prior_results()
+    hydration = prior_hydration()
     cursor = 0
     if CURSOR.exists():
         cursor = int(load_json(CURSOR).get("next_index", 0) or 0)
@@ -174,10 +195,20 @@ def main():
         cursor = (idx + 1) % max(len(queue), 1)
         scanned += 1
         key = (row.get("url") or row.get("title") or "").strip().lower()
-        if not key or key in results:
+        if not key:
             continue
+        prior = results.get(key)
+        hydrated = hydration.get(key)
+        prior_version = int((prior or {}).get("reconstruction_version", 1) or 1)
+        if prior is not None and (
+            hydrated is None or prior_version >= RECONSTRUCTION_VERSION
+        ):
+            continue
+        hydrated_text = (
+            "" if hydrated is None else str(hydrated.get("hydrated_text") or "")
+        )
         try:
-            spec = reconstruct(row, args.model)
+            spec = reconstruct(row, args.model, hydrated_text=hydrated_text)
             confidence = float(spec.get("extraction_confidence", 0.0) or 0.0)
             missing = [x for x in spec.get("missing_rules", []) if str(x).strip()]
             entries = [x for x in spec.get("entry_rules", []) if str(x).strip()]
@@ -198,6 +229,10 @@ def main():
                 "source_url": row.get("url"),
                 "source_query": row.get("query"),
                 "model": args.model,
+                "reconstruction_version": (
+                    RECONSTRUCTION_VERSION if hydrated is not None else 1
+                ),
+                "hydrated_evidence_used": bool(hydrated_text),
                 "spec": spec,
                 "rules_hash": rule_hash(spec),
                 "reconstruction_admitted": admitted,
@@ -219,6 +254,10 @@ def main():
                 "source_url": row.get("url"),
                 "source_query": row.get("query"),
                 "model": args.model,
+                "reconstruction_version": (
+                    RECONSTRUCTION_VERSION if hydrated is not None else 1
+                ),
+                "hydrated_evidence_used": bool(hydrated_text),
                 "reconstruction_admitted": False,
                 "intake_status": "reconstruction_error",
                 "error": f"{type(exc).__name__}: {str(exc)[:1400]}",
@@ -236,6 +275,16 @@ def main():
         "updated_at": now(),
     })
     vals = list(results.values())
+    hydrated_pending = sum(
+        1
+        for hkey in hydration
+        if hkey not in results
+        or int(
+            (results.get(hkey) or {}).get("reconstruction_version", 1) or 1
+        ) < RECONSTRUCTION_VERSION
+    )
+    base_complete = len(vals) >= len(queue)
+    all_current = base_complete and hydrated_pending == 0
     admitted = [x for x in vals if x.get("reconstruction_admitted")]
     unique_hashes = {
         x.get("rules_hash") for x in admitted if x.get("rules_hash")
@@ -252,14 +301,18 @@ def main():
         "errors": sum(
             1 for x in vals if x.get("intake_status") == "reconstruction_error"
         ),
-        "all_reconstructed": len(vals) >= len(queue),
+        "all_reconstructed": all_current,
+        "base_queue_reconstructed": base_complete,
+        "hydrated_source_count": len(hydration),
+        "hydrated_reconstruction_pending": hydrated_pending,
+        "reconstruction_version": RECONSTRUCTION_VERSION,
         "stage": (
             "reconstruction_complete"
-            if len(vals) >= len(queue) else "reconstructing"
+            if all_current else "reconstructing"
         ),
         "next_stage": (
             "development_engine_mapping"
-            if len(vals) >= len(queue) else "continue_reconstruction"
+            if all_current else "continue_reconstruction"
         ),
         "phase1_registry_mutated": False,
         "hidden_validation_opened": False,
