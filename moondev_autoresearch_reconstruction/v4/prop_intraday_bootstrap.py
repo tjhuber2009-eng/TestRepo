@@ -464,18 +464,70 @@ def _donchian_daily_decisions(frame: pd.DataFrame, params: dict):
     )
 
 
-def _hourly_donchian_stop_state(
+def _atr_channel_daily_decisions(frame: pd.DataFrame, params: dict):
+    """Return completed-day ATR-channel decisions and source stop basis."""
+    daily = _utc_daily_ohlc(frame)
+    close = daily["Close"].astype(float)
+    ema_window = int(params["ema_window"])
+    atr_window = int(params["atr_window"])
+    entry_atr_mult = float(params["entry_atr_mult"])
+
+    ema = close.ewm(span=ema_window, adjust=False).mean().shift(1)
+    atr = _atr_shifted_daily(daily, atr_window)
+    entry = close > (ema + entry_atr_mult * atr)
+    exit_ = close < ema
+
+    if "source_min_bars" not in params or "source_vol_lookback" not in params:
+        raise ValueError(
+            "stop-aware ATR-channel transfer requires source warmup and vol gate"
+        )
+    source_min_bars = int(params["source_min_bars"])
+    source_vol_lookback = int(params["source_vol_lookback"])
+    log_ret = np.log(close / close.shift(1))
+    source_rv = (
+        log_ret.rolling(source_vol_lookback)
+        .std(ddof=0)
+        .shift(1)
+        * np.sqrt(365.0)
+    )
+    bar_count = pd.Series(
+        np.arange(1, len(daily) + 1, dtype=int),
+        index=daily.index,
+    )
+    decision_ok = (
+        bar_count.ge(source_min_bars)
+        & source_rv.notna()
+        & source_rv.gt(0.0)
+        & ema.notna()
+        & atr.notna()
+        & atr.gt(0.0)
+    )
+    return (
+        daily,
+        (entry & decision_ok).fillna(False),
+        (exit_ & decision_ok).fillna(False),
+        atr,
+    )
+
+
+def _hourly_source_stop_state(
     frame: pd.DataFrame,
     params: dict,
 ) -> tuple[pd.Series, pd.Series]:
-    """Replay source Donchian entry/exit plus standing ATR stop on hourly bars.
+    """Replay supported source entry/exit plus standing ATR stop on hourly bars.
 
     The source decision is formed from the completed UTC daily bar and can
     execute no earlier than the following hourly open. A stop already placed
     on an open position may trigger intrabar from the hourly low. Prague reset
     still forces the V4 prop account flat.
     """
-    daily, entry, exit_, atr = _donchian_daily_decisions(frame, params)
+    family = str(params["source_family"])
+    if family in {"donchian_20_10", "donchian_sma50"}:
+        daily, entry, exit_, atr = _donchian_daily_decisions(frame, params)
+    elif family == "atr_channel_trend":
+        daily, entry, exit_, atr = _atr_channel_daily_decisions(frame, params)
+    else:
+        raise ValueError(f"unsupported stop-aware source family: {family}")
     index = frame.index
     utc_dates = pd.Series(index.floor("1D"), index=index)
     next_utc_dates = utc_dates.shift(-1)
@@ -554,7 +606,7 @@ def hourly_continuous_daily_signal_strategy(params, all_symbols):
         columns = sorted(data)
 
         if bool(params.get("source_stop_required")):
-            state, _ = _hourly_donchian_stop_state(data[target], params)
+            state, _ = _hourly_source_stop_state(data[target], params)
             out = pd.DataFrame(0.0, index=index, columns=columns)
             out.loc[:, target] = state.reindex(index).fillna(0.0)
             return out
@@ -930,7 +982,7 @@ def evaluate_strategy(data, params):
         family == "continuous_daily_signal"
         and bool(params.get("source_stop_required"))
     ):
-        _, stop_series = _hourly_donchian_stop_state(
+        _, stop_series = _hourly_source_stop_state(
             data[str(params["source_target"])],
             params,
         )
