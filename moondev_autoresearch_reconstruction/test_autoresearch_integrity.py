@@ -326,13 +326,19 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         )
         self.assertEqual(
             phase3_reconstruct_runner.reconstruction_version_for(
-                {"hydration_version": 1}
+                {"hydration_status": "attempted_no_text", "hydration_version": 2}
+            ),
+            1,
+        )
+        self.assertEqual(
+            phase3_reconstruct_runner.reconstruction_version_for(
+                {"hydration_status": "hydrated", "hydration_version": 1}
             ),
             2,
         )
         self.assertEqual(
             phase3_reconstruct_runner.reconstruction_version_for(
-                {"hydration_version": 2}
+                {"hydration_status": "hydrated", "hydration_version": 2}
             ),
             3,
         )
