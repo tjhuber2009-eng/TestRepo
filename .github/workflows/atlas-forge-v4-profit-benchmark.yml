@@ -81,18 +81,83 @@ jobs:
             exit 1
           }
 
+      - name: Restore verified V4 development evidence cache
+        uses: actions/cache@v6
+        with:
+          path: atlas_forge_autoresearch/v4_data
+          key: atlas-forge-v4-development-evidence-v1-${{ hashFiles('atlas_forge_autoresearch/v4/prepare_evidence_data.py', 'atlas_forge_autoresearch/prepare_market_data.py') }}
+
       - name: Prepare development-only primary data
-        shell: bash
+        shell: python
         run: |
-          python -m v4.prepare_evidence_data --source tiingo --symbol QQQ --id qqq --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
-          python -m v4.prepare_evidence_data --source tiingo --symbol TQQQ --id tqqq --start 2010-02-11 --end 2020-12-31 --output-dir v4_data
-          python -m v4.prepare_evidence_data --source tiingo --symbol SPY --id spy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
-          python -m v4.prepare_evidence_data --source tiingo --symbol IEF --id ief --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
-          python -m v4.prepare_evidence_data --source tiingo --symbol GLD --id gld --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
-          python -m v4.prepare_evidence_data --source tiingo --symbol SHY --id shy --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
-          python -m v4.prepare_evidence_data --source cboe_vix --symbol VIX --id vix --start 2010-01-01 --end 2020-12-31 --output-dir v4_data
-          python prepare_market_data.py --source binance --symbol BTCUSDT --id btc --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
-          python prepare_market_data.py --source binance --symbol ETHUSDT --id eth --start 2017-08-17 --end 2020-12-31 --output-dir v4_data
+          import hashlib, json, subprocess, sys
+          from pathlib import Path
+
+          root=Path("v4_data")
+          root.mkdir(exist_ok=True)
+
+          def sha256(path):
+              h=hashlib.sha256()
+              with path.open("rb") as f:
+                  for block in iter(lambda:f.read(1024*1024), b""):
+                      h.update(block)
+              return h.hexdigest()
+
+          def valid(ident, source, symbol, start, end):
+              csv_path=root/f"{ident}_1d.csv"
+              manifest_path=root/f"{ident}_1d.manifest.json"
+              if not csv_path.exists() or not manifest_path.exists():
+                  return False
+              try:
+                  m=json.loads(manifest_path.read_text())
+                  return (
+                      m.get("source")==source
+                      and str(m.get("symbol","")).upper()==symbol.upper()
+                      and m.get("requested_start")==start
+                      and m.get("requested_end")==end
+                      and m.get("final_oos_included") is False
+                      and m.get("hidden_validation_included",False) is False
+                      and m.get("csv_sha256")==sha256(csv_path)
+                  )
+              except Exception:
+                  return False
+
+          specs=[
+              ("evidence","tiingo","QQQ","qqq","2010-01-01","2020-12-31"),
+              ("evidence","tiingo","TQQQ","tqqq","2010-02-11","2020-12-31"),
+              ("evidence","tiingo","SPY","spy","2010-01-01","2020-12-31"),
+              ("evidence","tiingo","IEF","ief","2010-01-01","2020-12-31"),
+              ("evidence","tiingo","GLD","gld","2010-01-01","2020-12-31"),
+              ("evidence","tiingo","SHY","shy","2010-01-01","2020-12-31"),
+              ("evidence","cboe_vix","VIX","vix","2010-01-01","2020-12-31"),
+              ("market","binance","BTCUSDT","btc","2017-08-17","2020-12-31"),
+              ("market","binance","ETHUSDT","eth","2017-08-17","2020-12-31"),
+          ]
+          reused=0
+          acquired=0
+          for kind,source,symbol,ident,start,end in specs:
+              if valid(ident,source,symbol,start,end):
+                  print(f"[evidence cache] verified reuse {ident} {source}")
+                  reused += 1
+                  continue
+              if kind=="evidence":
+                  cmd=[
+                      sys.executable,"-m","v4.prepare_evidence_data",
+                      "--source",source,"--symbol",symbol,"--id",ident,
+                      "--start",start,"--end",end,"--output-dir","v4_data",
+                  ]
+              else:
+                  cmd=[
+                      sys.executable,"prepare_market_data.py",
+                      "--source",source,"--symbol",symbol,"--id",ident,
+                      "--start",start,"--end",end,"--output-dir","v4_data",
+                  ]
+              subprocess.run(cmd,check=True)
+              assert valid(ident,source,symbol,start,end), (
+                  f"newly prepared evidence failed manifest/hash verification: {ident}"
+              )
+              acquired += 1
+          print({"verified_reuse":reused,"acquired":acquired,"total":len(specs)})
 
       - name: Run upgraded private profit benchmark
         run: >
