@@ -142,8 +142,13 @@ def main():
         missing = [str(x) for x in spec.get("missing_rules", []) if str(x).strip()]
         admitted = bool(row.get("reconstruction_admitted"))
         rules_hash = row.get("rules_hash")
-        duplicate_rules = bool(rules_hash and rules_hash in seen_rule_hashes)
-        if rules_hash:
+        # Deduplicate only complete/admitted mechanical specifications.
+        # Incomplete specs commonly hash to the same sparse structure and must
+        # still receive independent source-hydration attempts.
+        duplicate_rules = bool(
+            admitted and rules_hash and rules_hash in seen_rule_hashes
+        )
+        if admitted and rules_hash:
             seen_rule_hashes.add(rules_hash)
 
         if admitted and engine["support"] == "supported" and not duplicate_rules:
