@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T06:54:56Z",
+  "generated_at": "2026-09-06T07:16:46Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -46063,7 +46063,7 @@
               "extreme_stress_return_pct": 345.325,
               "family": "ibs_deep_pullback",
               "market": "etf",
-              "multiple_test_qvalue": 0.026077,
+              "multiple_test_qvalue": 0.025262,
               "pbo": null,
               "profile": "private",
               "selection_score": 0.040563,
@@ -46104,7 +46104,7 @@
               "extreme_stress_return_pct": 97.397,
               "family": "ibs_deep_pullback",
               "market": "etf",
-              "multiple_test_qvalue": 0.026077,
+              "multiple_test_qvalue": 0.025262,
               "pbo": null,
               "profile": "private",
               "selection_score": 0.033798,
@@ -46145,7 +46145,7 @@
               "extreme_stress_return_pct": 108.754,
               "family": "connors_double7",
               "market": "etf",
-              "multiple_test_qvalue": 0.028871,
+              "multiple_test_qvalue": 0.028364,
               "pbo": null,
               "profile": "private",
               "selection_score": 0.018105,
@@ -54788,7 +54788,7 @@
             "worst_score": -3.636685761722702
           },
           {
-            "adjusted_score": 9.837967942446195,
+            "adjusted_score": 9.806508163307882,
             "fold_scores": [
               21.54530486501569,
               5.646336571268851,
@@ -54809,7 +54809,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 16.15461703232814,
+            "plateau_score": 16.049751101867095,
             "primary_score": 14.799434469041728,
             "score_std": 15.1483133876243,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -55068,7 +55068,7 @@
             "worst_score": -2.685224606061154
           },
           {
-            "adjusted_score": 8.622433618566433,
+            "adjusted_score": 8.526787877264377,
             "fold_scores": [
               13.230842854895819,
               7.143423026575024,
@@ -55089,7 +55089,7 @@
               "target_vol": 0.16,
               "vol_lookback": 60
             },
-            "plateau_score": 14.369981131323804,
+            "plateau_score": 14.05116199365029,
             "primary_score": 14.277582400344047,
             "score_std": 14.863326870309434,
             "structural_fingerprint": "leveraged_defensive_rotation_voltarget_v1",
@@ -63423,7 +63423,7 @@
           "gross_exposure": 0.9024925363279448,
           "max_dd_pct": -17.292203507758387,
           "score": 16.18178187710505,
-          "sharpe": 1.0805640230289826,
+          "sharpe": 1.0805640230289828,
           "weights": {
             "cash_rotation_risk_budgeted": 0.0022245923798104284,
             "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63452,7 +63452,7 @@
             "gross_exposure": 0.7775924788539519,
             "max_dd_pct": -16.346811898542658,
             "score": 15.864395423773308,
-            "sharpe": 1.070208501908635,
+            "sharpe": 1.0702085019086347,
             "weights": {
               "cash_rotation_risk_budgeted": 0.009315446914387892,
               "cash_rotation_vix_stress": 0.0411487227259109,
@@ -63479,7 +63479,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63506,7 +63506,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -63533,7 +63533,7 @@
             "gross_exposure": 0.9024925363279448,
             "max_dd_pct": -17.292203507758387,
             "score": 16.18178187710505,
-            "sharpe": 1.0805640230289826,
+            "sharpe": 1.0805640230289828,
             "weights": {
               "cash_rotation_risk_budgeted": 0.0022245923798104284,
               "cash_rotation_vix_stress": 0.03587022293645198,
@@ -70232,7 +70232,7 @@
             "extreme_stress_return_pct": 86.633,
             "family": "donchian_20_10",
             "market": "crypto",
-            "multiple_test_qvalue": 0.028871,
+            "multiple_test_qvalue": 0.028364,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.210462,
@@ -70272,7 +70272,7 @@
             "extreme_stress_return_pct": 90.726,
             "family": "donchian_sma50",
             "market": "crypto",
-            "multiple_test_qvalue": 0.026077,
+            "multiple_test_qvalue": 0.025262,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.157089,
@@ -70312,7 +70312,7 @@
             "extreme_stress_return_pct": 39.001,
             "family": "qqe_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.05575,
+            "multiple_test_qvalue": 0.055432,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.126989,
@@ -70574,7 +70574,7 @@
             "extreme_stress_return_pct": 24.824,
             "family": "swing_terminal_pullback_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.086957,
+            "multiple_test_qvalue": 0.086612,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.039254,
@@ -70643,7 +70643,7 @@
             "extreme_stress_return_pct": 17.261,
             "family": "turtle_55_20",
             "market": "crypto",
-            "multiple_test_qvalue": 0.079797,
+            "multiple_test_qvalue": 0.079456,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.01616,
@@ -70666,7 +70666,7 @@
             "extreme_stress_return_pct": 23.366,
             "family": "swing_terminal_breakout_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.077661,
+            "multiple_test_qvalue": 0.077323,
             "pbo": 0.157143,
             "profile": "prop",
             "selection_score": 0.014347,
@@ -70689,7 +70689,7 @@
             "extreme_stress_return_pct": 16.594,
             "family": "zanger_volume_breakout_proxy",
             "market": "crypto",
-            "multiple_test_qvalue": 0.095454,
+            "multiple_test_qvalue": 0.095104,
             "pbo": null,
             "profile": "prop",
             "selection_score": 0.012309,
@@ -70712,7 +70712,7 @@
             "extreme_stress_return_pct": 17.847,
             "family": "roc126_regime",
             "market": "crypto",
-            "multiple_test_qvalue": 0.092563,
+            "multiple_test_qvalue": 0.092211,
             "pbo": null,
             "profile": "prop",
             "selection_score": -0.022371,
@@ -117896,15 +117896,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "success",
         "created_at": "2026-09-06T06:54:40Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34017736461",
         "id": 34017736461,
         "name": "AUTORESEARCH v4 promotion cycle",
         "run_number": 10,
-        "status": "in_progress",
-        "updated_at": "2026-09-06T06:54:44Z"
+        "status": "completed",
+        "updated_at": "2026-09-06T07:16:35Z"
       },
       {
         "conclusion": "success",
