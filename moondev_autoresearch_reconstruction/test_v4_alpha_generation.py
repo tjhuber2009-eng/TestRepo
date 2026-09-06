@@ -10,7 +10,14 @@ import pandas as pd
 from v4.account_profiles import FTMO_1STEP, FTMO_2STEP, PropStageRule
 from v4.alpha_objective import RiskPolicy, hard_gate, metrics_from_equity, pareto_frontier
 from v4.campaign import assert_v4_data_boundary, run_integration_demo, synthetic_daily_market
-from v4.continuous_bridge import PROP_SIGNAL_ADAPTERS, private_portfolio_eligible, select_candidates
+from v4.continuous_bridge import (
+    PROP_SIGNAL_ADAPTERS,
+    _parse_float_required,
+    _parse_int_required,
+    private_portfolio_eligible,
+    select_candidates,
+    source_execution_adapter_blocker,
+)
 from v4.feature_store import FeatureStoreBuilder
 from v4.intraday_protocol import IntradayProtocol, assert_intraday_data
 from v4.live_bootstrap import build_rsi2_pullback_strategy, json_safe, pbo_gate, read_market_csv, select_portfolio_history_cohort
@@ -1507,6 +1514,64 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertTrue(
             set(full.columns) == {"BTCUSDT", "ETHUSDT"}
         )
+
+    def test_exact_prop_adapter_source_execution_blocker_fails_closed(self):
+        harmless = """
+class MoonStrategy:
+    def _buy_with_stop(self):
+        pass
+    def next(self):
+        if not self.position:
+            self.buy(size=1)
+        else:
+            self.position.close()
+"""
+        self.assertIsNone(source_execution_adapter_blocker(harmless))
+        self.assertEqual(
+            source_execution_adapter_blocker(
+                "class MoonStrategy:\n"
+                "    def next(self):\n"
+                "        self._buy_with_stop()\n"
+            ),
+            "source_stop_not_transferred",
+        )
+        self.assertEqual(
+            source_execution_adapter_blocker(
+                "class MoonStrategy:\n"
+                "    def next(self):\n"
+                "        self.sell(size=1)\n"
+            ),
+            "short_entry_not_transferred",
+        )
+        self.assertEqual(
+            source_execution_adapter_blocker(
+                "class MoonStrategy:\n"
+                "    def next(self):\n"
+                "        self.buy(size=1, sl=99)\n"
+            ),
+            "source_bracket_not_transferred",
+        )
+
+    def test_exact_prop_adapter_required_parameter_parsers_fail_closed(self):
+        source = "self.ema63 = self.I(_ema_now, self.data.Close, 63)\n"
+        self.assertEqual(
+            _parse_int_required(
+                source,
+                r"self\.ema\d+\s*=\s*self\.I\(_ema_now,\s*self\.data\.Close,\s*(\d+)\)",
+                "signal_window",
+            ),
+            63,
+        )
+        self.assertAlmostEqual(
+            _parse_float_required(
+                "if not self.position and z > 0.75:",
+                r"z\s*>\s*([-+]?[0-9]*\.?[0-9]+)",
+                "entry_z",
+            ),
+            0.75,
+        )
+        with self.assertRaises(ValueError):
+            _parse_int_required(source, r"missing=(\d+)", "missing")
 
     def test_signal_only_prop_proxies_are_not_authoritative_adapters(self):
         for family in (
