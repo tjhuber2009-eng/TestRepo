@@ -49,6 +49,7 @@ from v4.prop_intraday_bootstrap import (
     _frontier_structural_mutations,
     _frontier_universe_mutations,
     _resolve_prop_symbols,
+    _continuous_daily_state,
     aggregate_prague_days,
     aggregate_prague_days_scaled,
     hourly_continuous_daily_signal_strategy,
@@ -1581,6 +1582,46 @@ class MoonStrategy:
         ):
             with self.subTest(family=family):
                 self.assertNotIn(family, PROP_SIGNAL_ADAPTERS)
+
+    def test_exact_daily_adapter_preserves_source_warmup_and_vol_gate(self):
+        days = 40
+        idx = pd.date_range(
+            "2020-01-01T00:00:00Z",
+            periods=24 * days,
+            freq="h",
+            tz="UTC",
+        )
+        d = np.arange(days, dtype=float)
+        daily_close = 100.0 * np.exp(
+            np.cumsum(0.002 + 0.004 * np.sin(d))
+        )
+        close = np.repeat(daily_close, 24)
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": close * 1.001,
+                "Low": close * 0.999,
+                "Close": close,
+                "Volume": 1.0,
+            },
+            index=idx,
+        )
+        params = {
+            "source_family": "sentinel63",
+            "signal_window": 5,
+            "entry_z": -999.0,
+            "exit_z": -1000.0,
+            "source_min_bars": 20,
+            "source_vol_lookback": 5,
+        }
+        state = _continuous_daily_state(frame, params)
+        self.assertTrue((state.iloc[:19] == 0.0).all())
+        self.assertEqual(float(state.iloc[19]), 1.0)
+
+        partial = dict(params)
+        partial.pop("source_vol_lookback")
+        with self.assertRaises(ValueError):
+            _continuous_daily_state(frame, partial)
 
     def test_continuous_daily_signal_proxy_adapters_are_causal(self):
         idx = pd.date_range(
