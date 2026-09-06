@@ -49,8 +49,52 @@ jobs:
       source_ref: ${{ needs.resolve-source.outputs.source_ref }}
     secrets: inherit
 
+  verify-paired-provenance:
+    needs: [resolve-source, private-development, prop-development]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout persisted V4 state
+        uses: actions/checkout@v7
+        with:
+          ref: autoresearch-v4-state
+          fetch-depth: 1
+
+      - name: Require one source across private and prop state
+        shell: python
+        env:
+          EXPECTED_SOURCE: ${{ needs.resolve-source.outputs.source_ref }}
+        run: |
+          import json, os
+          from pathlib import Path
+
+          root=Path("atlas_forge_autoresearch/v4_state")
+          expected=os.environ["EXPECTED_SOURCE"]
+          private=json.loads((root/"development-bootstrap.json").read_text())
+          prop=json.loads((root/"prop-intraday-bootstrap.json").read_text())
+          for name,row in (("private",private),("prop",prop)):
+              actual=row.get("research_commit_sha")
+              assert actual == expected, (
+                  f"{name} source mismatch: expected {expected}, got {actual}"
+              )
+              assert row.get("stage") == "development_only", (
+                  f"{name} stage not development_only"
+              )
+              assert row.get("hidden_validation_opened") is False, (
+                  f"{name} opened hidden validation"
+              )
+              assert row.get("final_oos_opened") is False, (
+                  f"{name} opened final OOS"
+              )
+          print({
+              "paired_source": expected,
+              "private_source": private["research_commit_sha"],
+              "prop_source": prop["research_commit_sha"],
+              "hidden_validation_opened": False,
+              "final_oos_opened": False,
+          })
+
   dashboard-refresh:
-    needs: prop-development
+    needs: [resolve-source, verify-paired-provenance]
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
