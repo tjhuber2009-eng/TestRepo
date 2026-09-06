@@ -107,9 +107,11 @@ jobs:
         working-directory: build/yke-v3.1.0
         run: npm run desktop:prepare-sidecar
 
-      - name: Verify native Tauri shell
+      - name: Resolve lockfile and verify native Tauri shell
         working-directory: build/yke-v3.1.0
-        run: cargo check --manifest-path src-tauri/Cargo.toml --locked
+        run: |
+          cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+          cargo check --manifest-path src-tauri/Cargo.toml --locked
 
       - name: Build Windows Tauri installers
         working-directory: build/yke-v3.1.0
@@ -151,5 +153,6 @@ jobs:
           path: |
             build/yke-v3.1.0/src-tauri/target/release/bundle/**
             build/yke-v3.1.0/src-tauri/target/release/youtube-intelligence-desktop.exe
+            build/yke-v3.1.0/src-tauri/Cargo.lock
           if-no-files-found: error
           retention-days: 30
