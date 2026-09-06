@@ -21,7 +21,8 @@ PROGRESS = STATE / "engine_mapping_progress.json"
 HYDRATION_QUEUE = STATE / "hydration_queue.json"
 HYDRATED = STATE / "hydrated_sources.jsonl"
 PROTOCOL = "nested_chronological_v3"
-LANE = "phase3_engine_mapping"\nREQUIRED_HYDRATION_VERSION = 2
+LANE = "phase3_engine_mapping"
+REQUIRED_HYDRATION_VERSION = 2
 
 ARCHETYPES = (
     ("options_volatility", ("option", "variance risk", "volatility risk premium", "straddle", "put-write", "put write")),
