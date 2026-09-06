@@ -1,0 +1,210 @@
+name: Atlas Forge brand migration
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/atlas-forge-brand-migration.yml"
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: atlas-forge-brand-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure git
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Stop research during atomic rename
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run list --repo "$GITHUB_REPOSITORY" --limit 100 \
+            --json databaseId,status,name \
+            --jq '.[] | select((.status=="in_progress" or .status=="queued" or .status=="pending") and .name!="Atlas Forge brand migration") | .databaseId' \
+            | while read -r run_id; do
+                test -n "$run_id" || continue
+                gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY" || true
+              done
+          sleep 5
+
+      - name: Rebrand main workflows and references
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -B main refs/remotes/origin/main
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          replacements = [
+              ("moondev_autoresearch_reconstruction", "atlas_forge_autoresearch"),
+              ("moondev-nvidia-autoresearch", "atlas-forge-autoresearch"),
+              ("MOON DEV AUTORESEARCH", "ATLAS FORGE AUTORESEARCH"),
+              ("Moon Dev AUTORESEARCH", "Atlas Forge AUTORESEARCH"),
+              ("MOON DEV", "ATLAS FORGE"),
+              ("Moon Dev", "Atlas Forge"),
+              ("moondev.com", "legacy-source.invalid"),
+              ("MoonDev", "AtlasForge"),
+              ("MOONDEV", "ATLASFORGE"),
+              ("moondev", "atlasforge"),
+              ("Continuous NVIDIA AUTORESEARCH", "Atlas Forge Continuous AUTORESEARCH"),
+              ("Stock + FX AUTORESEARCH", "Atlas Forge Stock + FX AUTORESEARCH"),
+              ("AUTORESEARCH dashboard snapshot", "Atlas Forge dashboard snapshot"),
+              ("AUTORESEARCH v4 promotion cycle", "Atlas Forge V4 promotion cycle"),
+              ("Zero-fee AI strategy model tournament", "Atlas Forge model tournament"),
+          ]
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          for name in files:
+              p = Path(name)
+              try:
+                  data = p.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              new = data
+              for old, repl in replacements:
+                  new = new.replace(old, repl)
+              if new != data:
+                  p.write_text(new, encoding="utf-8")
+          PY
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "Rebrand project references to Atlas Forge"
+            git push origin main
+          fi
+
+      - name: Rebrand Atlas Forge research source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin atlas-forge-autoresearch
+          git checkout -B atlas-forge-autoresearch refs/remotes/origin/atlas-forge-autoresearch
+          if test -d moondev_autoresearch_reconstruction && ! test -e atlas_forge_autoresearch; then
+            git mv moondev_autoresearch_reconstruction atlas_forge_autoresearch
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          replacements = [
+              ("moondev_autoresearch_reconstruction", "atlas_forge_autoresearch"),
+              ("moondev-nvidia-autoresearch", "atlas-forge-autoresearch"),
+              ("MOON DEV AUTORESEARCH", "ATLAS FORGE AUTORESEARCH"),
+              ("Moon Dev AUTORESEARCH", "Atlas Forge AUTORESEARCH"),
+              ("MOON DEV", "ATLAS FORGE"),
+              ("Moon Dev", "Atlas Forge"),
+              ("MoonStrategy", "AtlasStrategy"),
+              ("moondev.com", "legacy-source.invalid"),
+              ("MoonDev", "AtlasForge"),
+              ("MOONDEV", "ATLASFORGE"),
+              ("moondev", "atlasforge"),
+          ]
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          for name in files:
+              p = Path(name)
+              try:
+                  data = p.read_text(encoding="utf-8")
+              except (UnicodeDecodeError, OSError):
+                  continue
+              new = data
+              for old, repl in replacements:
+                  new = new.replace(old, repl)
+              if new != data:
+                  p.write_text(new, encoding="utf-8")
+          PY
+          if git grep -IniE 'moon[ _-]?dev|moondev|MoonStrategy' -- . ':!*.ipynb'; then
+            echo "Legacy brand string remains in Atlas Forge source"
+            exit 1
+          fi
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "Complete Atlas Forge source rebrand"
+            git push origin atlas-forge-autoresearch
+          fi
+
+      - name: Migrate state branch folder paths without changing evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+          branches=(
+            continuous-autoresearch-state
+            stock-fx-autoresearch-state
+            autoresearch-v4-state
+            model-tournament-state
+            autoresearch-phase2-prior-state
+            autoresearch-phase3-free-state
+            autoresearch-phase3-reconstruction-state
+            autoresearch-phase3-engine-map-state
+            autoresearch-phase3-hydration-state
+          )
+          for branch in "${branches[@]}"; do
+            if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+              continue
+            fi
+            git reset --hard >/dev/null
+            git clean -fd >/dev/null
+            git checkout -B "$branch" "refs/remotes/origin/$branch"
+            if test -d moondev_autoresearch_reconstruction && ! test -e atlas_forge_autoresearch; then
+              git mv moondev_autoresearch_reconstruction atlas_forge_autoresearch
+              git commit -m "Move Atlas Forge state to renamed project path"
+              git push origin "$branch"
+            fi
+          done
+
+      - name: Archive old command PR and remove legacy source branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh pr edit 13 --repo "$GITHUB_REPOSITORY" \
+            --title "Archived — Atlas Forge migration" \
+            --body "This legacy command surface has been replaced by Atlas Forge Command Center issue #39. The active source branch is atlas-forge-autoresearch. This PR remains unmerged." || true
+          gh pr close 13 --repo "$GITHUB_REPOSITORY" || true
+          git push origin --delete moondev-nvidia-autoresearch || true
+
+      - name: Verify active references are clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main atlas-forge-autoresearch
+          git checkout -B verify-main refs/remotes/origin/main
+          if git grep -IniE 'moon[ _-]?dev|moondev' -- .github README.md 2>/dev/null; then
+            echo "Legacy brand remains on main"
+            exit 1
+          fi
+          git checkout -B verify-source refs/remotes/origin/atlas-forge-autoresearch
+          if git grep -IniE 'moon[ _-]?dev|moondev|MoonStrategy' -- atlas_forge_autoresearch 2>/dev/null; then
+            echo "Legacy brand remains in active source"
+            exit 1
+          fi
+          test -d atlas_forge_autoresearch
+          test ! -e moondev_autoresearch_reconstruction
+
+      - name: Restart Atlas Forge research
+        if: success()
+        shell: bash
+        run: |
+          gh workflow run continuous-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run stock-fx-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run autoresearch-dashboard.yml --repo "$GITHUB_REPOSITORY" --ref main
