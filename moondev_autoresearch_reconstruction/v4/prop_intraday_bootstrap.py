@@ -367,26 +367,35 @@ def _continuous_daily_state(frame: pd.DataFrame, params: dict) -> pd.Series:
     # Preserve the source strategy's decision warm-up and realized-volatility
     # validity gate. Source sizing is replaced by V4, but the source strategy
     # does not evaluate entries or exits until both conditions are satisfied.
-    source_min_bars = int(params["source_min_bars"])
-    source_vol_lookback = int(params["source_vol_lookback"])
-    log_ret = np.log(close / close.shift(1))
-    source_rv = (
-        log_ret.rolling(source_vol_lookback)
-        .std(ddof=0)
-        .shift(1)
-        * np.sqrt(365.0)
+    has_source_gate = (
+        "source_min_bars" in params or "source_vol_lookback" in params
     )
-    bar_count = pd.Series(
-        np.arange(1, len(daily) + 1, dtype=int),
-        index=daily.index,
-    )
-    source_decision_ok = (
-        bar_count.ge(source_min_bars)
-        & source_rv.notna()
-        & source_rv.gt(0.0)
-    )
-    entry = entry & source_decision_ok
-    exit_ = exit_ & source_decision_ok
+    if has_source_gate:
+        if "source_min_bars" not in params or "source_vol_lookback" not in params:
+            raise ValueError(
+                "authoritative continuous transfer requires both source_min_bars "
+                "and source_vol_lookback"
+            )
+        source_min_bars = int(params["source_min_bars"])
+        source_vol_lookback = int(params["source_vol_lookback"])
+        log_ret = np.log(close / close.shift(1))
+        source_rv = (
+            log_ret.rolling(source_vol_lookback)
+            .std(ddof=0)
+            .shift(1)
+            * np.sqrt(365.0)
+        )
+        bar_count = pd.Series(
+            np.arange(1, len(daily) + 1, dtype=int),
+            index=daily.index,
+        )
+        source_decision_ok = (
+            bar_count.ge(source_min_bars)
+            & source_rv.notna()
+            & source_rv.gt(0.0)
+        )
+        entry = entry & source_decision_ok
+        exit_ = exit_ & source_decision_ok
 
     state = []
     long = False
