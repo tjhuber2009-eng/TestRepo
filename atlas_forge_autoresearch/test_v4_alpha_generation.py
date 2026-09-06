@@ -50,7 +50,10 @@ from v4.multi_asset_engine import (
 )
 from v4.parameter_optimizer import ParameterSpec, StableParameterOptimizer
 from v4.portfolio_optimizer import RobustPortfolioOptimizer
-from v4.satellite_portfolio import build_staggered_satellite_candidates
+from v4.satellite_portfolio import (
+    build_staggered_satellite_candidates,
+    satellite_gross_profile,
+)
 from v4.prop_firm_engine import (
     FundedSimulation,
     PropOptimizationCandidate,
@@ -874,6 +877,65 @@ class V4AlphaGenerationTests(unittest.TestCase):
         )
         self.assertEqual(unlevered_financed.borrowed_gross, 0.0)
         self.assertEqual(unlevered_financed.annual_financing_drag_pct, 0.0)
+
+    def test_staggered_satellite_financing_uses_realized_gross(self):
+        idx = pd.bdate_range("2018-01-01", periods=300)
+        core = pd.DataFrame({
+            "core_a": np.full(len(idx), 0.0004),
+            "core_b": np.full(len(idx), 0.0002),
+        }, index=idx)
+        short = pd.Series(0.0010, index=idx[150:])
+        candidates, specs = build_staggered_satellite_candidates(
+            core,
+            {"core_a": 0.5, "core_b": 0.5},
+            {"short_alpha": short},
+            max_satellite_weight=0.20,
+            sleeve_steps=(0.20,),
+        )
+        name = next(iter(candidates))
+        gross = satellite_gross_profile(idx, specs[name])
+        self.assertTrue((gross.iloc[:150] == 0.8).all())
+        self.assertTrue((gross.iloc[150:] == 1.0).all())
+
+        stream = candidates[name].to_frame(name)
+        profile = gross.rename(name).to_frame()
+        realized = RobustPortfolioOptimizer(
+            dd_cap_pct=50,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=1.5,
+            max_gross=1.5,
+            annual_financing_rate_pct=6.0,
+            seed=19,
+        ).optimize(stream, gross_profiles=profile).chosen
+        always_full = RobustPortfolioOptimizer(
+            dd_cap_pct=50,
+            n_candidates=1,
+            bootstrap_reps=20,
+            max_weight=1.0,
+            min_gross=1.5,
+            max_gross=1.5,
+            annual_financing_rate_pct=6.0,
+            seed=19,
+        ).optimize(stream).chosen
+        self.assertIsNotNone(realized)
+        self.assertIsNotNone(always_full)
+        self.assertLess(
+            realized.borrowed_gross,
+            always_full.borrowed_gross,
+        )
+        self.assertGreater(realized.cagr_pct, always_full.cagr_pct)
+        self.assertAlmostEqual(
+            realized.average_gross_exposure,
+            1.35,
+            places=10,
+        )
+        self.assertAlmostEqual(
+            realized.max_realized_gross_exposure,
+            1.5,
+            places=10,
+        )
 
     def test_v4_config_records_financing_stress_policy(self):
         cfg = json.loads(
