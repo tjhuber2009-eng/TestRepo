@@ -1222,7 +1222,12 @@ class V4AlphaGenerationTests(unittest.TestCase):
         )
         self.assertIn("max_payout_efficiency", result.views)
         self.assertIn("max_repeat_payout_efficiency", result.views)
+        self.assertIn("max_repeat_expected_reward", result.views)
         self.assertIn("max_evaluation_pass", result.views)
+        self.assertGreaterEqual(
+            result.views["max_repeat_expected_reward"].repeat_expected_reward_pct,
+            result.views["max_repeat_payout_efficiency"].repeat_expected_reward_pct,
+        )
         self.assertIn("safest_funded", result.views)
         self.assertIn("balanced", result.views)
         self.assertIn("conservative", result.views)
@@ -1459,6 +1464,40 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreater(
             _frontier_rank("max_repeat_payout_efficiency", b),
             _frontier_rank("max_repeat_payout_efficiency", a),
+        )
+
+    def test_repeat_reward_frontier_rank_uses_absolute_expected_reward(self):
+        funded = FundedSimulation(
+            exposure_scale=0.5, paths=100, reward_window_days=14,
+            survival_probability=0.95, reward_eligible_probability=0.8,
+            positive_reward_probability=0.7, expected_reward_pct=1.0,
+            median_positive_reward_pct=1.2, daily_loss_breach_probability=0.01,
+            max_loss_breach_probability=0.01, best_day_ineligible_probability=0.0,
+        )
+        stage = StageSimulation(
+            stage_id="challenge", exposure_scale=0.5, paths=100,
+            analysis_horizon_days=252, pass_probability=0.5,
+            fail_probability=0.5, timeout_probability=0.0,
+            daily_loss_breach_probability=0.1, max_loss_breach_probability=0.1,
+            median_days_to_pass=50.0, p75_days_to_pass=80.0,
+        )
+        efficient = PropOptimizationCandidate(
+            0.5, None, 0.5, stage, None, funded, 0.5, 50.0, 0.02,
+            repeat_expected_reward_pct=10.0,
+            repeat_payout_efficiency_score=0.010,
+        )
+        more_money = PropOptimizationCandidate(
+            0.5, None, 0.5, stage, None, funded, 0.5, 50.0, 0.01,
+            repeat_expected_reward_pct=14.0,
+            repeat_payout_efficiency_score=0.006,
+        )
+        self.assertGreater(
+            _frontier_rank("max_repeat_expected_reward", more_money),
+            _frontier_rank("max_repeat_expected_reward", efficient),
+        )
+        self.assertGreater(
+            _frontier_rank("max_repeat_payout_efficiency", efficient),
+            _frontier_rank("max_repeat_payout_efficiency", more_money),
         )
 
     def test_prop_frontier_mutations_are_small_and_nonduplicative(self):
