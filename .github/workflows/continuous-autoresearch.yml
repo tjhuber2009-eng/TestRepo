@@ -6,6 +6,8 @@ on:
 permissions:
   actions: write
   contents: write
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: continuous-nvidia-autoresearch
@@ -285,12 +287,15 @@ jobs:
           fi
           git push --force-with-lease origin continuous-autoresearch-state
 
-      - name: V4 promotion dispatch paused for privacy
+      - name: Trigger sequential V4 promotion cycle
         if: success() && steps.v4_promotion.outputs.trigger == 'true'
         shell: bash
         working-directory: .
         run: |
-          echo "V4 promotion opportunity detected but automatic dispatch is paused until repository privacy is confirmed."
+          echo "Dispatching V4 promotion cycle: ${{ steps.v4_promotion.outputs.reason }}"
+          gh workflow run autoresearch-v4-promotion-cycle.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
 
       - name: Refresh stable live dashboard
         shell: bash
@@ -318,9 +323,19 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Continuous chaining paused for privacy
+      - name: Comment final exhaustive completion
+        if: steps.completion.outputs.new_completion == 'true'
+        shell: bash
+        working-directory: .
+        run: >
+          gh pr comment 13
+          --repo tjhuber2009-eng/TestRepo
+          --body-file moondev_autoresearch_reconstruction/completion-note.md
+
+      - name: Chain next cycle until exhaustive completion
         if: success() && steps.completion.outputs.terminal != 'true'
         shell: bash
         working-directory: .
         run: |
-          echo "Automatic chaining is paused until repository privacy is confirmed."
+          echo "Dispatching next AUTORESEARCH cycle because runnable universe is not terminal."
+          gh workflow run continuous-autoresearch.yml             --repo tjhuber2009-eng/TestRepo             --ref main
