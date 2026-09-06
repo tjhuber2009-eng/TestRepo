@@ -1737,6 +1737,76 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
                         "candidate": candidate,
                     }
 
+    # Transfer finite Phase-2 prior-work survivors after the broad/continuous
+    # families. Only exact persisted promotion artifacts with explicit signed
+    # adapters reach this point; V4 re-searches prop-specific risk sizing only.
+    phase2_transfer_seeds, phase2_prop_transfer = (
+        phase2_prop_transfer_candidates(data.keys())
+    )
+    phase2_transfer_params = []
+    phase2_seen = set()
+    for source in phase2_transfer_seeds:
+        for vt in (0.20, 0.40, 0.60):
+            for vl in (72, 168):
+                params = dict(source)
+                params["vol_target"] = float(vt)
+                params["vol_lookback"] = int(vl)
+                key = tuple(sorted(params.items()))
+                if key in phase2_seen:
+                    continue
+                phase2_seen.add(key)
+                phase2_transfer_params.append(params)
+
+    for params in phase2_transfer_params:
+        (
+            base,
+            dret,
+            dadv,
+            opened,
+            scaled_ret,
+            scaled_adv,
+        ) = evaluate_strategy(data, params)
+        for pidx, program in enumerate(programs):
+            prop = optimize_prop_exposure(
+                dret.to_numpy(dtype=float),
+                dadv.to_numpy(dtype=float),
+                opened.to_numpy(dtype=bool),
+                program,
+                exposure_scales=PROP_SCALES,
+                paths=400,
+                block=10,
+                seed=20261000 + pidx * 100000,
+                input_precision=(
+                    "phase2_exact_signed_daily_signal_to_hourly_ftmo_proxy_"
+                    "prague_midnight_reset_v4_risk_sizing"
+                ),
+                prescaled_returns_by_scale=scaled_ret,
+                prescaled_adverse_by_scale=scaled_adv,
+            )
+            sel = prop.selected
+            rows_by_program[program.id].append({
+                "params": params,
+                "search_phase": "phase2_prop_transfer",
+                "hourly_base_cagr_pct": base.metrics.cagr_pct,
+                "hourly_base_max_dd_pct": base.metrics.max_dd_pct,
+                "daily_worst_adverse_pct": float(dadv.min() * 100.0),
+                "selected": None if sel is None else sel.to_dict(),
+            })
+            for view_name in view_names:
+                candidate = prop.views.get(view_name)
+                if candidate is None:
+                    continue
+                current = leaders[program.id][view_name]
+                if (
+                    current is None
+                    or _frontier_rank(view_name, candidate)
+                    > _frontier_rank(view_name, current["candidate"])
+                ):
+                    leaders[program.id][view_name] = {
+                        "params": dict(params),
+                        "candidate": candidate,
+                    }
+
     program_results = {}
     for pidx, program in enumerate(programs):
         rows = rows_by_program[program.id]
