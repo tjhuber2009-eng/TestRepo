@@ -54,7 +54,10 @@ function render(){
   $("#touchedTracks").textContent=num(d.touched_tracks);
   $("#runnableTracks").textContent=num(p.runnable_track_count);
   $("#validTracks").textContent=num(d.tracks_valid_ge_1);
-  $("#terminalTracks").textContent=num(p.terminal_track_count);
+  const pboReady=Math.max(0,Number(p.pbo_ready_track_count||0));
+  const pboBase=Math.max(0,Number(p.pbo_baselined_track_count||0));
+  $("#pboReadyTracks").textContent=num(pboReady);
+  $("#pboReadyShare").textContent=pboBase?`${fmt(100*pboReady/pboBase,1)}% of baselined tracks`:"baseline + 4 unique candidates";
   $("#keepersKpi").textContent=num(p.total_kept_candidates);
 
   const runnable=Math.max(0,Number(p.runnable_track_count||0));
@@ -202,7 +205,7 @@ function renderDecisionSummary(){
       <h3>Still in breadth search</h3>
       <div class="decision-number">${fmt(breadth,1)}%</div>
       <p>${num(p.total_valid_candidates)} valid candidates out of ${num(d.breadth_total_candidates)} breadth slots. Hidden validation and final OOS remain sealed.</p>
-      <small>PBO appears only after enough unique variants exist.</small>
+      <small>PBO-ready: ${num(p.pbo_ready_track_count||0)} of ${num(p.pbo_baselined_track_count||0)} baselined tracks.</small>
     </article>`;
 
   next.innerHTML=`
