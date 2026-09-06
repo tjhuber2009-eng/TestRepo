@@ -1,6 +1,6 @@
 Atlas Forge V4 smoke
-Final financed leverage verification
-Source head: 30fe98758a9f7964cd002830e386c5b378dcaac7
-Checks: realized time-varying gross financing + growth-optimal leverage + documented policy + max expected prop reward registry
+Expanded satellite sleeve verification
+Source head: 5f8546e0bf761b11d5d582d8b6e71f42b8bd25db
+Checks: 30/35 percent satellite boundary + realized-gross financing + growth-optimal leverage + full V4 integrity suite
 Hidden validation: sealed
 Final 2023+ OOS: sealed
