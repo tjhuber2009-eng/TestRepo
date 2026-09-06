@@ -18,6 +18,8 @@ class PortfolioCandidate:
     max_dd_pct: float
     sharpe: float
     bootstrap_median_cagr_pct: float
+    bootstrap_cagr_q25_pct: float
+    bootstrap_cagr_q10_pct: float
     bootstrap_dd_q95_pct: float
     effective_n: float
     score: float
@@ -124,6 +126,109 @@ class RobustPortfolioOptimizer:
         self.seed = int(seed)
         if not (0.0 < self.min_gross <= self.max_gross):
             raise ValueError("require 0 < min_gross <= max_gross")
+
+    def _normalize_capped(self, raw: np.ndarray) -> np.ndarray:
+        """Project nonnegative preferences onto the simplex with max_weight."""
+        pref = np.maximum(np.asarray(raw, dtype=float), 0.0)
+        n = pref.size
+        if n < 1:
+            raise ValueError("empty portfolio preference vector")
+        if self.max_weight * n < 1.0 - 1e-12:
+            raise ValueError("max_weight is infeasible for the number of strategies")
+        if not np.isfinite(pref).all() or pref.sum() <= 0.0:
+            pref = np.ones(n, dtype=float)
+
+        out = np.zeros(n, dtype=float)
+        active = np.ones(n, dtype=bool)
+        remaining = 1.0
+        while active.any() and remaining > 1e-12:
+            base = pref[active]
+            if base.sum() <= 0.0:
+                base = np.ones(base.size, dtype=float)
+            proposal = remaining * base / base.sum()
+            active_idx = np.flatnonzero(active)
+            over = proposal > self.max_weight + 1e-12
+            if not over.any():
+                out[active_idx] = proposal
+                remaining = 0.0
+                break
+            capped_idx = active_idx[over]
+            out[capped_idx] = self.max_weight
+            remaining -= self.max_weight * len(capped_idx)
+            active[capped_idx] = False
+        if remaining > 1e-9:
+            raise ValueError("unable to satisfy capped simplex allocation")
+        return out
+
+    def _guided_compositions(self, arr: np.ndarray) -> list[np.ndarray]:
+        """Deterministic money/correlation seeds before random portfolio search.
+
+        These are development-only composition hypotheses. They do not relax
+        bootstrap drawdown gates; they simply ensure economically sensible
+        high-growth and diversification mixes are explicitly evaluated rather
+        than left to chance in the Dirichlet search.
+        """
+        n = arr.shape[1]
+        if n == 1:
+            return [np.ones(1, dtype=float)]
+
+        safe = np.clip(arr, -0.999999, None)
+        log_growth = np.nanmean(np.log1p(safe), axis=0) * self.periods_per_year
+        vol = np.nanstd(arr, axis=0, ddof=1) * np.sqrt(self.periods_per_year)
+        vol = np.where(np.isfinite(vol) & (vol > 1e-9), vol, np.nan)
+
+        corr = np.corrcoef(np.nan_to_num(arr, nan=0.0), rowvar=False)
+        corr = np.nan_to_num(corr, nan=0.0, posinf=0.0, neginf=0.0)
+        if n > 1:
+            avg_abs_corr = (
+                np.sum(np.abs(corr), axis=1) - 1.0
+            ) / float(n - 1)
+        else:
+            avg_abs_corr = np.zeros(n, dtype=float)
+
+        positive_growth = np.maximum(log_growth, 0.0)
+        inverse_vol = np.divide(
+            1.0,
+            vol,
+            out=np.zeros_like(vol, dtype=float),
+            where=np.isfinite(vol),
+        )
+        growth_risk = np.divide(
+            positive_growth,
+            vol,
+            out=np.zeros_like(positive_growth, dtype=float),
+            where=np.isfinite(vol),
+        )
+        growth_corr = np.divide(
+            growth_risk,
+            1.0 + avg_abs_corr,
+            out=np.zeros_like(growth_risk, dtype=float),
+            where=np.isfinite(avg_abs_corr),
+        )
+
+        preferences = [
+            growth_corr,
+            growth_risk,
+            positive_growth,
+            inverse_vol,
+            np.ones(n, dtype=float),
+        ]
+
+        order = np.argsort(growth_corr)[::-1]
+        for k in range(2, min(n, 6) + 1):
+            raw = np.zeros(n, dtype=float)
+            raw[order[:k]] = np.maximum(growth_corr[order[:k]], 1e-12)
+            preferences.append(raw)
+
+        out: list[np.ndarray] = []
+        seen = set()
+        for raw in preferences:
+            w = self._normalize_capped(raw)
+            key = tuple(np.round(w, 12))
+            if key not in seen:
+                seen.add(key)
+                out.append(w)
+        return out
 
     def _candidate_compositions(
         self, n: int, rng: np.random.Generator
@@ -237,9 +342,19 @@ class RobustPortfolioOptimizer:
         # bootstrap paths, defeating paired sensitivity comparisons.
         composition_rng = np.random.default_rng(self.seed)
         bootstrap_rng = np.random.default_rng(self.seed + 104729)
-        compositions = self._candidate_compositions(
+        random_compositions = self._candidate_compositions(
             len(names), composition_rng
         )
+        compositions: list[np.ndarray] = []
+        seen = set()
+        for w in self._guided_compositions(arr) + random_compositions:
+            key = tuple(np.round(np.asarray(w, dtype=float), 12))
+            if key in seen:
+                continue
+            seen.add(key)
+            compositions.append(np.asarray(w, dtype=float))
+            if len(compositions) >= self.n_candidates:
+                break
 
         boot_idx = np.vstack([
             _block_bootstrap_indices(
@@ -271,6 +386,8 @@ class RobustPortfolioOptimizer:
                 dtype=float,
             )
             med_cagr = float(np.nanmedian(boot_cagr))
+            q25_cagr = float(np.nanquantile(boot_cagr, 0.25))
+            q10_cagr = float(np.nanquantile(boot_cagr, 0.10))
             gross = float(np.sum(np.abs(actual_w)))
             norm = actual_w / gross if gross > 0 else actual_w
             effective_n = float(1.0 / np.sum(np.square(norm))) if gross > 0 else 0.0
@@ -295,6 +412,8 @@ class RobustPortfolioOptimizer:
                     max_dd_pct=float(dd),
                     sharpe=float(sharpe),
                     bootstrap_median_cagr_pct=med_cagr,
+                    bootstrap_cagr_q25_pct=q25_cagr,
+                    bootstrap_cagr_q10_pct=q10_cagr,
                     bootstrap_dd_q95_pct=float(dd_q),
                     effective_n=effective_n,
                     score=score,
