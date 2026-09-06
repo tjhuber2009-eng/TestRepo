@@ -2,9 +2,10 @@
 
 Crypto uses Binance Data Vision checksum-verified monthly archives.
 ETFs/stocks and continuous futures can use Yahoo's public chart endpoint.
-Daily FX expansion uses Stooq currency-history snapshots because the previously
-attempted Yahoo FX rows failed OHLC integrity checks. For symbols with adjusted
-close, OHLC are adjusted by the same factor to avoid split artifacts.
+Daily FX expansion uses Dukascopy native yearly BID candles because the
+previously attempted Yahoo FX rows failed OHLC integrity checks and the Stooq
+CSV endpoint proved unreliable from CI. For symbols with adjusted close, OHLC
+are adjusted by the same factor to avoid split artifacts.
 """
 
 import argparse
@@ -19,6 +20,8 @@ import urllib.request
 import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import dukascopy_daily
 
 BASE = Path(__file__).resolve().parent
 OUT = BASE / "data"
@@ -339,10 +342,15 @@ def write_manifest(out, source, symbol, ident, start, end):
                 "Bitstamp public OHLC endpoint has no archive checksum"
                 if source == "bitstamp"
                 else (
-                "provider response snapshotted by generated CSV SHA256; "
-                "Stooq public historical endpoint has no archive checksum"
-                if source in {"stooq", "stooq_fx"}
-                else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+                "Dukascopy native BID daily archives snapshotted by "
+                "per-year SHA256; provider publishes no archive checksum"
+                if source == "dukascopy_bid_daily"
+                else (
+                    "provider response snapshotted by generated CSV SHA256; "
+                    "Stooq public historical endpoint has no archive checksum"
+                    if source == "stooq"
+                    else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+                )
                 )
             )
         ),
@@ -355,6 +363,13 @@ def write_manifest(out, source, symbol, ident, start, end):
         manifest["normalization"] = json.loads(
             norm_path.read_text(encoding="utf-8")
         )
+    if source == "dukascopy_bid_daily":
+        source_path = out.with_suffix(".source.json")
+        if not source_path.exists():
+            raise RuntimeError("Dukascopy source audit missing")
+        manifest["source_audit"] = json.loads(
+            source_path.read_text(encoding="utf-8")
+        )
     path = out.with_suffix(".manifest.json")
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"manifest -> {path} sha256={manifest['csv_sha256']}")
@@ -363,7 +378,14 @@ def write_manifest(out, source, symbol, ident, start, end):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", choices=["binance","bitstamp","yahoo","yahoo_futures_proxy","stooq","stooq_fx"], required=True)
+    ap.add_argument(
+        "--source",
+        choices=[
+            "binance", "bitstamp", "yahoo", "yahoo_futures_proxy",
+            "stooq", "dukascopy_bid_daily",
+        ],
+        required=True,
+    )
     ap.add_argument("--symbol", required=True)
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
@@ -387,8 +409,10 @@ def main():
         prepare_binance(args.symbol, start, end, out)
     elif args.source == "bitstamp":
         prepare_bitstamp(args.symbol, start, end, out)
-    elif args.source in {"stooq", "stooq_fx"}:
+    elif args.source == "stooq":
         prepare_stooq(args.symbol, start, end, out)
+    elif args.source == "dukascopy_bid_daily":
+        dukascopy_daily.prepare(args.symbol, start, end, out, request_bytes)
     elif args.source == "yahoo_futures_proxy":
         prepare_yahoo_futures_proxy(args.symbol, start, end, out)
     else:
