@@ -480,7 +480,7 @@ def main():
     idx = cursor % max(len(ids), 1)
     while ids and processed < args.max_candidates and visited < len(ids):
         track_id = ids[idx]
-        if track_id not in existing:
+        if track_id not in existing or existing[track_id].get("status") == "error":
             track = lookup.get(track_id)
             if track is None:
                 row = {
