@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "status": "development_incumbent",
+  "source_head": "5f8546e0bf761b11d5d582d8b6e71f42b8bd25db",
+  "benchmark_run_id": 34066202427,
+  "architecture": "staggered_satellite",
+  "selected_candidate": "satellite_0.35__continuous__qqe_proxy__btc__private",
+  "sleeve_weight": 0.35,
+  "constraints": {
+    "max_satellite_weight": 0.35,
+    "max_gross": 1.5,
+    "bootstrap_dd_q95_cap_pct": 32,
+    "hidden_validation_opened": false,
+    "final_oos_opened": false
+  },
+  "financing": {
+    "6": {
+      "cagr_pct": 27.387491229538362,
+      "bootstrap_median_cagr_pct": 27.588231032350343,
+      "bootstrap_cagr_q10_pct": 20.24131340284695,
+      "bootstrap_dd_q95_pct": 31.999625089709994,
+      "max_dd_pct": -18.463533906948058,
+      "sharpe": 1.4348261022537994,
+      "max_realized_gross_exposure": 1.4967607802
+    },
+    "10": {
+      "cagr_pct": 26.105696141978907,
+      "bootstrap_median_cagr_pct": 26.264453277738266,
+      "bootstrap_cagr_q10_pct": 19.18840834030455,
+      "bootstrap_dd_q95_pct": 31.994654587508567,
+      "max_dd_pct": -18.90899648404777,
+      "sharpe": 1.4044429257409288,
+      "max_realized_gross_exposure": 1.4653705721
+    },
+    "14": {
+      "cagr_pct": 24.76070284816434,
+      "bootstrap_median_cagr_pct": 24.915081600914778,
+      "bootstrap_cagr_q10_pct": 18.12272169133543,
+      "bootstrap_dd_q95_pct": 31.639853388128298,
+      "max_dd_pct": -19.387810570885676,
+      "sharpe": 1.3793148027408697,
+      "max_realized_gross_exposure": 1.4220254746
+    }
+  },
+  "promotion_policy": {
+    "primary": "6% financing bootstrap median CAGR must improve",
+    "lower_tail": "6% financing bootstrap Q10 must not decline for automatic profit-incumbent promotion",
+    "stress": "10% and 14% financing stress must remain positive and within drawdown/gross caps",
+    "boundary": "hidden validation and final 2023+ OOS stay sealed"
+  }
+}
