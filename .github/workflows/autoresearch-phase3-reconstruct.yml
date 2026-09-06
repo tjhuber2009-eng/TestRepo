@@ -53,6 +53,15 @@ jobs:
             git checkout refs/remotes/origin/phase3-reconstruction-state -- moondev_autoresearch_reconstruction/phase3_state/reconstructions.jsonl moondev_autoresearch_reconstruction/phase3_state/reconstruction_progress.json moondev_autoresearch_reconstruction/phase3_state/reconstruction_cursor.json 2>/dev/null || true
           fi
 
+      - name: Restore hydrated public evidence
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase3-hydration-state:refs/remotes/origin/phase3-hydration-state || true
+          if git rev-parse --verify refs/remotes/origin/phase3-hydration-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/phase3-hydration-state -- moondev_autoresearch_reconstruction/phase3_state/hydrated_sources.jsonl 2>/dev/null || true
+          fi
+
       - name: Compile and verify sealed inputs
         shell: bash
         run: |
@@ -117,3 +126,9 @@ jobs:
         run: |
           echo "Phase 3 reconstruction: ${{ steps.progress.outputs.processed }}/${{ steps.progress.outputs.total }}"
           gh workflow run autoresearch-phase3-reconstruct.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Map reconstructed strategies to development engines
+        if: success() && steps.progress.outputs.complete == 'true'
+        shell: bash
+        working-directory: .
+        run: gh workflow run autoresearch-phase3-engine-map.yml --repo "$GITHUB_REPOSITORY" --ref main
