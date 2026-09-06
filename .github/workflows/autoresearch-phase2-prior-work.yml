@@ -1,0 +1,111 @@
+name: AUTORESEARCH Phase 2 prior-work lane
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: autoresearch-phase2-prior-work
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    defaults:
+      run:
+        working-directory: moondev_autoresearch_reconstruction
+    steps:
+      - name: Check out research source
+        uses: actions/checkout@v4
+        with:
+          ref: moondev-nvidia-autoresearch
+          fetch-depth: 0
+
+      - name: Record source SHA
+        shell: bash
+        run: echo "AUTORESEARCH_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: moondev_autoresearch_reconstruction/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore development-only data cache
+        uses: actions/cache@v4
+        with:
+          path: moondev_autoresearch_reconstruction/data
+          key: phase2-development-v3-sealed-${{ hashFiles('moondev_autoresearch_reconstruction/continuous_config.json') }}
+
+      - name: Restore isolated Phase 2 state
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin phase2-autoresearch-state:refs/remotes/origin/phase2-autoresearch-state || true
+          if git rev-parse --verify refs/remotes/origin/phase2-autoresearch-state >/dev/null 2>&1; then
+            git checkout refs/remotes/origin/phase2-autoresearch-state -- moondev_autoresearch_reconstruction/phase2_state || true
+          fi
+
+      - name: Integrity and contamination guards
+        shell: bash
+        run: |
+          python -m compileall -q .
+          python -m unittest -v test_autoresearch_integrity.py
+          python oos_guard.py
+
+      - name: Advance prior-work baseline screening
+        run: python phase2_prior_runner.py --max-tracks 6
+
+      - name: Post-run contamination guard
+        run: python oos_guard.py
+
+      - name: Determine continuation
+        id: progress
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          x=json.loads(Path("phase2_state/progress.json").read_text())
+          with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
+              f.write(f"complete={'true' if x.get('all_tracks_screened') else 'false'}\n")
+              f.write(f"screened={int(x.get('screened_count',0))}\n")
+              f.write(f"total={int(x.get('track_count',0))}\n")
+
+      - name: Persist isolated Phase 2 state
+        shell: bash
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C phase2-autoresearch-state
+          git add -f moondev_autoresearch_reconstruction/phase2_state
+          if git diff --cached --quiet; then
+            echo "no Phase 2 state changes"
+          else
+            git commit -m "Phase 2 prior-work state run $GITHUB_RUN_ID"
+          fi
+          git push --force-with-lease origin phase2-autoresearch-state
+
+      - name: Upload Phase 2 snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: autoresearch-phase2-${{ github.run_id }}
+          path: moondev_autoresearch_reconstruction/phase2_state
+          retention-days: 14
+
+      - name: Chain next Phase 2 batch
+        if: success() && steps.progress.outputs.complete != 'true'
+        shell: bash
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Phase 2: ${{ steps.progress.outputs.screened }}/${{ steps.progress.outputs.total }} screened"
+          gh workflow run autoresearch-phase2-prior-work.yml --repo "$GITHUB_REPOSITORY" --ref main
