@@ -495,18 +495,53 @@ def pbo_gate(diagnostic, max_pbo):
     )
 
 
-def portfolio_challenger_wins(challenger, incumbent, *, q10_tolerance_pct=5.0):
-    """Require better bootstrap growth without materially worse lower tail."""
+def portfolio_challenger_wins(challenger, baseline, *, q10_tolerance_pct=5.0):
+    """Require better bootstrap growth than one fixed baseline architecture."""
     if challenger is None or challenger.chosen is None:
         return False
-    if incumbent is None or incumbent.chosen is None:
+    if baseline is None or baseline.chosen is None:
         return True
     c = challenger.chosen
-    i = incumbent.chosen
+    b = baseline.chosen
     return bool(
-        c.bootstrap_median_cagr_pct > i.bootstrap_median_cagr_pct + 1e-12
+        c.bootstrap_median_cagr_pct > b.bootstrap_median_cagr_pct + 1e-12
         and c.bootstrap_cagr_q10_pct
-        >= i.bootstrap_cagr_q10_pct - float(q10_tolerance_pct)
+        >= b.bootstrap_cagr_q10_pct - float(q10_tolerance_pct)
+    )
+
+
+def select_portfolio_architecture(
+    static_portfolio,
+    challengers,
+    *,
+    q10_tolerance_pct=5.0,
+):
+    """Choose highest bootstrap-median CAGR from challengers clearing one floor.
+
+    All architectures are compared against the same static baseline. This
+    removes order dependence where a strong first challenger could accidentally
+    raise the lower-tail hurdle for later challengers.
+    """
+    options = []
+    if static_portfolio is not None and static_portfolio.chosen is not None:
+        options.append(("static_robust", static_portfolio))
+    for name, result in challengers.items():
+        if portfolio_challenger_wins(
+            result,
+            static_portfolio,
+            q10_tolerance_pct=q10_tolerance_pct,
+        ):
+            options.append((name, result))
+    if not options:
+        return None, None
+    return max(
+        options,
+        key=lambda item: (
+            item[1].chosen.bootstrap_median_cagr_pct,
+            item[1].chosen.bootstrap_cagr_q10_pct,
+            item[1].chosen.cagr_pct,
+            item[0],
+        ),
     )
 
 
