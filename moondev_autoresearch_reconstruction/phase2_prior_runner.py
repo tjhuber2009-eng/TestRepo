@@ -67,10 +67,20 @@ def build_tracks():
 
 def read_results():
     out={}
+    quality=read_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
+    blocked_targets={
+        key for key,row in quality.items()
+        if isinstance(row,dict) and row.get("status")=="blocked"
+    }
     if not RESULTS.exists(): return out
     for line in RESULTS.read_text(encoding="utf-8").splitlines():
         try: row=json.loads(line)
         except Exception: continue
+        if row.get("status")=="error" and row.get("target") in blocked_targets:
+            row=dict(row)
+            row["status"]="data_blocked"
+            row["block_reason"]=quality[row["target"]].get("reason")
+            row.pop("error",None)
         out[row.get("track_id")]=row
     return out
 
@@ -142,6 +152,7 @@ def prepare_data(track):
         try:
             m=load_json(manifest)
             if m.get("requested_start")==t["start"] and m.get("requested_end")==wanted_end:
+                qualify_data(t, data)
                 return data
         except Exception:
             pass
