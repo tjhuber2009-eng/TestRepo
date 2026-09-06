@@ -30,7 +30,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.88.0
+          toolchain: 1.89.0
 
       - name: Linux Tauri prerequisites
         if: runner.os == 'Linux'
