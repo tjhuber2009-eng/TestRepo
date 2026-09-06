@@ -95,6 +95,54 @@ def prepare_binance(symbol, start, end, out):
     print(f"Binance {symbol}: {len(rows)} verified daily bars -> {out}")
 
 
+def prepare_bitstamp(symbol, start, end, out):
+    pair = str(symbol).lower().replace("/", "").replace("-", "")
+    if pair not in {"btcusd", "ethusd"}:
+        raise RuntimeError(f"unsupported Bitstamp daily pair: {symbol}")
+    rows = []
+    seen = set()
+    cur = start
+    while cur <= end:
+        chunk_end = min(cur + timedelta(days=899), end)
+        params = urllib.parse.urlencode({
+            "step": 86400,
+            "start": int(cur.timestamp()),
+            "end": int(chunk_end.timestamp()),
+            "limit": 1000,
+        })
+        url = f"https://www.bitstamp.net/api/v2/ohlc/{pair}/?{params}"
+        payload = json.loads(request_bytes(url).decode())
+        data = (payload.get("data") or {}).get("ohlc") or []
+        for raw in data:
+            ts = int(raw["timestamp"])
+            stamp = datetime.fromtimestamp(ts, tz=timezone.utc)
+            if not (start <= stamp <= end):
+                continue
+            day = stamp.strftime("%Y-%m-%d")
+            if day in seen:
+                continue
+            vals = [float(raw[k]) for k in ("open","high","low","close")]
+            o,h,l,cl = vals
+            if h < max(o,l,cl) or l > min(o,h,cl):
+                raise RuntimeError(
+                    f"Bitstamp {symbol}: malformed OHLC row {day}"
+                )
+            rows.append([
+                stamp.isoformat(), o, h, l, cl,
+                float(raw.get("volume") or 0.0),
+            ])
+            seen.add(day)
+        cur = chunk_end + timedelta(days=1)
+    rows.sort(key=lambda x: x[0])
+    if len(rows) < 100:
+        raise RuntimeError(f"Bitstamp {symbol}: insufficient daily rows ({len(rows)})")
+    with out.open("w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["Date","Open","High","Low","Close","Volume"])
+        w.writerows(rows)
+    print(f"Bitstamp {symbol}: {len(rows)} daily bars -> {out}")
+
+
 def prepare_yahoo(symbol, start, end, out):
     p1 = int(start.timestamp())
     p2 = int((end + timedelta(days=1)).timestamp())
@@ -287,9 +335,14 @@ def write_manifest(out, source, symbol, ident, start, end):
             if source == "binance"
             else (
                 "provider response snapshotted by generated CSV SHA256; "
+                "Bitstamp public OHLC endpoint has no archive checksum"
+                if source == "bitstamp"
+                else (
+                "provider response snapshotted by generated CSV SHA256; "
                 "Stooq continuous-futures proxy has no archive checksum"
                 if source == "stooq"
                 else "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum"
+                )
             )
         ),
         "oos_included": False,
@@ -309,7 +362,7 @@ def write_manifest(out, source, symbol, ident, start, end):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--source", choices=["binance","yahoo","yahoo_futures_proxy","stooq"], required=True)
+    ap.add_argument("--source", choices=["binance","bitstamp","yahoo","yahoo_futures_proxy","stooq"], required=True)
     ap.add_argument("--symbol", required=True)
     ap.add_argument("--id", required=True)
     ap.add_argument("--start", default="2017-08-17")
@@ -331,6 +384,8 @@ def main():
     out = out_dir / f"{args.id}_1d.csv"
     if args.source == "binance":
         prepare_binance(args.symbol, start, end, out)
+    elif args.source == "bitstamp":
+        prepare_bitstamp(args.symbol, start, end, out)
     elif args.source == "stooq":
         prepare_stooq(args.symbol, start, end, out)
     elif args.source == "yahoo_futures_proxy":
