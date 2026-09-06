@@ -353,19 +353,37 @@ def prop_transfer_candidates(
             audit.append(row)
             continue
 
-        params = {
-            "family": "continuous_daily_signal",
-            "source_family": c.family,
-            "source_target": c.symbol,
-            "continuous_track_id": c.track_id,
-            "adapter": c.adapter,
-            "source_vol_target": _parse_float(
-                source, r"^\s*vol_target\s*=\s*([0-9.]+)", 0.08
-            ),
-            "transfer_exactness": "signal_logic_exact_v4_risk_resized",
-            "source_stop_required": False,
-            "source_stop_transferred": True,
-        }
+        try:
+            params = {
+                "family": "continuous_daily_signal",
+                "source_family": c.family,
+                "source_target": c.symbol,
+                "continuous_track_id": c.track_id,
+                "adapter": c.adapter,
+                "source_vol_target": _parse_float_required(
+                    source,
+                    r"^\s*vol_target\s*=\s*([0-9.]+)",
+                    "source_vol_target",
+                ),
+                "source_vol_lookback": _parse_int_required(
+                    source,
+                    r"^\s*vol_lookback\s*=\s*(\d+)",
+                    "source_vol_lookback",
+                ),
+                "source_min_bars": _parse_int_required(
+                    source,
+                    r"if\s+len\(self\.data\.Close\)\s*<\s*(\d+)",
+                    "source_min_bars",
+                ),
+                "transfer_exactness": "signal_logic_exact_v4_risk_resized",
+                "source_stop_required": False,
+                "source_stop_transferred": True,
+            }
+        except ValueError as exc:
+            row["transfer_status"] = "adapter_required"
+            row["transfer_reason"] = str(exc)
+            audit.append(row)
+            continue
         if c.family == "btc_rsi_adx":
             try:
                 params.update({
