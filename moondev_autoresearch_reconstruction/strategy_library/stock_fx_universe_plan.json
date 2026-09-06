@@ -18,7 +18,9 @@
         "private"
       ],
       "hidden_validation_opened": false,
-      "final_oos_opened": false
+      "final_oos_opened": false,
+      "forex_development_period": "2020-01-01..2021-12-31",
+      "forex_hidden_validation_period": "2022-01-01..2022-12-31"
     },
     {
       "id": "hidden_validation",
@@ -29,7 +31,7 @@
   "notes": [
     "This lane is isolated from phase1_fixed_514 and cannot change its track count.",
     "The 30-stock basket is a fixed 2026-selected seed basket, not point-in-time historical membership.",
-    "FX uses Dukascopy native BID daily archives with per-year local SHA256; volume-dependent strategy families are excluded.",
+    "FX uses authenticated Tiingo daily OHLC. FX development is 2020-01-01..2021-12-31; 2022 is sealed hidden validation; 2023+ final OOS remains sealed.",
     "2023+ final OOS remains absent until explicit authorization."
   ]
 }
