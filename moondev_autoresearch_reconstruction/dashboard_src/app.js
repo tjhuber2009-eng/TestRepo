@@ -81,6 +81,7 @@ function render(){
   renderPhaseRail(phase,hiddenOpen);
   renderWorkflows();
   renderDecisionSummary();
+  renderExpansion();
   renderV4();
   setupFilters();
   renderChampions();
@@ -131,10 +132,12 @@ function renderPhaseRail(phase,hiddenOpen){
 function renderWorkflows(){
   const wrap=$("#workflowSummary");
   const continuous=(DATA.workflow?.continuous_runs||[])[0];
+  const stockfx=(DATA.workflow?.stock_fx_runs||[])[0];
   const v4=(DATA.workflow?.v4_runs||[])[0];
   const tournament=(DATA.workflow?.tournament_runs||[])[0];
   const rows=[
     ["Continuous research",continuous],
+    ["Stock + FX research",stockfx],
     ["V4 promotion",v4],
     ["Model tournament",tournament],
   ];
@@ -214,6 +217,96 @@ function renderDecisionSummary(){
   `;
 }
 
+function renderExpansion(){
+  const state=$("#expansionState");
+  const wrap=$("#expansionContent");
+  if(!state||!wrap) return;
+
+  const e=DATA.expansion||{};
+  const p=e.progress||{};
+  const d=e.progress_derived||{};
+  const run=(DATA.workflow?.stock_fx_runs||[])[0];
+  const board=e.leaderboard||[];
+  const running=!!run&&["queued","pending","in_progress"].includes(String(run.status||"").toLowerCase());
+  const active=!!e.state_is_active;
+
+  if(active){
+    state.textContent=String(e.phase||p.phase||"active").toUpperCase();
+    state.className="pill good";
+  }else if(running){
+    state.textContent="FIRST CYCLE RUNNING";
+    state.className="pill warn";
+  }else if(e.configured){
+    state.textContent="CONFIGURED";
+    state.className="pill neutral";
+  }else{
+    state.textContent="NO STATE";
+    state.className="pill neutral";
+  }
+
+  const expected=Number(e.expected_track_count||0);
+  const stockTracks=Number(e.stock_track_count||0);
+  const fxTracks=Number(e.forex_track_count||0);
+  const valid=Number(p.total_valid_candidates||0);
+  const breadth=Number(d.breadth_pct||0);
+  const touched=Number(d.touched_tracks||0);
+  const pbo=Number(p.pbo_ready_track_count||0);
+  const runLabel=run
+    ? `#${esc(run.run_number||run.id)} · ${esc(run.status==="completed"?(run.conclusion||"completed"):run.status||"unknown")}`
+    : "No workflow metadata";
+  const leaders=board.slice(0,8);
+
+  const leaderTable=leaders.length?`
+    <div class="v4-explainer"><b>First persisted expansion leaders.</b> These remain development-only and cannot influence the frozen core holdout.</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Track</th><th>Market</th><th>Profile</th><th class="num">K</th><th class="num">CAGR</th><th class="num">PBO</th><th>Evidence</th></tr></thead>
+      <tbody>${leaders.map((r,i)=>`<tr>
+        <td>${i+1}</td>
+        <td><b>${esc(r.family||r.track_id||"—")}</b><div class="muted">${esc(String(r.target||"").toUpperCase())}</div></td>
+        <td>${esc(r.market||"—")}</td>
+        <td><span class="profile-chip ${esc(r.profile||"")}">${esc(r.profile||"—")}</span></td>
+        <td class="num">${fmt(r.development_score,5)}</td>
+        <td class="num">${pct(r.development_cagr_pct,1)}</td>
+        <td class="num">${r.pbo==null?"—":pct(100*Number(r.pbo),1)}</td>
+        <td>${esc(r.evidence_grade||"—")}</td>
+      </tr>`).join("")}</tbody>
+    </table></div>`:
+    `<div class="v4-explainer"><b>Qualification complete.</b> The expansion lane is isolated, all 37 development datasets passed, and the first breadth cycle is producing its initial checkpoint.</div>`;
+
+  wrap.innerHTML=`
+    <div class="decision-grid">
+      <article class="decision-card primary">
+        <span class="decision-label">ISOLATED UNIVERSE</span>
+        <h3>${num(expected)} expansion tracks</h3>
+        <div class="decision-number">${num(e.target_count||0)}</div>
+        <p>${num(e.stock_target_count||0)} new stocks and ${num(e.forex_target_count||0)} major FX pairs. AAPL/NVDA stay in the original 514-track lane.</p>
+        <small>${num(stockTracks)} stock tracks · ${num(fxTracks)} FX tracks</small>
+      </article>
+      <article class="decision-card">
+        <span class="decision-label">EXPANSION BREADTH</span>
+        <h3>${active?"Persisted research state":"First checkpoint pending"}</h3>
+        <div class="decision-number">${active?`${fmt(breadth,1)}%`:"—"}</div>
+        <p>${active?`${num(valid)} valid candidates across ${num(touched)} touched tracks.`:"All 37 development datasets qualified; research is running but no persisted leaderboard exists yet."}</p>
+        <small>PBO-ready: ${active?num(pbo):"—"}</small>
+      </article>
+      <article class="decision-card">
+        <span class="decision-label">FOREX CHRONOLOGY</span>
+        <h3>Target-specific holdout</h3>
+        <div class="decision-number">${num(e.forex_target_count||0)} FX</div>
+        <p>Development ${esc(e.forex_development_period||"2020-01-01..2021-12-31")}; hidden validation ${esc(e.forex_hidden_validation_period||"2022-01-01..2022-12-31")}.</p>
+        <small>2023+ final OOS remains sealed</small>
+      </article>
+      <article class="decision-card">
+        <span class="decision-label">LIVE WORKFLOW</span>
+        <h3>Stock + FX AUTORESEARCH</h3>
+        <div class="decision-number">${running?"LIVE":active?"STATE":"READY"}</div>
+        <p>${runLabel}</p>
+        <small>Hidden validation: ${e.hidden_validation_opened?"OPEN":"SEALED"}</small>
+      </article>
+    </div>
+    ${leaderTable}
+  `;
+}
 function renderV4(){
   const state=$("#v4State");
   const wrap=$("#v4Content");
