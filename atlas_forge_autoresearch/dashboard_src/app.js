@@ -373,10 +373,11 @@ function renderV4(){
     </tr>`;
   }).join("");
 
-  const viewOrder=["max_payout_efficiency","max_repeat_payout_efficiency","max_evaluation_pass","safest_funded","balanced","conservative"];
+  const viewOrder=["max_payout_efficiency","max_repeat_payout_efficiency","max_repeat_expected_reward","max_evaluation_pass","safest_funded","balanced","conservative"];
   const viewLabel={
     max_payout_efficiency:"Max first payout",
-    max_repeat_payout_efficiency:"Max repeat payout",
+    max_repeat_payout_efficiency:"Max repeat payout efficiency",
+    max_repeat_expected_reward:"Max expected repeat reward",
     max_evaluation_pass:"Max evaluation pass",
     safest_funded:"Safest funded",
     balanced:"Balanced",
@@ -491,6 +492,8 @@ function renderV4(){
 
   const repeat1=prop.programs?.ftmo_1step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
   const repeat2=prop.programs?.ftmo_2step_2026?.refined_frontiers?.max_repeat_payout_efficiency||{};
+  const reward1=prop.programs?.ftmo_1step_2026?.refined_frontiers?.max_repeat_expected_reward||{};
+  const reward2=prop.programs?.ftmo_2step_2026?.refined_frontiers?.max_repeat_expected_reward||{};
   const balanced2=prop.programs?.ftmo_2step_2026?.refined_frontiers?.balanced||{};
   const summaryCard=(label,row,tag)=>{
     const x=row.view||{};
@@ -513,8 +516,9 @@ function renderV4(){
       <b>How to read this section:</b> “Pass” = simulated evaluation completion; “12-cycle reward” = repeated-payout projection; “Survival” = simulated funded-account survival. Development estimates only.
     </div>
     <div class="frontier-grid">
-      ${summaryCard("FTMO 2-Step · Max repeat payout",repeat2,"BEST REPEAT ECONOMICS")}
-      ${summaryCard("FTMO 1-Step · Max repeat payout",repeat1,"SIMPLER PROGRAM")}
+      ${summaryCard("FTMO 2-Step · Max expected repeat reward",reward2.view?reward2:repeat2,"MAX MODELED REWARD")}
+      ${summaryCard("FTMO 2-Step · Max repeat efficiency",repeat2,"BEST REPEAT EFFICIENCY")}
+      ${summaryCard("FTMO 1-Step · Max expected repeat reward",reward1.view?reward1:repeat1,"SIMPLER PROGRAM")}
       ${summaryCard("FTMO 2-Step · Balanced",balanced2,"BALANCED / EXACT TRANSFER")}
     </div>
     ${privateHtml}
