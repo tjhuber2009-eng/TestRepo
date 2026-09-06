@@ -164,6 +164,7 @@ class MultiAssetBacktester:
         cost_multiplier: float = 1.0,
         cost_stress_multiplier: float | None = None,
         trade_event_count: int | None = None,
+        long_stop_prices: pd.DataFrame | None = None,
     ) -> MultiAssetResult:
         raw = strategy(self.data, features)
         if not isinstance(raw, pd.DataFrame):
@@ -174,12 +175,51 @@ class MultiAssetBacktester:
         exec_w = targets.shift(1).fillna(0.0)
         asset_ret = self.open_to_next_open_returns()
 
+        stop_hit = pd.DataFrame(False, index=self.index, columns=self.symbols)
+        if long_stop_prices is not None:
+            stops = (
+                long_stop_prices.reindex(index=self.index, columns=self.symbols)
+                .apply(pd.to_numeric, errors="coerce")
+            )
+            exec_stops = stops.shift(1)
+            for symbol in self.symbols:
+                open_ = self.data[symbol]["Open"].astype(float)
+                low = self.data[symbol]["Low"].astype(float)
+                stop = exec_stops[symbol]
+                active = exec_w[symbol].gt(0.0) & stop.notna() & stop.gt(0.0)
+                hit = active & low.le(stop)
+                stop_hit.loc[:, symbol] = hit
+                if hit.any():
+                    fill = pd.Series(
+                        np.where(open_.le(stop), open_, stop),
+                        index=self.index,
+                        dtype=float,
+                    )
+                    asset_ret.loc[hit, symbol] = (
+                        fill.loc[hit] / open_.loc[hit] - 1.0
+                    )
+
         delta = exec_w.diff().fillna(exec_w)
-        turnover = delta.abs().sum(axis=1)
+        turnover = pd.Series(0.0, index=self.index)
         transaction_cost = pd.Series(0.0, index=self.index)
         for symbol in self.symbols:
+            symbol_turnover = delta[symbol].abs().astype(float)
+            if long_stop_prices is not None:
+                hit = stop_hit[symbol].astype(bool)
+                # A stop exits intra-bar. On the following open the position
+                # starts from flat, so replace the ordinary delta with the
+                # full new desired weight (zero if no re-entry).
+                after_stop = hit.shift(1, fill_value=False)
+                symbol_turnover.loc[after_stop] = exec_w.loc[
+                    after_stop, symbol
+                ].abs()
+                # Charge the actual stop exit on the bar where it occurred.
+                symbol_turnover = symbol_turnover + exec_w[symbol].abs().where(
+                    hit, 0.0
+                )
+            turnover += symbol_turnover
             transaction_cost += (
-                delta[symbol].abs()
+                symbol_turnover
                 * self.costs[symbol].one_way_fraction
             )
         gross = exec_w.abs().sum(axis=1)
