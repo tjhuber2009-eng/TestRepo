@@ -23,7 +23,7 @@ PROGRESS = STATE / "hydration_progress.json"
 CURSOR = STATE / "hydration_cursor.json"
 LANE = "phase3_source_hydration"
 PROTOCOL = "nested_chronological_v3"
-MAX_TEXT = 50000
+MAX_TEXT = 50000\nHYDRATION_VERSION = 2
 
 
 def now():
@@ -99,10 +99,29 @@ def github_readme_candidates(url):
     ]
 
 
+def doi_metadata_targets(url):
+    m = re.match(r"https?://doi\\.org/(.+)", str(url or "").strip(), re.I)
+    if not m:
+        return []
+    doi = m.group(1).strip()
+    encoded = __import__("urllib.parse", fromlist=["quote"]).quote(doi, safe="")
+    return [
+        f"https://api.crossref.org/works/{encoded}",
+        f"https://api.openalex.org/works/https://doi.org/{doi}",
+        (
+            "https://api.semanticscholar.org/graph/v1/paper/DOI:"
+            f"{encoded}?fields=title,abstract,year,authors,openAccessPdf"
+        ),
+    ]
+
+
 def normalize_target(url):
     url = str(url or "").strip().rstrip(".,);]}>")
     if not url.startswith(("http://", "https://")):
         return []
+    doi_targets = doi_metadata_targets(url)
+    if doi_targets:
+        return doi_targets + [url]
     if "github.com/" in url and "/blob/" in url:
         m = re.match(r"https?://github\.com/([^/]+)/([^/]+)/blob/([^/]+)/(.*)", url, re.I)
         if m:
@@ -181,7 +200,14 @@ def main():
         cursor = (idx + 1) % max(len(queue), 1)
         scanned += 1
         k = key_for(row)
-        if not k or k in results:
+        if not k:
+            continue
+        prior = results.get(k)
+        prior_version = int((prior or {}).get("hydration_version", 1) or 1)
+        if prior is not None and (
+            prior.get("hydration_status") == "hydrated"
+            or prior_version >= HYDRATION_VERSION
+        ):
             continue
         text, attempts = hydrate(row)
         result = {
@@ -193,6 +219,7 @@ def main():
             "source_type": row.get("source_type"),
             "archetype": row.get("archetype"),
             "hydration_status": "hydrated" if text else "attempted_no_text",
+            "hydration_version": HYDRATION_VERSION,
             "hydrated_text": text,
             "hydrated_chars": len(text),
             "fetch_attempts": attempts,
@@ -206,7 +233,18 @@ def main():
 
     save_json(CURSOR, {"next_index": cursor, "queue_count": len(queue), "updated_at": now()})
     vals = list(results.values())
-    complete = len(vals) >= len(queue)
+    queue_keys = [key_for(x) for x in queue if key_for(x)]
+    pending = sum(
+        1
+        for qkey in queue_keys
+        if qkey not in results
+        or (
+            results[qkey].get("hydration_status") != "hydrated"
+            and int(results[qkey].get("hydration_version", 1) or 1)
+            < HYDRATION_VERSION
+        )
+    )
+    complete = pending == 0
     progress = {
         "updated_at": now(),
         "lane": LANE,
@@ -214,9 +252,13 @@ def main():
         "stage": "hydration_complete" if complete else "hydrating",
         "queue_count": len(queue),
         "processed_count": len(vals),
+        "hydration_version": HYDRATION_VERSION,
+        "retry_pending_count": pending,
         "hydrated_count": sum(1 for x in vals if x.get("hydration_status") == "hydrated"),
         "attempted_no_text_count": sum(1 for x in vals if x.get("hydration_status") == "attempted_no_text"),
-        "completion_pct": round(100.0 * len(vals) / max(len(queue), 1), 2),
+        "completion_pct": round(
+            100.0 * (len(queue_keys) - pending) / max(len(queue_keys), 1), 2
+        ),
         "all_hydrated_or_attempted": complete,
         "next_stage": "reconstruct_with_hydrated_evidence" if complete else "continue_source_hydration",
         "phase1_registry_mutated": False,
