@@ -38,6 +38,9 @@ jobs:
           python -m compileall -q .
           python -m unittest -v test_autoresearch_integrity.py
 
+      - name: Validate dashboard JavaScript syntax
+        run: node --check dashboard_src/app.js
+
       - name: Generate and compile every runnable family
         shell: python
         run: |
