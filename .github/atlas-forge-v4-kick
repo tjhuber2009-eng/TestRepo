@@ -1,8 +1,9 @@
 Atlas Forge V4 promotion restart
 Requested: 2026-09-06
-Reason: persist financing-realistic private portfolio and repaired max expected repeat reward prop frontier.
-V4 source head: 4d30aadd0b9c3144811e34e9c92f89aaa9aa526f
-Private financing: 6% base annual borrowing cost; 10% and 14% stress; charge gross above 1x only
+Reason: persist definitive exposure-aware financing and profit-optimal leverage logic.
+V4 source head: 30fe98758a9f7964cd002830e386c5b378dcaac7
+Private financing: 6% base annual cost, 10% and 14% stress, realized time-varying gross above 1x only
+Scale selection: maximize development geometric growth inside drawdown-feasible range
 Prop: unified max expected 12-cycle repeat reward frontier
 Hidden validation: sealed
 Final 2023+ OOS: sealed
