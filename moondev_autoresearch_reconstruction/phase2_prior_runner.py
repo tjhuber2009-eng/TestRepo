@@ -28,6 +28,12 @@ TARGET_QUALITY=STATE/"target_quality.json"
 CONFIG=HERE/"continuous_config.json"
 PROTOCOL="nested_chronological_v3"
 LANE="phase2_prior_work"
+PHASE2_SOURCE_OVERRIDES={
+    "es":{"source":"stooq","symbol":"ES.F"},
+    "nq":{"source":"stooq","symbol":"NQ.F"},
+    "gold":{"source":"stooq","symbol":"GC.F"},
+    "oil":{"source":"stooq","symbol":"CL.F"},
+}
 
 
 def now():
@@ -49,7 +55,18 @@ def slug(*parts):
 
 def build_tracks():
     cfg=load_json(CONFIG)
-    targets=[x for x in cfg["targets"] if x.get("enabled")]
+    targets=[]
+    for raw in cfg["targets"]:
+        if not raw.get("enabled"):
+            continue
+        target=dict(raw)
+        target.update(PHASE2_SOURCE_OVERRIDES.get(target["id"],{}))
+        if target["id"] in PHASE2_SOURCE_OVERRIDES:
+            target["data_quality_note"]=(
+                "Stooq continuous futures proxy; development screening only; "
+                "not contract-exact"
+            )
+        targets.append(target)
     profiles=cfg["profiles"]
     out=[]
     for family in runnable_families():
@@ -68,14 +85,27 @@ def build_tracks():
 def read_results():
     out={}
     quality=load_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
-    blocked_targets={
-        key for key,row in quality.items()
-        if isinstance(row,dict) and row.get("status")=="blocked"
-    }
+    blocked_targets=set()
+    for key,row in quality.items():
+        if not isinstance(row,dict) or row.get("status")!="blocked":
+            continue
+        override=PHASE2_SOURCE_OVERRIDES.get(key)
+        if override and (
+            row.get("source")!=override["source"]
+            or row.get("symbol")!=override["symbol"]
+        ):
+            continue
+        blocked_targets.add(key)
     if not RESULTS.exists(): return out
     for line in RESULTS.read_text(encoding="utf-8").splitlines():
         try: row=json.loads(line)
         except Exception: continue
+        override=PHASE2_SOURCE_OVERRIDES.get(row.get("target"))
+        if override and (
+            row.get("data_source")!=override["source"]
+            or row.get("data_symbol")!=override["symbol"]
+        ):
+            continue
         if row.get("status")=="error" and row.get("target") in blocked_targets:
             row=dict(row)
             row["status"]="data_blocked"
@@ -110,7 +140,10 @@ def development_end(target):
 def qualify_data(target, path):
     quality=load_json(TARGET_QUALITY) if TARGET_QUALITY.exists() else {}
     prior=quality.get(target["id"])
-    if prior:
+    if prior and (
+        prior.get("source")==target.get("source")
+        and prior.get("symbol")==target.get("symbol")
+    ):
         if prior.get("status")=="blocked":
             raise DataQualificationBlocked(prior.get("reason","target data blocked"))
         return prior
@@ -121,7 +154,13 @@ def qualify_data(target, path):
     need=["Open","High","Low","Close"]
     missing=[x for x in need if x not in df.columns]
     if missing:
-        row={"status":"blocked","reason":f"missing OHLC columns: {missing}","checked_at":now()}
+        row={
+            "status":"blocked",
+            "reason":f"missing OHLC columns: {missing}",
+            "checked_at":now(),
+            "source":target.get("source"),
+            "symbol":target.get("symbol"),
+        }
     else:
         for col in need:
             df[col]=pd.to_numeric(df[col],errors="coerce")
@@ -135,6 +174,8 @@ def qualify_data(target, path):
                 "checked_at":now(),
                 "data_quality_grade":target.get("data_quality_grade"),
                 "instrument_fidelity":target.get("instrument_fidelity"),
+                "source":target.get("source"),
+                "symbol":target.get("symbol"),
             }
         else:
             row={
@@ -143,6 +184,8 @@ def qualify_data(target, path):
                 "checked_at":now(),
                 "data_quality_grade":target.get("data_quality_grade"),
                 "instrument_fidelity":target.get("instrument_fidelity"),
+                "source":target.get("source"),
+                "symbol":target.get("symbol"),
             }
     quality[target["id"]]=row
     save_json(TARGET_QUALITY,quality)
@@ -158,7 +201,12 @@ def prepare_data(track):
     if data.exists() and data.stat().st_size>1000 and manifest.exists():
         try:
             m=load_json(manifest)
-            if m.get("requested_start")==t["start"] and m.get("requested_end")==wanted_end:
+            if (
+                m.get("requested_start")==t["start"]
+                and m.get("requested_end")==wanted_end
+                and m.get("source")==t["source"]
+                and m.get("symbol")==t["symbol"]
+            ):
                 qualify_data(t, data)
                 return data
         except Exception:
