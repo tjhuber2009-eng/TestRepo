@@ -21,6 +21,7 @@ from v4.continuous_bridge import (
     source_execution_adapter_blocker,
 )
 from v4.feature_store import FeatureStoreBuilder
+from v4.dynamic_portfolio import causal_dynamic_allocation
 from v4.hr_dual_locked import (
     SOURCE_LOCK as HR_DUAL_SOURCE_LOCK,
     build_targets as hr_dual_build_targets,
@@ -756,6 +757,100 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertLess(result.chosen.gross_exposure, 1.0)
         self.assertGreater(result.chosen.cash_weight, 0.0)
         self.assertLessEqual(result.chosen.bootstrap_dd_q95_pct, 20)
+
+    def test_guided_portfolio_compositions_respect_concentration_cap(self):
+        rng = np.random.default_rng(222)
+        base = rng.normal(0.0005, 0.01, 700)
+        arr = np.column_stack([
+            base + 0.0004,
+            0.80 * base + rng.normal(0.0002, 0.004, 700),
+            rng.normal(0.00035, 0.007, 700),
+            rng.normal(0.00020, 0.006, 700),
+        ])
+        optimizer = RobustPortfolioOptimizer(
+            dd_cap_pct=32,
+            n_candidates=100,
+            bootstrap_reps=10,
+            max_weight=0.55,
+            seed=3,
+        )
+        guided = optimizer._guided_compositions(arr)
+        self.assertGreaterEqual(len(guided), 4)
+        self.assertTrue(
+            all(float(np.max(w)) <= 0.55 + 1e-12 for w in guided)
+        )
+        self.assertTrue(
+            all(float(np.sum(w)) <= 1.0 + 1e-12 for w in guided)
+        )
+
+    def test_portfolio_reports_bootstrap_growth_tail_quantiles(self):
+        rng = np.random.default_rng(333)
+        ret = pd.DataFrame({
+            "A": rng.normal(0.0007, 0.012, 650),
+            "B": rng.normal(0.0004, 0.009, 650),
+        })
+        chosen = RobustPortfolioOptimizer(
+            dd_cap_pct=32,
+            n_candidates=80,
+            bootstrap_reps=40,
+            max_weight=0.60,
+            seed=4,
+        ).optimize(ret).chosen
+        self.assertIsNotNone(chosen)
+        self.assertLessEqual(
+            chosen.bootstrap_cagr_q10_pct,
+            chosen.bootstrap_cagr_q25_pct + 1e-12,
+        )
+        self.assertLessEqual(
+            chosen.bootstrap_cagr_q25_pct,
+            chosen.bootstrap_median_cagr_pct + 1e-12,
+        )
+
+    def test_dynamic_portfolio_is_prefix_invariant_and_capped(self):
+        rng = np.random.default_rng(444)
+        idx = pd.bdate_range("2018-01-01", periods=420)
+        split = 210
+        a = np.r_[
+            rng.normal(0.0010, 0.008, split),
+            rng.normal(-0.0003, 0.008, len(idx) - split),
+        ]
+        b = np.r_[
+            rng.normal(-0.0002, 0.007, split),
+            rng.normal(0.0011, 0.007, len(idx) - split),
+        ]
+        c0 = rng.normal(0.00025, 0.004, len(idx))
+        frame = pd.DataFrame({"A": a, "B": b, "C": c0}, index=idx)
+
+        kwargs = dict(
+            min_history=80,
+            growth_lookback=60,
+            risk_lookback=30,
+            rebalance_every=10,
+            max_weight=0.55,
+            soft_drawdown=-0.10,
+            hard_drawdown=-0.20,
+        )
+        full = causal_dynamic_allocation(frame, **kwargs)
+        prefix = causal_dynamic_allocation(frame.iloc[:330], **kwargs)
+
+        pd.testing.assert_frame_equal(
+            full.weights.iloc[:330],
+            prefix.weights,
+        )
+        pd.testing.assert_series_equal(
+            full.returns.iloc[:330],
+            prefix.returns,
+        )
+        self.assertTrue(
+            (full.weights.abs().max(axis=1) <= 0.55 + 1e-12).all()
+        )
+        self.assertTrue(
+            (full.weights.iloc[:80].abs().sum(axis=1) == 0.0).all()
+        )
+        self.assertGreater(
+            float(full.weights.iloc[-1]["B"]),
+            float(full.weights.iloc[-1]["A"]),
+        )
 
     def test_meta_filter_label_delay_blocks_unavailable_previous_outcome(self):
         rng = np.random.default_rng(123)
