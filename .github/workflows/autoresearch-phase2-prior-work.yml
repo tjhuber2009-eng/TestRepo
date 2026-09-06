@@ -63,6 +63,18 @@ jobs:
       - name: Advance prior-work baseline screening
         run: python phase2_prior_runner.py --max-tracks 192
 
+      - name: Advance survivor follow-up when baseline is complete
+        shell: python
+        run: |
+          import json, subprocess, sys
+          from pathlib import Path
+          x=json.loads(Path("phase2_state/progress.json").read_text())
+          if x.get("all_tracks_screened"):
+              subprocess.run(
+                  [sys.executable, "phase2_followup_runner.py", "--max-candidates", "24"],
+                  check=True,
+              )
+
       - name: Post-run contamination guard
         run: python oos_guard.py
 
@@ -72,11 +84,18 @@ jobs:
         run: |
           import json, os
           from pathlib import Path
-          x=json.loads(Path("phase2_state/progress.json").read_text())
+          baseline=json.loads(Path("phase2_state/progress.json").read_text())
+          baseline_complete=bool(baseline.get("all_tracks_screened"))
+          follow_path=Path("phase2_state/followup_progress.json")
+          follow=(json.loads(follow_path.read_text()) if follow_path.exists() else {})
+          follow_complete=bool(follow.get("all_survivors_followed_up"))
+          complete=baseline_complete and follow_complete
           with open(os.environ["GITHUB_OUTPUT"],"a",encoding="utf-8") as f:
-              f.write(f"complete={'true' if x.get('all_tracks_screened') else 'false'}\n")
-              f.write(f"screened={int(x.get('screened_count',0))}\n")
-              f.write(f"total={int(x.get('track_count',0))}\n")
+              f.write(f"complete={'true' if complete else 'false'}\n")
+              f.write(f"screened={int(baseline.get('screened_count',0))}\n")
+              f.write(f"total={int(baseline.get('track_count',0))}\n")
+              f.write(f"followed={int(follow.get('processed_count',0))}\n")
+              f.write(f"survivors={int(follow.get('candidate_count',0))}\n")
 
       - name: Persist isolated Phase 2 state
         shell: bash
@@ -107,5 +126,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Phase 2: ${{ steps.progress.outputs.screened }}/${{ steps.progress.outputs.total }} screened"
+          echo "Phase 2 baseline: ${{ steps.progress.outputs.screened }}/${{ steps.progress.outputs.total }}; follow-up: ${{ steps.progress.outputs.followed }}/${{ steps.progress.outputs.survivors }}"
           gh workflow run autoresearch-phase2-prior-work.yml --repo "$GITHUB_REPOSITORY" --ref main
