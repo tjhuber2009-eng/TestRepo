@@ -34,6 +34,7 @@ LANE = "phase2_prior_work_followup"
 PBO_LIMIT = 0.55
 MIN_COHORT = 5
 FDR_REPORT_LEVEL = 0.10
+FOLLOWUP_VERSION = 2
 
 
 def load_json(path):
@@ -221,6 +222,7 @@ def rerun_detail(track, baseline_row):
         "protocol": PROTOCOL,
         "lane": LANE,
         "stage": "development_survivor_followup",
+        "followup_version": FOLLOWUP_VERSION,
         "track_id": track["id"],
         "family": track["family"],
         "target": track["target"]["id"],
@@ -474,6 +476,7 @@ def build_promotion(rows, selection):
         "protocol": PROTOCOL,
         "lane": LANE,
         "stage": "adaptive_followup_complete",
+        "followup_version": FOLLOWUP_VERSION,
         "selection_hash": selection["selection_hash"],
         "candidate_count": len(queue),
         "research_survivor_count": sum(
@@ -508,6 +511,7 @@ def write_progress(selection, results):
     payload = {
         "protocol": PROTOCOL,
         "lane": LANE,
+        "followup_version": FOLLOWUP_VERSION,
         "stage": (
             "adaptive_followup_complete"
             if complete and errors == 0
@@ -551,6 +555,7 @@ def main():
         x.get("track_id"): x
         for x in read_jsonl(RESULTS)
         if x.get("track_id")
+        and int(x.get("followup_version", 1) or 1) >= FOLLOWUP_VERSION
     }
     cursor = 0
     if CURSOR.exists():
@@ -572,6 +577,7 @@ def main():
                     "protocol": PROTOCOL,
                     "lane": LANE,
                     "track_id": track_id,
+                    "followup_version": FOLLOWUP_VERSION,
                     "status": "error",
                     "error": "frozen Phase-2 track no longer exists",
                     "parameter_rescue_performed": False,
@@ -589,6 +595,7 @@ def main():
                         "protocol": PROTOCOL,
                         "lane": LANE,
                         "track_id": track_id,
+                        "followup_version": FOLLOWUP_VERSION,
                         "family": track.get("family"),
                         "target": track.get("target", {}).get("id"),
                         "profile": track.get("profile_name"),
@@ -608,6 +615,7 @@ def main():
     save_json(CURSOR, {
         "next_index": idx,
         "selection_hash": selection["selection_hash"],
+        "followup_version": FOLLOWUP_VERSION,
         "candidate_count": len(ids),
         "updated_at": p2.now(),
     })
