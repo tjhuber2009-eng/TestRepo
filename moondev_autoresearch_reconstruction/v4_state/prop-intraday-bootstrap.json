@@ -534,6 +534,56 @@
       "venue_execution_verified": false
     }
   },
+  "phase2_prop_transfer": {
+    "available": true,
+    "candidate_count": 1,
+    "candidates": [
+      {
+        "bars_per_year": 365,
+        "bootstrap_fdr_qvalue": 0.037589,
+        "cagr_pct": 23.469,
+        "candidate_pbo_when_selected": 0.125,
+        "candidate_selection_share": 0.571429,
+        "cohort": "btc::prop",
+        "cohort_pbo": 0.5,
+        "commission": 0.001,
+        "development_years": null,
+        "error": "ValueError: unsupported import in promoted strategy: math",
+        "evidence_grade": "A",
+        "extreme_stress_return_pct": 101.582,
+        "family": "bollinger_breakout_20_2",
+        "fdr_report_level": 0.1,
+        "final_oos_opened": false,
+        "harness_sha256": "f154e64ec7f3918cd663c490a5cf3d92f24fac57d855a1e8c3fdb02f27080b03",
+        "hidden_validation_opened": false,
+        "margin": 0.25,
+        "market": "crypto",
+        "max_dd_pct": -5.787,
+        "parameter_rescue_performed": false,
+        "pbo_limit": 0.55,
+        "pf": 5.933,
+        "profile": "prop",
+        "program_sha256": "9798b229584964cbe8989ae8afc6a9d67f3dd92adb1e2d12df9826c9563fdec0",
+        "promotion_source_path": "moondev_autoresearch_reconstruction/phase2_state/promotion_sources/bollinger_breakout_20_2__btc__prop.py",
+        "promotion_source_sha256": "3544e47f73e6e53f48c4bf69fa517d6c43e88402de2c5cc0dd91156c84d8467f",
+        "provisional_reason": null,
+        "ready_for_v4_replay": true,
+        "research_survivor": true,
+        "score": 0.269639,
+        "sharpe": 1.7826,
+        "strategy_sha256": "3544e47f73e6e53f48c4bf69fa517d6c43e88402de2c5cc0dd91156c84d8467f",
+        "symbol": "BTCUSDT",
+        "target": "btc",
+        "track_id": "bollinger_breakout_20_2__btc__prop",
+        "trades": 35,
+        "transfer_status": "error"
+      }
+    ],
+    "final_oos_opened": false,
+    "hidden_validation_opened": false,
+    "policy": "consume only ready Phase-2 prop survivors whose exact source artifact passes execution audit and whose signed daily signal has an explicit causal v4 adapter; source sizing is replaced by the v4 prop exposure optimizer",
+    "supported_count": 0
+  },
   "policy": "force flat for execution at each Prague midnight reset",
   "prague_day_brake_execution": {
     "emergency_close_cost_stress_multiplier": 3.0,
@@ -47347,14 +47397,15 @@
     "reward_cycle_days": 14,
     "scaling_plan_upgrades_included": false
   },
-  "research_commit_sha": "e3ee02ee99d1ab0fa3f11976c45d5ae96ae0b1db",
+  "research_commit_sha": "6dd2afebad71c0fa80446e1fe33281c4f4daddd2",
   "reset_timezone": "Europe/Prague",
   "search_policy": {
     "broad_base_candidates": 120,
     "candidate_families": [
       "cross_sectional_long",
       "tsmom_long_short",
-      "continuous_daily_signal"
+      "continuous_daily_signal",
+      "phase2_daily_signal"
     ],
     "continuous_transfer_risk_candidates": 42,
     "continuous_transfer_source_candidates": 7,
@@ -47363,7 +47414,9 @@
     "frontier_structural_mutations": 49,
     "frontier_universe_mutations": 6,
     "independent_tsmom_candidates": 36,
-    "policy": "broad long-only alpha/risk search first; mutate only coarse frontier leaders for session/rebalance structure, asset-universe robustness, and causal Prague-day risk/profit smoothing; evaluate time-series momentum as an independent compact family",
+    "phase2_transfer_risk_candidates": 0,
+    "phase2_transfer_source_candidates": 0,
+    "policy": "broad long-only alpha/risk search first; mutate only coarse frontier leaders for session/rebalance structure, asset-universe robustness, and causal Prague-day risk/profit smoothing; evaluate time-series momentum as an independent compact family; replay frozen Phase-2 survivors only through exact signed adapters and V4 prop risk sizing",
     "structural_dimensions": {
       "day_loss_cap": [
         0.01,
