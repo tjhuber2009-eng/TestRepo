@@ -65,6 +65,7 @@ from v4.prop_firm_engine import (
 )
 from v4.prop_intraday_bootstrap import (
     PRAGUE,
+    PROP_FRONTIER_VIEW_NAMES,
     _frontier_day_brake_mutations,
     _frontier_rank,
     _frontier_structural_mutations,
@@ -1542,6 +1543,16 @@ class V4AlphaGenerationTests(unittest.TestCase):
         self.assertGreater(
             _frontier_rank("max_repeat_payout_efficiency", b),
             _frontier_rank("max_repeat_payout_efficiency", a),
+        )
+
+    def test_prop_frontier_registry_includes_max_expected_repeat_reward(self):
+        self.assertIn(
+            "max_repeat_expected_reward",
+            PROP_FRONTIER_VIEW_NAMES,
+        )
+        self.assertEqual(
+            len(PROP_FRONTIER_VIEW_NAMES),
+            len(set(PROP_FRONTIER_VIEW_NAMES)),
         )
 
     def test_repeat_reward_frontier_rank_uses_absolute_expected_reward(self):
