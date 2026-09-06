@@ -21,7 +21,7 @@ PROGRESS = STATE / "engine_mapping_progress.json"
 HYDRATION_QUEUE = STATE / "hydration_queue.json"
 HYDRATED = STATE / "hydrated_sources.jsonl"
 PROTOCOL = "nested_chronological_v3"
-LANE = "phase3_engine_mapping"
+LANE = "phase3_engine_mapping"\nREQUIRED_HYDRATION_VERSION = 2
 
 ARCHETYPES = (
     ("options_volatility", ("option", "variance risk", "volatility risk premium", "straddle", "put-write", "put write")),
@@ -127,6 +127,11 @@ def main():
     recon = read_jsonl(RECON)
     original = load_json(QUEUE).get("candidates", []) if QUEUE.exists() else []
     original_by_key = {key_for(x): x for x in original if key_for(x)}
+    hydrated = {}
+    for hrow in read_jsonl(HYDRATED):
+        hkey = key_for(hrow)
+        if hkey:
+            hydrated[hkey] = hrow
 
     latest = {}
     for row in recon:
@@ -166,7 +171,20 @@ def main():
         elif duplicate_rules:
             status = "duplicate_rule_set"
         else:
-            status = "source_hydration_required"
+            hrow = hydrated.get(k)
+            hydration_current = bool(
+                hrow
+                and (
+                    hrow.get("hydration_status") == "hydrated"
+                    or int(hrow.get("hydration_version", 1) or 1)
+                    >= REQUIRED_HYDRATION_VERSION
+                )
+            )
+            status = (
+                "incomplete_after_hydration"
+                if hydration_current
+                else "source_hydration_required"
+            )
 
         mapped = {
             "source_title": row.get("source_title"),
@@ -181,6 +199,13 @@ def main():
             "missing_rules": missing,
             "rules_hash": rules_hash,
             "duplicate_rules": duplicate_rules,
+            "hydration_status": (
+                None if k not in hydrated else hydrated[k].get("hydration_status")
+            ),
+            "hydration_version": (
+                None if k not in hydrated
+                else int(hydrated[k].get("hydration_version", 1) or 1)
+            ),
             "hidden_validation_opened": False,
             "final_oos_opened": False,
         }
@@ -213,6 +238,10 @@ def main():
 
     ready = [x for x in mappings if x["mapping_status"] == "ready_for_development_adapter"]
     cap = [x for x in mappings if x["mapping_status"] == "engine_capability_required"]
+    exhausted = [
+        x for x in mappings
+        if x["mapping_status"] == "incomplete_after_hydration"
+    ]
     payload = {
         "updated_at": now(),
         "lane": LANE,
@@ -222,6 +251,8 @@ def main():
         "ready_for_development_adapter_count": len(ready),
         "engine_capability_required_count": len(cap),
         "source_hydration_required_count": len(hydrate),
+        "incomplete_after_hydration_count": len(exhausted),
+        "required_hydration_version": REQUIRED_HYDRATION_VERSION,
         "phase1_registry_mutated": False,
         "hidden_validation_opened": False,
         "final_oos_opened": False,
@@ -244,7 +275,21 @@ def main():
         "ready_for_development_adapter_count": len(ready),
         "engine_capability_required_count": len(cap),
         "hydration_queue_count": len(hydrate),
-        "next_stage": "source_hydration" if hydrate else ("development_adapter" if ready else "engine_capability_build"),
+        "incomplete_after_hydration_count": len(exhausted),
+        "required_hydration_version": REQUIRED_HYDRATION_VERSION,
+        "next_stage": (
+            "source_hydration"
+            if hydrate
+            else (
+                "development_adapter"
+                if ready
+                else (
+                    "engine_capability_build"
+                    if cap
+                    else "research_exhausted_no_complete_specs"
+                )
+            )
+        ),
         "phase1_registry_mutated": False,
         "hidden_validation_opened": False,
         "final_oos_opened": False,
