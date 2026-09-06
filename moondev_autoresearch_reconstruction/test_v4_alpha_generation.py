@@ -1671,6 +1671,71 @@ class MoonStrategy:
         )
         self.assertEqual(audit["supported_count"], 1)
 
+    def test_atr_channel_prop_adapter_transfers_source_atr_stop(self):
+        self.assertEqual(
+            PROP_SIGNAL_ADAPTERS["atr_channel_trend"],
+            "daily_atr_channel_stop",
+        )
+        source = """
+class MoonStrategy:
+    vol_lookback = 30
+    vol_target = 0.04
+    def init(self):
+        self.ema = self.I(_ema, self.data.Close, 50)
+        self.atr = self.I(_atr, self.data.High, self.data.Low, self.data.Close, 20)
+    def _buy_with_stop(self, px, atr, stop_mult=3.0):
+        self.buy(size=1, sl=px - stop_mult * atr)
+    def next(self):
+        if len(self.data.Close) < 70:
+            return
+        px = float(self.data.Close[-1])
+        ema = float(self.ema[-1])
+        atr = float(self.atr[-1])
+        if not self.position and px > ema + 1.5 * atr:
+            self._buy_with_stop(px, atr, 2.5)
+        elif self.position and px < ema:
+            self.position.close()
+"""
+        board = {
+            "protocol": "nested_chronological_v3",
+            "rows": [{
+                "track_id": "atr",
+                "profile": "prop",
+                "family": "atr_channel_trend",
+                "target": "btc",
+                "market": "crypto",
+                "exactness": "family",
+                "evidence_grade": "A",
+                "development_guard_ok": True,
+                "development_cagr_pct": 30.0,
+                "development_max_dd_pct": -8.0,
+                "development_sharpe": 1.5,
+                "development_pf": 2.0,
+                "development_years": 3.0,
+                "development_trades": 20,
+                "selection_score": 1.0,
+                "multiple_test_qvalue": 0.05,
+                "pbo": None,
+                "extreme_stress_return_pct": 25.0,
+            }],
+        }
+        with mock.patch(
+            "v4.continuous_bridge.load_candidate_source",
+            return_value=source,
+        ):
+            supported, audit = prop_transfer_candidates(
+                {"BTCUSDT"},
+                leaderboard=board,
+            )
+        self.assertEqual(len(supported), 1)
+        params = supported[0]
+        self.assertEqual(params["ema_window"], 50)
+        self.assertEqual(params["atr_window"], 20)
+        self.assertAlmostEqual(params["entry_atr_mult"], 1.5)
+        self.assertAlmostEqual(params["stop_mult"], 2.5)
+        self.assertTrue(params["source_stop_transferred"])
+        self.assertEqual(audit["supported_count"], 1)
+
     def test_multi_asset_engine_executes_long_stop_fill_inside_bar(self):
         idx = pd.date_range("2020-01-01", periods=4, freq="h", tz="UTC")
         frame = pd.DataFrame({
@@ -1946,6 +2011,20 @@ class MoonStrategy:
                 "sma_window": 7,
                 "atr_window": 3,
                 "stop_mult": 3.0,
+                "source_min_bars": 10,
+                "source_vol_lookback": 5,
+                "source_stop_required": True,
+                "source_stop_transferred": True,
+                "transfer_exactness": "signal_and_atr_stop_logic_exact_v4_risk_resized",
+            },
+            {
+                "family": "continuous_daily_signal",
+                "source_family": "atr_channel_trend",
+                "source_target": "BTCUSDT",
+                "ema_window": 7,
+                "atr_window": 3,
+                "entry_atr_mult": 1.5,
+                "stop_mult": 2.5,
                 "source_min_bars": 10,
                 "source_vol_lookback": 5,
                 "source_stop_required": True,
