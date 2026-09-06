@@ -30,6 +30,9 @@ jobs:
             /continuous-autoresearch-cycle)
               gh workflow run continuous-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
+            /stock-fx|/stock-fx-autoresearch-cycle)
+              gh workflow run stock-fx-autoresearch.yml --repo "$GITHUB_REPOSITORY" --ref main
+              ;;
             /model-tournament)
               gh workflow run model-tournament.yml --repo "$GITHUB_REPOSITORY" --ref main
               ;;
