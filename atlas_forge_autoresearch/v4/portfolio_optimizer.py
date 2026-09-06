@@ -400,6 +400,74 @@ class RobustPortfolioOptimizer:
                 hi = mid
         return float(lo), float(q_lo)
 
+    def _best_growth_scale(
+        self,
+        base_returns: np.ndarray,
+        boot_base_returns: np.ndarray,
+        base_gross_profile: np.ndarray,
+        boot_gross_profile: np.ndarray,
+        max_feasible_scale: float,
+    ) -> tuple[float, float]:
+        """Choose growth-maximizing scale inside the already-safe risk range.
+
+        Financing can make excess leverage economically harmful even when it
+        remains drawdown-feasible. The scale therefore maximizes development
+        geometric growth after financing instead of blindly consuming all
+        available drawdown budget.
+        """
+        hi = float(max_feasible_scale)
+        lo = min(float(self.min_gross), hi)
+        n = max(5, min(int(self.scale_search_steps), 12))
+        grid = list(np.linspace(lo, hi, n))
+        for anchor in (1.0, hi):
+            if lo - 1e-12 <= anchor <= hi + 1e-12:
+                grid.append(float(anchor))
+        grid = sorted({round(float(x), 10) for x in grid})
+
+        best_scale = lo
+        best_cagr = float("-inf")
+        for scale in grid:
+            pr = _apply_gross_and_financing(
+                base_returns,
+                scale,
+                base_gross_profile,
+                annual_financing_rate_pct=self.annual_financing_rate_pct,
+                periods_per_year=self.periods_per_year,
+            )
+            if not np.all(1.0 + pr > 0.0):
+                continue
+            dd = abs(min(max_drawdown_pct(_equity(pr)), 0.0))
+            if not np.isfinite(dd) or dd > self.dd_cap_pct:
+                continue
+            growth = _cagr(pr, self.periods_per_year)
+            if not np.isfinite(growth):
+                continue
+            if (
+                growth > best_cagr + 1e-12
+                or (
+                    abs(growth - best_cagr) <= 1e-12
+                    and scale < best_scale
+                )
+            ):
+                best_cagr = float(growth)
+                best_scale = float(scale)
+
+        boot_scaled = _apply_gross_and_financing(
+            boot_base_returns,
+            best_scale,
+            boot_gross_profile,
+            annual_financing_rate_pct=self.annual_financing_rate_pct,
+            periods_per_year=self.periods_per_year,
+        )
+        dd_q = _bootstrap_dd_q95(
+            boot_scaled, 1.0, self.dd_quantile
+        )
+        if dd_q > self.dd_cap_pct + 1e-9:
+            raise RuntimeError(
+                "growth scale escaped bootstrap drawdown-feasible range"
+            )
+        return best_scale, float(dd_q)
+
     def optimize(
         self,
         returns: pd.DataFrame,
@@ -464,14 +532,21 @@ class RobustPortfolioOptimizer:
             boot_gross_profile = np.einsum(
                 "rts,s->rt", boot_gross_assets, composition
             )
-            scale, dd_q = self._max_feasible_scale(
+            max_safe_scale, _ = self._max_feasible_scale(
                 base,
                 boot_base,
                 base_gross_profile,
                 boot_gross_profile,
             )
-            if scale is None:
+            if max_safe_scale is None:
                 continue
+            scale, dd_q = self._best_growth_scale(
+                base,
+                boot_base,
+                base_gross_profile,
+                boot_gross_profile,
+                max_safe_scale,
+            )
 
             actual_w = composition * scale
             pr = _apply_gross_and_financing(
@@ -574,7 +649,8 @@ class RobustPortfolioOptimizer:
             policy=(
                 "choose strategy composition and maximum feasible total gross exposure; "
                 "charge financing on realized time-varying gross exposure above 1x; "
-                "maximize paired moving-"
+                "choose development-geometric-growth-maximizing scale inside the "
+                "drawdown-feasible range; maximize paired moving-"
                 "block-bootstrap median CAGR subject to original and bootstrap drawdown "
                 "caps; cash is allowed and leverage is capped"
             ),
