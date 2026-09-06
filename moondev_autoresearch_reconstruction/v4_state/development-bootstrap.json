@@ -21243,6 +21243,46 @@
       }
     ]
   },
+  "phase2_private_transfer": {
+    "available": true,
+    "candidate_count": 1,
+    "candidates": [
+      {
+        "bootstrap_fdr_qvalue": 0.037589,
+        "cagr_pct": 92.002,
+        "candidate_pbo_when_selected": 0.078431,
+        "candidate_selection_share": 0.728571,
+        "cohort": "btc::private",
+        "cohort_pbo": 0.3,
+        "error": "RuntimeError: Phase-2 promotion artifact metadata missing: bollinger_breakout_20_2__btc__private",
+        "evidence_grade": "A",
+        "family": "bollinger_breakout_20_2",
+        "fdr_report_level": 0.1,
+        "final_oos_opened": false,
+        "hidden_validation_opened": false,
+        "market": "crypto",
+        "max_dd_pct": -16.383,
+        "parameter_rescue_performed": false,
+        "pbo_limit": 0.55,
+        "pf": 5.696,
+        "profile": "private",
+        "provisional_reason": null,
+        "ready_for_v4_replay": true,
+        "replay_status": "error",
+        "research_survivor": true,
+        "score": 0.923533,
+        "sharpe": 1.895,
+        "symbol": "BTCUSDT",
+        "target": "btc",
+        "track_id": "bollinger_breakout_20_2__btc__private",
+        "trades": 35
+      }
+    ],
+    "final_oos_opened": false,
+    "hidden_validation_opened": false,
+    "policy": "consume only Phase-2 v2 frozen survivors with exact persisted source artifacts; require exact-source v4 replay, positive 3x-cost replay, private drawdown compliance, and both cohort/candidate PBO <= 0.55",
+    "portfolio_eligible_count": 0
+  },
   "portfolio": {
     "candidates_evaluated": 1000,
     "chosen": {
@@ -21480,18 +21520,18 @@
       "final_oos_opened": false,
       "hidden_validation_opened": false,
       "metrics_5bp": {
-        "cagr_pct": 29.76629781416289,
-        "cost_stress_cagr_pct": 28.146661488575585,
-        "cumulative_return_pct": 1605.5770825293762,
+        "cagr_pct": 29.766315713064962,
+        "cost_stress_cagr_pct": 28.146679149577068,
+        "cumulative_return_pct": 1605.579643479937,
         "dsr": 1.0,
         "gross_exposure": 1.0,
-        "max_dd_pct": -59.88391683509467,
+        "max_dd_pct": -59.883944882646325,
         "pbo": null,
         "psr_zero": 1.0,
-        "sharpe": 0.9341542874690145,
-        "sortino": 1.3046451644677302,
+        "sharpe": 0.9341547308675707,
+        "sortino": 1.3046457586030886,
         "trades": 204,
-        "turnover_per_year": 16.476615825207485,
+        "turnover_per_year": 16.476625717641525,
         "years": 10.885918259786306
       },
       "protocol": "alpha_generation_v4",
