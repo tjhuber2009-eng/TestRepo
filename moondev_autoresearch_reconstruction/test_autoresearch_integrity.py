@@ -278,6 +278,30 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         cutoff = dates < pd.Timestamp("2018-01-01", tz="UTC")
         np.testing.assert_array_equal(original[cutoff], changed_signal[cutoff])
 
+    def test_recovered_prior_work_classifications_are_locked(self):
+        by_id = {x["id"]: x for x in self.registry["families"]}
+        self.assertEqual(by_id["calendar_monthly"]["status"], "phase2_runnable")
+        self.assertEqual(
+            by_id["finlab_rotation_exact"]["status"], "prior_rejected"
+        )
+        self.assertEqual(
+            by_id["finlab_rotation_exact"]["prior_classification"], "FAIL"
+        )
+        self.assertEqual(
+            by_id["hr_dual_alpha"]["status"], "prior_frozen_superior_pass"
+        )
+        self.assertEqual(
+            by_id["hr_dual_alpha"]["prior_classification"], "SUPERIOR_PASS"
+        )
+        self.assertEqual(
+            by_id["hr_dual_alpha"]["source_lock"]["commit"],
+            "abfe2babadd20ca4c6c1b36af0545691e3bb6dde",
+        )
+        self.assertEqual(
+            by_id["hr_dual_alpha"]["source_lock"]["implementation_blob_sha"],
+            "27a24f0bc1883c497af23ff3a27918e35f3f4c11",
+        )
+
     def test_phase3_free_lane_is_finite_and_registry_isolated(self):
         import phase3_free_runner
         self.assertGreaterEqual(len(phase3_free_runner.QUERY_BATCHES), 4)
