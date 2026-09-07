@@ -26,9 +26,11 @@ function publicationBound(value,sourceBasis='',anchor=Date.now()){
   return{date:d.toISOString().slice(0,10),basis:'relative_upper_bound'};
 }
 function priority(date,cutoffs){if(!date)return 99;for(let i=0;i<cutoffs.length;i++)if(date<=cutoffs[i])return i;return cutoffs.length}
+const GEMINI_EXTRACTOR_VERSION=2;
 function retryDue(row,now=Date.now()){
   if(!row)return true;
-  if(row.status==='done'||row.status==='done_gemini')return false;
+  if(row.status==='done')return false;
+  if(row.status==='done_gemini'&&Number(row.extractorVersion||0)>=GEMINI_EXTRACTOR_VERSION)return false;
   const last=Date.parse(row.lastAttemptAt||'');if(!Number.isFinite(last))return true;
   const days=row.status==='no_captions'?7:row.status==='chronology_unknown'?30:1;
   return now-last>=days*86400000;
@@ -167,7 +169,7 @@ for(const entry of config.channels){
           publishedAt:publication.date,publicationBasis:publication.basis,
         });
         directIdeas.push(...ideas);geminiMinutes+=estimate;stats.geminiVideosAnalyzed++;cs.geminiAnalyzed++;stats.geminiIdeas+=ideas.length;
-        state.videos[key]={status:'done_gemini',lastAttemptAt:iso(),attempts:attempt,published:publication.date,publicationBasis:publication.basis,title:String(v.title||'').slice(0,300),ideaCount:ideas.length,model:analysis.model};
+        state.videos[key]={status:'done_gemini',extractorVersion:GEMINI_EXTRACTOR_VERSION,lastAttemptAt:iso(),attempts:attempt,published:publication.date,publicationBasis:publication.basis,title:String(v.title||'').slice(0,300),ideaCount:ideas.length,model:analysis.model};
       }catch(e){
         const status=classifyError(e);
         state.videos[key]={status,lastAttemptAt:iso(),attempts:attempt,published:publication.date,publicationBasis:publication.basis,title:String(v.title||'').slice(0,300),lastError:String(e?.message||e).slice(0,300),code:String(e?.code||'')};
@@ -192,7 +194,7 @@ for(const entry of config.channels){
             const analysis=await analyzeYouTubeVideoWithGemini({videoUrl:`https://www.youtube.com/watch?v=${v.id}`});
             const ideas=geminiAnalysisToAtlasFeed({analysis,video:v,channel:{id:sid,title:sourceTitle(discovered,channel)},publishedAt:publication.date,publicationBasis:publication.basis});
             directIdeas.push(...ideas);geminiMinutes+=estimate;stats.geminiVideosAnalyzed++;cs.geminiAnalyzed++;stats.geminiIdeas+=ideas.length;
-            state.videos[key]={status:'done_gemini',lastAttemptAt:iso(),attempts:attempt,published:publication.date,publicationBasis:publication.basis,title:String(v.title||'').slice(0,300),ideaCount:ideas.length,model:analysis.model};
+            state.videos[key]={status:'done_gemini',extractorVersion:GEMINI_EXTRACTOR_VERSION,lastAttemptAt:iso(),attempts:attempt,published:publication.date,publicationBasis:publication.basis,title:String(v.title||'').slice(0,300),ideaCount:ideas.length,model:analysis.model};
             continue;
           }catch(ge){e=ge}
         }
