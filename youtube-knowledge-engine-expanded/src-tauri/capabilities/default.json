@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "settings-capability",
+  "description": "Only the bundled provider-settings window can read or update provider configuration. The main YouTube research webview has no Tauri command capability.",
+  "windows": ["settings"],
+  "permissions": [
+    "allow-desktop-provider-status",
+    "allow-desktop-save-provider-settings"
+  ]
+}

@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+node_modules/
+*.log
+.DS_Store
+cookies.txt
+*.cookies.txt
+.cts-checkpoints/
+ai-checkpoints/
+*.zip
+*.tgz
+
+data/
+
+src-tauri/binaries/
+src-tauri/target/

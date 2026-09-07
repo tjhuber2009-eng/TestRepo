@@ -1,0 +1,11 @@
+.git
+.github
+node_modules
+*.log
+.env
+.env.*
+cookies.txt
+*.cookies.txt
+.cts-checkpoints
+ai-checkpoints
+channel-transcript-studio*.zip
