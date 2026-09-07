@@ -1,6 +1,6 @@
 Atlas Forge source smoke
-Source head: 902d1ce106f53e5c9b111e8f92778d09eb46d068
-Purpose: validate EvoMind v0.10 research-intelligence integration, persistent lane memory, proposal-source routing, and unchanged Atlas Forge evidence/OOS boundaries
+Source head: c2a983ceeda3f98ae5f7b99e0680449cbf807508
+Purpose: validate complete EvoMind v0.10 Atlas Forge integration including persistent lane memory, proposal-source routing, concept transfer, dashboard status, and unchanged evidence/OOS boundaries
 EvoMind source artifact SHA256: 9ed2ba620ccd4e97db9648244e815fb5e668920d8fd32028006a900f1dcae5e9
 EvoMind wheel SHA256: 4d1958b3384b8ed970db3a274b163cc5236839bbb5805fb432f178cb1133796d
 Hidden validation: sealed
