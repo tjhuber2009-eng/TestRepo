@@ -3811,7 +3811,7 @@
           "extreme_stress_return_pct": 399.598,
           "family": "qqe_proxy",
           "market": "crypto",
-          "multiple_test_qvalue": 0.026077,
+          "multiple_test_qvalue": 0.024596,
           "pbo": 0.071429,
           "profile": "private",
           "selection_score": 0.898301,
@@ -3852,7 +3852,7 @@
           "extreme_stress_return_pct": 143.235,
           "family": "btc_rsi_adx",
           "market": "crypto",
-          "multiple_test_qvalue": 0.037775,
+          "multiple_test_qvalue": 0.034658,
           "pbo": 0.257143,
           "profile": "private",
           "selection_score": 0.281631,
@@ -3893,7 +3893,7 @@
           "extreme_stress_return_pct": 345.325,
           "family": "ibs_deep_pullback",
           "market": "etf",
-          "multiple_test_qvalue": 0.026077,
+          "multiple_test_qvalue": 0.024596,
           "pbo": 0.057143,
           "profile": "private",
           "selection_score": 0.040563,
@@ -3934,7 +3934,7 @@
           "extreme_stress_return_pct": 97.397,
           "family": "ibs_deep_pullback",
           "market": "etf",
-          "multiple_test_qvalue": 0.026077,
+          "multiple_test_qvalue": 0.024596,
           "pbo": null,
           "profile": "private",
           "selection_score": 0.033798,
@@ -3975,7 +3975,7 @@
           "extreme_stress_return_pct": 108.754,
           "family": "connors_double7",
           "market": "etf",
-          "multiple_test_qvalue": 0.028871,
+          "multiple_test_qvalue": 0.027231,
           "pbo": null,
           "profile": "private",
           "selection_score": 0.018105,
@@ -17640,6 +17640,7 @@
     "cross_asset_momentum_risk_budgeted",
     "defensive_rotation_risk_budgeted",
     "long_history_cross_asset_trend",
+    "phase2__bollinger_breakout_20_2__btc__private",
     "rotation_risk_budgeted",
     "rotation_sma_hysteresis",
     "rotation_walkforward_meta_filter"
@@ -21249,72 +21250,80 @@
     "candidate_count": 1,
     "candidates": [
       {
-        "bars_per_year": 365,
-        "bootstrap_fdr_qvalue": 0.037589,
-        "cagr_pct": 92.002,
-        "candidate_pbo_when_selected": 0.078431,
-        "candidate_selection_share": 0.728571,
-        "cohort": "btc::private",
-        "cohort_pbo": 0.3,
-        "commission": 0.001,
-        "development_years": null,
-        "error": "RuntimeError: Phase-2 promotion source unavailable: bollinger_breakout_20_2__btc__private",
-        "evidence_grade": "A",
-        "extreme_stress_return_pct": 771.417,
-        "family": "bollinger_breakout_20_2",
-        "fdr_report_level": 0.1,
+        "base": {
+          "cagr_pct": 91.81726962649739,
+          "max_dd_pct": -16.3829688728649,
+          "sharpe": 1.8934316108613922,
+          "trades": 35
+        },
+        "candidate": {
+          "adapter": null,
+          "development_cagr_pct": 92.002,
+          "development_max_dd_pct": -16.383,
+          "development_pf": 5.696,
+          "development_sharpe": 1.895,
+          "development_trades": 35,
+          "development_years": 0.0,
+          "evidence_grade": "A",
+          "exactness": "phase2_frozen_exact_source",
+          "extreme_stress_return_pct": 771.417,
+          "family": "bollinger_breakout_20_2",
+          "market": "crypto",
+          "multiple_test_qvalue": 0.037589,
+          "pbo": 0.3,
+          "profile": "private",
+          "selection_score": 0.923533,
+          "symbol": "BTCUSDT",
+          "target": "btc",
+          "track_id": "bollinger_breakout_20_2__btc__private"
+        },
+        "cost_stress": {
+          "cagr_pct": 89.81536358126168,
+          "max_dd_pct": -16.74758830204549,
+          "sharpe": 1.8643357673230398,
+          "trades": 35
+        },
         "final_oos_opened": false,
-        "harness_sha256": "f154e64ec7f3918cd663c490a5cf3d92f24fac57d855a1e8c3fdb02f27080b03",
         "hidden_validation_opened": false,
-        "margin": 0.25,
-        "market": "crypto",
-        "max_dd_pct": -16.383,
-        "parameter_rescue_performed": false,
-        "pbo_limit": 0.55,
-        "pf": 5.696,
-        "profile": "private",
-        "program_sha256": "9798b229584964cbe8989ae8afc6a9d67f3dd92adb1e2d12df9826c9563fdec0",
-        "promotion_source_path": "moondev_autoresearch_reconstruction/phase2_state/promotion_sources/bollinger_breakout_20_2__btc__private.py",
-        "promotion_source_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
-        "provisional_reason": null,
-        "ready_for_v4_replay": true,
-        "replay_status": "error",
-        "research_survivor": true,
-        "score": 0.923533,
-        "sharpe": 1.895,
-        "strategy_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
-        "symbol": "BTCUSDT",
-        "target": "btc",
-        "track_id": "bollinger_breakout_20_2__btc__private",
-        "trades": 35
+        "phase2_evidence": {
+          "bootstrap_fdr_qvalue": 0.037589,
+          "candidate_pbo_when_selected": 0.078431,
+          "cohort_pbo": 0.3,
+          "promotion_source_sha256": "8e7555ff932d0c8275380e0c4081eec6db6905b74a526701c6651426d70a2b75",
+          "strict_pbo": 0.3
+        },
+        "portfolio_eligible": true,
+        "portfolio_gate_reason": "eligible",
+        "replay_gate_ok": true,
+        "replay_status": "completed"
       }
     ],
     "final_oos_opened": false,
     "hidden_validation_opened": false,
     "policy": "consume only Phase-2 v2 frozen survivors with exact persisted source artifacts; require exact-source v4 replay, positive 3x-cost replay, private drawdown compliance, and both cohort/candidate PBO <= 0.55",
-    "portfolio_eligible_count": 0
+    "portfolio_eligible_count": 1
   },
   "portfolio": {
     "candidates_evaluated": 1,
     "chosen": {
-      "annual_financing_drag_pct": 0.9232029968401312,
-      "average_gross_exposure": 1.1351573549360674,
-      "bootstrap_cagr_q10_pct": 20.24131340284695,
-      "bootstrap_cagr_q25_pct": 22.897779518369536,
-      "bootstrap_dd_q95_pct": 31.999625089709994,
-      "bootstrap_median_cagr_pct": 27.588231032350343,
-      "borrowed_gross": 0.15386716614002185,
-      "cagr_pct": 27.387491229538362,
-      "cash_weight": 0.01870981120395474,
+      "annual_financing_drag_pct": 1.0164488524224295,
+      "average_gross_exposure": 1.1694081420704048,
+      "bootstrap_cagr_q10_pct": 20.525872738552497,
+      "bootstrap_cagr_q25_pct": 24.528246916519848,
+      "bootstrap_dd_q95_pct": 31.99012826554066,
+      "bootstrap_median_cagr_pct": 29.3528651219107,
+      "borrowed_gross": 0.16940814207040492,
+      "cagr_pct": 28.520689106111984,
+      "cash_weight": 0.0,
       "effective_n": 1.0,
       "financing_rate_pct": 6.0,
-      "gross_exposure": 1.4967607802,
-      "max_dd_pct": -18.463533906948058,
-      "max_realized_gross_exposure": 1.4967607802,
-      "score": 27.626927554395422,
-      "sharpe": 1.4348261022537994,
+      "gross_exposure": 1.4748080047,
+      "max_dd_pct": -17.782013931243533,
+      "max_realized_gross_exposure": 1.4748080047,
+      "score": 29.391025016448406,
+      "sharpe": 1.4079947268852862,
       "weights": {
-        "satellite_0.35__continuous__qqe_proxy__btc__private": 1.4967607802
+        "satellite_0.30__phase2__bollinger_breakout_20_2__btc__private": 1.4748080047
       }
     },
     "dd_cap_pct": 32.0,
@@ -21557,24 +21566,24 @@
     "10%": {
       "candidates_evaluated": 1,
       "chosen": {
-        "annual_financing_drag_pct": 1.4414433262054003,
-        "average_gross_exposure": 1.1113507279392485,
-        "bootstrap_cagr_q10_pct": 19.18840834030455,
-        "bootstrap_cagr_q25_pct": 21.77882269499633,
-        "bootstrap_dd_q95_pct": 31.994654587508567,
-        "bootstrap_median_cagr_pct": 26.264453277738266,
-        "borrowed_gross": 0.14414433262054002,
-        "cagr_pct": 26.105696141978907,
-        "cash_weight": 0.032793604681291395,
+        "annual_financing_drag_pct": 1.3608273127832913,
+        "average_gross_exposure": 1.1360827312783293,
+        "bootstrap_cagr_q10_pct": 19.585228089937754,
+        "bootstrap_cagr_q25_pct": 23.325597743221206,
+        "bootstrap_dd_q95_pct": 31.71635918571855,
+        "bootstrap_median_cagr_pct": 28.017217412170872,
+        "borrowed_gross": 0.13608273127832912,
+        "cagr_pct": 27.194698527673822,
+        "cash_weight": 0.0,
         "effective_n": 1.0,
         "financing_rate_pct": 10.0,
-        "gross_exposure": 1.4653705721,
-        "max_dd_pct": -18.90899648404777,
-        "max_realized_gross_exposure": 1.4653705721,
-        "score": 26.302542136253084,
-        "sharpe": 1.4044429257409288,
+        "gross_exposure": 1.4327794085,
+        "max_dd_pct": -17.374978235518,
+        "max_realized_gross_exposure": 1.4327794085,
+        "score": 28.05497752612083,
+        "sharpe": 1.3880056974977193,
         "weights": {
-          "selected_architecture_10pct": 1.4653705721
+          "selected_architecture_10pct": 1.4327794085
         }
       },
       "dd_cap_pct": 32.0,
@@ -21586,24 +21595,24 @@
     "14%": {
       "candidates_evaluated": 1,
       "chosen": {
-        "annual_financing_drag_pct": 1.8300601207937248,
-        "average_gross_exposure": 1.0784774011669025,
-        "bootstrap_cagr_q10_pct": 18.12272169133543,
-        "bootstrap_cagr_q25_pct": 20.619274290572974,
-        "bootstrap_dd_q95_pct": 31.639853388128298,
-        "bootstrap_median_cagr_pct": 24.915081600914778,
-        "borrowed_gross": 0.13071858005669462,
-        "cagr_pct": 24.76070284816434,
-        "cash_weight": 0.05224117888979201,
+        "annual_financing_drag_pct": 1.7849562207598684,
+        "average_gross_exposure": 1.1193082788680482,
+        "bootstrap_cagr_q10_pct": 18.844291737448604,
+        "bootstrap_cagr_q25_pct": 22.41011444975366,
+        "bootstrap_dd_q95_pct": 31.85806886437482,
+        "bootstrap_median_cagr_pct": 27.037165557843245,
+        "borrowed_gross": 0.12749687291141917,
+        "cagr_pct": 26.214426847680585,
+        "cash_weight": 0.0081885940433711,
         "effective_n": 1.0,
         "financing_rate_pct": 14.0,
-        "gross_exposure": 1.4220254746,
-        "max_dd_pct": -19.387810570885676,
-        "max_realized_gross_exposure": 1.4220254746,
-        "score": 24.952667896969597,
-        "sharpe": 1.3793148027408697,
+        "gross_exposure": 1.4116241798,
+        "max_dd_pct": -17.197194879457566,
+        "max_realized_gross_exposure": 1.4116241798,
+        "score": 27.074441994186614,
+        "sharpe": 1.36382181716842,
         "weights": {
-          "selected_architecture_14pct": 1.4220254746
+          "selected_architecture_14pct": 1.4116241798
         }
       },
       "dd_cap_pct": 32.0,
@@ -21615,24 +21624,24 @@
     "6%": {
       "candidates_evaluated": 1,
       "chosen": {
-        "annual_financing_drag_pct": 0.9232029968401312,
-        "average_gross_exposure": 1.1351573549360674,
-        "bootstrap_cagr_q10_pct": 20.24131340284695,
-        "bootstrap_cagr_q25_pct": 22.897779518369536,
-        "bootstrap_dd_q95_pct": 31.999625089709994,
-        "bootstrap_median_cagr_pct": 27.588231032350343,
-        "borrowed_gross": 0.15386716614002185,
-        "cagr_pct": 27.387491229538362,
-        "cash_weight": 0.01870981120395474,
+        "annual_financing_drag_pct": 1.0164488524224295,
+        "average_gross_exposure": 1.1694081420704048,
+        "bootstrap_cagr_q10_pct": 20.525872738552497,
+        "bootstrap_cagr_q25_pct": 24.528246916519848,
+        "bootstrap_dd_q95_pct": 31.99012826554066,
+        "bootstrap_median_cagr_pct": 29.3528651219107,
+        "borrowed_gross": 0.16940814207040492,
+        "cagr_pct": 28.520689106111984,
+        "cash_weight": 0.0,
         "effective_n": 1.0,
         "financing_rate_pct": 6.0,
-        "gross_exposure": 1.4967607802,
-        "max_dd_pct": -18.463533906948058,
-        "max_realized_gross_exposure": 1.4967607802,
-        "score": 27.626927554395422,
-        "sharpe": 1.4348261022537994,
+        "gross_exposure": 1.4748080047,
+        "max_dd_pct": -17.782013931243533,
+        "max_realized_gross_exposure": 1.4748080047,
+        "score": 29.391025016448406,
+        "sharpe": 1.4079947268852862,
         "weights": {
-          "selected_architecture_6pct": 1.4967607802
+          "selected_architecture_6pct": 1.4748080047
         }
       },
       "dd_cap_pct": 32.0,
@@ -21707,6 +21716,12 @@
         "start": "2010-01-04",
         "years": 10.984126984126984
       },
+      "phase2__bollinger_breakout_20_2__btc__private": {
+        "end": "2020-12-31",
+        "observations": 1233,
+        "start": "2017-08-17",
+        "years": 4.892857142857143
+      },
       "rotation_risk_budgeted": {
         "end": "2020-12-30",
         "observations": 2741,
@@ -21735,7 +21750,8 @@
     "supplemental_strategy_names": [
       "continuous__btc_rsi_adx__eth__private",
       "continuous__qqe_proxy__btc__private",
-      "cross_asset_momentum_risk_budgeted"
+      "cross_asset_momentum_risk_budgeted",
+      "phase2__bollinger_breakout_20_2__btc__private"
     ]
   },
   "portfolio_satellite": {
@@ -21743,23 +21759,23 @@
       "candidates_evaluated": 1,
       "chosen": {
         "annual_financing_drag_pct": 0.03099843233980304,
-        "average_gross_exposure": 0.771059426258548,
-        "bootstrap_cagr_q10_pct": 14.35798667936381,
-        "bootstrap_cagr_q25_pct": 16.2136533196503,
-        "bootstrap_dd_q95_pct": 21.860084789090273,
-        "bootstrap_median_cagr_pct": 19.13981768704983,
+        "average_gross_exposure": 0.8061480455216126,
+        "bootstrap_cagr_q10_pct": 14.90868366989174,
+        "bootstrap_cagr_q25_pct": 17.56276312469135,
+        "bootstrap_dd_q95_pct": 22.36676675813031,
+        "bootstrap_median_cagr_pct": 20.69242967320144,
         "borrowed_gross": 0.005166405389967173,
-        "cagr_pct": 18.994793199639993,
-        "cash_weight": 0.2341069791314191,
+        "cagr_pct": 20.15280043425276,
+        "cash_weight": 0.19901835986835456,
         "effective_n": 1.0,
         "financing_rate_pct": 6.0,
         "gross_exposure": 1.0166797611,
-        "max_dd_pct": -12.669451077510107,
+        "max_dd_pct": -12.471435799886532,
         "max_realized_gross_exposure": 1.0166797611,
-        "score": 19.179484623198746,
-        "sharpe": 1.4833468074456668,
+        "score": 20.73160198283018,
+        "sharpe": 1.4586154814369952,
         "weights": {
-          "satellite_0.35__continuous__qqe_proxy__btc__private": 1.0166797611
+          "satellite_0.30__phase2__bollinger_breakout_20_2__btc__private": 1.0166797611
         }
       },
       "dd_cap_pct": 32.0,
@@ -21771,24 +21787,24 @@
     "risk_scaled_result": {
       "candidates_evaluated": 1,
       "chosen": {
-        "annual_financing_drag_pct": 0.9232029968401312,
-        "average_gross_exposure": 1.1351573549360674,
-        "bootstrap_cagr_q10_pct": 20.24131340284695,
-        "bootstrap_cagr_q25_pct": 22.897779518369536,
-        "bootstrap_dd_q95_pct": 31.999625089709994,
-        "bootstrap_median_cagr_pct": 27.588231032350343,
-        "borrowed_gross": 0.15386716614002185,
-        "cagr_pct": 27.387491229538362,
-        "cash_weight": 0.01870981120395474,
+        "annual_financing_drag_pct": 1.0164488524224295,
+        "average_gross_exposure": 1.1694081420704048,
+        "bootstrap_cagr_q10_pct": 20.525872738552497,
+        "bootstrap_cagr_q25_pct": 24.528246916519848,
+        "bootstrap_dd_q95_pct": 31.99012826554066,
+        "bootstrap_median_cagr_pct": 29.3528651219107,
+        "borrowed_gross": 0.16940814207040492,
+        "cagr_pct": 28.520689106111984,
+        "cash_weight": 0.0,
         "effective_n": 1.0,
         "financing_rate_pct": 6.0,
-        "gross_exposure": 1.4967607802,
-        "max_dd_pct": -18.463533906948058,
-        "max_realized_gross_exposure": 1.4967607802,
-        "score": 27.626927554395422,
-        "sharpe": 1.4348261022537994,
+        "gross_exposure": 1.4748080047,
+        "max_dd_pct": -17.782013931243533,
+        "max_realized_gross_exposure": 1.4748080047,
+        "score": 29.391025016448406,
+        "sharpe": 1.4079947268852862,
         "weights": {
-          "satellite_0.35__continuous__qqe_proxy__btc__private": 1.4967607802
+          "satellite_0.30__phase2__bollinger_breakout_20_2__btc__private": 1.4748080047
         }
       },
       "dd_cap_pct": 32.0,
@@ -21798,20 +21814,20 @@
       "policy": "choose strategy composition and maximum feasible total gross exposure; charge financing on realized time-varying gross exposure above 1x; choose development-geometric-growth-maximizing scale inside the drawdown-feasible range; maximize paired moving-block-bootstrap median CAGR subject to original and bootstrap drawdown caps; cash is allowed and leverage is capped"
     },
     "sleeve": {
-      "best_raw_candidate": "satellite_0.35__continuous__qqe_proxy__btc__private",
-      "candidate_count": 49,
-      "eligible_candidate_count": 37,
+      "best_raw_candidate": "satellite_0.30__phase2__bollinger_breakout_20_2__btc__private",
+      "candidate_count": 77,
+      "eligible_candidate_count": 65,
       "policy": "supplemental sleeve capped at 35% composition; pre-inception allocation held as cash; all sleeves clear the same static-portfolio Q10 floor",
-      "selected_candidate": "satellite_0.35__continuous__qqe_proxy__btc__private",
+      "selected_candidate": "satellite_0.30__phase2__bollinger_breakout_20_2__btc__private",
       "spec": {
         "inception_dates": {
-          "continuous__qqe_proxy__btc__private": "2017-08-17"
+          "phase2__bollinger_breakout_20_2__btc__private": "2017-08-17"
         },
-        "name": "satellite_0.35__continuous__qqe_proxy__btc__private",
+        "name": "satellite_0.30__phase2__bollinger_breakout_20_2__btc__private",
         "satellite_weights": {
-          "continuous__qqe_proxy__btc__private": 1.0
+          "phase2__bollinger_breakout_20_2__btc__private": 1.0
         },
-        "sleeve_weight": 0.35
+        "sleeve_weight": 0.3
       }
     }
   },
@@ -21866,18 +21882,18 @@
       "final_oos_opened": false,
       "hidden_validation_opened": false,
       "metrics_5bp": {
-        "cagr_pct": 29.766285341288466,
-        "cost_stress_cagr_pct": 28.146649166526206,
-        "cumulative_return_pct": 1605.5752979295353,
+        "cagr_pct": 29.76633233265482,
+        "cost_stress_cagr_pct": 28.146695562349255,
+        "cumulative_return_pct": 1605.5820213913719,
         "dsr": 1.0,
         "gross_exposure": 1.0,
-        "max_dd_pct": -59.883955859181015,
+        "max_dd_pct": -59.88392531007116,
         "pbo": null,
         "psr_zero": 1.0,
-        "sharpe": 0.9341541593022231,
-        "sortino": 1.3046449071716395,
+        "sharpe": 0.9341552658523127,
+        "sortino": 1.3046466079153596,
         "trades": 204,
-        "turnover_per_year": 16.47660170268534,
+        "turnover_per_year": 16.476643334885587,
         "years": 10.885918259786306
       },
       "protocol": "alpha_generation_v4",
