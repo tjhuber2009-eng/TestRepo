@@ -1,0 +1,26 @@
+{
+  "csv_sha256": "683e7c37e3417aeb71407d6b188741999d2abe53695fa93554e004d26d1ac2ad",
+  "first": "2020-01-01T00:00:00+00:00",
+  "id": "eurusd",
+  "last": "2021-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "authenticated Tiingo Forex API response; canonical CSV and raw response SHA256 recorded",
+  "requested_end": "2021-12-31",
+  "requested_start": "2020-01-01",
+  "rows": 622,
+  "source": "tiingo_fx",
+  "source_audit": {
+    "final_oos_included": false,
+    "provider": "Tiingo Forex API",
+    "requested_end": "2021-12-31",
+    "requested_start": "2020-01-01",
+    "resample_freq": "1day",
+    "response_sha256": "c95feaea532da94f167f84cfaeb9cd95852023565e2bede2a0052f26dcf82132",
+    "rows": 622,
+    "source": "tiingo_fx",
+    "ticker": "eurusd",
+    "version": 1
+  },
+  "symbol": "EURUSD",
+  "version": 1
+}

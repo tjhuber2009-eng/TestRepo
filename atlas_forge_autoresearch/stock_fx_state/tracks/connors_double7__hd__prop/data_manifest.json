@@ -1,0 +1,27 @@
+{
+  "csv_sha256": "9b5bffe92f81b79173784b386fd5631429263f49153b2f3ed08b303e9ddca7bb",
+  "first": "2010-01-04T00:00:00+00:00",
+  "id": "hd",
+  "last": "2020-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "authenticated Tiingo API response; adjusted canonical CSV and raw response SHA256 recorded",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2769,
+  "source": "tiingo_eod",
+  "source_audit": {
+    "final_oos_included": false,
+    "price_basis": "dividend_and_split_adjusted_ohlcv",
+    "provider": "Tiingo End-of-Day Stock Price API",
+    "requested_end": "2020-12-31",
+    "requested_start": "2010-01-01",
+    "resample_freq": "daily",
+    "response_sha256": "9bcfec9aa48b4e6ad3d6bef6ac24dbfc3143528b7082f276c55e8b2caf1c540d",
+    "rows": 2769,
+    "source": "tiingo_eod",
+    "ticker": "HD",
+    "version": 1
+  },
+  "symbol": "HD",
+  "version": 1
+}

@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "9a86ce8c581260c754e782454b04a33c90afa1fcb9b234d0494a2b21345ee8dd",
+  "first": "2010-01-04T14:30:00+00:00",
+  "id": "bac",
+  "last": "2020-12-31T14:30:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2769,
+  "source": "yahoo",
+  "symbol": "BAC",
+  "version": 1
+}

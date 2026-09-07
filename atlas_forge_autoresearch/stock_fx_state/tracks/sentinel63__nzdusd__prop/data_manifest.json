@@ -1,0 +1,26 @@
+{
+  "csv_sha256": "9f0fcb7061006ad69965aff1a77f26d06a79cf56904216f2aa9d75ba40fb4065",
+  "first": "2020-01-01T00:00:00+00:00",
+  "id": "nzdusd",
+  "last": "2021-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "authenticated Tiingo Forex API response; canonical CSV and raw response SHA256 recorded",
+  "requested_end": "2021-12-31",
+  "requested_start": "2020-01-01",
+  "rows": 623,
+  "source": "tiingo_fx",
+  "source_audit": {
+    "final_oos_included": false,
+    "provider": "Tiingo Forex API",
+    "requested_end": "2021-12-31",
+    "requested_start": "2020-01-01",
+    "resample_freq": "1day",
+    "response_sha256": "e886e9b1deb91e45df483b753962af621f16ee4a2e79d103d0a42b6d6c057712",
+    "rows": 623,
+    "source": "tiingo_fx",
+    "ticker": "nzdusd",
+    "version": 1
+  },
+  "symbol": "NZDUSD",
+  "version": 1
+}

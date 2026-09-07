@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-07T04:40:13Z	1	REJECTED	-0.002618	-0.029979	12.957	1.115	0.3704	3.127	82	-6.916	0.889808	0.091816	A	11.768	paired chronological folds did not show a median/majority improvement over baseline	Add a low-volatility regime filter: only enter when current realized volatility is below its 20-period simple moving average.
+2026-09-07T04:41:07Z	2	REJECTED	-0.042624	-0.029979	21.539	1.791	0.5888	3.098	86	-9.557	0.973471	0.017964	A	20.268	guard: development robustness gate failed	Add an intermediate trend filter: require price to be above its 50-day SMA in addition to the existing 200-day SMA condition.

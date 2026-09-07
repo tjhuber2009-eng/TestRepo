@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-07T03:38:24Z	1	REJECTED	-0.015874	-0.070038	6.274	0.555	0.2358	2.48	54	-5.245	0.782737	0.181637	B	5.57	paired chronological folds did not show a median/majority improvement over baseline	Add a low-volatility regime filter: only enter when current realized volatility is below its 20-period simple moving average.
+2026-09-07T03:41:53Z	2	REJECTED	-0.023468	-0.070038	3.944	0.353	0.1775	2.109	126	-4.374	0.722729	0.225549	B	2.503	paired chronological folds did not show a median/majority improvement over baseline	Add a volatility-based exit: close position when realized volatility exceeds its 20-period simple moving average.

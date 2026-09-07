@@ -1,0 +1,26 @@
+{
+  "csv_sha256": "2a95efef2d9277a69f0551ecf4ab6ba9424b2c8c5a33055d505335330d38f621",
+  "first": "2020-01-01T00:00:00+00:00",
+  "id": "audusd",
+  "last": "2021-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "authenticated Tiingo Forex API response; canonical CSV and raw response SHA256 recorded",
+  "requested_end": "2021-12-31",
+  "requested_start": "2020-01-01",
+  "rows": 622,
+  "source": "tiingo_fx",
+  "source_audit": {
+    "final_oos_included": false,
+    "provider": "Tiingo Forex API",
+    "requested_end": "2021-12-31",
+    "requested_start": "2020-01-01",
+    "resample_freq": "1day",
+    "response_sha256": "54b5301f8f0ea308bdd8789140a8e2dea58ddf1a07bdc4ffa43d5a925b28f215",
+    "rows": 622,
+    "source": "tiingo_fx",
+    "ticker": "audusd",
+    "version": 1
+  },
+  "symbol": "AUDUSD",
+  "version": 1
+}

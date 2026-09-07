@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-07T03:47:42Z	1	REJECTED	-0.080461	-0.069851	5.7	2.812	0.272	10.152	6	-10.788	0.665331	0.303393	D	5.406	guard: development robustness gate failed	Add a low-volatility regime filter: only enter when current realized volatility is below its 20-period simple moving average.
+2026-09-07T03:48:29Z	2	REJECTED	-0.055523	-0.069851	1.781	0.887	0.124	9.149	4	-10.733	0.577123	0.391218	D	1.619	guard: development robustness gate failed	Add a long-term trend filter: only enter long when price is above its 200-period simple moving average.

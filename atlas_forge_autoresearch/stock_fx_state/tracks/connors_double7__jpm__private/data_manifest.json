@@ -1,0 +1,27 @@
+{
+  "csv_sha256": "670a6e48816eb24b26046589c7e1c974f15bb004f8fb348701f1d413a96e46b8",
+  "first": "2010-01-04T00:00:00+00:00",
+  "id": "jpm",
+  "last": "2020-12-31T00:00:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "authenticated Tiingo API response; adjusted canonical CSV and raw response SHA256 recorded",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2769,
+  "source": "tiingo_eod",
+  "source_audit": {
+    "final_oos_included": false,
+    "price_basis": "dividend_and_split_adjusted_ohlcv",
+    "provider": "Tiingo End-of-Day Stock Price API",
+    "requested_end": "2020-12-31",
+    "requested_start": "2010-01-01",
+    "resample_freq": "daily",
+    "response_sha256": "216b08331e0026ecc047d8e8762b2a910929e3e25486a04e4f307503b10caaf4",
+    "rows": 2769,
+    "source": "tiingo_eod",
+    "ticker": "JPM",
+    "version": 1
+  },
+  "symbol": "JPM",
+  "version": 1
+}

@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "62f029590a2cb0cb7375dcc54562125b60838ed040a6990c515ffccf3b2f6ffc",
+  "first": "2010-01-04T14:30:00+00:00",
+  "id": "avgo",
+  "last": "2020-12-31T14:30:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2769,
+  "source": "yahoo",
+  "symbol": "AVGO",
+  "version": 1
+}
