@@ -75,6 +75,20 @@ jobs:
             echo "no prior state branch; starting clean"
           fi
 
+      - name: Restore YouTube Intelligence hypothesis feed
+        shell: bash
+        working-directory: .
+        run: |
+          git fetch origin +refs/heads/youtube-intelligence-atlas-state:refs/remotes/origin/youtube-intelligence-atlas-state || true
+          mkdir -p atlas_forge_autoresearch/continuous_state
+          if git rev-parse --verify refs/remotes/origin/youtube-intelligence-atlas-state >/dev/null 2>&1; then
+            git show refs/remotes/origin/youtube-intelligence-atlas-state:atlas_youtube_state/youtube_intelligence_feed.jsonl > atlas_forge_autoresearch/continuous_state/youtube_intelligence_feed.jsonl 2>/dev/null || rm -f atlas_forge_autoresearch/continuous_state/youtube_intelligence_feed.jsonl
+            git show refs/remotes/origin/youtube-intelligence-atlas-state:atlas_youtube_state/harvest-stats.json > atlas_forge_autoresearch/continuous_state/youtube_intelligence_harvest_stats.json 2>/dev/null || true
+            echo "restored YouTube Intelligence feed"
+          else
+            echo "no YouTube Intelligence state branch"
+          fi
+
       - name: Capture pre-cycle V4 promotion counters
         id: promotion_before
         shell: python
