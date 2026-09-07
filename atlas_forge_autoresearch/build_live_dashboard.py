@@ -110,6 +110,50 @@ def evomind_summary(path):
         base["error"]=f"{type(exc).__name__}: {str(exc)[:120]}"
     return base
 
+def youtube_intelligence_summary(path):
+    path=Path(path)
+    base={
+        "version":"3.1.0",
+        "active":False,
+        "ideas":0,
+        "eligible":0,
+        "quarantined":0,
+        "tested":0,
+        "keepers":0,
+        "cutoff":None,
+    }
+    if not path.exists():
+        return base
+    try:
+        conn=sqlite3.connect(f"file:{path}?mode=ro",uri=True)
+        conn.row_factory=sqlite3.Row
+        meta={
+            row["key"]:row["value"]
+            for row in conn.execute(
+                "SELECT key,value FROM metadata"
+            ).fetchall()
+        }
+        base["active"]=True
+        base["version"]=meta.get("youtube_intelligence_version","3.1.0")
+        base["cutoff"]=meta.get("published_cutoff")
+        base["ideas"]=int(conn.execute("SELECT COUNT(*) FROM ideas").fetchone()[0])
+        base["eligible"]=int(
+            conn.execute("SELECT COUNT(*) FROM ideas WHERE eligible=1").fetchone()[0]
+        )
+        base["quarantined"]=int(
+            conn.execute("SELECT COUNT(*) FROM ideas WHERE eligible=0").fetchone()[0]
+        )
+        base["tested"]=int(
+            conn.execute("SELECT COUNT(*) FROM outcomes").fetchone()[0]
+        )
+        base["keepers"]=int(
+            conn.execute("SELECT COUNT(*) FROM outcomes WHERE kept=1").fetchone()[0]
+        )
+        conn.close()
+    except Exception as exc:
+        base["error"]=f"{type(exc).__name__}: {str(exc)[:120]}"
+    return base
+
 def status_badge(status, conclusion=None):
     x=(conclusion or status or "").lower()
     if x in {"success","completed"}:
@@ -148,6 +192,10 @@ v4_private=load(V4_STATE/"development-bootstrap.json",{}) or {}
 v4_prop=load(V4_STATE/"prop-intraday-bootstrap.json",{}) or {}
 evomind_core=evomind_summary(STATE/"evomind.db")
 evomind_stock_fx=evomind_summary(STOCK_FX_STATE/"evomind.db")
+youtube_core=youtube_intelligence_summary(STATE/"youtube_intelligence.db")
+youtube_stock_fx=youtube_intelligence_summary(
+    STOCK_FX_STATE/"youtube_intelligence.db"
+)
 
 stale_state=None
 state_is_active=(
@@ -506,6 +554,28 @@ f"| 2023+ final OOS | **{'OPEN' if final_oos_open else 'SEALED'}** |",
 "> EvoMind allocates proposal attention and transfers development concepts only. "
 "Atlas Forge remains authoritative for backtests, risk controls, PBO/bootstrap, "
 "keep/revert, hidden validation, and final OOS.",
+"",
+"## YouTube Intelligence external hypothesis feed",
+"",
+"| Lane | Status | Ideas | Chronology-eligible | Quarantined | Tested | Keepers |",
+"|---|---|---:|---:|---:|---:|---:|",
+(
+    f"| Core AUTORESEARCH | **{'ACTIVE' if youtube_core['active'] else 'ARMED — feed pending'}** | "
+    f"{youtube_core['ideas']} | {youtube_core['eligible']} | "
+    f"{youtube_core['quarantined']} | {youtube_core['tested']} | "
+    f"{youtube_core['keepers']} |"
+),
+(
+    f"| Stock + FX | **{'ACTIVE' if youtube_stock_fx['active'] else 'ARMED — feed pending'}** | "
+    f"{youtube_stock_fx['ideas']} | {youtube_stock_fx['eligible']} | "
+    f"{youtube_stock_fx['quarantined']} | {youtube_stock_fx['tested']} | "
+    f"{youtube_stock_fx['keepers']} |"
+),
+"",
+"> YouTube Intelligence is an idea source only. Creator return/win-rate claims are "
+"withheld from the strategy-generation prompt and never count as Atlas evidence. "
+"Videos published after a track's adaptive-development cutoff are quarantined so "
+"hidden validation and final OOS remain chronology-safe.",
 "",
 "## Research progress",
 "",
