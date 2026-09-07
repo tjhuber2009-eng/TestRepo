@@ -1,0 +1,60 @@
+{
+  "atlas_source_sha": "487a797c0bb715c6dd780e07fa83f7935777a373",
+  "attempts": 3,
+  "baseline_state_sha": "12388f4e36d85c9bf093ea94068a40bc6d146842",
+  "development_end": "2020-12-31",
+  "development_start": "2010-01-01",
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "ideas": [
+    {
+      "base_score": -0.003456,
+      "cagr_pct": null,
+      "candidate_score": null,
+      "description": "Change SMA period from 50 to 20 to implement 20 SMA catch-up filter as per YouTube hypothesis for trend continuation after breakout",
+      "guard_ok": null,
+      "idea_id": "yti-gemini:UCFSn-h8wTnhpKJMteN76Abg:6jQH1a5Zopw:0:13mg213",
+      "max_dd_pct": null,
+      "pf": null,
+      "reason": "numeric-only parameter mutation rejected by hardened anti-curve-fit policy",
+      "sharpe": null,
+      "verdict": "PARAMETER_ONLY"
+    },
+    {
+      "base_score": -0.003456,
+      "cagr_pct": 2.258,
+      "candidate_score": -0.035797,
+      "description": "Add 200 SMA trend filter: only enter when the 50 SMA is above the 200 SMA to confirm bullish trend.",
+      "guard_ok": false,
+      "idea_id": "yti-gemini:UCPCPE5MoI7DS1WiVB_-mzNw:-fcE1UmIqdk:0:16yatkl",
+      "max_dd_pct": -24.717,
+      "pf": 1.761,
+      "reason": "guard: development robustness gate failed",
+      "sharpe": 0.2605,
+      "verdict": "REJECTED"
+    },
+    {
+      "base_score": -0.003456,
+      "cagr_pct": 4.38,
+      "candidate_score": -0.045985,
+      "description": "Replace Donchian breakout entry with 50-period Fibonacci 38.2% retracement breakout entry",
+      "guard_ok": true,
+      "idea_id": "yti-gemini:UCPCPE5MoI7DS1WiVB_-mzNw:-fcE1UmIqdk:1:dbb4rp",
+      "max_dd_pct": -29.714,
+      "pf": 1.623,
+      "reason": "paired chronological folds did not show a median/majority improvement over baseline",
+      "sharpe": 0.3711,
+      "verdict": "REJECTED"
+    }
+  ],
+  "invalid_pre_backtest": 1,
+  "kept": 0,
+  "rejected": 2,
+  "route_id": "gold_gc_proxy_1d",
+  "routing_stage": "reproduction",
+  "schema": 2,
+  "source_track": "donchian_sma50__gold__private",
+  "symbol": "GC=F",
+  "timeframe": "1D",
+  "youtube_feed_sha": "047ba6704b21a286e34162024bafeae6d88dd429"
+}
