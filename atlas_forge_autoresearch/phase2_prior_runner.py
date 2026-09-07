@@ -17,6 +17,8 @@ import sys
 
 import pandas as pd
 
+import strategy_routing
+
 from phase2_seed_factory import runnable_families, generate
 
 HERE=Path(__file__).resolve().parent
@@ -50,6 +52,35 @@ def save_json(path,obj):
 
 def slug(*parts):
     return "__".join(str(x).replace("/","_") for x in parts)
+
+
+def phase2_routing(family, target):
+    if family == "bitcoin_cycle_monthly_causal":
+        meta = {
+            "routing": {
+                "native_markets": ["crypto"],
+                "native_instruments": ["BTCUSD", "BTCUSDT"],
+                "native_timeframes": ["1D"],
+                "evaluation_timeframes": ["1D"],
+                "signal_cadence": "monthly",
+                "source_route_verified": True,
+            }
+        }
+    else:
+        # Prior indicator-tournament implementations remain useful daily Atlas
+        # variants unless/until their original source timeframe/instrument is
+        # independently verified.
+        meta = {
+            "routing": {
+                "native_markets": [],
+                "native_instruments": [],
+                "native_timeframes": [],
+                "evaluation_timeframes": ["1D"],
+                "signal_cadence": "bar",
+                "source_route_verified": False,
+            }
+        }
+    return strategy_routing.classify_track(meta, target)
 
 
 def build_tracks():
@@ -96,6 +127,7 @@ def build_tracks():
                     "target":target,
                     "profile_name":profile_name,
                     "profile":profiles[profile_name],
+                    "routing":phase2_routing(family, target),
                 })
     return out
 
@@ -283,6 +315,17 @@ def screen_track(track):
     env.update({
         "AUTORESEARCH_SYMBOL":str(t["symbol"]),
         "AUTORESEARCH_MARKET":str(t["market"]),
+        "AUTORESEARCH_TIMEFRAME":strategy_routing.canonical_timeframe(
+            t.get("timeframe", "1D")
+        ),
+        "AUTORESEARCH_ROUTE_STAGE":track["routing"]["stage"],
+        "AUTORESEARCH_SOURCE_ROUTE_VERIFIED":(
+            "1" if track["routing"]["source_route_verified"] else "0"
+        ),
+        "AUTORESEARCH_SOURCE_NATIVE_MATCH":(
+            "1" if track["routing"]["source_native_match"] else "0"
+        ),
+        "AUTORESEARCH_SIGNAL_CADENCE":track["routing"]["signal_cadence"],
         "AUTORESEARCH_DATA_FILE":f"data/{t['id']}_1d.csv",
         "AUTORESEARCH_COMMISSION":str(t["commission"]),
         "AUTORESEARCH_MARGIN":str(t["margin"]),
@@ -323,6 +366,12 @@ def screen_track(track):
         "target":t["id"],
         "symbol":t["symbol"],
         "market":t["market"],
+        "tested_timeframe":track["routing"]["tested_timeframe"],
+        "route_stage":track["routing"]["stage"],
+        "source_route_verified":track["routing"]["source_route_verified"],
+        "source_native_match":track["routing"]["source_native_match"],
+        "signal_cadence":track["routing"]["signal_cadence"],
+        "routing":track["routing"],
         "profile":track["profile_name"],
         "source_logic":"prior_indicator_tournament_exact_signal_logic",
         "data_source":t["source"],
@@ -364,6 +413,21 @@ def write_progress(tracks,results):
         "protocol":PROTOCOL,
         "stage":"baseline_screening" if done<len(tracks) else "baseline_screening_complete",
         "track_count":len(tracks),
+        "routing_stage_counts":{
+            stage:sum(
+                1 for track in tracks if track["routing"]["stage"]==stage
+            )
+            for stage in ("reproduction","transfer","atlas_variant","blocked")
+        },
+        "timeframe_counts":{
+            tf:sum(
+                1 for track in tracks
+                if track["routing"]["tested_timeframe"]==tf
+            )
+            for tf in sorted({
+                track["routing"]["tested_timeframe"] for track in tracks
+            })
+        },
         "screened_count":done,
         "success_count":ok,
         "error_count":errors,
@@ -428,6 +492,9 @@ def main():
                     "stage":"development_baseline_screen","track_id":track["id"],
                     "family":track["family"],"target":track["target"]["id"],
                     "data_source":track["target"]["source"],"data_symbol":track["target"]["symbol"],
+                    "tested_timeframe":track["routing"]["tested_timeframe"],
+                    "route_stage":track["routing"]["stage"],
+                    "routing":track["routing"],
                     "profile":track["profile_name"],"status":"data_blocked",
                     "block_reason":str(exc)[:1000],
                     "hidden_validation_opened":False,"final_oos_opened":False,
@@ -438,6 +505,9 @@ def main():
                     "stage":"development_baseline_screen","track_id":track["id"],
                     "family":track["family"],"target":track["target"]["id"],
                     "data_source":track["target"]["source"],"data_symbol":track["target"]["symbol"],
+                    "tested_timeframe":track["routing"]["tested_timeframe"],
+                    "route_stage":track["routing"]["stage"],
+                    "routing":track["routing"],
                     "profile":track["profile_name"],"status":"error",
                     "error":f"{type(exc).__name__}: {str(exc)[:1800]}",
                     "hidden_validation_opened":False,"final_oos_opened":False,
