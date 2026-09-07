@@ -1,0 +1,119 @@
+{
+  "aapl": {
+    "checked_at": "2026-09-06T14:34:38Z",
+    "data_quality_grade": "B",
+    "instrument_fidelity": "adjusted_daily",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo",
+    "status": "qualified",
+    "symbol": "AAPL"
+  },
+  "btc": {
+    "checked_at": "2026-09-06T14:34:42Z",
+    "data_quality_grade": "A",
+    "instrument_fidelity": "spot_exact",
+    "reason": "OHLC integrity passed",
+    "source": "binance",
+    "status": "qualified",
+    "symbol": "BTCUSDT"
+  },
+  "btc_bitstamp_monthly": {
+    "checked_at": "2026-09-06T15:30:29Z",
+    "data_quality_grade": "B",
+    "instrument_fidelity": "spot_exact",
+    "reason": "OHLC integrity passed",
+    "source": "bitstamp",
+    "status": "qualified",
+    "symbol": "BTCUSD"
+  },
+  "es": {
+    "checked_at": "2026-09-06T14:39:39Z",
+    "data_quality_grade": "C",
+    "instrument_fidelity": "proxy",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo_futures_proxy",
+    "status": "qualified",
+    "symbol": "ES=F"
+  },
+  "eth": {
+    "checked_at": "2026-09-06T14:35:09Z",
+    "data_quality_grade": "A",
+    "instrument_fidelity": "spot_exact",
+    "reason": "OHLC integrity passed",
+    "source": "binance",
+    "status": "qualified",
+    "symbol": "ETHUSDT"
+  },
+  "gold": {
+    "checked_at": "2026-09-06T14:40:07Z",
+    "data_quality_grade": "C",
+    "instrument_fidelity": "proxy",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo_futures_proxy",
+    "status": "qualified",
+    "symbol": "GC=F"
+  },
+  "nq": {
+    "checked_at": "2026-09-06T14:40:11Z",
+    "data_quality_grade": "C",
+    "instrument_fidelity": "proxy",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo_futures_proxy",
+    "status": "qualified",
+    "symbol": "NQ=F"
+  },
+  "nvda": {
+    "checked_at": "2026-09-06T14:33:57Z",
+    "data_quality_grade": "B",
+    "instrument_fidelity": "adjusted_daily",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo",
+    "status": "qualified",
+    "symbol": "NVDA"
+  },
+  "oil": {
+    "checked_at": "2026-09-07T03:42:29Z",
+    "data_quality_grade": "C",
+    "instrument_fidelity": "proxy",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo_futures_proxy",
+    "status": "qualified",
+    "symbol": "CL=F"
+  },
+  "qqq": {
+    "checked_at": "2026-09-06T14:34:04Z",
+    "data_quality_grade": "B",
+    "instrument_fidelity": "adjusted_daily",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo",
+    "status": "qualified",
+    "symbol": "QQQ"
+  },
+  "sol": {
+    "checked_at": "2026-09-06T14:34:23Z",
+    "data_quality_grade": "A",
+    "instrument_fidelity": "spot_exact",
+    "reason": "OHLC integrity passed",
+    "source": "binance",
+    "status": "qualified",
+    "symbol": "SOLUSDT"
+  },
+  "spy": {
+    "checked_at": "2026-09-06T14:34:26Z",
+    "data_quality_grade": "B",
+    "instrument_fidelity": "adjusted_daily",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo",
+    "status": "qualified",
+    "symbol": "SPY"
+  },
+  "tqqq": {
+    "checked_at": "2026-09-06T14:34:32Z",
+    "data_quality_grade": "B",
+    "instrument_fidelity": "adjusted_daily",
+    "reason": "OHLC integrity passed",
+    "source": "yahoo",
+    "status": "qualified",
+    "symbol": "TQQQ"
+  }
+}

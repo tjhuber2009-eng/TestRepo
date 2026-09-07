@@ -1,0 +1,18 @@
+{
+  "all_survivors_followed_up": true,
+  "candidate_count": 102,
+  "completion_pct": 100.0,
+  "error_count": 0,
+  "final_oos_opened": false,
+  "followup_version": 2,
+  "hidden_validation_opened": false,
+  "lane": "phase2_prior_work_followup",
+  "next_stage": "frozen_for_cross_lane_promotion",
+  "phase1_registry_mutated": false,
+  "processed_count": 102,
+  "protocol": "nested_chronological_v3",
+  "ready_for_v4_replay_count": 2,
+  "research_survivor_count": 102,
+  "selection_hash": "59d692cc9cecc0dc80576a4ef4277d64c62e923b7bb3bfc62a3be34a91423717",
+  "stage": "adaptive_followup_complete"
+}
