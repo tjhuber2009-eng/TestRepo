@@ -198,7 +198,7 @@ class AtlasYouTubeIntelligenceTests(unittest.TestCase):
                 Path(td) / "spy.db",
                 feed_path=None,
                 track_id="youtube__spy__private",
-                domain="stock:sentinel63:private",
+                domain="etf:sentinel63:private",
                 published_cutoff="2021-12-31",
                 symbol="SPY",
                 timeframe="1D",
