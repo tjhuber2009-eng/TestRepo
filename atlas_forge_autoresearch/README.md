@@ -72,6 +72,51 @@ adaptive portfolio mode off by default, compute-cost mutation credit off, and
 one island. The v0.10 release/source/wheel hashes and MIT license are frozen
 under `vendor/evomind/`.
 
+## YouTube Intelligence external hypothesis layer
+
+YouTube Intelligence v3.1.0 is integrated underneath EvoMind as an external
+hypothesis source. Its frozen source is branch
+`yke-v3.1-windows-build`, commit
+`1f7673b00994fb321fda0b7077c5405529441691`.
+
+The current YouTube Intelligence product can discover whole public channels,
+ingest/search transcripts, analyze channel performance/content patterns, extract
+transcript-derived claims/recommendations/predictions/strategy rules, and fall
+back to audio transcription for captionless videos. Visual frame/video
+understanding is not part of this integration yet.
+
+The Atlas bridge consumes a JSON or JSONL strategy-idea export. Useful fields
+include `published_at`, `video_id`, `channel_title`, `summary`,
+`strategy_rules`, `markets`, `timeframes`, `tags`,
+`specification_quality`, and `claimed_metrics`.
+
+Authority is deliberately one-way:
+
+1. EvoMind decides whether the current proposal slot is
+   `external_proposal`.
+2. YouTube Intelligence supplies at most one compatible, previously untested
+   hypothesis for that track.
+3. Creator performance claims are stored for source auditing but are withheld
+   from the proposal prompt and never count as empirical evidence.
+4. Atlas Forge translates/tests the hypothesis under the normal frozen risk,
+   chronology, cost, PBO/bootstrap, and lookahead gates.
+5. Atlas Forge's verdict is written back to the YouTube Intelligence bridge so
+   source/idea usefulness can be measured from actual research outcomes.
+
+The chronology guard is strict. A video's `published_at` must be on or before
+the active track's adaptive-development cutoff. Newer videos are retained as
+quarantined discoveries but cannot enter that legacy track. This prevents a
+2026 video from leaking knowledge about the supposedly untouched 2021–2022
+hidden-validation or 2023+ final-OOS periods.
+
+Lane state is stored separately:
+
+- core: `continuous_state/youtube_intelligence.db`
+- Stock+FX: `stock_fx_state/youtube_intelligence.db`
+- feed: `youtube_intelligence_feed.jsonl` in the corresponding state directory
+
+As with EvoMind, **Atlas Forge grades YouTube Intelligence, never the reverse.**
+
 ## Setup on Windows PowerShell
 
     python -m venv .venv
