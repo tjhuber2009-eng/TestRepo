@@ -454,6 +454,14 @@ def target_env(track):
         ),
         "AUTORESEARCH_EVOMIND_ENABLED": "1",
         "AUTORESEARCH_EVOMIND_DB": str(STATE / "evomind.db"),
+        "AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED": "1",
+        "AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB": str(
+            STATE / "youtube_intelligence.db"
+        ),
+        "AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED": str(
+            STATE / "youtube_intelligence_feed.jsonl"
+        ),
+        "AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF": development_end(track),
         "AUTORESEARCH_TRACK_ID": track["id"],
         "AUTORESEARCH_PROTOCOL": PROTOCOL,
         "AUTORESEARCH_BOOTSTRAP_REPS": str(
