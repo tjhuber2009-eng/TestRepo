@@ -1,4 +1,4 @@
-Matrix request: 2026-09-06 exact-daily-reproduction
+Matrix request: 2026-09-06 exact-daily-reproduction supersede-stale
 Atlas source: 487a797c0bb715c6dd780e07fa83f7935777a373
 Routes: EURUSD 1D; SPX500->SPY 1D; Gold->GC=F proxy 1D
-Mode: reproduction only; multi-timeframe strategies deferred
+Mode: reproduction only; multi-timeframe strategies deferred; cancel stale YouTube runs
