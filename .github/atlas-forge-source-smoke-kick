@@ -1,5 +1,5 @@
 Atlas Forge source smoke
-Source head: eb597e0e275f9a650b9cfdf1ce664f557ccebe82
-Purpose: final validation of project-wide instrument/timeframe routing and frozen Phase-2 promotion-source preservation
+Source head: 4a655f1d5d14eb99999dd4e1f63aa6e8562fd914
+Purpose: final project-wide instrument/timeframe routing validation including both dashboards, JavaScript syntax, and frozen Phase-2 promotion-source preservation
 Hidden validation: sealed
 Final 2023+ OOS: sealed
