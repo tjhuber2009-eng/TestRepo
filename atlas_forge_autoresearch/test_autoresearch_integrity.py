@@ -13,6 +13,7 @@ import loop
 import overfit_diagnostics
 import research_metrics
 import seed_factory
+import strategy_routing
 
 HERE = Path(__file__).resolve().parent
 
@@ -148,6 +149,100 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         ids = [x["id"] for x in tracks]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual(len(ids), 514)
+
+    def test_every_target_has_explicit_canonical_timeframe(self):
+        for name in ("continuous_config.json", "stock_fx_config.json"):
+            cfg = json.loads((HERE / name).read_text(encoding="utf-8"))
+            self.assertTrue(cfg["targets"])
+            for target in cfg["targets"]:
+                self.assertEqual(target.get("timeframe"), "1D")
+                self.assertEqual(
+                    strategy_routing.canonical_timeframe(target["timeframe"]),
+                    "1D",
+                )
+
+    def test_every_registry_family_has_routing_metadata(self):
+        required = {
+            "native_markets", "native_instruments", "native_timeframes",
+            "evaluation_timeframes", "signal_cadence",
+            "source_route_verified", "requires_multi_timeframe",
+            "requires_session_clock", "requires_volume",
+            "requires_contract_data",
+        }
+        for family in self.registry["families"]:
+            routing = family.get("routing")
+            self.assertIsInstance(routing, dict, family["id"])
+            self.assertTrue(required <= set(routing), family["id"])
+            for tf in routing.get("native_timeframes", []):
+                self.assertEqual(
+                    strategy_routing.canonical_timeframe(tf), tf, family["id"]
+                )
+            for tf in routing.get("evaluation_timeframes", []):
+                self.assertEqual(
+                    strategy_routing.canonical_timeframe(tf), tf, family["id"]
+                )
+
+    def test_phase1_routes_reproduction_transfer_and_atlas_variants_explicitly(self):
+        tracks = {x["id"]: x for x in continuous_runner.build_tracks()}
+        self.assertEqual(
+            tracks["btc_rsi_adx__btc__private"]["routing"]["stage"],
+            "reproduction",
+        )
+        self.assertEqual(
+            tracks["btc_rsi_adx__sol__private"]["routing"]["stage"],
+            "transfer",
+        )
+        self.assertEqual(
+            tracks["turtle_55_20__es__private"]["routing"]["stage"],
+            "reproduction",
+        )
+        self.assertEqual(
+            tracks["turtle_55_20__btc__private"]["routing"]["stage"],
+            "transfer",
+        )
+        self.assertEqual(
+            tracks["qqe_proxy__btc__private"]["routing"]["stage"],
+            "atlas_variant",
+        )
+        self.assertTrue(
+            all(
+                x["routing"]["tested_timeframe"] == "1D"
+                for x in tracks.values()
+            )
+        )
+        self.assertFalse(
+            any(x["routing"]["stage"] == "blocked" for x in tracks.values())
+        )
+
+    def test_phase2_daily_variants_and_monthly_signal_cadence_are_labeled(self):
+        import phase2_prior_runner
+        tracks = {x["id"]: x for x in phase2_prior_runner.build_tracks()}
+        generic = tracks["macd_12_26_9__btc__private"]
+        monthly = tracks[
+            "bitcoin_cycle_monthly_causal__btc_bitstamp_monthly__private"
+        ]
+        self.assertEqual(generic["routing"]["stage"], "atlas_variant")
+        self.assertEqual(generic["routing"]["tested_timeframe"], "1D")
+        self.assertEqual(monthly["routing"]["stage"], "reproduction")
+        self.assertEqual(monthly["routing"]["tested_timeframe"], "1D")
+        self.assertEqual(monthly["routing"]["signal_cadence"], "monthly")
+
+    def test_phase3_intraday_or_unknown_timeframe_cannot_enter_daily_adapter(self):
+        ok, reason = strategy_routing.development_adapter_ready(
+            {"timeframe": "1D"}
+        )
+        self.assertTrue(ok)
+        self.assertIn("compatible", reason)
+
+        for spec in (
+            {"timeframe": "15M"},
+            {"timeframe": "4H"},
+            {"timeframe": "unknown"},
+            {"timeframes": ["1D", "4H"], "requires_multi_timeframe": True},
+            {"timeframe": "1D", "requires_session_clock": True},
+        ):
+            ok, _ = strategy_routing.development_adapter_ready(spec)
+            self.assertFalse(ok, spec)
 
     def test_phase1_plan_seals_hidden_validation_until_expansion_finishes(self):
         plan = json.loads(
@@ -741,6 +836,28 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             continuous_runner.track_state_identity_matches(
                 stock_track, unrelated
             )
+        )
+
+    def test_track_state_identity_rejects_changed_timeframe(self):
+        track = {
+            "target": {
+                "source": "yahoo",
+                "symbol": "SPY",
+                "timeframe": "1D",
+            }
+        }
+        same = {
+            "protocol": continuous_runner.PROTOCOL,
+            "symbol": "SPY",
+            "target_source": "yahoo",
+            "tested_timeframe": "1D",
+        }
+        stale = dict(same, tested_timeframe="1H")
+        self.assertTrue(
+            continuous_runner.track_state_identity_matches(track, same)
+        )
+        self.assertFalse(
+            continuous_runner.track_state_identity_matches(track, stale)
         )
 
     def test_track_state_identity_prefers_explicit_source_over_manifest(self):
