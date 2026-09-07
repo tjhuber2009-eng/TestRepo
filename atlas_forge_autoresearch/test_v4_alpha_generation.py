@@ -40,7 +40,11 @@ from v4.live_bootstrap import (
     select_portfolio_history_cohort,
 )
 from v4.meta_filter import BoostedStumpMetaFilter, walk_forward_probabilities
-from v4.phase2_bridge import load_promotion_source as load_phase2_promotion_source
+from v4.phase2_bridge import (
+    load_promotion_source as load_phase2_promotion_source,
+    prop_transfer_candidates as phase2_prop_transfer_candidates,
+    replay_private_promotions as replay_phase2_private_promotions,
+)
 from v4.motif_library import MotifEvidence, MotifTransferPlanner
 from v4.multi_asset_engine import (
     AssetCost,
@@ -245,6 +249,107 @@ class V4AlphaGenerationTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 load_phase2_promotion_source(unsafe)
+
+    def test_phase2_private_promotion_preserves_routing_provenance(self):
+        row = {
+            "track_id": "bollinger_breakout_20_2__btc__private",
+            "profile": "private",
+            "family": "bollinger_breakout_20_2",
+            "target": "btc",
+            "symbol": "BTCUSDT",
+            "market": "crypto",
+            "evidence_grade": "A",
+            "cagr_pct": 20.0,
+            "max_dd_pct": -8.0,
+            "sharpe": 1.2,
+            "pf": 2.0,
+            "development_years": 2.0,
+            "trades": 20,
+            "score": 0.5,
+            "bootstrap_fdr_qvalue": 0.05,
+            "cohort_pbo": 0.20,
+            "candidate_pbo_when_selected": 0.10,
+            "extreme_stress_return_pct": 12.0,
+            "commission": 0.001,
+            "margin": 0.25,
+            "promotion_source_sha256": "a" * 64,
+            "tested_timeframe": "1D",
+            "route_stage": "atlas_variant",
+            "source_route_verified": False,
+            "source_native_match": False,
+            "signal_cadence": "bar",
+            "routing": {
+                "stage": "atlas_variant",
+                "tested_timeframe": "1D",
+                "source_route_verified": False,
+                "source_native_match": False,
+            },
+        }
+        ret = pd.Series(
+            [0.01, -0.005],
+            index=pd.date_range("2020-01-01", periods=2),
+        )
+        frame = pd.DataFrame(
+            {"Open": [100.0, 101.0], "High": [101.0, 102.0],
+             "Low": [99.0, 100.0], "Close": [100.5, 101.5]},
+            index=ret.index,
+        )
+        with mock.patch(
+            "v4.phase2_bridge.ready_rows", return_value=[row]
+        ), mock.patch(
+            "v4.phase2_bridge.load_promotion_source", return_value="source"
+        ), mock.patch(
+            "v4.phase2_bridge.replay_private_candidate",
+            return_value=(ret, {"portfolio_eligible": True}),
+        ):
+            eligible, audit = replay_phase2_private_promotions(
+                {"BTCUSDT": frame},
+                max_dd_pct=32.0,
+            )
+        self.assertIn(
+            "phase2__bollinger_breakout_20_2__btc__private", eligible
+        )
+        routing = audit["candidates"][0]["source_routing"]
+        self.assertEqual(routing["tested_timeframe"], "1D")
+        self.assertEqual(routing["route_stage"], "atlas_variant")
+        self.assertFalse(routing["source_route_verified"])
+        self.assertFalse(routing["source_native_match"])
+
+    def test_phase2_prop_transfer_preserves_routing_provenance(self):
+        row = {
+            "track_id": "bollinger_breakout_20_2__btc__prop",
+            "profile": "prop",
+            "family": "bollinger_breakout_20_2",
+            "target": "btc",
+            "symbol": "BTCUSDT",
+            "market": "crypto",
+            "promotion_source_sha256": "b" * 64,
+            "cohort_pbo": 0.20,
+            "candidate_pbo_when_selected": 0.10,
+            "tested_timeframe": "1D",
+            "route_stage": "atlas_variant",
+            "source_route_verified": False,
+            "source_native_match": False,
+            "signal_cadence": "bar",
+            "routing": {"stage": "atlas_variant", "tested_timeframe": "1D"},
+        }
+        with mock.patch(
+            "v4.phase2_bridge.ready_rows", return_value=[row]
+        ), mock.patch(
+            "v4.phase2_bridge.load_promotion_source", return_value="source"
+        ), mock.patch(
+            "v4.phase2_bridge.source_execution_adapter_blocker",
+            return_value=None,
+        ):
+            supported, audit = phase2_prop_transfer_candidates({"BTCUSDT"})
+        self.assertEqual(len(supported), 1)
+        self.assertEqual(supported[0]["source_tested_timeframe"], "1D")
+        self.assertEqual(supported[0]["source_route_stage"], "atlas_variant")
+        self.assertFalse(supported[0]["source_route_verified"])
+        self.assertFalse(supported[0]["source_native_match"])
+        routing = audit["candidates"][0]["source_routing"]
+        self.assertEqual(routing["route_stage"], "atlas_variant")
+        self.assertEqual(routing["tested_timeframe"], "1D")
 
     def test_phase2_bollinger_signed_adapter_is_prefix_invariant(self):
         days = 100
