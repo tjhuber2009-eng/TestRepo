@@ -6,6 +6,7 @@ research/tournament cycles.
 """
 import json
 import math
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -60,6 +61,55 @@ def development_period(track_id, total_return_pct):
     except Exception:
         return start,end,None,None
 
+def evomind_summary(path):
+    path=Path(path)
+    base={
+        "version":"0.10.0",
+        "active":False,
+        "concepts":0,
+        "outcomes":0,
+        "keepers":0,
+        "top_arm":None,
+        "top_arm_value":None,
+    }
+    if not path.exists():
+        return base
+    try:
+        conn=sqlite3.connect(f"file:{path}?mode=ro",uri=True)
+        conn.row_factory=sqlite3.Row
+        meta={
+            row["key"]:row["value"]
+            for row in conn.execute(
+                "SELECT key,value FROM metadata"
+            ).fetchall()
+        }
+        base["active"]=True
+        base["version"]=meta.get("evomind_release","0.10.0")
+        base["concepts"]=int(
+            conn.execute("SELECT COUNT(*) FROM concepts").fetchone()[0]
+        )
+        base["outcomes"]=int(
+            conn.execute("SELECT COUNT(*) FROM outcomes").fetchone()[0]
+        )
+        base["keepers"]=int(
+            conn.execute(
+                "SELECT COUNT(*) FROM outcomes WHERE kept=1"
+            ).fetchone()[0]
+        )
+        state=json.loads(meta.get("proposal_portfolio_state","{}"))
+        values=state.get("values") or {}
+        if values:
+            arm,value=max(
+                values.items(),
+                key=lambda kv:float(kv[1]),
+            )
+            base["top_arm"]=arm
+            base["top_arm_value"]=float(value)
+        conn.close()
+    except Exception as exc:
+        base["error"]=f"{type(exc).__name__}: {str(exc)[:120]}"
+    return base
+
 def status_badge(status, conclusion=None):
     x=(conclusion or status or "").lower()
     if x in {"success","completed"}:
@@ -96,6 +146,8 @@ tournament_run=latest_run(RUNTIME/"tournament_runs.json")
 jobs=(load(RUNTIME/"tournament_jobs.json",{}) or {}).get("jobs",[])
 v4_private=load(V4_STATE/"development-bootstrap.json",{}) or {}
 v4_prop=load(V4_STATE/"prop-intraday-bootstrap.json",{}) or {}
+evomind_core=evomind_summary(STATE/"evomind.db")
+evomind_stock_fx=evomind_summary(STOCK_FX_STATE/"evomind.db")
 
 stale_state=None
 state_is_active=(
@@ -425,6 +477,35 @@ f"| Core breadth progress | **{breadth_pct:.2f}%** |",
 f"| Stock/FX breadth | **{stock_fx_breadth_pct:.2f}%** |" if stock_fx_active else "| Stock/FX breadth | **checkpoint pending** |",
 f"| Hidden validation | **{'OPEN' if hidden_open or stock_fx_hidden_open else 'SEALED'}** |",
 f"| 2023+ final OOS | **{'OPEN' if final_oos_open else 'SEALED'}** |",
+"",
+"## EvoMind v0.10 research intelligence",
+"",
+"| Lane | Status | Learned concepts | Outcomes | Keeper outcomes | Current favored proposal mode |",
+"|---|---|---:|---:|---:|---|",
+(
+    f"| Core AUTORESEARCH | **{'ACTIVE' if evomind_core['active'] else 'ARMED — next cycle'}** | "
+    f"{evomind_core['concepts']} | {evomind_core['outcomes']} | {evomind_core['keepers']} | "
+    f"{evomind_core['top_arm'] or '—'}"
+    + (
+        f" ({f(evomind_core['top_arm_value'],3)})"
+        if evomind_core.get('top_arm_value') is not None else ""
+    )
+    + " |"
+),
+(
+    f"| Stock + FX | **{'ACTIVE' if evomind_stock_fx['active'] else 'ARMED — next cycle'}** | "
+    f"{evomind_stock_fx['concepts']} | {evomind_stock_fx['outcomes']} | {evomind_stock_fx['keepers']} | "
+    f"{evomind_stock_fx['top_arm'] or '—'}"
+    + (
+        f" ({f(evomind_stock_fx['top_arm_value'],3)})"
+        if evomind_stock_fx.get('top_arm_value') is not None else ""
+    )
+    + " |"
+),
+"",
+"> EvoMind allocates proposal attention and transfers development concepts only. "
+"Atlas Forge remains authoritative for backtests, risk controls, PBO/bootstrap, "
+"keep/revert, hidden validation, and final OOS.",
 "",
 "## Research progress",
 "",
