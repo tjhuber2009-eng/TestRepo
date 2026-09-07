@@ -1,6 +1,2 @@
-Atlas Forge V4 smoke
-Conditional high-volatility satellite risk experiment
-Source head: 83309e73afeb2fc58ef9c2e00b9fcbee0cf66b51
-Checks: causal top-quintile high-volatility de-risking + no low-vol boost + unchanged 35% satellite cap + unchanged 1.5x gross cap + full V4 integrity suite
-Hidden validation: sealed
-Final 2023+ OOS: sealed
+Source head: 8c3e7e3ae223517e1487d919cab1a12713e40130
+Purpose: verify V4 preservation of instrument/timeframe routing provenance from Phase-2 through private and prop promotion
