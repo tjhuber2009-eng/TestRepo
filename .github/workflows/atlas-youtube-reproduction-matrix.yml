@@ -1,0 +1,345 @@
+name: Atlas YouTube exact reproduction matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/atlas-youtube-reproduction-matrix-kick"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atlas-youtube-hypothesis-tournament
+  cancel-in-progress: false
+
+jobs:
+  reproduction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - route_id: eurusd_1d
+            state_branch: stock-fx-autoresearch-state
+            state_root: stock_fx_state
+            track: sentinel63__eurusd__private
+            family: sentinel63
+            symbol: EURUSD
+            market: forex
+            source: tiingo_fx
+            data_id: eurusd
+            start: "2020-01-01"
+            development_end: "2021-12-31"
+            validation_start: "2022-01-01"
+            validation_end: "2022-12-31"
+            commission: "0.0001"
+            margin: "0.05"
+          - route_id: spx500_spy_1d
+            state_branch: continuous-autoresearch-state
+            state_root: continuous_state
+            track: sentinel63__spy__private
+            family: sentinel63
+            symbol: SPY
+            market: etf
+            source: yahoo
+            data_id: spy
+            start: "2010-01-01"
+            development_end: "2020-12-31"
+            validation_start: "2021-01-01"
+            validation_end: "2022-12-31"
+            commission: "0.0002"
+            margin: "0.5"
+          - route_id: gold_gc_proxy_1d
+            state_branch: continuous-autoresearch-state
+            state_root: continuous_state
+            track: donchian_sma50__gold__private
+            family: donchian_sma50
+            symbol: GC=F
+            market: futures_proxy
+            source: yahoo_futures_proxy
+            data_id: gold
+            start: "2010-01-01"
+            development_end: "2020-12-31"
+            validation_start: "2021-01-01"
+            validation_end: "2022-12-31"
+            commission: "0.00015"
+            margin: "0.1"
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      ATLAS_SOURCE_SHA: 487a797c0bb715c6dd780e07fa83f7935777a373
+      ROUTE_ID: ${{ matrix.route_id }}
+      STATE_BRANCH: ${{ matrix.state_branch }}
+      STATE_ROOT: ${{ matrix.state_root }}
+      SOURCE_TRACK: ${{ matrix.track }}
+      FAMILY: ${{ matrix.family }}
+      SYMBOL: ${{ matrix.symbol }}
+      MARKET: ${{ matrix.market }}
+      DATA_SOURCE: ${{ matrix.source }}
+      DATA_ID: ${{ matrix.data_id }}
+      DEVELOPMENT_START: ${{ matrix.start }}
+      DEVELOPMENT_END: ${{ matrix.development_end }}
+      VALIDATION_START: ${{ matrix.validation_start }}
+      VALIDATION_END: ${{ matrix.validation_end }}
+      COMMISSION: ${{ matrix.commission }}
+      MARGIN: ${{ matrix.margin }}
+    defaults:
+      run:
+        working-directory: atlas_forge_autoresearch
+
+    steps:
+      - name: Checkout pinned Atlas source
+        uses: actions/checkout@v7
+        with:
+          ref: 487a797c0bb715c6dd780e07fa83f7935777a373
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore frozen baseline, prior route state, and YouTube feed
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          test -n "$NVIDIA_API_KEY"
+          if test "$DATA_SOURCE" = "tiingo_fx"; then test -n "$TIINGO_API_TOKEN"; fi
+          git fetch origin "+refs/heads/$STATE_BRANCH:refs/remotes/origin/$STATE_BRANCH"
+          git fetch origin +refs/heads/youtube-intelligence-atlas-state:refs/remotes/origin/youtube-intelligence-atlas-state
+          git fetch origin +refs/heads/youtube-hypothesis-tournament-state:refs/remotes/origin/youtube-hypothesis-tournament-state
+
+          echo "BASELINE_STATE_SHA=$(git rev-parse refs/remotes/origin/$STATE_BRANCH)" >> "$GITHUB_ENV"
+          echo "YOUTUBE_FEED_SHA=$(git rev-parse refs/remotes/origin/youtube-intelligence-atlas-state)" >> "$GITHUB_ENV"
+
+          TRACK_PATH="atlas_forge_autoresearch/$STATE_ROOT/tracks/$SOURCE_TRACK"
+          git checkout "refs/remotes/origin/$STATE_BRANCH" -- "$TRACK_PATH"
+
+          ROUTE_PATH="atlas_forge_autoresearch/youtube_reproduction_state/$ROUTE_ID"
+          if git cat-file -e "refs/remotes/origin/youtube-hypothesis-tournament-state:$ROUTE_PATH" 2>/dev/null; then
+            git checkout refs/remotes/origin/youtube-hypothesis-tournament-state -- "$ROUTE_PATH"
+          else
+            mkdir -p "$ROUTE_PATH"
+          fi
+
+          git show refs/remotes/origin/youtube-intelligence-atlas-state:atlas_youtube_state/youtube_intelligence_feed.jsonl \
+            > "$ROUTE_PATH/youtube_intelligence_feed.jsonl"
+          test -s "$ROUTE_PATH/youtube_intelligence_feed.jsonl"
+
+      - name: Restore isolated runtime from frozen baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          TRACK="$STATE_ROOT/tracks/$SOURCE_TRACK"
+          rm -f baseline.json last_run.json validation_run.json lookahead_audit.json results.tsv proposal.txt STOP strategy.py strategy_best.py seen_hashes.json experiments.jsonl
+          rm -rf keepers logs
+          mkdir -p keepers logs "youtube_reproduction_state/$ROUTE_ID"
+          for f in baseline.json last_run.json results.tsv strategy_best.py seen_hashes.json experiments.jsonl; do
+            test -f "$TRACK/$f"
+            cp "$TRACK/$f" "$f"
+          done
+          cp strategy_best.py strategy.py
+          if test -d "$TRACK/keepers"; then cp -a "$TRACK/keepers/." keepers/; fi
+          cp baseline.json "youtube_reproduction_state/$ROUTE_ID/baseline_before.json"
+          cp strategy_best.py "youtube_reproduction_state/$ROUTE_ID/strategy_before.py"
+
+      - name: Prepare development-only route data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python prepare_market_data.py \
+            --source "$DATA_SOURCE" \
+            --symbol "$SYMBOL" \
+            --id "$DATA_ID" \
+            --start "$DEVELOPMENT_START" \
+            --end "$DEVELOPMENT_END" \
+            --output-dir data
+          test -s "data/${DATA_ID}_1d.csv"
+          python oos_guard.py
+
+      - name: Run exact routed YouTube reproduction
+        shell: bash
+        env:
+          AUTORESEARCH_HARNESS: robust_harness.py
+          AUTORESEARCH_PROGRAM: program_robust.md
+          AUTORESEARCH_FAMILY: ${{ matrix.family }}
+          AUTORESEARCH_SYMBOL: ${{ matrix.symbol }}
+          AUTORESEARCH_TIMEFRAME: "1D"
+          AUTORESEARCH_MARKET: ${{ matrix.market }}
+          AUTORESEARCH_DATA_FILE: data/${{ matrix.data_id }}_1d.csv
+          AUTORESEARCH_COMMISSION: ${{ matrix.commission }}
+          AUTORESEARCH_MARGIN: ${{ matrix.margin }}
+          AUTORESEARCH_BARS_PER_YEAR: "252"
+          AUTORESEARCH_PROFILE: private
+          AUTORESEARCH_MAX_DD_PCT: "32"
+          AUTORESEARCH_MIN_TRADES: "8"
+          AUTORESEARCH_MIN_VALIDATION_TRADES: "2"
+          AUTORESEARCH_MIN_ACTIVE_FOLDS: "3"
+          AUTORESEARCH_MIN_FOLD_BARS: "100"
+          AUTORESEARCH_VOL_BAND: "0.50"
+          AUTORESEARCH_COST_STRESS_MULT: "2"
+          AUTORESEARCH_EXTREME_COST_STRESS_MULT: "3"
+          AUTORESEARCH_BOOTSTRAP_REPS: "500"
+          AUTORESEARCH_IS_START: ${{ matrix.start }}
+          AUTORESEARCH_VALIDATION_START: ${{ matrix.validation_start }}
+          AUTORESEARCH_VALIDATION_END: ${{ matrix.validation_end }}
+          AUTORESEARCH_PROTOCOL: nested_chronological_v3
+          AUTORESEARCH_SOURCE_SHA: 487a797c0bb715c6dd780e07fa83f7935777a373
+          AUTORESEARCH_TRACK_ID: youtube_reproduction__${{ matrix.route_id }}__private
+          AUTORESEARCH_EVOMIND_ENABLED: "1"
+          AUTORESEARCH_EVOMIND_DB: youtube_reproduction_state/${{ matrix.route_id }}/evomind.db
+          AUTORESEARCH_CONTROLLED_TOURNAMENT: "1"
+          AUTORESEARCH_FORCED_PROPOSAL_ARM: external_proposal
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED: "1"
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB: youtube_reproduction_state/${{ matrix.route_id }}/youtube_intelligence.db
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED: youtube_reproduction_state/${{ matrix.route_id }}/youtube_intelligence_feed.jsonl
+          AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF: ${{ matrix.development_end }}
+          AUTORESEARCH_YOUTUBE_ROUTING_STAGE: reproduction
+          AUTORESEARCH_YOUTUBE_MULTI_TIMEFRAME_CAPABLE: "0"
+        run: |
+          python -m unittest -v test_atlas_evomind.py test_atlas_youtube_intelligence.py
+          python loop.py --iters 12 --model nvidia/nemotron-3-super-120b-a12b
+          python oos_guard.py
+
+      - name: Build route report
+        shell: python
+        run: |
+          import json, math, os, shutil
+          from pathlib import Path
+
+          route = os.environ["ROUTE_ID"]
+          state = Path("youtube_reproduction_state") / route
+          rows = []
+          p = Path("experiments.jsonl")
+          if p.exists():
+              for line in p.read_text().splitlines():
+                  if not line.strip():
+                      continue
+                  x = json.loads(line)
+                  if x.get("youtube_idea_id"):
+                      rows.append(x)
+
+          def f(v):
+              try:
+                  x = float(v)
+                  return round(x, 6) if math.isfinite(x) else None
+              except Exception:
+                  return None
+
+          report = {
+              "schema": 2,
+              "route_id": route,
+              "atlas_source_sha": os.environ["ATLAS_SOURCE_SHA"],
+              "baseline_state_sha": os.environ.get("BASELINE_STATE_SHA"),
+              "youtube_feed_sha": os.environ.get("YOUTUBE_FEED_SHA"),
+              "source_track": os.environ["SOURCE_TRACK"],
+              "symbol": os.environ["SYMBOL"],
+              "timeframe": "1D",
+              "routing_stage": "reproduction",
+              "development_start": os.environ["DEVELOPMENT_START"],
+              "development_end": os.environ["DEVELOPMENT_END"],
+              "hidden_validation_opened": False,
+              "final_oos_opened": False,
+              "attempts": len(rows),
+              "kept": sum(x.get("verdict") == "KEPT" for x in rows),
+              "rejected": sum(x.get("verdict") == "REJECTED" for x in rows),
+              "invalid_pre_backtest": sum(
+                  x.get("verdict") in {
+                      "CRASH", "DUPLICATE", "PARAMETER_ONLY",
+                      "TOO_BROAD", "RISK_CONTROL_CHANGE"
+                  }
+                  for x in rows
+              ),
+              "ideas": [{
+                  "idea_id": x.get("youtube_idea_id"),
+                  "verdict": x.get("verdict"),
+                  "reason": x.get("reason"),
+                  "description": x.get("description"),
+                  "base_score": f(x.get("base_score")),
+                  "candidate_score": f(x.get("candidate_score")),
+                  "cagr_pct": f(x.get("cagr_pct")),
+                  "sharpe": f(x.get("sharpe")),
+                  "pf": f(x.get("pf")),
+                  "max_dd_pct": f(x.get("max_dd_pct")),
+                  "guard_ok": x.get("guard_ok"),
+              } for x in rows],
+          }
+          state.mkdir(parents=True, exist_ok=True)
+          (state / "tournament-summary.json").write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n"
+          )
+          lines = [
+              "# Atlas Forge YouTube Exact Reproduction",
+              "",
+              f"Route: **{route}**",
+              f"Instrument: **{report['symbol']} @ 1D**",
+              f"Frozen baseline: **{report['source_track']}**",
+              f"Atlas source: `{report['atlas_source_sha']}`",
+              f"Development: **{report['development_start']} through {report['development_end']}**",
+              "**Hidden validation: SEALED**",
+              "**Final 2023+ OOS: SEALED**",
+              "",
+              f"Attempts: **{report['attempts']}** | Kept: **{report['kept']}** | Rejected: **{report['rejected']}**",
+              "",
+              "| Idea | Verdict | K | CAGR | Sharpe | PF | DD |",
+              "|---|---|---:|---:|---:|---:|---:|",
+          ]
+          for x in report["ideas"]:
+              lines.append(
+                  f"| `{x['idea_id']}` | {x['verdict']} | "
+                  f"{x['candidate_score']} | {x['cagr_pct']} | "
+                  f"{x['sharpe']} | {x['pf']} | {x['max_dd_pct']} |"
+              )
+          (state / "tournament-report.md").write_text("\n".join(lines) + "\n")
+          for src, dst in [
+              ("experiments.jsonl", "experiments.jsonl"),
+              ("results.tsv", "results.tsv"),
+              ("baseline.json", "baseline_after.json"),
+              ("strategy_best.py", "strategy_after.py"),
+          ]:
+              if Path(src).exists():
+                  shutil.copy2(src, state / dst)
+          print(json.dumps(report, indent=2))
+
+      - name: Persist route state
+        shell: bash
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin +refs/heads/youtube-hypothesis-tournament-state:refs/remotes/origin/youtube-hypothesis-tournament-state
+          cp -a "atlas_forge_autoresearch/youtube_reproduction_state/$ROUTE_ID" "/tmp/$ROUTE_ID"
+          git reset --hard
+          git clean -fd
+          git switch -C youtube-hypothesis-tournament-state refs/remotes/origin/youtube-hypothesis-tournament-state
+          DEST="atlas_forge_autoresearch/youtube_reproduction_state/$ROUTE_ID"
+          rm -rf "$DEST"
+          mkdir -p "$(dirname "$DEST")"
+          cp -a "/tmp/$ROUTE_ID" "$DEST"
+          git add -f "$DEST"
+          if git diff --cached --quiet; then
+            echo "no route-state changes"
+          else
+            git commit -m "YouTube exact reproduction $ROUTE_ID $GITHUB_RUN_ID"
+            git push origin HEAD:youtube-hypothesis-tournament-state
+          fi
+
+      - name: Upload route report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: youtube-reproduction-${{ matrix.route_id }}-${{ github.run_id }}
+          path: |
+            atlas_forge_autoresearch/youtube_reproduction_state/${{ matrix.route_id }}/tournament-summary.json
+            atlas_forge_autoresearch/youtube_reproduction_state/${{ matrix.route_id }}/tournament-report.md
