@@ -155,6 +155,28 @@ class AtlasYouTubeIntelligenceTests(unittest.TestCase):
             finally:
                 brain.close()
 
+    def test_descriptive_market_labels_match_lane(self):
+        with tempfile.TemporaryDirectory() as td:
+            brain = ayi.YouTubeAtlasBridge(
+                Path(td) / "youtube.db",
+                feed_path=None,
+                track_id="sentinel63__eurusd__private",
+                domain="forex:sentinel63:private",
+                published_cutoff="2021-12-31",
+            )
+            try:
+                self.assertTrue(
+                    brain._market_compatible(("Forex (GBP/USD demonstrated)",))
+                )
+                self.assertTrue(
+                    brain._market_compatible(("Gold", "Forex strategy",))
+                )
+                self.assertFalse(
+                    brain._market_compatible(("Equities", "Stock",))
+                )
+            finally:
+                brain.close()
+
     def test_youtube_only_supplies_when_evomind_requests_external_proposal(self):
         with tempfile.TemporaryDirectory() as td:
             feed = Path(td) / "feed.jsonl"
