@@ -7,7 +7,7 @@ test('Gemini result sanitizer keeps reproducible rules and strips malformed item
     strategy_relevant:true,
     visual_context_used:true,
     ideas:[
-      {summary:'QQE pullback confirmation',rules:['Wait for pullback','Enter when QQE confirms'],markets:['crypto'],timeframes:['15m'],tags:['qqe','pullback'],timestamps_seconds:[12,45,-2,'bad'],specificity:1.2},
+      {summary:'QQE pullback confirmation',rules:['Wait for the higher-timeframe pullback to complete, then require a confirmed QQE momentum turn on the execution timeframe before entry; place the stop beyond the pullback swing and do not enter if confirmation occurs after price has already extended materially away from the setup zone.','Enter when QQE confirms'],markets:['crypto'],timeframes:['15m'],tags:['qqe','pullback'],timestamps_seconds:[12,45,-2,'bad'],specificity:1.2},
       {summary:'',rules:[],specificity:1},
     ],
   },{model:'test-model'});
@@ -15,6 +15,7 @@ test('Gemini result sanitizer keeps reproducible rules and strips malformed item
   assert.equal(x.visual_context_used,true);
   assert.equal(x.ideas.length,1);
   assert.equal(x.ideas[0].specificity,1);
+  assert.ok(x.ideas[0].rules[0].length>120);
   assert.deepEqual(x.ideas[0].timestamps_seconds,[12,45]);
   assert.equal(x.model,'test-model');
 });
