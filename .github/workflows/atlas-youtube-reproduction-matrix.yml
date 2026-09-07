@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: atlas-youtube-hypothesis-tournament
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   reproduction:
