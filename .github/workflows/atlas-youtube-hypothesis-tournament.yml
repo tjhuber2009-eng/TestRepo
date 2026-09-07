@@ -220,12 +220,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin +refs/heads/youtube-hypothesis-tournament-state:refs/remotes/origin/youtube-hypothesis-tournament-state
+          cp -a atlas_forge_autoresearch/youtube_tournament_state /tmp/youtube_tournament_state
+          git reset --hard
+          git clean -fd
           git switch -C youtube-hypothesis-tournament-state refs/remotes/origin/youtube-hypothesis-tournament-state
+          rm -rf atlas_forge_autoresearch/youtube_tournament_state
+          cp -a /tmp/youtube_tournament_state atlas_forge_autoresearch/youtube_tournament_state
           git add -f atlas_forge_autoresearch/youtube_tournament_state
           if git diff --cached --quiet; then echo "no tournament-state changes"; else git commit -m "YouTube hypothesis tournament $GITHUB_RUN_ID"; fi
           git push origin HEAD:youtube-hypothesis-tournament-state
 
       - name: Upload tournament report
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: youtube-hypothesis-tournament-${{ github.run_id }}
