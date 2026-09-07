@@ -71,7 +71,7 @@ jobs:
       - name: Compile and run integrity tests
         run: |
           python -m compileall -q .
-          python -m unittest -v test_autoresearch_integrity.py test_atlas_evomind.py
+          python -m unittest -v test_autoresearch_integrity.py test_atlas_evomind.py test_atlas_youtube_intelligence.py
 
       - name: Exercise EvoMind persistent research intelligence
         shell: bash
@@ -124,6 +124,55 @@ jobs:
               "reward":learned["reward"],
               "tags":learned["tags"],
           })
+          PY
+
+      - name: Exercise chronology-safe YouTube Intelligence bridge
+        shell: bash
+        env:
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED: "1"
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB: "/tmp/atlas-youtube-smoke.db"
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED: "/tmp/atlas-youtube-smoke.jsonl"
+          AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF: "2020-12-31"
+          AUTORESEARCH_TRACK_ID: "smoke__btc__private"
+          AUTORESEARCH_MARKET: "crypto"
+          AUTORESEARCH_FAMILY: "smoke"
+          AUTORESEARCH_PROFILE: "private"
+        run: |
+          rm -f "$AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB" "$AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB-wal" "$AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB-shm"
+          cat > "$AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED" <<'JSONL'
+          {"idea_id":"safe-old","video_id":"old","channel_title":"Smoke Channel","published_at":"2020-06-01","title":"Causal pullback","summary":"Test a pullback confirmation concept.","strategy_rules":["Wait for a pullback before confirmation."],"markets":["crypto"],"specification_quality":0.9,"claimed_metrics":{"return":"999%"}}
+          {"idea_id":"future-leak","video_id":"new","channel_title":"Future Channel","published_at":"2024-01-01","title":"Future idea","summary":"Must be quarantined.","strategy_rules":["Use future-discovered behavior."],"markets":["crypto"],"specification_quality":1.0}
+          JSONL
+          python - <<'PY'
+          import atlas_youtube_intelligence as y
+          guidance, idea_id=y.prompt_guidance(1, "external_proposal")
+          assert idea_id=="safe-old", (idea_id,guidance)
+          assert "999%" not in guidance
+          update=y.learn_from_atlas(
+              idea_id=idea_id,
+              verdict="KEPT",
+              result={"guard_ok":True},
+              base_score=0.5,
+              candidate_score=0.6,
+          )
+          assert update["kept"] is True, update
+          brain=y.YouTubeAtlasBridge(
+              "/tmp/atlas-youtube-smoke.db",
+              feed_path="/tmp/atlas-youtube-smoke.jsonl",
+              track_id="smoke__btc__private",
+              domain="crypto:smoke:private",
+              published_cutoff="2020-12-31",
+          )
+          try:
+              snap=brain.snapshot()
+              assert snap["eligible"]==1, snap
+              assert snap["quarantined"]==1, snap
+              assert snap["keeper_outcomes"]==1, snap
+              assert snap["hidden_validation_access"] is False
+              assert snap["final_oos_access"] is False
+              print(snap)
+          finally:
+              brain.close()
           PY
 
       - name: Generate and compile every runnable family
@@ -260,4 +309,4 @@ jobs:
         if: success()
         shell: bash
         run: |
-          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. EvoMind v0.10 research-memory/proposal routing, all runnable seeds, protocol-v3 development harness, 2x/3x cost stress, prefix-invariance lookahead audit, integrity tests, and >=3 continuous-path folds passed. Hidden validation and 2023+ OOS were not opened."
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. EvoMind v0.10 research-memory/proposal routing, chronology-safe YouTube Intelligence external-hypothesis routing, all runnable seeds, protocol-v3 development harness, 2x/3x cost stress, prefix-invariance lookahead audit, integrity tests, and >=3 continuous-path folds passed. Hidden validation and 2023+ OOS were not opened."
