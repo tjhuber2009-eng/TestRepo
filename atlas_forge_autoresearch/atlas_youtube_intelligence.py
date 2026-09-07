@@ -460,12 +460,13 @@ class YouTubeAtlasBridge:
         return explicit
 
     def _market_compatible(self, markets: tuple[str, ...]) -> bool:
-        if not self._broad_market_compatible(markets):
-            return False
         explicit = self._explicit_instruments(markets)
         if self.routing_stage == "reproduction" and explicit:
+            # Instrument identity outranks the adapter's broad market class.
+            # Example: XAUUSD may be carried by an FX data adapter even when
+            # the source labels the hypothesis simply as "Gold".
             return bool(self.symbol and self.symbol in explicit)
-        return True
+        return self._broad_market_compatible(markets)
 
     def _timeframe_compatible(self, timeframes: tuple[str, ...]) -> bool:
         if not timeframes:
