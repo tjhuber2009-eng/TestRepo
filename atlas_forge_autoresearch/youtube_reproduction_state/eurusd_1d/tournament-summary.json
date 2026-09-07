@@ -1,0 +1,34 @@
+{
+  "atlas_source_sha": "487a797c0bb715c6dd780e07fa83f7935777a373",
+  "attempts": 1,
+  "baseline_state_sha": "3aa16e8708ffe3c545f472ed23b92f1260616a48",
+  "development_end": "2021-12-31",
+  "development_start": "2020-01-01",
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "ideas": [
+    {
+      "base_score": -0.090349,
+      "cagr_pct": 2.56,
+      "candidate_score": -0.044927,
+      "description": "Add ADX trend filter: only enter long when ADX > 20 indicating a trending market",
+      "guard_ok": false,
+      "idea_id": "yti-gemini:UCPCPE5MoI7DS1WiVB_-mzNw:-DRjEKYUCno:0:6fjbpw",
+      "max_dd_pct": -8.54,
+      "pf": 2.281,
+      "reason": "guard: development robustness gate failed",
+      "sharpe": 0.3481,
+      "verdict": "REJECTED"
+    }
+  ],
+  "invalid_pre_backtest": 0,
+  "kept": 0,
+  "rejected": 1,
+  "route_id": "eurusd_1d",
+  "routing_stage": "reproduction",
+  "schema": 2,
+  "source_track": "sentinel63__eurusd__private",
+  "symbol": "EURUSD",
+  "timeframe": "1D",
+  "youtube_feed_sha": "047ba6704b21a286e34162024bafeae6d88dd429"
+}

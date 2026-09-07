@@ -1,0 +1,4 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T23:24:14Z	1	RISK_CONTROL_CHANGE	nan	-0.090349	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop-loss to limit losses on long entries
+2026-09-06T23:24:50Z	2	REJECTED	-0.064705	-0.090349	7.757	3.809	0.4529	7.278	6	-8.977	0.762251	0.241517	D	7.502	guard: development robustness gate failed	Add low-volatility filter: only enter long when realized volatility is below its 20-bar SMA
+2026-09-07T03:01:27Z	3	REJECTED	-0.044927	-0.090349	5.182	2.56	0.3481	6.496	3	-8.54	0.707969	0.265469	D	5.058	guard: development robustness gate failed	Add ADX trend filter: only enter long when ADX > 20 indicating a trending market
