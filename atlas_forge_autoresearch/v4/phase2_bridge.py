@@ -87,6 +87,16 @@ def load_phase2_promotion_queue() -> dict | None:
     return payload
 
 
+def _routing_value(row: dict, key: str, default=None):
+    value = row.get(key)
+    if value is not None:
+        return value
+    routing = row.get("routing")
+    if isinstance(routing, dict) and routing.get(key) is not None:
+        return routing.get(key)
+    return default
+
+
 def _strict_pbo(row: dict) -> float | None:
     values = [
         _finite(row.get("cohort_pbo")),
@@ -230,11 +240,20 @@ def replay_private_promotions(
                 ),
             }
             replay["source_routing"] = {
-                "tested_timeframe": row.get("tested_timeframe"),
-                "route_stage": row.get("route_stage"),
-                "source_route_verified": row.get("source_route_verified"),
-                "source_native_match": row.get("source_native_match"),
-                "signal_cadence": row.get("signal_cadence"),
+                "tested_timeframe": _routing_value(
+                    row, "tested_timeframe"
+                ),
+                "route_stage": _routing_value(row, "route_stage",
+                    _routing_value(row, "stage")),
+                "source_route_verified": _routing_value(
+                    row, "source_route_verified", False
+                ),
+                "source_native_match": _routing_value(
+                    row, "source_native_match", False
+                ),
+                "signal_cadence": _routing_value(
+                    row, "signal_cadence", "bar"
+                ),
                 "routing": row.get("routing"),
             }
             replay["replay_status"] = "completed"
@@ -306,11 +325,21 @@ def prop_transfer_candidates(
                 "source_artifact_sha256": str(
                     row["promotion_source_sha256"]
                 ),
-                "source_tested_timeframe": row.get("tested_timeframe"),
-                "source_route_stage": row.get("route_stage"),
-                "source_route_verified": row.get("source_route_verified"),
-                "source_native_match": row.get("source_native_match"),
-                "source_signal_cadence": row.get("signal_cadence"),
+                "source_tested_timeframe": _routing_value(
+                    row, "tested_timeframe"
+                ),
+                "source_route_stage": _routing_value(
+                    row, "route_stage", _routing_value(row, "stage")
+                ),
+                "source_route_verified": _routing_value(
+                    row, "source_route_verified", False
+                ),
+                "source_native_match": _routing_value(
+                    row, "source_native_match", False
+                ),
+                "source_signal_cadence": _routing_value(
+                    row, "signal_cadence", "bar"
+                ),
             }
             supported.append(params)
             record["transfer_status"] = "supported"
@@ -318,11 +347,20 @@ def prop_transfer_candidates(
             record["adapter"] = adapter
             record["strict_pbo"] = strict_pbo
             record["source_routing"] = {
-                "tested_timeframe": row.get("tested_timeframe"),
-                "route_stage": row.get("route_stage"),
-                "source_route_verified": row.get("source_route_verified"),
-                "source_native_match": row.get("source_native_match"),
-                "signal_cadence": row.get("signal_cadence"),
+                "tested_timeframe": _routing_value(
+                    row, "tested_timeframe"
+                ),
+                "route_stage": _routing_value(row, "route_stage",
+                    _routing_value(row, "stage")),
+                "source_route_verified": _routing_value(
+                    row, "source_route_verified", False
+                ),
+                "source_native_match": _routing_value(
+                    row, "source_native_match", False
+                ),
+                "signal_cadence": _routing_value(
+                    row, "signal_cadence", "bar"
+                ),
                 "routing": row.get("routing"),
             }
             audit.append(record)
