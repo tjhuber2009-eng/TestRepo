@@ -21295,7 +21295,32 @@
         "portfolio_eligible": true,
         "portfolio_gate_reason": "eligible",
         "replay_gate_ok": true,
-        "replay_status": "completed"
+        "replay_status": "completed",
+        "source_routing": {
+          "route_stage": "atlas_variant",
+          "routing": {
+            "evaluation_timeframes": [
+              "1D"
+            ],
+            "native_instruments": [],
+            "native_markets": [],
+            "native_timeframes": [],
+            "reason": "source-native instrument/timeframe route not verified",
+            "requires_contract_data": false,
+            "requires_multi_timeframe": false,
+            "requires_session_clock": false,
+            "requires_volume": false,
+            "signal_cadence": "bar",
+            "source_native_match": false,
+            "source_route_verified": false,
+            "stage": "atlas_variant",
+            "tested_timeframe": "1D"
+          },
+          "signal_cadence": null,
+          "source_native_match": false,
+          "source_route_verified": null,
+          "tested_timeframe": "1D"
+        }
       }
     ],
     "final_oos_opened": false,
@@ -21882,18 +21907,18 @@
       "final_oos_opened": false,
       "hidden_validation_opened": false,
       "metrics_5bp": {
-        "cagr_pct": 29.76633233265482,
-        "cost_stress_cagr_pct": 28.146695562349255,
-        "cumulative_return_pct": 1605.5820213913719,
+        "cagr_pct": 29.766301162574905,
+        "cost_stress_cagr_pct": 28.146664795185885,
+        "cumulative_return_pct": 1605.577561615345,
         "dsr": 1.0,
         "gross_exposure": 1.0,
-        "max_dd_pct": -59.88392531007116,
+        "max_dd_pct": -59.88394626394506,
         "pbo": null,
         "psr_zero": 1.0,
-        "sharpe": 0.9341552658523127,
-        "sortino": 1.3046466079153596,
+        "sharpe": 0.9341545826503549,
+        "sortino": 1.304645777309448,
         "trades": 204,
-        "turnover_per_year": 16.476643334885587,
+        "turnover_per_year": 16.47661015781708,
         "years": 10.885918259786306
       },
       "protocol": "alpha_generation_v4",
@@ -21917,7 +21942,7 @@
   },
   "promotion_blocked": false,
   "protocol": "alpha_generation_v4",
-  "research_commit_sha": "5f8546e0bf761b11d5d582d8b6e71f42b8bd25db",
+  "research_commit_sha": "8c3e7e3ae223517e1487d919cab1a12713e40130",
   "reversal_parameter_optimizer": {
     "chosen": null,
     "frozen_structure": "qqq_rsi2_pullback_tqqq_voltarget_v1",
