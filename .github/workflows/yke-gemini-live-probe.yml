@@ -1,0 +1,46 @@
+name: YKE Gemini live video probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/yke-gemini-live-probe-kick"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ATLAS_YOUTUBE_GEMINI_MODEL: gemini-3.8-flash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: yke-v3.1-atlas-integration
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify secret is present
+        shell: bash
+        run: test -n "$GEMINI_API_KEY"
+      - name: Analyze one public trading video
+        working-directory: youtube-knowledge-engine-expanded
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import {analyzeYouTubeVideoWithGemini} from './lib/atlas-gemini-video.js';
+          const result=await analyzeYouTubeVideoWithGemini({
+            videoUrl:'https://www.youtube.com/watch?v=_BBjCdVfRvU',
+          });
+          console.log(JSON.stringify({
+            strategy_relevant:result.strategy_relevant,
+            visual_context_used:result.visual_context_used,
+            idea_count:result.ideas.length,
+            model:result.model,
+            idea_summaries:result.ideas.map(x=>x.summary.slice(0,160)),
+          },null,2));
+          JS
