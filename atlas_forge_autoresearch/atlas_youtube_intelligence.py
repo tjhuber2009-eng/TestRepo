@@ -363,10 +363,11 @@ class YouTubeAtlasBridge:
         rows = self.conn.execute(
             """
             SELECT * FROM ideas
-            WHERE eligible=1
+            WHERE eligible=1 AND substr(published_at,1,10) <= ?
             ORDER BY specification_quality DESC, attempts ASC, keepers DESC,
                      published_at ASC, idea_id ASC
-            """
+            """,
+            (self.cutoff.isoformat(),),
         ).fetchall()
         for row in rows:
             if row["idea_id"] in attempted:
