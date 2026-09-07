@@ -1,4 +1,4 @@
-Tournament request: 2026-09-06 retry-market-routing
-Atlas source: bbca5a8c69f18e46bd9c11a0a5709e1e3084f688
+Tournament request: 2026-09-06 exact-instrument-timeframe-routing
+Atlas source: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
 Track: sentinel63__eurusd__private
-Mode: forced external_proposal, development-only
+Mode: forced external_proposal, reproduction routing, 1D only
