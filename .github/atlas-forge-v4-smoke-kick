@@ -1,2 +1,2 @@
-Source head: 8c3e7e3ae223517e1487d919cab1a12713e40130
-Purpose: verify V4 preservation of instrument/timeframe routing provenance from Phase-2 through private and prop promotion
+Source head: e3418cf965320ee2edc9ba8f7bca7cf001f5a790
+Purpose: final audit verification of V4 routing provenance fallback and propagation
