@@ -353,7 +353,7 @@ class YouTubeAtlasBridge:
             for alias in allowed:
                 if value == alias:
                     return True
-                if re.search(rf"\\b{re.escape(alias)}\\b", value):
+                if re.search(rf"\b{re.escape(alias)}\b", value):
                     return True
         return False
 
