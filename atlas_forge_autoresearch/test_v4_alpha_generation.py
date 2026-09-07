@@ -93,7 +93,13 @@ from v4.regime_engine import RegimeEngine
 from v4.risk_overlays import vix_stress_overlay, volatility_target_overlay
 from v4.selection_diagnostics import cscv_pbo
 from v4.research_allocator import ResearchAllocator, ResearchCell, ResearchObservation
-from v4.strategy_examples import independent_trend_basket, leveraged_defensive_rotation, pead_event_weights
+from v4.strategy_examples import (
+    independent_trend_basket,
+    leveraged_defensive_rotation,
+    overnight_gap_reversal_diagnostic,
+    pead_event_weights,
+    rolling_pair_reversion,
+)
 from v4.strategy_intake import HypothesisQueue, StrategyHypothesis
 
 
@@ -2832,6 +2838,65 @@ class MoonStrategy:
                 self.assertTrue(
                     np.isfinite(full.to_numpy(dtype=float)).all()
                 )
+
+    def test_stat_arb_pair_strategy_is_prefix_invariant_and_dollar_controlled(self):
+        idx = pd.date_range("2018-01-01", periods=420, freq="D")
+        t = np.arange(len(idx), dtype=float)
+        right = 100.0 * np.exp(0.0005 * t + 0.01 * np.sin(t / 23.0))
+        spread = 0.03 * np.sin(t / 7.0)
+        left = np.exp(0.9 * np.log(right) + spread)
+        data = {
+            "A": pd.DataFrame(
+                {"Open": left, "High": left * 1.01, "Low": left * 0.99, "Close": left},
+                index=idx,
+            ),
+            "B": pd.DataFrame(
+                {"Open": right, "High": right * 1.01, "Low": right * 0.99, "Close": right},
+                index=idx,
+            ),
+        }
+        strat = rolling_pair_reversion(
+            left_symbol="A",
+            right_symbol="B",
+            formation_window=120,
+            z_window=40,
+            entry_z=1.2,
+            exit_z=0.25,
+            stop_z=4.0,
+            gross_weight=1.0,
+        )
+        full = strat(data)
+        short = {k: v.iloc[:330].copy() for k, v in data.items()}
+        prefix = strat(short)
+        pd.testing.assert_frame_equal(prefix, full.loc[prefix.index])
+        gross = full.abs().sum(axis=1)
+        self.assertLessEqual(float(gross.max()), 1.0 + 1e-12)
+        self.assertGreater(int((gross > 0.0).sum()), 0)
+        active_net = full.loc[gross > 0.0].sum(axis=1).abs()
+        self.assertLess(float(active_net.max()), 1.0)
+
+    def test_overnight_gap_reversal_uses_open_known_signal(self):
+        idx = pd.date_range("2020-01-01", periods=5, freq="D")
+        frame = pd.DataFrame(
+            {
+                "Open": [100.0, 110.0, 90.0, 100.0, 101.0],
+                "High": [101.0, 111.0, 101.0, 101.0, 102.0],
+                "Low": [99.0, 99.0, 89.0, 99.0, 100.0],
+                "Close": [100.0, 100.0, 100.0, 100.0, 101.0],
+            },
+            index=idx,
+        )
+        result = overnight_gap_reversal_diagnostic(
+            frame,
+            gap_threshold=0.05,
+            one_way_cost_bps=0.0,
+        )
+        self.assertEqual(result["trades"], 2)
+        self.assertGreater(result["cagr_pct"], 0.0)
+        self.assertEqual(
+            result["causality"],
+            "signal uses open[t] and close[t-1]; exit is close[t]",
+        )
 
     def test_full_v4_integration_demo(self):
         out=run_integration_demo()
