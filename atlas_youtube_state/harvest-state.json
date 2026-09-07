@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "updatedAt": "2026-09-07T00:37:19.037Z",
+  "videos": {
+    "UC04-HvUvHG4hpMnQx07ObYQ:__Z7jayHzzU": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:35:08.211Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Live Trading Forex, Gold & NQ (9-1 VIP STREAK!)",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] __Z7jayHzzU: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UC04-HvUvHG4hpMnQx07ObYQ:_aZLYGIdT1I": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:35:10.271Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Live Trading Forex, Gold, And Nasdaq (TOP Forex Stream ORB Scalping)",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _aZLYGIdT1I: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCPCPE5MoI7DS1WiVB_-mzNw:__rxiiwhrdg": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:35:45.903Z",
+      "attempts": 1,
+      "published": "",
+      "title": "LIVE Trading PCE & GDP Data | Gold, Nasdaq, Forex",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] __rxiiwhrdg: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCPCPE5MoI7DS1WiVB_-mzNw:_1uZXyKiKuE": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:35:48.221Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Watch Me Trade Forex: 2 Losses on GBP/JPY 📉 (REALITY CHECK)",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _1uZXyKiKuE: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCc8IRYpgBr4NGbaQFnd2b-A:_04ZnwpWD14": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:35:58.409Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Ergodic TVI Index (Indicator Profile Series)",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _04ZnwpWD14: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCc8IRYpgBr4NGbaQFnd2b-A:_0EbM3DMbvQ": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:00.253Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Can The US Dollar Index Help Forex Traders? (Podcast Episode 58)",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _0EbM3DMbvQ: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCFSn-h8wTnhpKJMteN76Abg:_BBjCdVfRvU": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:13.708Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Breakout trading: How to trade breakouts like a PRO",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _BBjCdVfRvU: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCFSn-h8wTnhpKJMteN76Abg:_KRelepN4Ek": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:15.796Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Forex Trading for Beginners #1: What is Forex trading and How Does it Work",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _KRelepN4Ek: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCgY_eHY4NCTcRnU6CCZXWng:_IaExNGNYg0": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:22.526Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Testing Trend Indicator 100 Times to see if it actually works - Chaikin Money Flow",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _IaExNGNYg0: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCgY_eHY4NCTcRnU6CCZXWng:_QuzEybPwM0": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:24.511Z",
+      "attempts": 1,
+      "published": "",
+      "title": "I took 100 TRADES with Williams %R Trading Strategy and here's what happened... Forex Day Trading",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _QuzEybPwM0: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCGL9ubdGcvZh_dvSV2z1hoQ:_cXdHyJrfjQ": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:32.525Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Good trading strategies ( Forex review 4/11 - 6/3 )",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _cXdHyJrfjQ: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCGL9ubdGcvZh_dvSV2z1hoQ:_Ja-J9woB54": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:34.470Z",
+      "attempts": 1,
+      "published": "",
+      "title": "FWMP 2/12-2/16 Predictions For 3 Major Forex Pairs",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _Ja-J9woB54: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCYFQzaZyTUzY-Tiytyv3HhA:_Ek9NZNM-3c": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:48.915Z",
+      "attempts": 1,
+      "published": "",
+      "title": "3 Line Strike Indicator FREE***",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _Ek9NZNM-3c: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCYFQzaZyTUzY-Tiytyv3HhA:_if6vWgsRXk": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:36:51.521Z",
+      "attempts": 1,
+      "published": "",
+      "title": "Forex Watch",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _if6vWgsRXk: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCg3B_joekBGJ1s_4fRjsMKA:_ER-jT6oFqs": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:37:16.676Z",
+      "attempts": 1,
+      "published": "",
+      "title": "SMB Options Tribe - Gama Scalping",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _ER-jT6oFqs: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    },
+    "UCg3B_joekBGJ1s_4fRjsMKA:_jE9269Z5RQ": {
+      "status": "error",
+      "lastAttemptAt": "2026-09-07T00:37:19.037Z",
+      "attempts": 1,
+      "published": "",
+      "title": "21 EMA Day Trading Strategy",
+      "lastError": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _jE9269Z5RQ: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how to manually pass cookies. Also see  htt",
+      "code": "YTDLP_CAPTION_INSPECT_FAILED"
+    }
+  },
+  "channels": {
+    "UC04-HvUvHG4hpMnQx07ObYQ": {
+      "channel": "@tradewithpat",
+      "title": "Trade with Pat",
+      "lastRunAt": "2026-09-07T00:35:10.271Z",
+      "discovered": 393,
+      "relevant": 303
+    },
+    "UCPCPE5MoI7DS1WiVB_-mzNw": {
+      "channel": "@tradernick",
+      "title": "TraderNick",
+      "lastRunAt": "2026-09-07T00:35:48.221Z",
+      "discovered": 3000,
+      "relevant": 1012
+    },
+    "UCc8IRYpgBr4NGbaQFnd2b-A": {
+      "channel": "@nononsenseforex",
+      "title": "No Nonsense Forex",
+      "lastRunAt": "2026-09-07T00:36:00.254Z",
+      "discovered": 688,
+      "relevant": 274
+    },
+    "UCFSn-h8wTnhpKJMteN76Abg": {
+      "channel": "@tradingwithrayner",
+      "title": "Rayner Teo",
+      "lastRunAt": "2026-09-07T00:36:15.796Z",
+      "discovered": 853,
+      "relevant": 321
+    },
+    "UCgY_eHY4NCTcRnU6CCZXWng": {
+      "channel": "@TRADINGRUSH",
+      "title": "TRADING RUSH",
+      "lastRunAt": "2026-09-07T00:36:24.511Z",
+      "discovered": 201,
+      "relevant": 136
+    },
+    "UCGL9ubdGcvZh_dvSV2z1hoQ": {
+      "channel": "@thetradingchannel",
+      "title": "The Trading Channel (The Trading Channel)",
+      "lastRunAt": "2026-09-07T00:36:34.470Z",
+      "discovered": 423,
+      "relevant": 246
+    },
+    "UCYFQzaZyTUzY-Tiytyv3HhA": {
+      "channel": "@themovingaverage",
+      "title": "The Moving Average",
+      "lastRunAt": "2026-09-07T00:36:51.521Z",
+      "discovered": 1199,
+      "relevant": 305
+    },
+    "UCg3B_joekBGJ1s_4fRjsMKA": {
+      "channel": "@smbcapital",
+      "title": "SMB Capital",
+      "lastRunAt": "2026-09-07T00:37:19.037Z",
+      "discovered": 2536,
+      "relevant": 586
+    }
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "startedAt": "2026-09-07T00:34:58.912Z",
+  "channels": [
+    {
+      "channel": "@tradewithpat",
+      "discovered": 393,
+      "relevant": 303,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "__Z7jayHzzU",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] __Z7jayHzzU: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_aZLYGIdT1I",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _aZLYGIdT1I: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@tradernick",
+      "discovered": 3000,
+      "relevant": 1012,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "__rxiiwhrdg",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] __rxiiwhrdg: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_1uZXyKiKuE",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _1uZXyKiKuE: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@nononsenseforex",
+      "discovered": 688,
+      "relevant": 274,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "_04ZnwpWD14",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _04ZnwpWD14: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_0EbM3DMbvQ",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _0EbM3DMbvQ: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@tradingwithrayner",
+      "discovered": 853,
+      "relevant": 321,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "_BBjCdVfRvU",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _BBjCdVfRvU: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_KRelepN4Ek",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _KRelepN4Ek: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@TRADINGRUSH",
+      "discovered": 201,
+      "relevant": 136,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "_IaExNGNYg0",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _IaExNGNYg0: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_QuzEybPwM0",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _QuzEybPwM0: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@thetradingchannel",
+      "discovered": 423,
+      "relevant": 246,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "_cXdHyJrfjQ",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _cXdHyJrfjQ: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_Ja-J9woB54",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _Ja-J9woB54: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@themovingaverage",
+      "discovered": 1199,
+      "relevant": 305,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "_Ek9NZNM-3c",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _Ek9NZNM-3c: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_if6vWgsRXk",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _if6vWgsRXk: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    },
+    {
+      "channel": "@smbcapital",
+      "discovered": 2536,
+      "relevant": 586,
+      "selected": 2,
+      "captured": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "transcript",
+          "videoId": "_ER-jT6oFqs",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _ER-jT6oFqs: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        },
+        {
+          "stage": "transcript",
+          "videoId": "_jE9269Z5RQ",
+          "code": "YTDLP_CAPTION_INSPECT_FAILED",
+          "message": "yt-dlp could not inspect subtitle tracks: ERROR: [youtube] _jE9269Z5RQ: Sign in to confirm you’re not a bot. Use --cookies-from-browser or --cookies for the authentication. See  https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp  for how"
+        }
+      ]
+    }
+  ],
+  "existingIdeas": 0,
+  "newIdeas": 0,
+  "transcriptsAttempted": 16,
+  "transcriptsCaptured": 0,
+  "blocked": false,
+  "completedAt": "2026-09-07T00:37:19.037Z",
+  "totalIdeas": 0
+}
