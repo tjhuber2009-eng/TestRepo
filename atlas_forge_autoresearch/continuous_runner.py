@@ -21,6 +21,7 @@ import random
 import re
 
 import overfit_diagnostics
+import strategy_routing
 import shutil
 import subprocess
 import sys
@@ -240,11 +241,13 @@ def build_tracks():
             if allowlist is not None and family["id"] not in allowlist:
                 continue
             for profile_name in ["prop", "private"]:
+                routing = strategy_routing.classify_track(family, target)
                 tracks.append({
                     "family": family,
                     "target": target,
                     "profile_name": profile_name,
                     "profile": profiles[profile_name],
+                    "routing": routing,
                     "id": slug(family["id"], target["id"], profile_name),
                 })
     if bool(config.get("balanced_market_scheduling", False)):
@@ -346,6 +349,17 @@ def track_state_identity_matches(track, meta):
     configured_symbol = track.get("target", {}).get("symbol")
     if stored_symbol and configured_symbol and str(stored_symbol) != str(configured_symbol):
         return False
+    stored_timeframe = meta.get("tested_timeframe") or meta.get("timeframe")
+    configured_timeframe = strategy_routing.canonical_timeframe(
+        track.get("target", {}).get("timeframe", "1D")
+    )
+    if (
+        stored_timeframe
+        and configured_timeframe
+        and strategy_routing.canonical_timeframe(stored_timeframe)
+        != configured_timeframe
+    ):
+        return False
     return True
 
 
@@ -433,6 +447,17 @@ def target_env(track):
         "AUTORESEARCH_FAMILY": track["family"]["id"],
         "AUTORESEARCH_SYMBOL": t["symbol"],
         "AUTORESEARCH_MARKET": t["market"],
+        "AUTORESEARCH_TIMEFRAME": strategy_routing.canonical_timeframe(
+            t.get("timeframe", "1D")
+        ),
+        "AUTORESEARCH_ROUTE_STAGE": track["routing"]["stage"],
+        "AUTORESEARCH_SOURCE_ROUTE_VERIFIED": (
+            "1" if track["routing"]["source_route_verified"] else "0"
+        ),
+        "AUTORESEARCH_SOURCE_NATIVE_MATCH": (
+            "1" if track["routing"]["source_native_match"] else "0"
+        ),
+        "AUTORESEARCH_SIGNAL_CADENCE": track["routing"]["signal_cadence"],
         "AUTORESEARCH_DATA_FILE": f"data/{t['id']}_1d.csv",
         "AUTORESEARCH_COMMISSION": str(t["commission"]),
         "AUTORESEARCH_MARGIN": str(t["margin"]),
@@ -610,6 +635,9 @@ def initialize_track(track, track_dir, env):
                 "profile": track["profile_name"],
                 "symbol": track["target"]["symbol"],
                 "target_source": track["target"].get("source"),
+                "tested_timeframe": track["routing"]["tested_timeframe"],
+                "route_stage": track["routing"]["stage"],
+                "routing": track["routing"],
                 "updated_at": now(),
             })
             return False, reason
@@ -636,6 +664,9 @@ def initialize_track(track, track_dir, env):
                 "protocol": PROTOCOL,
                 "symbol": track["target"]["symbol"],
                 "target_source": track["target"].get("source"),
+                "tested_timeframe": track["routing"]["tested_timeframe"],
+                "route_stage": track["routing"]["stage"],
+                "routing": track["routing"],
                 "updated_at": now(),
             })
             return False, reason
@@ -660,6 +691,9 @@ def initialize_track(track, track_dir, env):
             "protocol": PROTOCOL,
             "symbol": track["target"]["symbol"],
             "target_source": track["target"].get("source"),
+            "tested_timeframe": track["routing"]["tested_timeframe"],
+            "route_stage": track["routing"]["stage"],
+            "routing": track["routing"],
             "updated_at": now(),
         })
         return False, reason
@@ -711,6 +745,12 @@ def save_track_state(track, track_dir, reason=""):
         "symbol": track["target"]["symbol"],
         "market": track["target"]["market"],
         "target_source": track["target"].get("source"),
+        "tested_timeframe": track["routing"]["tested_timeframe"],
+        "route_stage": track["routing"]["stage"],
+        "source_route_verified": track["routing"]["source_route_verified"],
+        "source_native_match": track["routing"]["source_native_match"],
+        "signal_cadence": track["routing"]["signal_cadence"],
+        "routing": track["routing"],
         "profile": track["profile_name"],
         "max_dd_limit_pct": track["profile"]["max_dd_pct"],
         **counts,
@@ -1541,6 +1581,11 @@ def write_progress(
             "profile": track["profile_name"],
             "data_quality_grade": track["target"].get("data_quality_grade"),
             "instrument_fidelity": track["target"].get("instrument_fidelity"),
+            "tested_timeframe": track["routing"]["tested_timeframe"],
+            "route_stage": track["routing"]["stage"],
+            "source_route_verified": track["routing"]["source_route_verified"],
+            "source_native_match": track["routing"]["source_native_match"],
+            "signal_cadence": track["routing"]["signal_cadence"],
             "status": status,
             "valid_attempts": rc["valid"],
             "attempts": rc["attempts"],
@@ -1584,6 +1629,21 @@ def write_progress(
         "depth_target": depth_target,
         "elite_target": elite_target,
         "runnable_track_count": len(tracks),
+        "routing_stage_counts": {
+            stage: sum(
+                1 for track in tracks if track["routing"]["stage"] == stage
+            )
+            for stage in ("reproduction", "transfer", "atlas_variant", "blocked")
+        },
+        "timeframe_counts": {
+            tf: sum(
+                1 for track in tracks
+                if track["routing"]["tested_timeframe"] == tf
+            )
+            for tf in sorted({
+                track["routing"]["tested_timeframe"] for track in tracks
+            })
+        },
         "terminal_track_count": terminal,
         "validation_pass_count": counts["validation_pass"],
         "validation_fail_count": counts["validation_fail"],
@@ -1646,6 +1706,14 @@ def rebuild_leaderboard(tracks):
             "data_quality_grade": track["target"].get("data_quality_grade"),
             "data_quality_note": track["target"].get("data_quality_note"),
             "instrument_fidelity": track["target"].get("instrument_fidelity"),
+            "tested_timeframe": track["routing"]["tested_timeframe"],
+            "route_stage": track["routing"]["stage"],
+            "source_route_verified": track["routing"]["source_route_verified"],
+            "source_native_match": track["routing"]["source_native_match"],
+            "signal_cadence": track["routing"]["signal_cadence"],
+            "native_markets": track["routing"]["native_markets"],
+            "native_instruments": track["routing"]["native_instruments"],
+            "native_timeframes": track["routing"]["native_timeframes"],
             "valid_attempts": m.get("valid", m.get("valid_attempts", 0)),
             "development_guard_ok": bool(b.get("guard_ok")),
             "development_score": b.get("score"),
