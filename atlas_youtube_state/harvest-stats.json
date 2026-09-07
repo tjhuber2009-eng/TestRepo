@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "startedAt": "2026-09-07T01:00:34.225Z",
+  "startedAt": "2026-09-07T01:07:24.708Z",
   "channels": [
     {
       "channel": "@tradewithpat",
@@ -20,22 +20,9 @@
       "chronologyEligible": 359,
       "selected": 2,
       "captured": 0,
-      "geminiAnalyzed": 0,
-      "ideas": 0,
-      "failures": [
-        {
-          "stage": "gemini_video",
-          "videoId": "_cF3GrbFVcY",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "_SZGq9HVwSo",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        }
-      ]
+      "geminiAnalyzed": 2,
+      "ideas": 5,
+      "failures": []
     },
     {
       "channel": "@nononsenseforex",
@@ -44,22 +31,9 @@
       "chronologyEligible": 102,
       "selected": 2,
       "captured": 0,
-      "geminiAnalyzed": 0,
+      "geminiAnalyzed": 2,
       "ideas": 0,
-      "failures": [
-        {
-          "stage": "gemini_video",
-          "videoId": "2XAIHVbwX30",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "7bUI4Mw9FBU",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        }
-      ]
+      "failures": []
     },
     {
       "channel": "@tradingwithrayner",
@@ -68,22 +42,9 @@
       "chronologyEligible": 257,
       "selected": 2,
       "captured": 0,
-      "geminiAnalyzed": 0,
-      "ideas": 0,
-      "failures": [
-        {
-          "stage": "gemini_video",
-          "videoId": "1BX5Bkgl038",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "1xrDFPxy4d0",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        }
-      ]
+      "geminiAnalyzed": 2,
+      "ideas": 2,
+      "failures": []
     },
     {
       "channel": "@TRADINGRUSH",
@@ -92,20 +53,14 @@
       "chronologyEligible": 85,
       "selected": 2,
       "captured": 0,
-      "geminiAnalyzed": 0,
-      "ideas": 0,
+      "geminiAnalyzed": 1,
+      "ideas": 1,
       "failures": [
         {
           "stage": "gemini_video",
-          "videoId": "--AkI5rmtg4",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "7-Ntn-5cw1U",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+          "videoId": "A0uPiLtLTIA",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
         }
       ]
     },
@@ -116,22 +71,9 @@
       "chronologyEligible": 166,
       "selected": 2,
       "captured": 0,
-      "geminiAnalyzed": 0,
+      "geminiAnalyzed": 1,
       "ideas": 0,
-      "failures": [
-        {
-          "stage": "gemini_video",
-          "videoId": "_SUTvm1SLPI",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "-nzRFcya3To",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        }
-      ]
+      "failures": []
     },
     {
       "channel": "@themovingaverage",
@@ -145,15 +87,9 @@
       "failures": [
         {
           "stage": "gemini_video",
-          "videoId": "-MDuzmLXXhA",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "-za-CIJbwxs",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+          "videoId": "3jwixTmgHUg",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
         }
       ]
     },
@@ -166,33 +102,20 @@
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
-      "failures": [
-        {
-          "stage": "gemini_video",
-          "videoId": "1iZXnYpOgT0",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        },
-        {
-          "stage": "gemini_video",
-          "videoId": "1l2ae7bcYmo",
-          "code": "GEMINI_HTTP_400",
-          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
-        }
-      ]
+      "failures": []
     }
   ],
   "existingIdeas": 0,
-  "newIdeas": 0,
+  "newIdeas": 8,
   "transcriptsAttempted": 0,
   "transcriptsCaptured": 0,
-  "geminiVideosAnalyzed": 0,
-  "geminiMinutesEstimated": 0,
-  "geminiIdeas": 0,
+  "geminiVideosAnalyzed": 8,
+  "geminiMinutesEstimated": 169.2,
+  "geminiIdeas": 8,
   "blocked": true,
   "cloudRunner": true,
   "geminiConfigured": true,
   "needsGeminiKey": false,
-  "completedAt": "2026-09-07T01:03:00.428Z",
-  "totalIdeas": 0
+  "completedAt": "2026-09-07T01:15:19.633Z",
+  "totalIdeas": 8
 }

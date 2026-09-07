@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updatedAt": "2026-09-07T01:03:00.428Z",
+  "updatedAt": "2026-09-07T01:15:19.633Z",
   "videos": {
     "UC04-HvUvHG4hpMnQx07ObYQ:__Z7jayHzzU": {
       "status": "error",
@@ -285,13 +285,113 @@
       "title": "A Good Trading Strategy Sometimes Requires A Bit More Work To Be Super Profitable",
       "lastError": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n    \"status\": \"INVALID_ARGUMENT\",\n    \"det",
       "code": "GEMINI_HTTP_400"
+    },
+    "UCPCPE5MoI7DS1WiVB_-mzNw:-DRjEKYUCno": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:08:48.117Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "My Top Forex Trading Setups for this Week: 8/16/2020",
+      "ideaCount": 3,
+      "model": "gemini-3.8-flash"
+    },
+    "UCPCPE5MoI7DS1WiVB_-mzNw:-fcE1UmIqdk": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:08:59.257Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Forex Trading Strategy: How to Let your Winners Run?",
+      "ideaCount": 2,
+      "model": "gemini-3.8-flash"
+    },
+    "UCc8IRYpgBr4NGbaQFnd2b-A:7Yj0E5FRwBs": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:09:30.368Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Forex Indicators - By Far, The Best Way To Trade",
+      "ideaCount": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "UCc8IRYpgBr4NGbaQFnd2b-A:a2iEpxJxoO0": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:09:47.504Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Forex vs Stocks -- Why Choose?",
+      "ideaCount": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "UCFSn-h8wTnhpKJMteN76Abg:6HI3KkU1CnY": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:10:13.307Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Do You Make These Moving Average Mistakes?",
+      "ideaCount": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "UCFSn-h8wTnhpKJMteN76Abg:6jQH1a5Zopw": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:10:32.841Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Do You Make These Price Action Trading Mistakes?",
+      "ideaCount": 2,
+      "model": "gemini-3.8-flash"
+    },
+    "UCgY_eHY4NCTcRnU6CCZXWng:8A0yF3OPeWE": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:11:07.545Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "This Simple Trend Indicator Made Trend Trading So Easy",
+      "ideaCount": 1,
+      "model": "gemini-3.8-flash"
+    },
+    "UCgY_eHY4NCTcRnU6CCZXWng:A0uPiLtLTIA": {
+      "status": "transient",
+      "lastAttemptAt": "2026-09-07T01:11:27.241Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Is Money Flow Index Better Than RSI? How To Trade MFI Indicator",
+      "lastError": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quo",
+      "code": "GEMINI_HTTP_429"
+    },
+    "UCGL9ubdGcvZh_dvSV2z1hoQ:00KIOxpgwOg": {
+      "status": "done_gemini",
+      "lastAttemptAt": "2026-09-07T01:13:59.884Z",
+      "attempts": 1,
+      "published": "2020-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "Support and Resistance SECRETS For Beginners: 3 simple tricks to better trades!",
+      "ideaCount": 0,
+      "model": "gemini-3.8-flash"
+    },
+    "UCYFQzaZyTUzY-Tiytyv3HhA:3jwixTmgHUg": {
+      "status": "transient",
+      "lastAttemptAt": "2026-09-07T01:14:49.325Z",
+      "attempts": 1,
+      "published": "2021-09-07",
+      "publicationBasis": "relative_upper_bound",
+      "title": "How to Calculate Pips in Forex",
+      "lastError": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quo",
+      "code": "GEMINI_HTTP_429"
     }
   },
   "channels": {
     "UC04-HvUvHG4hpMnQx07ObYQ": {
       "channel": "@tradewithpat",
       "title": "Trade with Pat",
-      "lastRunAt": "2026-09-07T01:00:42.801Z",
+      "lastRunAt": "2026-09-07T01:07:33.031Z",
       "discovered": 393,
       "relevant": 0,
       "chronologyEligible": 0
@@ -299,7 +399,7 @@
     "UCPCPE5MoI7DS1WiVB_-mzNw": {
       "channel": "@tradernick",
       "title": "TraderNick",
-      "lastRunAt": "2026-09-07T01:01:28.029Z",
+      "lastRunAt": "2026-09-07T01:08:59.257Z",
       "discovered": 3000,
       "relevant": 359,
       "chronologyEligible": 359
@@ -307,7 +407,7 @@
     "UCc8IRYpgBr4NGbaQFnd2b-A": {
       "channel": "@nononsenseforex",
       "title": "No Nonsense Forex",
-      "lastRunAt": "2026-09-07T01:01:39.405Z",
+      "lastRunAt": "2026-09-07T01:09:47.504Z",
       "discovered": 688,
       "relevant": 102,
       "chronologyEligible": 102
@@ -315,7 +415,7 @@
     "UCFSn-h8wTnhpKJMteN76Abg": {
       "channel": "@tradingwithrayner",
       "title": "Rayner Teo",
-      "lastRunAt": "2026-09-07T01:01:52.935Z",
+      "lastRunAt": "2026-09-07T01:10:32.841Z",
       "discovered": 853,
       "relevant": 257,
       "chronologyEligible": 257
@@ -323,7 +423,7 @@
     "UCgY_eHY4NCTcRnU6CCZXWng": {
       "channel": "@TRADINGRUSH",
       "title": "TRADING RUSH",
-      "lastRunAt": "2026-09-07T01:01:58.064Z",
+      "lastRunAt": "2026-09-07T01:11:27.241Z",
       "discovered": 201,
       "relevant": 85,
       "chronologyEligible": 85
@@ -331,7 +431,7 @@
     "UCGL9ubdGcvZh_dvSV2z1hoQ": {
       "channel": "@thetradingchannel",
       "title": "The Trading Channel (The Trading Channel)",
-      "lastRunAt": "2026-09-07T01:02:06.169Z",
+      "lastRunAt": "2026-09-07T01:13:59.884Z",
       "discovered": 423,
       "relevant": 166,
       "chronologyEligible": 166
@@ -339,7 +439,7 @@
     "UCYFQzaZyTUzY-Tiytyv3HhA": {
       "channel": "@themovingaverage",
       "title": "The Moving Average",
-      "lastRunAt": "2026-09-07T01:02:25.782Z",
+      "lastRunAt": "2026-09-07T01:14:49.325Z",
       "discovered": 1199,
       "relevant": 43,
       "chronologyEligible": 43
@@ -347,7 +447,7 @@
     "UCg3B_joekBGJ1s_4fRjsMKA": {
       "channel": "@smbcapital",
       "title": "SMB Capital",
-      "lastRunAt": "2026-09-07T01:03:00.428Z",
+      "lastRunAt": "2026-09-07T01:15:19.633Z",
       "discovered": 2536,
       "relevant": 212,
       "chronologyEligible": 212
