@@ -27422,7 +27422,7 @@
     "stock_track_count": 900,
     "target_count": 37
   },
-  "generated_at": "2026-09-07T04:21:55Z",
+  "generated_at": "2026-09-07T04:32:28Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -192705,8 +192705,8 @@
         "id": 34082812078,
         "name": "Atlas Forge Continuous AUTORESEARCH",
         "run_number": 128,
-        "status": "queued",
-        "updated_at": "2026-09-07T04:21:52Z"
+        "status": "in_progress",
+        "updated_at": "2026-09-07T04:21:55Z"
       },
       {
         "conclusion": "success",
