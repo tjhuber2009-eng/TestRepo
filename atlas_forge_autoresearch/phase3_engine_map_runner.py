@@ -12,6 +12,8 @@ from pathlib import Path
 import json
 import re
 
+import strategy_routing
+
 HERE = Path(__file__).resolve().parent
 STATE = HERE / "phase3_state"
 RECON = STATE / "reconstructions.jsonl"
@@ -175,8 +177,19 @@ def main():
             admitted, rules_hash, seen_rule_hashes
         )
 
-        if admitted and engine["support"] == "supported" and not duplicate_rules:
+        adapter_ready, adapter_reason = (
+            strategy_routing.development_adapter_ready(spec)
+            if admitted else (False, "reconstruction not admitted")
+        )
+        if (
+            admitted
+            and engine["support"] == "supported"
+            and adapter_ready
+            and not duplicate_rules
+        ):
             status = "ready_for_development_adapter"
+        elif admitted and not adapter_ready:
+            status = "timeframe_capability_required"
         elif admitted and engine["support"] in {"partial", "missing"}:
             status = "engine_capability_required"
         elif duplicate_rules:
@@ -203,6 +216,16 @@ def main():
             "missing_rules": missing,
             "rules_hash": rules_hash,
             "duplicate_rules": duplicate_rules,
+            "source_timeframe": spec.get("timeframe"),
+            "source_timeframes": spec.get("timeframes"),
+            "requires_multi_timeframe": bool(
+                spec.get("requires_multi_timeframe", False)
+            ),
+            "requires_session_clock": bool(
+                spec.get("requires_session_clock", False)
+            ),
+            "development_adapter_ready": adapter_ready,
+            "development_adapter_reason": adapter_reason,
             "hydration_status": (
                 None if k not in hydrated else hydrated[k].get("hydration_status")
             ),
@@ -242,6 +265,10 @@ def main():
 
     ready = [x for x in mappings if x["mapping_status"] == "ready_for_development_adapter"]
     cap = [x for x in mappings if x["mapping_status"] == "engine_capability_required"]
+    timeframe_cap = [
+        x for x in mappings
+        if x["mapping_status"] == "timeframe_capability_required"
+    ]
     exhausted = [
         x for x in mappings
         if x["mapping_status"] == "incomplete_after_hydration"
@@ -254,6 +281,7 @@ def main():
         "candidate_count": len(mappings),
         "ready_for_development_adapter_count": len(ready),
         "engine_capability_required_count": len(cap),
+        "timeframe_capability_required_count": len(timeframe_cap),
         "source_hydration_required_count": len(hydrate),
         "incomplete_after_hydration_count": len(exhausted),
         "required_hydration_version": REQUIRED_HYDRATION_VERSION,
@@ -278,6 +306,7 @@ def main():
         "mapped_count": len(mappings),
         "ready_for_development_adapter_count": len(ready),
         "engine_capability_required_count": len(cap),
+        "timeframe_capability_required_count": len(timeframe_cap),
         "hydration_queue_count": len(hydrate),
         "incomplete_after_hydration_count": len(exhausted),
         "required_hydration_version": REQUIRED_HYDRATION_VERSION,
@@ -288,9 +317,13 @@ def main():
                 "development_adapter"
                 if ready
                 else (
-                    "engine_capability_build"
-                    if cap
-                    else "research_exhausted_no_complete_specs"
+                    "timeframe_capability_build"
+                    if timeframe_cap
+                    else (
+                        "engine_capability_build"
+                        if cap
+                        else "research_exhausted_no_complete_specs"
+                    )
                 )
             )
         ),
