@@ -1,0 +1,34 @@
+{
+  "atlas_source_sha": "487a797c0bb715c6dd780e07fa83f7935777a373",
+  "attempts": 1,
+  "baseline_state_sha": "12388f4e36d85c9bf093ea94068a40bc6d146842",
+  "development_end": "2020-12-31",
+  "development_start": "2010-01-01",
+  "final_oos_opened": false,
+  "hidden_validation_opened": false,
+  "ideas": [
+    {
+      "base_score": -0.078148,
+      "cagr_pct": null,
+      "candidate_score": null,
+      "description": "Add a filter to enter long only when price is above the EMA of lows, alongside existing EMA63 z-score condition.",
+      "guard_ok": null,
+      "idea_id": "yti-gemini:UCPCPE5MoI7DS1WiVB_-mzNw:-DRjEKYUCno:1:1j0ssdf",
+      "max_dd_pct": null,
+      "pf": null,
+      "reason": "host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed",
+      "sharpe": null,
+      "verdict": "RISK_CONTROL_CHANGE"
+    }
+  ],
+  "invalid_pre_backtest": 1,
+  "kept": 0,
+  "rejected": 0,
+  "route_id": "spx500_spy_1d",
+  "routing_stage": "reproduction",
+  "schema": 2,
+  "source_track": "sentinel63__spy__private",
+  "symbol": "SPY",
+  "timeframe": "1D",
+  "youtube_feed_sha": "047ba6704b21a286e34162024bafeae6d88dd429"
+}
