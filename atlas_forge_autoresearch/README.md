@@ -35,14 +35,42 @@ The model does not receive filesystem or shell tools. Each iteration sends:
 - program.md
 - the current baseline
 - the last 30 scored attempts
+- EvoMind v0.10 development-only research guidance
 - the current strategy.py
 
-The model must return JSON with:
+The model returns one proposal plus the complete replacement strategy source
+inside the host's explicit delimiter protocol. The host validates the response,
+Python syntax, source safety, risk-control fingerprint, localized-change limits,
+and the required AtlasStrategy class before any backtest.
 
-    {"proposal":"one-line description","strategy_py":"complete Python source"}
+## EvoMind v0.10 research intelligence
 
-The host validates JSON, Python syntax, and the required AtlasStrategy class
-before writing strategy.py.
+EvoMind is integrated as the research-intelligence layer above the frozen Atlas
+Forge evaluator. It does not replace the evaluator.
+
+For every adaptive research iteration EvoMind:
+
+1. selects one proposal mode from **evolution**, **synthesis**,
+   **skill_transfer**, **immigrant**, or **external_proposal**;
+2. retrieves strong concepts learned from prior development-only experiments;
+3. can transfer abstract concepts between tracks in the same research lane;
+4. tells the proposal model which mechanisms have repeatedly failed;
+5. receives the resulting Atlas Forge development verdict and metrics; and
+6. updates its persistent proposal-source and concept memory.
+
+Persistent memory is stored inside the active research state directory as
+`evomind.db`, so core AUTORESEARCH and Stock+FX keep independent empirical
+state while each learns across its own tracks.
+
+The integration is intentionally asymmetric: **Atlas Forge grades EvoMind, never
+the reverse.** EvoMind cannot change position sizing, keep/revert a candidate,
+open hidden validation, open the 2023+ final OOS, bypass PBO/bootstrap evidence,
+or relax any private/prop risk limit.
+
+Atlas Forge uses EvoMind v0.10.0 safe-production behavior as the reference:
+adaptive portfolio mode off by default, compute-cost mutation credit off, and
+one island. The v0.10 release/source/wheel hashes and MIT license are frozen
+under `vendor/evomind/`.
 
 ## Setup on Windows PowerShell
 
