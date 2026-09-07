@@ -157,22 +157,132 @@ class AtlasYouTubeIntelligenceTests(unittest.TestCase):
 
     def test_descriptive_market_labels_match_lane(self):
         with tempfile.TemporaryDirectory() as td:
-            brain = ayi.YouTubeAtlasBridge(
-                Path(td) / "youtube.db",
+            eur = ayi.YouTubeAtlasBridge(
+                Path(td) / "eur.db",
                 feed_path=None,
                 track_id="sentinel63__eurusd__private",
                 domain="forex:sentinel63:private",
                 published_cutoff="2021-12-31",
+                symbol="EURUSD",
+                timeframe="1D",
+            )
+            gbp = ayi.YouTubeAtlasBridge(
+                Path(td) / "gbp.db",
+                feed_path=None,
+                track_id="sentinel63__gbpusd__private",
+                domain="forex:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="GBPUSD",
+                timeframe="1D",
+            )
+            try:
+                self.assertFalse(
+                    eur._market_compatible(("Forex (GBP/USD demonstrated)",))
+                )
+                self.assertTrue(
+                    gbp._market_compatible(("Forex (GBP/USD demonstrated)",))
+                )
+                self.assertTrue(
+                    eur._market_compatible(("Forex",))
+                )
+                self.assertFalse(
+                    eur._market_compatible(("Equities", "Stock",))
+                )
+            finally:
+                eur.close()
+                gbp.close()
+
+    def test_index_aliases_route_to_matching_underlying(self):
+        with tempfile.TemporaryDirectory() as td:
+            spy = ayi.YouTubeAtlasBridge(
+                Path(td) / "spy.db",
+                feed_path=None,
+                track_id="youtube__spy__private",
+                domain="stock:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="SPY",
+                timeframe="1D",
+            )
+            qqq = ayi.YouTubeAtlasBridge(
+                Path(td) / "qqq.db",
+                feed_path=None,
+                track_id="youtube__qqq__private",
+                domain="stock:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="QQQ",
+                timeframe="1D",
+            )
+            try:
+                markets = ("SPX500", "Indices")
+                self.assertTrue(spy._market_compatible(markets))
+                self.assertFalse(qqq._market_compatible(markets))
+            finally:
+                spy.close()
+                qqq.close()
+
+    def test_gold_reproduction_does_not_fall_through_to_generic_forex(self):
+        with tempfile.TemporaryDirectory() as td:
+            gold = ayi.YouTubeAtlasBridge(
+                Path(td) / "gold.db",
+                feed_path=None,
+                track_id="youtube__xauusd__private",
+                domain="forex:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="XAUUSD",
+                timeframe="1D",
+            )
+            eur = ayi.YouTubeAtlasBridge(
+                Path(td) / "eur.db",
+                feed_path=None,
+                track_id="youtube__eurusd__private",
+                domain="forex:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="EURUSD",
+                timeframe="1D",
+            )
+            try:
+                markets = ("Gold (XAU/USD)", "Forex")
+                self.assertTrue(gold._market_compatible(markets))
+                self.assertFalse(eur._market_compatible(markets))
+            finally:
+                gold.close()
+                eur.close()
+
+    def test_transfer_stage_can_probe_related_market_after_reproduction(self):
+        with tempfile.TemporaryDirectory() as td:
+            brain = ayi.YouTubeAtlasBridge(
+                Path(td) / "youtube.db",
+                feed_path=None,
+                track_id="youtube__eurusd__private",
+                domain="forex:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="EURUSD",
+                timeframe="1D",
+                routing_stage="transfer",
             )
             try:
                 self.assertTrue(
                     brain._market_compatible(("Forex (GBP/USD demonstrated)",))
                 )
-                self.assertTrue(
-                    brain._market_compatible(("Gold", "Forex strategy",))
-                )
+            finally:
+                brain.close()
+
+    def test_timeframe_mismatch_and_multitimeframe_are_deferred(self):
+        with tempfile.TemporaryDirectory() as td:
+            brain = ayi.YouTubeAtlasBridge(
+                Path(td) / "youtube.db",
+                feed_path=None,
+                track_id="youtube__eurusd__private",
+                domain="forex:sentinel63:private",
+                published_cutoff="2021-12-31",
+                symbol="EURUSD",
+                timeframe="1D",
+            )
+            try:
+                self.assertTrue(brain._timeframe_compatible(("Daily",)))
+                self.assertFalse(brain._timeframe_compatible(("4H",)))
                 self.assertFalse(
-                    brain._market_compatible(("Equities", "Stock",))
+                    brain._timeframe_compatible(("Daily", "4-Hour"))
                 )
             finally:
                 brain.close()
@@ -240,6 +350,9 @@ class AtlasYouTubeIntelligenceTests(unittest.TestCase):
                 "AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF": "2020-12-31",
                 "AUTORESEARCH_TRACK_ID": "qqe__btc__private",
                 "AUTORESEARCH_MARKET": "crypto",
+                "AUTORESEARCH_SYMBOL": "BTCUSDT",
+                "AUTORESEARCH_TIMEFRAME": "1D",
+                "AUTORESEARCH_YOUTUBE_ROUTING_STAGE": "reproduction",
                 "AUTORESEARCH_FAMILY": "qqe",
                 "AUTORESEARCH_PROFILE": "private",
             }
