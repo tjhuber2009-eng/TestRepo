@@ -1,5 +1,5 @@
 Atlas Forge source smoke
-Source head: 169bf79a0040ece08cc066f608548d5aa5926891
-Purpose: final verified-provenance semantics for project-wide instrument/timeframe routing, both dashboards, and frozen Phase-2 promotion artifacts
+Source head: bbcc90f40ab7eb7f828ad5277095c657e7896774
+Purpose: final audit verification of complete Phase-2 routing provenance after before/after review
 Hidden validation: sealed
 Final 2023+ OOS: sealed
