@@ -1,0 +1,75 @@
+name: Expand certified YKE source for Atlas integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/yke-atlas-expand-kick"
+
+permissions:
+  contents: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout integration branch
+        uses: actions/checkout@v4
+        with:
+          ref: yke-v3.1-atlas-integration
+          fetch-depth: 0
+
+      - name: Reconstruct certified v3.1 source
+        shell: python
+        run: |
+          import base64, hashlib, shutil, zipfile
+          from pathlib import Path
+
+          root=Path(".")
+          parts=sorted((root/"youtube-knowledge-engine").glob("source.b64.part*"))
+          assert len(parts)==18, len(parts)
+          b64="".join(p.read_text(encoding="utf-8").strip() for p in parts)
+          assert len(b64)==358072, len(b64)
+          data=base64.b64decode(b64, validate=True)
+          assert len(data)==268553, len(data)
+          digest=hashlib.sha256(data).hexdigest()
+          expected="5afad97f474df7a63fde3d98d38a7da952ffaab188ac0ce555ae3d630ccf2298"
+          assert digest==expected, (digest,expected)
+
+          target=root/"youtube-knowledge-engine-expanded"
+          shutil.rmtree(target, ignore_errors=True)
+          target.mkdir(parents=True)
+          zpath=root/"yke-certified-source.zip"
+          zpath.write_bytes(data)
+          with zipfile.ZipFile(zpath) as z:
+              for info in z.infolist():
+                  dest=(target/info.filename).resolve()
+                  dest.relative_to(target.resolve())
+              z.extractall(target)
+          zpath.unlink()
+          files=[p for p in target.rglob("*") if p.is_file()]
+          assert len(files)>=80, len(files)
+          (target/"CERTIFIED-SOURCE.json").write_text(
+              '{\n'
+              '  "version": "3.1.0",\n'
+              '  "source_zip_sha256": "'+digest+'",\n'
+              '  "origin_branch": "yke-v3.1-windows-build",\n'
+              '  "origin_commit": "1f7673b00994fb321fda0b7077c5405529441691"\n'
+              '}\n',
+              encoding="utf-8",
+          )
+          print(f"expanded_files={len(files)} sha256={digest}")
+
+      - name: Commit expanded source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add youtube-knowledge-engine-expanded
+          if git diff --cached --quiet; then
+            echo "No expanded-source changes."
+            exit 0
+          fi
+          git commit -m "Expand certified YKE v3.1 source for Atlas integration"
+          git push origin HEAD:yke-v3.1-atlas-integration
