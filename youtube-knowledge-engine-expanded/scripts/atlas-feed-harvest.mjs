@@ -125,6 +125,17 @@ for(const entry of config.channels){
   cs.relevant=candidates.length;
   cs.chronologyEligible=candidates.filter(v=>Boolean(v._date&&v._date<=maxLegacyCutoff)).length;
   candidates.sort((a,b)=>{
+    const aState=state.videos[`${sid}:${a.id}`]||{};
+    const bState=state.videos[`${sid}:${b.id}`]||{};
+    const aRepair=(
+      aState.status==='done_gemini' &&
+      Number(aState.extractorVersion||0)<GEMINI_EXTRACTOR_VERSION
+    )?0:1;
+    const bRepair=(
+      bState.status==='done_gemini' &&
+      Number(bState.extractorVersion||0)<GEMINI_EXTRACTOR_VERSION
+    )?0:1;
+    if(aRepair!==bRepair)return aRepair-bRepair;
     const pa=priority(a._date,cutoffs),pb=priority(b._date,cutoffs);
     if(pa!==pb)return pa-pb;
     const da=a._date||'',db=b._date||'';
