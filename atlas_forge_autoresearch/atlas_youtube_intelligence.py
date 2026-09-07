@@ -428,6 +428,10 @@ class YouTubeAtlasBridge:
                 "stock", "stocks", "equity", "equities", "etf",
                 "index", "indices",
             },
+            "etf": {
+                "stock", "stocks", "equity", "equities", "etf",
+                "index", "indices",
+            },
             "forex": {"forex", "fx", "currency", "currencies"},
             "futures_proxy": {
                 "futures", "index futures", "commodities", "commodity",
