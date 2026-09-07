@@ -1,0 +1,235 @@
+name: Atlas YouTube hypothesis tournament
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/atlas-youtube-tournament-kick"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atlas-youtube-hypothesis-tournament
+  cancel-in-progress: false
+
+jobs:
+  tournament:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      ATLAS_SOURCE_SHA: d4d64ca56e36f42f36605adb8bdafb46f4b85e6b
+    defaults:
+      run:
+        working-directory: atlas_forge_autoresearch
+    steps:
+      - name: Checkout pinned Atlas source
+        uses: actions/checkout@v7
+        with:
+          ref: d4d64ca56e36f42f36605adb8bdafb46f4b85e6b
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: atlas_forge_autoresearch/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore Stock/FX development data cache
+        uses: actions/cache@v6
+        with:
+          path: atlas_forge_autoresearch/data
+          key: stock-fx-development-v1-${{ hashFiles('atlas_forge_autoresearch/stock_fx_config.json') }}
+
+      - name: Restore frozen Sentinel63 EURUSD development state and real YouTube feed
+        shell: bash
+        working-directory: .
+        run: |
+          test -n "$NVIDIA_API_KEY"
+          test -n "$TIINGO_API_TOKEN"
+          git fetch origin +refs/heads/stock-fx-autoresearch-state:refs/remotes/origin/stock-fx-autoresearch-state
+          git fetch origin +refs/heads/youtube-intelligence-atlas-state:refs/remotes/origin/youtube-intelligence-atlas-state
+          echo "STOCK_FX_STATE_SHA=$(git rev-parse refs/remotes/origin/stock-fx-autoresearch-state)" >> "$GITHUB_ENV"
+          echo "YOUTUBE_FEED_SHA=$(git rev-parse refs/remotes/origin/youtube-intelligence-atlas-state)" >> "$GITHUB_ENV"
+          git checkout refs/remotes/origin/stock-fx-autoresearch-state -- \
+            atlas_forge_autoresearch/stock_fx_state/tracks/sentinel63__eurusd__private
+          mkdir -p atlas_forge_autoresearch/youtube_tournament_state
+          git show refs/remotes/origin/youtube-intelligence-atlas-state:atlas_youtube_state/youtube_intelligence_feed.jsonl \
+            > atlas_forge_autoresearch/youtube_tournament_state/youtube_intelligence_feed.jsonl
+          test -s atlas_forge_autoresearch/youtube_tournament_state/youtube_intelligence_feed.jsonl
+
+      - name: Restore isolated runtime from frozen track
+        shell: bash
+        run: |
+          set -euo pipefail
+          TRACK=stock_fx_state/tracks/sentinel63__eurusd__private
+          rm -f baseline.json last_run.json validation_run.json lookahead_audit.json results.tsv proposal.txt STOP strategy.py strategy_best.py seen_hashes.json experiments.jsonl
+          rm -rf keepers logs
+          mkdir -p keepers logs youtube_tournament_state
+          for f in baseline.json last_run.json results.tsv strategy_best.py seen_hashes.json experiments.jsonl; do
+            test -f "$TRACK/$f"
+            cp "$TRACK/$f" "$f"
+          done
+          cp strategy_best.py strategy.py
+          if test -d "$TRACK/keepers"; then cp -a "$TRACK/keepers/." keepers/; fi
+          cp baseline.json youtube_tournament_state/baseline_before.json
+          cp strategy_best.py youtube_tournament_state/strategy_before.py
+
+      - name: Ensure EURUSD development data only
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, subprocess, sys
+          from pathlib import Path
+          p=Path('data/eurusd_1d.manifest.json')
+          ok=False
+          if p.exists() and Path('data/eurusd_1d.csv').exists():
+              try:
+                  m=json.loads(p.read_text())
+                  ok=(m.get('source')=='tiingo_fx' and m.get('requested_start')=='2020-01-01' and m.get('requested_end')=='2021-12-31' and m.get('final_oos_included') is False)
+              except Exception:
+                  pass
+          if not ok:
+              subprocess.run([sys.executable,'prepare_market_data.py','--source','tiingo_fx','--symbol','EURUSD','--id','eurusd','--start','2020-01-01','--end','2021-12-31','--output-dir','data'],check=True)
+          m=json.loads(Path('data/eurusd_1d.manifest.json').read_text())
+          assert m.get('requested_end')=='2021-12-31', m
+          assert m.get('final_oos_included') is False, m
+          print({'rows':m.get('rows'),'start':m.get('requested_start'),'end':m.get('requested_end'),'source':m.get('source')})
+          PY
+          python oos_guard.py
+
+      - name: Run finite forced-external YouTube tournament
+        shell: bash
+        env:
+          AUTORESEARCH_HARNESS: robust_harness.py
+          AUTORESEARCH_PROGRAM: program_robust.md
+          AUTORESEARCH_FAMILY: sentinel63
+          AUTORESEARCH_SYMBOL: EURUSD
+          AUTORESEARCH_MARKET: forex
+          AUTORESEARCH_DATA_FILE: data/eurusd_1d.csv
+          AUTORESEARCH_COMMISSION: "0.0001"
+          AUTORESEARCH_MARGIN: "0.05"
+          AUTORESEARCH_BARS_PER_YEAR: "252"
+          AUTORESEARCH_PROFILE: private
+          AUTORESEARCH_MAX_DD_PCT: "32"
+          AUTORESEARCH_MIN_TRADES: "8"
+          AUTORESEARCH_MIN_VALIDATION_TRADES: "2"
+          AUTORESEARCH_MIN_ACTIVE_FOLDS: "3"
+          AUTORESEARCH_MIN_FOLD_BARS: "100"
+          AUTORESEARCH_VOL_BAND: "0.50"
+          AUTORESEARCH_COST_STRESS_MULT: "2"
+          AUTORESEARCH_EXTREME_COST_STRESS_MULT: "3"
+          AUTORESEARCH_BOOTSTRAP_REPS: "500"
+          AUTORESEARCH_IS_START: "2020-01-01"
+          AUTORESEARCH_VALIDATION_START: "2022-01-01"
+          AUTORESEARCH_VALIDATION_END: "2022-12-31"
+          AUTORESEARCH_PROTOCOL: nested_chronological_v3
+          AUTORESEARCH_SOURCE_SHA: d4d64ca56e36f42f36605adb8bdafb46f4b85e6b
+          AUTORESEARCH_TRACK_ID: youtube_tournament__sentinel63__eurusd__private
+          AUTORESEARCH_EVOMIND_ENABLED: "1"
+          AUTORESEARCH_EVOMIND_DB: youtube_tournament_state/evomind.db
+          AUTORESEARCH_CONTROLLED_TOURNAMENT: "1"
+          AUTORESEARCH_FORCED_PROPOSAL_ARM: external_proposal
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED: "1"
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB: youtube_tournament_state/youtube_intelligence.db
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED: youtube_tournament_state/youtube_intelligence_feed.jsonl
+          AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF: "2021-12-31"
+        run: |
+          python -m unittest -v test_atlas_evomind.py test_atlas_youtube_intelligence.py
+          python loop.py --iters 8 --model nvidia/nemotron-3-super-120b-a12b
+          python oos_guard.py
+
+      - name: Build tournament report
+        shell: python
+        run: |
+          import json, math, os, shutil
+          from pathlib import Path
+          state=Path('youtube_tournament_state')
+          rows=[]
+          p=Path('experiments.jsonl')
+          if p.exists():
+              for line in p.read_text().splitlines():
+                  if not line.strip(): continue
+                  x=json.loads(line)
+                  if x.get('youtube_idea_id'): rows.append(x)
+          def f(v):
+              try:
+                  x=float(v); return round(x,6) if math.isfinite(x) else None
+              except Exception: return None
+          report={
+              'schema':1,
+              'atlas_source_sha':os.environ['ATLAS_SOURCE_SHA'],
+              'stock_fx_state_sha':os.environ.get('STOCK_FX_STATE_SHA'),
+              'youtube_feed_sha':os.environ.get('YOUTUBE_FEED_SHA'),
+              'track':'sentinel63__eurusd__private',
+              'tournament_track_id':'youtube_tournament__sentinel63__eurusd__private',
+              'stage':'adaptive_development_only',
+              'development_end':'2021-12-31',
+              'hidden_validation_opened':False,
+              'final_oos_opened':False,
+              'attempts':len(rows),
+              'kept':sum(x.get('verdict')=='KEPT' for x in rows),
+              'rejected':sum(x.get('verdict')=='REJECTED' for x in rows),
+              'invalid_pre_backtest':sum(x.get('verdict') in {'CRASH','DUPLICATE','PARAMETER_ONLY','TOO_BROAD','RISK_CONTROL_CHANGE'} for x in rows),
+              'ideas':[{
+                  'idea_id':x.get('youtube_idea_id'),
+                  'verdict':x.get('verdict'),
+                  'reason':x.get('reason'),
+                  'description':x.get('description'),
+                  'base_score':f(x.get('base_score')),
+                  'candidate_score':f(x.get('candidate_score')),
+                  'cagr_pct':f(x.get('cagr_pct')),
+                  'sharpe':f(x.get('sharpe')),
+                  'pf':f(x.get('pf')),
+                  'max_dd_pct':f(x.get('max_dd_pct')),
+                  'guard_ok':x.get('guard_ok'),
+                  'selection_eligible':x.get('selection_eligible'),
+                  'lookahead_audit_pass':x.get('lookahead_audit_pass'),
+              } for x in rows],
+          }
+          state.mkdir(exist_ok=True)
+          (state/'tournament-summary.json').write_text(json.dumps(report,indent=2,sort_keys=True)+'\n')
+          lines=[
+              '# Atlas Forge YouTube Hypothesis Tournament','',
+              f"Atlas source: `{report['atlas_source_sha']}`",
+              f"YouTube feed source: `{report['youtube_feed_sha']}`",
+              f"Development window ends: **{report['development_end']}**",
+              '**Hidden validation: SEALED**',
+              '**Final 2023+ OOS: SEALED**','',
+              f"Attempts: **{report['attempts']}** | Kept: **{report['kept']}** | Rejected: **{report['rejected']}** | Invalid/pre-backtest: **{report['invalid_pre_backtest']}**",
+              '', '| Idea | Verdict | K | CAGR | Sharpe | PF | DD |', '|---|---|---:|---:|---:|---:|---:|'
+          ]
+          for x in report['ideas']:
+              lines.append(f"| `{x['idea_id']}` | {x['verdict']} | {x['candidate_score']} | {x['cagr_pct']} | {x['sharpe']} | {x['pf']} | {x['max_dd_pct']} |")
+          (state/'tournament-report.md').write_text('\n'.join(lines)+'\n')
+          for src,dst in [('experiments.jsonl','experiments.jsonl'),('results.tsv','results.tsv'),('baseline.json','baseline_after.json'),('strategy_best.py','strategy_after.py')]:
+              if Path(src).exists(): shutil.copy2(src,state/dst)
+          print(json.dumps(report,indent=2))
+
+      - name: Persist isolated tournament state
+        shell: bash
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin +refs/heads/youtube-hypothesis-tournament-state:refs/remotes/origin/youtube-hypothesis-tournament-state
+          git switch -C youtube-hypothesis-tournament-state refs/remotes/origin/youtube-hypothesis-tournament-state
+          git add -f atlas_forge_autoresearch/youtube_tournament_state
+          if git diff --cached --quiet; then echo "no tournament-state changes"; else git commit -m "YouTube hypothesis tournament $GITHUB_RUN_ID"; fi
+          git push origin HEAD:youtube-hypothesis-tournament-state
+
+      - name: Upload tournament report
+        uses: actions/upload-artifact@v7
+        with:
+          name: youtube-hypothesis-tournament-${{ github.run_id }}
+          path: |
+            atlas_forge_autoresearch/youtube_tournament_state/tournament-summary.json
+            atlas_forge_autoresearch/youtube_tournament_state/tournament-report.md
+          retention-days: 30
