@@ -521,6 +521,9 @@ def build_promotion(rows, selection):
             item["margin"] = float(track["target"]["margin"])
             item["tested_timeframe"] = routing["tested_timeframe"]
             item["route_stage"] = routing["stage"]
+            item["source_route_verified"] = routing["source_route_verified"]
+            item["source_native_match"] = routing["source_native_match"]
+            item["signal_cadence"] = routing["signal_cadence"]
             item["routing"] = routing
         if not item["ready_for_v4_replay"]:
             continue
