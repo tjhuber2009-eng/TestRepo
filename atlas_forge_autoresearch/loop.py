@@ -19,6 +19,7 @@ import time
 from datetime import datetime, timezone
 
 import atlas_evomind
+import atlas_youtube_intelligence
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(HERE)
@@ -315,6 +316,7 @@ def append_experiment_record(
     ts, iteration, model, verdict, reason, desc, base_score,
     candidate_score, candidate_ast_sha, candidate_source_sha,
     best_before_ast_sha, result=None, evomind_arm=None,
+    youtube_idea_id=None,
 ):
     prompt_path = os.path.join(LOGS, f"prompt_{iteration}.txt")
     record = {
@@ -329,6 +331,10 @@ def append_experiment_record(
         "reason": reason,
         "evomind_version": atlas_evomind.EVOMIND_VERSION,
         "evomind_proposal_arm": evomind_arm,
+        "youtube_intelligence_version": (
+            atlas_youtube_intelligence.YOUTUBE_INTELLIGENCE_VERSION
+        ),
+        "youtube_idea_id": youtube_idea_id,
         "description": desc,
         "base_score": str(base_score),
         "candidate_score": str(candidate_score),
@@ -975,6 +981,8 @@ def main():
         used_model = args.model
         evomind_guidance = ""
         evomind_arm = None
+        youtube_guidance = ""
+        youtube_idea_id = None
         try:
             evomind_guidance, evomind_arm = (
                 atlas_evomind.prompt_guidance(iteration)
@@ -991,7 +999,29 @@ def main():
                 f"[EvoMind warning] guidance unavailable: {evomind_exc}",
                 file=sys.stderr,
             )
-        prompt = build_prompt(iteration, base, evomind_guidance)
+        try:
+            youtube_guidance, youtube_idea_id = (
+                atlas_youtube_intelligence.prompt_guidance(
+                    iteration, evomind_arm
+                )
+            )
+            if youtube_idea_id:
+                print(
+                    "[YouTube Intelligence] external_idea="
+                    f"{youtube_idea_id}"
+                )
+        except Exception as youtube_exc:
+            # External discovery is advisory. Failure must never affect the
+            # authoritative Atlas evaluation path.
+            print(
+                f"[YouTube Intelligence warning] guidance unavailable: "
+                f"{youtube_exc}",
+                file=sys.stderr,
+            )
+        research_guidance = "\n\n".join(
+            x for x in (evomind_guidance, youtube_guidance) if x
+        )
+        prompt = build_prompt(iteration, base, research_guidance)
         try:
             desc = run_agent(iteration, prompt, used_model)
         except Exception as primary_exc:
@@ -1170,6 +1200,7 @@ def main():
             best_before_ast_sha=best_before_ast_sha,
             result=result,
             evomind_arm=evomind_arm,
+            youtube_idea_id=youtube_idea_id,
         )
         try:
             evomind_update = atlas_evomind.learn_from_atlas(
@@ -1195,6 +1226,28 @@ def main():
                 f"[EvoMind warning] memory update failed: {evomind_exc}",
                 file=sys.stderr,
             )
+        if youtube_idea_id and verdict != "CRASH":
+            try:
+                youtube_update = atlas_youtube_intelligence.learn_from_atlas(
+                    idea_id=youtube_idea_id,
+                    verdict=verdict,
+                    result=result,
+                    base_score=base["score"],
+                    candidate_score=score,
+                )
+                if youtube_update is not None:
+                    print(
+                        "[YouTube Intelligence] graded idea="
+                        f"{youtube_update['idea_id']} "
+                        f"kept={youtube_update['kept']} "
+                        f"delta_k={youtube_update['delta_k']}"
+                    )
+            except Exception as youtube_exc:
+                print(
+                    f"[YouTube Intelligence warning] outcome update failed: "
+                    f"{youtube_exc}",
+                    file=sys.stderr,
+                )
         scoreboard()
 
 
