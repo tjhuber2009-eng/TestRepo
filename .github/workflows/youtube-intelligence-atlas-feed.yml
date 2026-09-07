@@ -1,0 +1,104 @@
+name: YouTube Intelligence → Atlas feed
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 10 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: youtube-intelligence-atlas-feed
+  cancel-in-progress: false
+
+jobs:
+  harvest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout YouTube Intelligence integration source
+        uses: actions/checkout@v4
+        with:
+          ref: yke-v3.1-atlas-integration
+          path: yke
+          fetch-depth: 1
+
+      - name: Checkout persistent Atlas YouTube state
+        uses: actions/checkout@v4
+        with:
+          ref: youtube-intelligence-atlas-state
+          path: state
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned public YouTube extractor
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "yt-dlp[default]==2026.8.19"
+
+      - id: harvest
+        name: Incrementally mine strategy-rule passages
+        shell: bash
+        working-directory: yke/youtube-knowledge-engine-expanded
+        run: |
+          set +e
+          node scripts/atlas-feed-harvest.mjs \
+            --config "$GITHUB_WORKSPACE/state/atlas_youtube_state/atlas-youtube-channels.json" \
+            --state "$GITHUB_WORKSPACE/state/atlas_youtube_state/harvest-state.json" \
+            --feed "$GITHUB_WORKSPACE/state/atlas_youtube_state/youtube_intelligence_feed.jsonl" \
+            --stats "$GITHUB_WORKSPACE/state/atlas_youtube_state/harvest-stats.json"
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            echo "blocked=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::YouTube access was blocked or rate-limited on this runner; previous feed preserved and retry state recorded."
+          elif [ "$code" -ne 0 ]; then
+            exit "$code"
+          else
+            echo "blocked=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate feed contract
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+          feed=Path("state/atlas_youtube_state/youtube_intelligence_feed.jsonl")
+          rows=[]
+          if feed.exists():
+              for n,line in enumerate(feed.read_text(encoding="utf-8").splitlines(),1):
+                  if not line.strip(): continue
+                  row=json.loads(line)
+                  for key in ("idea_id","video_id","channel_id","published_at","summary","strategy_rules","specification_quality"):
+                      assert key in row, (n,key)
+                  assert len(str(row["published_at"]))>=10
+                  assert isinstance(row["strategy_rules"],list) and row["strategy_rules"]
+                  rows.append(row)
+          assert len({r["idea_id"] for r in rows})==len(rows)
+          print({"ideas":len(rows),"channels":len({r["channel_id"] for r in rows})})
+
+      - name: Persist feed and retry state
+        shell: bash
+        working-directory: state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add atlas_youtube_state
+          if git diff --cached --quiet; then
+            echo "No feed/state changes."
+            exit 0
+          fi
+          git commit -m "Refresh YouTube Intelligence Atlas feed"
+          git push origin HEAD:youtube-intelligence-atlas-state
+
+      - name: Summarize
+        shell: bash
+        run: |
+          cat state/atlas_youtube_state/harvest-stats.json || true
+          echo "runner_blocked=${{ steps.harvest.outputs.blocked }}"
