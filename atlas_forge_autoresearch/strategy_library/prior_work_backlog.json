@@ -218,13 +218,13 @@
     {
       "id": "pead",
       "origin": "Prior PEAD academic/mechanical project",
-      "status": "registry_blocked_revisit",
+      "status": "v4_event_engine_data_blocked",
       "registry_id": "pead",
       "requirements": [
         "point-in-time earnings announcement data",
-        "surprise measure",
-        "event engine"
-      ]
+        "surprise measure"
+      ],
+      "v4_engine": "v4/strategy_examples.py::pead_event_weights"
     },
     {
       "id": "nbe_volume_profile",
@@ -259,11 +259,17 @@
     {
       "id": "overnight_intraday_reversal",
       "origin": "Prior overnight-to-intraday reversal project",
-      "status": "registry_blocked_revisit",
+      "status": "v4_daily_session_engine_runnable",
       "registry_id": "overnight_intraday_reversal",
-      "requirements": [
-        "overnight/intraday session decomposition"
-      ]
+      "requirements": [],
+      "v4_engine": "v4/strategy_examples.py::overnight_gap_reversal_diagnostic",
+      "frozen_rules": {
+        "instrument": "SPY",
+        "gap_threshold_pct": 1,
+        "execution": "open-to-same-day-close",
+        "one_way_cost_bps": 3,
+        "portfolio_eligibility": "diagnostic_only_until_family_PBO_is_established"
+      }
     },
     {
       "id": "intraday_residual_reversal",
@@ -315,13 +321,26 @@
     {
       "id": "stat_arb_pairs",
       "origin": "Prior cointegration/stat-arb repository research",
-      "status": "v4_engine_available_rules_pending",
+      "status": "v4_family_runnable",
       "registry_id": "stat_arb_pairs",
-      "requirements": [
-        "freeze pair universe and formation",
-        "freeze hedge-ratio/entry/exit/rebalance",
-        "synchronized pair data"
-      ]
+      "requirements": [],
+      "v4_engine": "v4/strategy_examples.py::rolling_pair_reversion",
+      "frozen_rules": {
+        "pair_universe": [
+          [
+            "QQQ",
+            "SPY"
+          ]
+        ],
+        "formation_window": 252,
+        "z_window": 60,
+        "entry_z": 2,
+        "exit_z": 0.5,
+        "stop_z": 4,
+        "gross_weight": 1,
+        "rebalance": "daily_next_open",
+        "portfolio_eligibility": "diagnostic_only_until_family_PBO_is_established"
+      }
     },
     {
       "id": "finlab_rotation_exact",
