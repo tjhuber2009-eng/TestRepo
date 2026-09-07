@@ -10,6 +10,8 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
+import strategy_routing
+
 HERE = Path(__file__).resolve().parent
 STATE = HERE / "continuous_state"
 STOCK_FX_STATE = HERE / "stock_fx_state"
@@ -18,6 +20,9 @@ RUNTIME = HERE / "dashboard_runtime"
 V4_STATE = HERE / "v4_state"
 OUT = HERE / "live-dashboard.md"
 ACTIVE_PROTOCOL = "nested_chronological_v3"
+REGISTRY = HERE / "strategy_library" / "registry.json"
+CORE_CONFIG = HERE / "continuous_config.json"
+STOCK_FX_CONFIG = HERE / "stock_fx_config.json"
 
 def load(path, default=None):
     p=Path(path)
@@ -27,6 +32,53 @@ def load(path, default=None):
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
         return default
+
+def source_routing_snapshot(config_path):
+    registry=load(REGISTRY,{}) or {}
+    config=load(config_path,{}) or {}
+    families=[
+        row for row in registry.get("families",[])
+        if row.get("status")=="runnable"
+    ]
+    targets=[row for row in config.get("targets",[]) if row.get("enabled")]
+    allowlists={
+        market:set(ids)
+        for market,ids in (config.get("family_allowlist_by_market") or {}).items()
+    }
+    counts={
+        "reproduction":0,
+        "transfer":0,
+        "atlas_variant":0,
+        "blocked":0,
+    }
+    timeframes={}
+    by_track={}
+    for family in families:
+        allowed=set(family.get("markets",[]))
+        for target in targets:
+            if allowed and target.get("market") not in allowed:
+                continue
+            allow=allowlists.get(target.get("market"))
+            if allow is not None and family.get("id") not in allow:
+                continue
+            routing=strategy_routing.classify_track(family,target)
+            for profile in ("prop","private"):
+                track_id="__".join((
+                    str(family.get("id")),
+                    str(target.get("id")),
+                    profile,
+                ))
+                by_track[track_id]=routing
+                counts[routing["stage"]]=counts.get(routing["stage"],0)+1
+                tf=routing["tested_timeframe"]
+                timeframes[tf]=timeframes.get(tf,0)+1
+    return {
+        "counts":counts,
+        "timeframes":timeframes,
+        "tracks":sum(counts.values()),
+        "by_track":by_track,
+    }
+
 
 def f(v, digits=3):
     try:
@@ -180,6 +232,8 @@ progress=load(STATE/"progress.json",{}) or {}
 board=load(STATE/"leaderboard_latest.json",{}) or {}
 stock_fx_progress=load(STOCK_FX_STATE/"progress.json",{}) or {}
 stock_fx_board=load(STOCK_FX_STATE/"leaderboard_latest.json",{}) or {}
+core_routing=source_routing_snapshot(CORE_CONFIG)
+stock_fx_routing=source_routing_snapshot(STOCK_FX_CONFIG)
 stock_fx_config=load(HERE/"stock_fx_config.json",{}) or {}
 stock_fx_plan=load(HERE/"strategy_library"/"stock_fx_universe_plan.json",{}) or {}
 tour=load(TOURNAMENT/"tournament-summary.json",None)
@@ -585,6 +639,18 @@ f"| Breadth completion | **{breadth_pct:.2f}%** |",
 f"| Valid candidates | **{valid:,} / {breadth_total:,}** |",
 f"| PBO-ready tracks | **{int(progress.get('pbo_ready_track_count',0) or 0):,} / {int(progress.get('pbo_baselined_track_count',0) or 0):,} baselined** |",
 f"| Runnable tracks | **{runnable:,}** |",
+(
+    f"| Evidence routing | **{core_routing['counts'].get('reproduction',0):,} reproduction** · "
+    f"**{core_routing['counts'].get('transfer',0):,} transfer** · "
+    f"**{core_routing['counts'].get('atlas_variant',0):,} Atlas variant** |"
+),
+(
+    f"| Tested timeframes | **"
+    + " · ".join(
+        f"{tf}: {count:,}" for tf,count in sorted(core_routing["timeframes"].items())
+    )
+    + "** |"
+),
 f"| Tracks touched | **{touched:,}** |",
 f"| Tracks with ≥1 valid | **{v1:,}** |",
 f"| Tracks with ≥2 valid | **{v2:,}** |",
@@ -596,6 +662,11 @@ f"| Terminal tracks | **{int(progress.get('terminal_track_count',0) or 0):,}** |
 "| Metric | Current |",
 "|---|---:|",
 f"| Configured tracks | **{stock_fx_expected:,}** |",
+(
+    f"| Evidence routing | **{stock_fx_routing['counts'].get('reproduction',0):,} reproduction** · "
+    f"**{stock_fx_routing['counts'].get('transfer',0):,} transfer** · "
+    f"**{stock_fx_routing['counts'].get('atlas_variant',0):,} Atlas variant** |"
+),
 f"| New stock targets | **{int(stock_fx_phase.get('stock_target_count',30) or 30):,}** |",
 f"| FX targets | **{int(stock_fx_phase.get('forex_target_count',7) or 7):,}** |",
 f"| Persisted state | **{'YES' if stock_fx_active else 'NO — first checkpoint pending'}** |",
@@ -635,8 +706,8 @@ out += ["</details>", ""]
 out += [
 "## Top development champions",
 "",
-"| # | Family | Target | Profile | Eligible | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence | Data | Trades/yr |",
-"|---:|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---:|",
+"| # | Family | Target | TF | Route | Profile | Eligible | Robust K | CAGR | Excess vs B&H | B&H CAGR | Years | Sharpe | PF | DD | PSR | FDR q | PBO | Evidence | Data | Trades/yr |",
+"|---:|---|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---:|",
 ]
 for i,r in enumerate((board.get("rows",[]) or [])[:8],1):
     _start,_end,_years,_cagr=development_period(
@@ -647,8 +718,12 @@ for i,r in enumerate((board.get("rows",[]) or [])[:8],1):
     _psr = r.get("development_psr_zero")
     _q = r.get("multiple_test_qvalue")
     _pbo = r.get("pbo")
+    _routing=core_routing["by_track"].get(str(r.get("track_id")),{})
+    _route=r.get("route_stage") or _routing.get("stage") or "—"
+    _tf=r.get("tested_timeframe") or _routing.get("tested_timeframe") or "—"
     out.append(
         f"| {i} | {r.get('family','—')} | {str(r.get('target','—')).upper()} | "
+        f"{_tf} | {_route} | "
         f"{r.get('profile','—')} | {'YES' if r.get('development_guard_ok') is not False else 'NO'} | "
         f"{f(r.get('development_score'),6)} | {pct(_cagr,1)} | {pct(r.get('excess_cagr_vs_buyhold_pct'),1)} | "
         f"{pct(r.get('benchmark_cagr_pct'),1)} | {f(_years,1)} | "
