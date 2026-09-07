@@ -1,0 +1,37 @@
+name: YKE Atlas integration CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/yke-atlas-ci-kick"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: yke-v3.1-atlas-integration
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: youtube-knowledge-engine-expanded/package-lock.json
+      - name: Install
+        working-directory: youtube-knowledge-engine-expanded
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Syntax checks
+        working-directory: youtube-knowledge-engine-expanded
+        run: npm run check
+      - name: Full test suite
+        working-directory: youtube-knowledge-engine-expanded
+        run: npm test
+      - name: Atlas feed contract tests
+        working-directory: youtube-knowledge-engine-expanded
+        run: node --test test/atlas-feed.test.js test/channel-analysis.test.js
