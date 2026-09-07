@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "principles": [
     "No strategy is promoted from a single aggregate backtest.",
     "2023+ remains sealed for final one-look OOS.",
@@ -7,7 +7,8 @@
     "Blocked families remain in the library until their required data/engine exists; they are never silently approximated as exact.",
     "Adaptive NVIDIA search uses development data only; hidden pre-OOS validation is opened only after the research universe is frozen.",
     "Transaction-cost stress is part of robustness qualification, not a post-hoc sensitivity chart.",
-    "Previously falsified or explicitly overfit strategies remain in the registry as terminal negative evidence rather than being silently rediscovered and retested."
+    "Previously falsified or explicitly overfit strategies remain in the registry as terminal negative evidence rather than being silently rediscovered and retested.",
+    "Every strategy records source-native routing separately from Atlas evaluation routing; reproduction, transfer, and Atlas-variant evidence must never be conflated."
   ],
   "families": [
     {
@@ -21,7 +22,26 @@
       ],
       "factory": "bear_four_up_rsi2_nextopen",
       "min_trades": 6,
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "cumulative_rsi3_45_nextopen",
@@ -34,7 +54,26 @@
       ],
       "factory": "cumulative_rsi3_45_nextopen",
       "min_trades": 8,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "connors_rsi2_65_nextopen",
@@ -47,7 +86,26 @@
       ],
       "factory": "connors_rsi2_65_nextopen",
       "min_trades": 8,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "sma200_regime",
@@ -63,7 +121,25 @@
       ],
       "factory": "sma200_regime",
       "min_trades": 6,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "sentinel65",
@@ -78,7 +154,23 @@
       ],
       "factory": "sentinel65",
       "min_trades": 8,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "tsmom_252",
@@ -94,7 +186,29 @@
       ],
       "factory": "tsmom_252",
       "min_trades": 4,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "crypto",
+          "etf",
+          "stock",
+          "futures_proxy",
+          "forex"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "btc_rsi_adx",
@@ -106,7 +220,28 @@
       ],
       "factory": "btc_rsi_adx",
       "min_trades": 10,
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "crypto"
+        ],
+        "native_instruments": [
+          "BTCUSDT",
+          "BTCUSD"
+        ],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "connors_double7",
@@ -119,7 +254,26 @@
       ],
       "factory": "connors_double7",
       "min_trades": 8,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "connors_rsi2",
@@ -132,7 +286,26 @@
       ],
       "factory": "connors_rsi2",
       "min_trades": 6,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "ibs_deep_pullback",
@@ -145,7 +318,26 @@
       ],
       "factory": "ibs_deep_pullback",
       "min_trades": 10,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "sentinel63",
@@ -161,7 +353,23 @@
       ],
       "factory": "sentinel63",
       "min_trades": 8,
-      "priority": 1
+      "priority": 1,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "donchian_20_10",
@@ -176,7 +384,23 @@
         "forex"
       ],
       "factory": "donchian_20_10",
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "turtle_55_20",
@@ -191,7 +415,25 @@
         "forex"
       ],
       "factory": "turtle_55_20",
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "futures_proxy"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "sma175_regime_proxy",
@@ -207,7 +449,28 @@
       ],
       "factory": "sma175_regime_proxy",
       "min_trades": 6,
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "etf"
+        ],
+        "native_instruments": [
+          "QQQ",
+          "TQQQ"
+        ],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "sma200_roc126_proxy",
@@ -223,7 +486,25 @@
       ],
       "factory": "sma200_roc126_proxy",
       "min_trades": 6,
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "roc126_regime",
@@ -239,7 +520,25 @@
       ],
       "factory": "roc126_regime",
       "min_trades": 6,
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "zanger_volume_breakout_proxy",
@@ -252,7 +551,26 @@
         "crypto"
       ],
       "factory": "zanger_volume_breakout_proxy",
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "stock",
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": true,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "swing_terminal_breakout_proxy",
@@ -266,7 +584,26 @@
         "futures_proxy"
       ],
       "factory": "swing_terminal_breakout_proxy",
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "stock",
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": true,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "swing_terminal_pullback_proxy",
@@ -280,7 +617,26 @@
         "futures_proxy"
       ],
       "factory": "swing_terminal_pullback_proxy",
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [
+          "stock",
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "zscore_mean_reversion",
@@ -295,7 +651,21 @@
         "forex"
       ],
       "factory": "zscore_mean_reversion",
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "bollinger_mean_reversion",
@@ -310,7 +680,21 @@
         "forex"
       ],
       "factory": "bollinger_mean_reversion",
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "atr_channel_trend",
@@ -325,7 +709,21 @@
         "forex"
       ],
       "factory": "atr_channel_trend",
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "vol_contraction_breakout",
@@ -340,7 +738,21 @@
         "forex"
       ],
       "factory": "vol_contraction_breakout",
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": true,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "qqe_proxy",
@@ -355,7 +767,21 @@
         "forex"
       ],
       "factory": "qqe_proxy",
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "halftrend_proxy",
@@ -370,7 +796,21 @@
         "forex"
       ],
       "factory": "halftrend_proxy",
-      "priority": 3
+      "priority": 3,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "calendar_monthly",
@@ -382,7 +822,28 @@
       ],
       "phase2_factory": "bitcoin_cycle_monthly_causal",
       "provenance": "dual-signal-audit-2026-09 monthly_seasonality_repro.py + independent reconstruction",
-      "note": "The hindsight 2012-2024 frozen table is diagnostic only and is excluded from causal screening."
+      "note": "The hindsight 2012-2024 frozen table is diagnostic only and is excluded from causal screening.",
+      "routing": {
+        "native_markets": [
+          "crypto"
+        ],
+        "native_instruments": [
+          "BTCUSD",
+          "BTCUSDT"
+        ],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "monthly",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "donchian_sma50",
@@ -397,7 +858,23 @@
         "forex"
       ],
       "factory": "donchian_sma50",
-      "priority": 2
+      "priority": 2,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "pead",
@@ -408,7 +885,23 @@
         "point-in-time earnings announcement data",
         "surprise measure",
         "event engine"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "zanger_exact",
@@ -424,6 +917,23 @@
         "source_closer_sha256": "ce70d6e71ca4e83278ff6bd398e3de8d74f5c8e66dd3f00800fc1699ba5108ff",
         "signal_runner_sha256": "d6a2a80b9ec78cf1dae3b973a5e3cdbd029a4f804dab9d7cb1aed7350bfba217",
         "outcome_evaluator_sha256": "e8e89d2fde49a8728fa440f25e1c85892d92439ae9079a84ac4bdf3f7f78eea9"
+      },
+      "routing": {
+        "native_markets": [
+          "stock",
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
       }
     },
     {
@@ -448,6 +958,22 @@
         "ema_smoothing_type": "EMA",
         "ema_smoothing_length": 80,
         "time_filter": false
+      },
+      "routing": {
+        "native_markets": [
+          "forex"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "5M"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": true,
+        "requires_contract_data": false
       }
     },
     {
@@ -458,7 +984,19 @@
       "requires": [
         "intraday session data",
         "broker/session execution model"
-      ]
+      ],
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": true,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "opening_reversal_futures",
@@ -468,7 +1006,21 @@
       "requires": [
         "intraday futures data",
         "contract calendar"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "futures_proxy"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": true,
+        "requires_volume": false,
+        "requires_contract_data": true
+      }
     },
     {
       "id": "overnight_intraday_reversal",
@@ -477,7 +1029,22 @@
       "origin": "HR-001 overnight-to-intraday reversal",
       "requires": [
         "overnight/intraday session decomposition"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": true,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "intraday_residual_reversal",
@@ -486,7 +1053,21 @@
       "origin": "HR-002 intraday residual reversal",
       "requires": [
         "intraday cross-sectional data"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": true,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "bounded_vrp",
@@ -495,7 +1076,22 @@
       "origin": "HR-004 bounded volatility risk premium",
       "requires": [
         "options/volatility surface data"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "etf",
+          "stock"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "fx_futures_mean_reversion",
@@ -504,7 +1100,22 @@
       "origin": "HR-007 FX-futures mean reversion",
       "requires": [
         "clean futures/FX data and contract model"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "forex",
+          "futures_proxy"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": true
+      }
     },
     {
       "id": "liquidation_mean_reversion",
@@ -513,7 +1124,21 @@
       "origin": "Crypto liquidation mean-reversion research",
       "requires": [
         "historical liquidation feed"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "crypto"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "funding_basis",
@@ -523,7 +1148,21 @@
       "requires": [
         "historical funding",
         "mark/index/basis data"
-      ]
+      ],
+      "routing": {
+        "native_markets": [
+          "crypto"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "stat_arb_pairs",
@@ -535,7 +1174,23 @@
         "freeze hedge-ratio, entry, exit and rebalance rules",
         "synchronized source data for selected pairs"
       ],
-      "v4_engine": "v4/multi_asset_engine.py"
+      "v4_engine": "v4/multi_asset_engine.py",
+      "routing": {
+        "native_markets": [
+          "stock",
+          "etf",
+          "crypto"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "finlab_rotation_exact",
@@ -551,7 +1206,23 @@
         "result_blob_sha": "ac8222e877ef75de6f80efdb3a6eba8455c8aa03"
       },
       "evidence": "Frozen independent replication classified FAIL because the preregistered 2022+ CAGR and Sharpe gates failed; retain as terminal negative evidence.",
-      "prior_classification": "FAIL"
+      "prior_classification": "FAIL",
+      "routing": {
+        "native_markets": [
+          "etf"
+        ],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "monthly",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "hr_dual_alpha",
@@ -578,7 +1249,30 @@
         "result_blob_sha": "66b68a96dc6dd31c5f629d067bf176e99b3917a3"
       },
       "prior_classification": "SUPERIOR_PASS",
-      "note": "Prior historical evidence is known and must not be re-optimized. Any AUTORESEARCH reuse must preserve this source lock and use only development-safe data."
+      "note": "Prior historical evidence is known and must not be re-optimized. Any AUTORESEARCH reuse must preserve this source lock and use only development-safe data.",
+      "routing": {
+        "native_markets": [
+          "etf"
+        ],
+        "native_instruments": [
+          "QQQ",
+          "TQQQ",
+          "TECL",
+          "IEF",
+          "GLD",
+          "SHY"
+        ],
+        "native_timeframes": [
+          "1D"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "monthly",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "copy_trader_signal_replication",
@@ -588,7 +1282,19 @@
       "requires": [
         "historical timestamped source signals",
         "execution mapping"
-      ]
+      ],
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "boto_pumpdump_30m",
@@ -598,7 +1304,21 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Long-history prior test: weak/negative after realistic cost stress; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "30M"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "supertrend_10x3_1h",
@@ -608,7 +1328,21 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior long-history test approximately -83% total with severe drawdown; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1H"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "macd_30_63_30_30m",
@@ -618,7 +1352,21 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior long-history test approximately -85% total; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "30M"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "donchian_doubleconfirm_1h",
@@ -628,7 +1376,21 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior long-history test approximately -68% total; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1H"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "bollinger_42_2p5_1h",
@@ -638,7 +1400,21 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior long-history result only weakly positive with poor risk/reward; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [
+          "1H"
+        ],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": true,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "heiken_ashi_supertrend",
@@ -648,7 +1424,19 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior long-history test materially negative; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "qqe_ssl_wae",
@@ -658,7 +1446,19 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior normalized long-history test materially negative with severe drawdown; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "lazybear_squeeze",
@@ -668,7 +1468,19 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Prior long-history test materially negative with severe drawdown; rejected.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "eight_rule_post_sweep",
@@ -678,7 +1490,19 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Explicit 500-million-combination parameter sweep contaminated historical defaults; not eligible for retrospective promotion.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     },
     {
       "id": "crazy_sma",
@@ -688,7 +1512,19 @@
       "origin": "Prior trading-strategy research",
       "evidence": "Author described it as overfit; failed older history and had suspect data handling.",
       "requires": [],
-      "priority": 99
+      "priority": 99,
+      "routing": {
+        "native_markets": [],
+        "native_instruments": [],
+        "native_timeframes": [],
+        "evaluation_timeframes": [],
+        "signal_cadence": "bar",
+        "source_route_verified": false,
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
+        "requires_volume": false,
+        "requires_contract_data": false
+      }
     }
   ]
 }
