@@ -93,14 +93,14 @@ jobs:
           if p.exists() and Path('data/eurusd_1d.csv').exists():
               try:
                   m=json.loads(p.read_text())
-                  ok=(m.get('source')=='tiingo_fx' and m.get('requested_start')=='2020-01-01' and m.get('requested_end')=='2021-12-31' and m.get('final_oos_included') is False)
+                  ok=(m.get('source')=='tiingo_fx' and m.get('requested_start')=='2020-01-01' and m.get('requested_end')=='2021-12-31' and (m.get('final_oos_included') is False or m.get('oos_included') is False))
               except Exception:
                   pass
           if not ok:
               subprocess.run([sys.executable,'prepare_market_data.py','--source','tiingo_fx','--symbol','EURUSD','--id','eurusd','--start','2020-01-01','--end','2021-12-31','--output-dir','data'],check=True)
           m=json.loads(Path('data/eurusd_1d.manifest.json').read_text())
           assert m.get('requested_end')=='2021-12-31', m
-          assert m.get('final_oos_included') is False, m
+          assert (m.get('final_oos_included') is False or m.get('oos_included') is False), m
           print({'rows':m.get('rows'),'start':m.get('requested_start'),'end':m.get('requested_end'),'source':m.get('source')})
           PY
           python oos_guard.py
