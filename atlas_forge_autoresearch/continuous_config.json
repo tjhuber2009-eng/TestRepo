@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "profiles": {
     "prop": {
       "max_dd_pct": 10,
@@ -27,7 +27,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "A",
       "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
-      "instrument_fidelity": "spot_exact"
+      "instrument_fidelity": "spot_exact",
+      "timeframe": "1D"
     },
     {
       "id": "eth",
@@ -43,7 +44,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "A",
       "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
-      "instrument_fidelity": "spot_exact"
+      "instrument_fidelity": "spot_exact",
+      "timeframe": "1D"
     },
     {
       "id": "sol",
@@ -59,7 +61,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "A",
       "data_quality_note": "Binance Data Vision archive with published SHA256 verification",
-      "instrument_fidelity": "spot_exact"
+      "instrument_fidelity": "spot_exact",
+      "timeframe": "1D"
     },
     {
       "id": "spy",
@@ -75,7 +78,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
-      "instrument_fidelity": "adjusted_daily"
+      "instrument_fidelity": "adjusted_daily",
+      "timeframe": "1D"
     },
     {
       "id": "qqq",
@@ -91,7 +95,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
-      "instrument_fidelity": "adjusted_daily"
+      "instrument_fidelity": "adjusted_daily",
+      "timeframe": "1D"
     },
     {
       "id": "tqqq",
@@ -107,7 +112,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
-      "instrument_fidelity": "adjusted_daily"
+      "instrument_fidelity": "adjusted_daily",
+      "timeframe": "1D"
     },
     {
       "id": "aapl",
@@ -123,7 +129,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
-      "instrument_fidelity": "adjusted_daily"
+      "instrument_fidelity": "adjusted_daily",
+      "timeframe": "1D"
     },
     {
       "id": "nvda",
@@ -139,7 +146,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "B",
       "data_quality_note": "Yahoo adjusted daily OHLC snapshot; provider has no archive checksum",
-      "instrument_fidelity": "adjusted_daily"
+      "instrument_fidelity": "adjusted_daily",
+      "timeframe": "1D"
     },
     {
       "id": "es",
@@ -155,7 +163,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
       "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
-      "instrument_fidelity": "proxy"
+      "instrument_fidelity": "proxy",
+      "timeframe": "1D"
     },
     {
       "id": "nq",
@@ -171,7 +180,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
       "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
-      "instrument_fidelity": "proxy"
+      "instrument_fidelity": "proxy",
+      "timeframe": "1D"
     },
     {
       "id": "gold",
@@ -187,7 +197,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
       "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
-      "instrument_fidelity": "proxy"
+      "instrument_fidelity": "proxy",
+      "timeframe": "1D"
     },
     {
       "id": "oil",
@@ -203,7 +214,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "C",
       "data_quality_note": "Yahoo adjusted continuous futures proxy; OHLC envelope normalization audited; not contract-exact",
-      "instrument_fidelity": "proxy"
+      "instrument_fidelity": "proxy",
+      "timeframe": "1D"
     },
     {
       "id": "eurusd",
@@ -220,7 +232,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "D",
       "data_quality_note": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
-      "instrument_fidelity": "disabled"
+      "instrument_fidelity": "disabled",
+      "timeframe": "1D"
     },
     {
       "id": "gbpusd",
@@ -237,7 +250,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "D",
       "data_quality_note": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
-      "instrument_fidelity": "disabled"
+      "instrument_fidelity": "disabled",
+      "timeframe": "1D"
     },
     {
       "id": "usdjpy",
@@ -254,7 +268,8 @@
       "validation_end": "2022-12-31",
       "data_quality_grade": "D",
       "data_quality_note": "Yahoo adjusted OHLC integrity failure; do not silently clean malformed rows",
-      "instrument_fidelity": "disabled"
+      "instrument_fidelity": "disabled",
+      "timeframe": "1D"
     }
   ],
   "protocol": {
@@ -274,5 +289,17 @@
       "Probabilistic Sharpe and block-bootstrap significance are soft penalties, not hard small-sample exclusions.",
       "CSCV PBO uses fixed even development slices, the frozen incumbent baseline, and unique selection-eligible candidates produced by matching harness/program fingerprints."
     ]
+  },
+  "routing_policy": {
+    "version": 1,
+    "tested_timeframe_field": "targets[].timeframe",
+    "evidence_stages": [
+      "reproduction",
+      "transfer",
+      "atlas_variant",
+      "blocked"
+    ],
+    "existing_daily_evidence_policy": "retain and reclassify; do not discard solely because source-native timeframe was previously implicit",
+    "source_fidelity_policy": "only source_route_verified native market/instrument/timeframe matches may be labeled reproduction"
   }
 }
