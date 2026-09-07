@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "language": "en",
+  "max_catalog_videos": 3000,
+  "max_per_channel_per_run": 2,
+  "minimum_completeness": 2,
+  "max_feed_ideas": 5000,
+  "backfill_cutoffs": [
+    "2020-12-31",
+    "2021-12-31"
+  ],
+  "channels": [
+    {
+      "channel": "@tradewithpat",
+      "label": "Trade with Pat",
+      "focus": [
+        "forex",
+        "gold",
+        "indices",
+        "robots"
+      ]
+    },
+    {
+      "channel": "@tradernick",
+      "label": "TraderNick",
+      "focus": [
+        "forex",
+        "macro",
+        "day trading"
+      ]
+    },
+    {
+      "channel": "@nononsenseforex",
+      "label": "No Nonsense Forex",
+      "focus": [
+        "forex",
+        "systematic indicators",
+        "risk"
+      ]
+    },
+    {
+      "channel": "@tradingwithrayner",
+      "label": "Rayner Teo / TradingwithRayner",
+      "focus": [
+        "price action",
+        "stocks",
+        "forex",
+        "technical analysis"
+      ]
+    },
+    {
+      "channel": "@TRADINGRUSH",
+      "label": "Trading Rush",
+      "focus": [
+        "strategy tests",
+        "indicators",
+        "forex",
+        "stocks"
+      ]
+    },
+    {
+      "channel": "@thetradingchannel",
+      "label": "The Trading Channel",
+      "focus": [
+        "forex",
+        "price action",
+        "rules-based systems"
+      ]
+    },
+    {
+      "channel": "@themovingaverage",
+      "label": "The Moving Average",
+      "focus": [
+        "day trading",
+        "technical analysis"
+      ]
+    },
+    {
+      "channel": "@smbcapital",
+      "label": "SMB Capital",
+      "focus": [
+        "day trading",
+        "stocks",
+        "futures",
+        "execution"
+      ]
+    }
+  ]
+}
