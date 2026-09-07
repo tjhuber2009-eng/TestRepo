@@ -204,6 +204,9 @@ class AutoresearchIntegrityTests(unittest.TestCase):
             tracks["qqe_proxy__btc__private"]["routing"]["stage"],
             "atlas_variant",
         )
+        self.assertFalse(
+            tracks["qqe_proxy__btc__private"]["routing"]["source_native_match"]
+        )
         self.assertTrue(
             all(
                 x["routing"]["tested_timeframe"] == "1D"
