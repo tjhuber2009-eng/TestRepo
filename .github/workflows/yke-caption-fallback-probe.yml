@@ -40,12 +40,13 @@ jobs:
                       english=next((x for x in caps if str(x.get('languageCode','')).lower().startswith('en')),None)
                       print(json.dumps({'base':base,'video':vid,'status':'catalog_ok','caption_count':len(caps),'english':bool(english)}))
                       if english:
-                          q=urllib.parse.urlencode({'lang':english.get('languageCode','en')})
-                          req=urllib.request.Request(f'{url}?{q}',headers={'User-Agent':'Mozilla/5.0 AtlasForgeCaptionProbe/1.0'})
+                          cap_url=urllib.parse.urljoin(base+'/',str(english.get('url') or ''))
+                          print(json.dumps({'base':base,'video':vid,'status':'caption_url','url':cap_url[:300]}))
+                          req=urllib.request.Request(cap_url,headers={'User-Agent':'Mozilla/5.0 AtlasForgeCaptionProbe/1.0'})
                           with urllib.request.urlopen(req,timeout=15) as r:
                               text=r.read(500000).decode('utf-8','replace')
                           good='-->' in text and len(text)>100
-                          print(json.dumps({'base':base,'video':vid,'status':'vtt','good':good,'chars':len(text)}))
+                          print(json.dumps({'base':base,'video':vid,'status':'vtt','good':good,'chars':len(text),'prefix':text[:80].replace('\\n',' ')}))
                           if good: ok.append((base,vid)); raise SystemExit(0)
                   except SystemExit:
                       raise
