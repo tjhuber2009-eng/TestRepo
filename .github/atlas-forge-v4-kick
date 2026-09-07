@@ -1,10 +1,11 @@
 Atlas Forge V4 promotion restart
 Requested: 2026-09-06
-Reason: test controlled satellite boundary expansion after the prior development winner used the full 25% sleeve cap.
-V4 source head: 5f8546e0bf761b11d5d582d8b6e71f42b8bd25db
+Reason: preserve project-wide instrument/timeframe routing provenance through Phase-2 -> V4 private and prop promotion.
+V4 source head: 8c3e7e3ae223517e1487d919cab1a12713e40130
 Private financing: 6% base annual cost, 10% and 14% stress, realized time-varying gross above 1x only
 Satellite sleeve grid: 5/10/15/20/25/30/35%; same bootstrap median, Q10, financing, drawdown, and evidence gates
 Scale selection: maximize development geometric growth inside drawdown-feasible range
 Prop: unified max expected 12-cycle repeat reward frontier
+Routing provenance: retain tested timeframe, route stage, source-route verification, source-native match, and signal cadence in V4 private/prop artifacts
 Hidden validation: sealed
 Final 2023+ OOS: sealed
