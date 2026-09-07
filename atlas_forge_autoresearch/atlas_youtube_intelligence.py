@@ -35,6 +35,73 @@ YOUTUBE_INTELLIGENCE_SOURCE_COMMIT = (
     "1f7673b00994fb321fda0b7077c5405529441691"
 )
 
+# Reproduction routing is deliberately stricter than broad market compatibility.
+# Explicit creator instruments must match the Atlas test instrument. Generic
+# market labels (for example "Forex") may match any instrument in that class.
+_INDEX_INSTRUMENT_GROUPS = {
+    "sp500": (
+        ("spx500", "s&p 500", "s&p500", "sp500", "s&p 500 index", "spx"),
+        {"SPY", "ES", "ES1", "SPX", "SPX500", "US500"},
+    ),
+    "nasdaq100": (
+        ("nas100", "nasdaq 100", "nasdaq-100", "ndx", "us100"),
+        {"QQQ", "NQ", "NQ1", "NDX", "NAS100", "US100"},
+    ),
+    "dow30": (
+        ("us30", "dow jones", "dow 30", "djia", "dow"),
+        {"DIA", "YM", "YM1", "DJI", "DJIA", "US30"},
+    ),
+    "russell2000": (
+        ("russell 2000", "russell2000", "us2000", "rut"),
+        {"IWM", "RTY", "RTY1", "RUT", "US2000"},
+    ),
+    "gold": (
+        ("xauusd", "xau/usd", "gold"),
+        {"XAUUSD", "GC", "GCF", "GLD"},
+    ),
+}
+_MAJOR_CCY = "EUR|GBP|USD|JPY|AUD|NZD|CAD|CHF"
+_FX_PAIR_RE = re.compile(
+    rf"\b({_MAJOR_CCY})\s*[/_\-]?\s*({_MAJOR_CCY})\b",
+    re.IGNORECASE,
+)
+
+
+def _norm_symbol(value: Any) -> str:
+    return re.sub(r"[^A-Za-z0-9]", "", str(value or "")).upper()
+
+
+def _canonical_timeframe(value: Any) -> str:
+    raw = str(value or "").strip().lower()
+    compact = re.sub(r"[\s_\-]+", "", raw)
+    aliases = {
+        "daily": "1D",
+        "day": "1D",
+        "1d": "1D",
+        "d1": "1D",
+        "4hour": "4H",
+        "4hours": "4H",
+        "4h": "4H",
+        "h4": "4H",
+        "1hour": "1H",
+        "1hours": "1H",
+        "1h": "1H",
+        "h1": "1H",
+        "30minute": "30M",
+        "30minutes": "30M",
+        "30min": "30M",
+        "30m": "30M",
+        "15minute": "15M",
+        "15minutes": "15M",
+        "15min": "15M",
+        "15m": "15M",
+        "5minute": "5M",
+        "5minutes": "5M",
+        "5min": "5M",
+        "5m": "5M",
+    }
+    return aliases.get(compact, str(value or "").strip().upper())
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -122,12 +189,26 @@ class YouTubeAtlasBridge:
         track_id: str,
         domain: str,
         published_cutoff: str,
+        symbol: str | None = None,
+        timeframe: str | None = None,
+        routing_stage: str = "reproduction",
+        multi_timeframe_capable: bool = False,
     ) -> None:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.feed_path = Path(feed_path) if feed_path else None
         self.track_id = str(track_id)
         self.domain = str(domain)
+        inferred_symbol = ""
+        parts = self.track_id.split("__")
+        if len(parts) >= 2:
+            inferred_symbol = parts[-2]
+        self.symbol = _norm_symbol(symbol or inferred_symbol)
+        self.timeframe = _canonical_timeframe(timeframe or "1D")
+        self.routing_stage = str(routing_stage or "reproduction").strip().lower()
+        if self.routing_stage not in {"reproduction", "transfer"}:
+            raise ValueError("YouTube routing_stage must be reproduction or transfer")
+        self.multi_timeframe_capable = bool(multi_timeframe_capable)
         cutoff = _date(published_cutoff)
         if cutoff is None:
             raise ValueError("YouTube Intelligence published cutoff must be YYYY-MM-DD")
@@ -337,15 +418,21 @@ class YouTubeAtlasBridge:
             )
         return {"imported": imported, "quarantined": quarantined}
 
-    def _market_compatible(self, markets: tuple[str, ...]) -> bool:
+    def _broad_market_compatible(self, markets: tuple[str, ...]) -> bool:
         if not markets:
             return True
         market = self.domain.split(":", 1)[0].lower()
         aliases = {
             "crypto": {"crypto", "bitcoin", "btc", "ethereum", "eth"},
-            "stock": {"stock", "stocks", "equity", "equities", "etf"},
+            "stock": {
+                "stock", "stocks", "equity", "equities", "etf",
+                "index", "indices",
+            },
             "forex": {"forex", "fx", "currency", "currencies"},
-            "futures_proxy": {"futures", "index futures", "commodities"},
+            "futures_proxy": {
+                "futures", "index futures", "commodities", "commodity",
+                "index", "indices",
+            },
         }
         allowed = aliases.get(market, {market})
         normalized = [str(x).strip().lower() for x in markets if str(x).strip()]
@@ -356,6 +443,45 @@ class YouTubeAtlasBridge:
                 if re.search(rf"\b{re.escape(alias)}\b", value):
                     return True
         return False
+
+    def _explicit_instruments(self, markets: tuple[str, ...]) -> set[str]:
+        explicit: set[str] = set()
+        for raw in markets:
+            value = str(raw or "").strip().lower()
+            if not value:
+                continue
+            for match in _FX_PAIR_RE.finditer(value):
+                explicit.add(
+                    _norm_symbol(match.group(1) + match.group(2))
+                )
+            for _, (tokens, symbols) in _INDEX_INSTRUMENT_GROUPS.items():
+                if any(token in value for token in tokens):
+                    explicit.update(symbols)
+        return explicit
+
+    def _market_compatible(self, markets: tuple[str, ...]) -> bool:
+        if not self._broad_market_compatible(markets):
+            return False
+        explicit = self._explicit_instruments(markets)
+        if self.routing_stage == "reproduction" and explicit:
+            return bool(self.symbol and self.symbol in explicit)
+        return True
+
+    def _timeframe_compatible(self, timeframes: tuple[str, ...]) -> bool:
+        if not timeframes:
+            return True
+        wanted = {
+            _canonical_timeframe(value)
+            for value in timeframes
+            if str(value or "").strip()
+        }
+        if self.timeframe not in wanted:
+            return False
+        # A single-bar-series Atlas run must not pretend to reproduce a
+        # strategy that explicitly specifies multiple resolutions.
+        if len(wanted) > 1 and not self.multi_timeframe_capable:
+            return False
+        return True
 
     def choose(self, iteration: int, evomind_arm: str | None) -> YouTubeIdea | None:
         # EvoMind owns proposal-source allocation. YouTube Intelligence supplies
@@ -381,7 +507,10 @@ class YouTubeAtlasBridge:
             if row["idea_id"] in attempted:
                 continue
             markets = tuple(json.loads(row["markets_json"]))
+            timeframes = tuple(json.loads(row["timeframes_json"]))
             if not self._market_compatible(markets):
+                continue
+            if not self._timeframe_compatible(timeframes):
                 continue
             idea = YouTubeIdea(
                 idea_id=row["idea_id"],
@@ -393,7 +522,7 @@ class YouTubeAtlasBridge:
                 summary=row["summary"],
                 rules=tuple(json.loads(row["rules_json"])),
                 markets=markets,
-                timeframes=tuple(json.loads(row["timeframes_json"])),
+                timeframes=timeframes,
                 tags=tuple(json.loads(row["tags_json"])),
                 source_kind=row["source_kind"],
                 specification_quality=float(row["specification_quality"]),
@@ -409,6 +538,9 @@ class YouTubeAtlasBridge:
                                 "iteration": int(iteration),
                                 "track_id": self.track_id,
                                 "idea_id": idea.idea_id,
+                                "routing_stage": self.routing_stage,
+                                "symbol": self.symbol,
+                                "timeframe": self.timeframe,
                                 "ts": utc_now(),
                             },
                             sort_keys=True,
@@ -434,6 +566,10 @@ class YouTubeAtlasBridge:
             f"Idea id: {idea.idea_id}",
             f"Published: {idea.published_at}",
             f"Source type: {idea.source_kind}",
+            (
+                f"Atlas route: {self.routing_stage} on "
+                f"{self.symbol or 'unspecified'} @ {self.timeframe}"
+            ),
         ]
         if idea.channel_title:
             lines.append(f"Channel: {idea.channel_title}")
@@ -534,6 +670,10 @@ class YouTubeAtlasBridge:
                 ).fetchone()[0]
             ),
             "published_cutoff": self.cutoff.isoformat(),
+            "routing_stage": self.routing_stage,
+            "symbol": self.symbol,
+            "timeframe": self.timeframe,
+            "multi_timeframe_capable": self.multi_timeframe_capable,
             "hidden_validation_access": False,
             "final_oos_access": False,
         }
@@ -556,6 +696,16 @@ def _brain() -> YouTubeAtlasBridge | None:
         track_id=os.environ.get("AUTORESEARCH_TRACK_ID", "unknown"),
         domain=f"{market}:{family}:{profile}",
         published_cutoff=cutoff,
+        symbol=os.environ.get("AUTORESEARCH_SYMBOL"),
+        timeframe=os.environ.get("AUTORESEARCH_TIMEFRAME", "1D"),
+        routing_stage=os.environ.get(
+            "AUTORESEARCH_YOUTUBE_ROUTING_STAGE", "reproduction"
+        ),
+        multi_timeframe_capable=(
+            os.environ.get(
+                "AUTORESEARCH_YOUTUBE_MULTI_TIMEFRAME_CAPABLE", "0"
+            ) == "1"
+        ),
     )
 
 
