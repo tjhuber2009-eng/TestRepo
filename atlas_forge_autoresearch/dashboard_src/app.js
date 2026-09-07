@@ -842,15 +842,21 @@ function renderTracks(){
   let rows=[...(DATA.tracks||[])];
   rows=rows.filter(r=>
     (profile==="all"||r.profile===profile)&&
-    (!q||`${r.track_id} ${r.family} ${r.target} ${r.profile}`.toLowerCase().includes(q))
+    (!q||`${r.track_id} ${r.family} ${r.target} ${r.profile} ${r.route_stage||""} ${r.tested_timeframe||""}`.toLowerCase().includes(q))
   );
   rows.sort((a,b)=>{
     const av=Number(a.valid_attempts||0),bv=Number(b.valid_attempts||0);
     if(bv!==av)return bv-av;
     return Number(b.development_score??-1e99)-Number(a.development_score??-1e99);
   });
-  $("#tracksTable tbody").innerHTML=rows.slice(0,600).map(r=>`<tr>
+  $("#tracksTable tbody").innerHTML=rows.slice(0,600).map(r=>{
+    const fallback=DATA.routing?.core?.by_track?.[r.track_id]||{};
+    const tf=r.tested_timeframe||fallback.tested_timeframe||"—";
+    const route=r.route_stage||fallback.stage||"—";
+    return `<tr>
     <td><b>${esc(r.track_id)}</b></td>
+    <td>${esc(tf)}</td>
+    <td><span class="status-chip">${esc(route.replace("_"," "))}</span></td>
     <td><span class="status-chip">${esc(r.status||"")}</span></td>
     <td class="num">${fmt(r.development_score,5)}</td>
     <td class="num">${pct(r.development_cagr_pct,1)}</td>
@@ -859,7 +865,8 @@ function renderTracks(){
     <td class="num">${num(r.valid_attempts)}</td>
     <td>${r.depth_selected?"YES":"—"}</td>
     <td>${r.elite_selected?"YES":"—"}</td>
-  </tr>`).join("");
+  </tr>`;
+  }).join("");
 }
 
 $("#refreshBtn").addEventListener("click",load);
