@@ -26,11 +26,11 @@ test('Gemini call sends public YouTube URL and API key only in header',async()=>
     return{
       ok:true,status:200,
       text:async()=>JSON.stringify({
-        candidates:[{content:{parts:[{text:JSON.stringify({
+        steps:[{type:'model_output',content:[{type:'text',text:JSON.stringify({
           strategy_relevant:true,
           visual_context_used:true,
           ideas:[{summary:'Breakout after compression',rules:['Enter on range breakout','Exit on opposite break'],markets:['stock'],timeframes:['1h'],tags:['breakout'],timestamps_seconds:[90],specificity:.8}],
-        })}]}}],
+        })}]}],
       }),
     };
   };
@@ -44,8 +44,13 @@ test('Gemini call sends public YouTube URL and API key only in header',async()=>
   assert.equal(captured.opts.headers['x-goog-api-key'],'secret-test-key');
   assert.ok(!captured.opts.body.includes('secret-test-key'));
   const body=JSON.parse(captured.opts.body);
-  assert.equal(body.contents[0].parts[0].fileData.fileUri,'https://www.youtube.com/watch?v=AAAAAAAAAAA');
-  assert.equal(body.generationConfig.temperature,.1);
+  assert.equal(captured.url,'https://generativelanguage.googleapis.com/v1beta/interactions');
+  assert.equal(body.model,'gemini-test');
+  assert.equal(body.input[0].type,'video');
+  assert.equal(body.input[0].uri,'https://www.youtube.com/watch?v=AAAAAAAAAAA');
+  assert.equal(body.response_format.mime_type,'application/json');
+  assert.equal(body.response_format.type,'text');
+  assert.ok(body.system_instruction.includes('untrusted source evidence'));
 });
 
 test('Atlas rows keep chronology provenance and never promote creator claims',()=>{
