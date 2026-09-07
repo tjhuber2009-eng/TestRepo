@@ -878,13 +878,12 @@
     },
     {
       "id": "pead",
-      "status": "blocked",
+      "status": "v4_event_engine_data_blocked",
       "exactness": "documented",
       "origin": "PEAD academic/mechanical research",
       "requires": [
         "point-in-time earnings announcement data",
-        "surprise measure",
-        "event engine"
+        "surprise measure"
       ],
       "routing": {
         "native_markets": [
@@ -901,7 +900,9 @@
         "requires_session_clock": false,
         "requires_volume": false,
         "requires_contract_data": false
-      }
+      },
+      "v4_engine": "v4/strategy_examples.py::pead_event_weights",
+      "engine_status": "implemented_and_unit_tested"
     },
     {
       "id": "zanger_exact",
@@ -1024,12 +1025,10 @@
     },
     {
       "id": "overnight_intraday_reversal",
-      "status": "blocked",
-      "exactness": "research_queue",
+      "status": "v4_daily_session_engine_runnable",
+      "exactness": "atlas_variant_frozen_rules",
       "origin": "HR-001 overnight-to-intraday reversal",
-      "requires": [
-        "overnight/intraday session decomposition"
-      ],
+      "requires": [],
       "routing": {
         "native_markets": [
           "etf",
@@ -1037,13 +1036,25 @@
         ],
         "native_instruments": [],
         "native_timeframes": [],
-        "evaluation_timeframes": [],
-        "signal_cadence": "bar",
+        "evaluation_timeframes": [
+          "1D"
+        ],
+        "signal_cadence": "session",
         "source_route_verified": false,
         "requires_multi_timeframe": false,
         "requires_session_clock": true,
         "requires_volume": false,
         "requires_contract_data": false
+      },
+      "v4_engine": "v4/strategy_examples.py::overnight_gap_reversal_diagnostic",
+      "frozen_rules": {
+        "instrument": "SPY",
+        "input": "daily OHLC",
+        "signal": "at open[t], short gaps >= +1%; long gaps <= -1% versus close[t-1]",
+        "execution": "enter open[t], exit close[t]",
+        "one_way_cost_bps": 3,
+        "cost_stress_multiplier": 3,
+        "portfolio_eligibility": "diagnostic_only_until_family_PBO_is_established"
       }
     },
     {
@@ -1166,15 +1177,11 @@
     },
     {
       "id": "stat_arb_pairs",
-      "status": "v4_engine_available_rules_pending",
-      "exactness": "family",
+      "status": "v4_family_runnable",
+      "exactness": "atlas_variant_frozen_rules",
       "origin": "Cointegration/stat-arb family; synchronized v4 multi-asset engine now exists",
-      "requires": [
-        "freeze pair-universe/formation rule",
-        "freeze hedge-ratio, entry, exit and rebalance rules",
-        "synchronized source data for selected pairs"
-      ],
-      "v4_engine": "v4/multi_asset_engine.py",
+      "requires": [],
+      "v4_engine": "v4/strategy_examples.py::rolling_pair_reversion",
       "routing": {
         "native_markets": [
           "stock",
@@ -1183,13 +1190,32 @@
         ],
         "native_instruments": [],
         "native_timeframes": [],
-        "evaluation_timeframes": [],
+        "evaluation_timeframes": [
+          "1D"
+        ],
         "signal_cadence": "bar",
         "source_route_verified": false,
         "requires_multi_timeframe": false,
         "requires_session_clock": false,
         "requires_volume": false,
         "requires_contract_data": false
+      },
+      "frozen_rules": {
+        "pair_universe": [
+          [
+            "QQQ",
+            "SPY"
+          ]
+        ],
+        "formation_window": 252,
+        "z_window": 60,
+        "entry_z": 2,
+        "exit_z": 0.5,
+        "stop_z": 4,
+        "gross_weight": 1,
+        "hedge_ratio": "rolling log-price OLS beta using trailing covariance/variance",
+        "rebalance": "daily signal at close, execution next open",
+        "portfolio_eligibility": "diagnostic_only_until_family_PBO_is_established"
       }
     },
     {
