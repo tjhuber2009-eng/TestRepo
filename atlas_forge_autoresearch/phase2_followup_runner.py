@@ -202,6 +202,9 @@ def rerun_detail(track, baseline_row):
             "family": track["family"],
             "target": track["target"]["id"],
             "market": track["target"]["market"],
+            "tested_timeframe": track["routing"]["tested_timeframe"],
+            "route_stage": track["routing"]["stage"],
+            "routing": track["routing"],
             "profile": track["profile_name"],
             "status": "baseline_replay_mismatch",
             "mismatches": mismatches,
@@ -236,6 +239,12 @@ def rerun_detail(track, baseline_row):
         "family": track["family"],
         "target": track["target"]["id"],
         "market": track["target"]["market"],
+        "tested_timeframe": track["routing"]["tested_timeframe"],
+        "route_stage": track["routing"]["stage"],
+        "source_route_verified": track["routing"]["source_route_verified"],
+        "source_native_match": track["routing"]["source_native_match"],
+        "signal_cadence": track["routing"]["signal_cadence"],
+        "routing": track["routing"],
         "profile": track["profile_name"],
         "status": "ok",
         "guard_ok": bool(summary.get("guard_ok")),
@@ -447,6 +456,12 @@ def build_promotion(rows, selection):
             "family": row.get("family"),
             "target": row.get("target"),
             "market": row.get("market"),
+            "tested_timeframe": row.get("tested_timeframe"),
+            "route_stage": row.get("route_stage"),
+            "source_route_verified": row.get("source_route_verified"),
+            "source_native_match": row.get("source_native_match"),
+            "signal_cadence": row.get("signal_cadence"),
+            "routing": row.get("routing"),
             "profile": row.get("profile"),
             "score": row.get("score"),
             "cagr_pct": row.get("cagr_pct"),
@@ -501,6 +516,9 @@ def build_promotion(rows, selection):
             item["bars_per_year"] = int(track["target"]["bars_per_year"])
             item["commission"] = float(track["target"]["commission"])
             item["margin"] = float(track["target"]["margin"])
+            item["tested_timeframe"] = track["routing"]["tested_timeframe"]
+            item["route_stage"] = track["routing"]["stage"]
+            item["routing"] = track["routing"]
         if not item["ready_for_v4_replay"]:
             continue
         if track is None:
