@@ -71,6 +71,7 @@ jobs:
       - name: Compile and run integrity tests
         run: |
           python -m compileall -q .
+          node --check dashboard_src/app.js
           python -m unittest -v test_autoresearch_integrity.py test_atlas_evomind.py test_atlas_youtube_intelligence.py
 
       - name: Exercise EvoMind persistent research intelligence
