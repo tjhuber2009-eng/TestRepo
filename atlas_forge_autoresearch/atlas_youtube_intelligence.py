@@ -21,6 +21,7 @@ import json
 import math
 import os
 import sqlite3
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -347,7 +348,14 @@ class YouTubeAtlasBridge:
             "futures_proxy": {"futures", "index futures", "commodities"},
         }
         allowed = aliases.get(market, {market})
-        return bool({x.lower() for x in markets} & allowed)
+        normalized = [str(x).strip().lower() for x in markets if str(x).strip()]
+        for value in normalized:
+            for alias in allowed:
+                if value == alias:
+                    return True
+                if re.search(rf"\\b{re.escape(alias)}\\b", value):
+                    return True
+        return False
 
     def choose(self, iteration: int, evomind_arm: str | None) -> YouTubeIdea | None:
         # EvoMind owns proposal-source allocation. YouTube Intelligence supplies
