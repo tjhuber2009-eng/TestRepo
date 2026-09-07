@@ -436,9 +436,20 @@ def development_selection_score(track):
     return score * (1.0 - penalty) if score >= 0 else score * (1.0 + penalty)
 
 
+def track_routing(track):
+    routing = track.get("routing")
+    if routing is not None:
+        return routing
+    return strategy_routing.classify_track(
+        track.get("family") or {},
+        track.get("target") or {},
+    )
+
+
 def target_env(track):
     t = track["target"]
     p = track["profile"]
+    routing = track_routing(track)
     cfg = load_json(CONFIG)
     env = dict(os.environ)
     env.update({
@@ -450,14 +461,14 @@ def target_env(track):
         "AUTORESEARCH_TIMEFRAME": strategy_routing.canonical_timeframe(
             t.get("timeframe", "1D")
         ),
-        "AUTORESEARCH_ROUTE_STAGE": track["routing"]["stage"],
+        "AUTORESEARCH_ROUTE_STAGE": routing["stage"],
         "AUTORESEARCH_SOURCE_ROUTE_VERIFIED": (
-            "1" if track["routing"]["source_route_verified"] else "0"
+            "1" if routing["source_route_verified"] else "0"
         ),
         "AUTORESEARCH_SOURCE_NATIVE_MATCH": (
-            "1" if track["routing"]["source_native_match"] else "0"
+            "1" if routing["source_native_match"] else "0"
         ),
-        "AUTORESEARCH_SIGNAL_CADENCE": track["routing"]["signal_cadence"],
+        "AUTORESEARCH_SIGNAL_CADENCE": routing["signal_cadence"],
         "AUTORESEARCH_DATA_FILE": f"data/{t['id']}_1d.csv",
         "AUTORESEARCH_COMMISSION": str(t["commission"]),
         "AUTORESEARCH_MARGIN": str(t["margin"]),
