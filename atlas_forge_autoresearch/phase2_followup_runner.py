@@ -529,13 +529,18 @@ def build_promotion(rows, selection):
                 f"ready Phase-2 promotion track disappeared: {item['track_id']}"
             )
         source_path = PROMOTION_SOURCES / f"{item['track_id']}.py"
-        p2.generate(
-            track["family"],
-            source_path,
-            int(track["target"]["bars_per_year"]),
-            float(track["profile"]["starting_vol_target"]),
-            float(track["profile"]["f_max"]),
-        )
+        # Promotion sources are frozen evidence artifacts. Reuse a persisted
+        # source whenever present; regenerating it from a later seed-factory
+        # revision can silently change the candidate while keeping the same
+        # track id.
+        if not source_path.exists():
+            p2.generate(
+                track["family"],
+                source_path,
+                int(track["target"]["bars_per_year"]),
+                float(track["profile"]["starting_vol_target"]),
+                float(track["profile"]["f_max"]),
+            )
         source_sha = sha256_file(source_path)
         expected_sha = str(item.get("strategy_sha256") or "")
         if not expected_sha or source_sha != expected_sha:
