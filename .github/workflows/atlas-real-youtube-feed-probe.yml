@@ -1,0 +1,70 @@
+name: Atlas real YouTube feed probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/atlas-real-youtube-feed-probe-kick"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Atlas source
+        uses: actions/checkout@v4
+        with:
+          ref: atlas-forge-autoresearch
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore real YouTube Intelligence feed
+        shell: bash
+        run: |
+          git fetch origin +refs/heads/youtube-intelligence-atlas-state:refs/remotes/origin/youtube-intelligence-atlas-state
+          mkdir -p /tmp/atlas-real-youtube
+          git show refs/remotes/origin/youtube-intelligence-atlas-state:atlas_youtube_state/youtube_intelligence_feed.jsonl > /tmp/atlas-real-youtube/feed.jsonl
+          test -s /tmp/atlas-real-youtube/feed.jsonl
+
+      - name: Verify Atlas consumes real feed
+        working-directory: atlas_forge_autoresearch
+        env:
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED: "1"
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB: "/tmp/atlas-real-youtube/youtube.db"
+          AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED: "/tmp/atlas-real-youtube/feed.jsonl"
+          AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF: "2020-12-31"
+          AUTORESEARCH_TRACK_ID: "real_feed_probe__forex__private"
+          AUTORESEARCH_MARKET: "forex"
+          AUTORESEARCH_FAMILY: "real_feed_probe"
+          AUTORESEARCH_PROFILE: "private"
+        shell: python
+        run: |
+          import atlas_youtube_intelligence as y
+          guidance, idea_id = y.prompt_guidance(1, 'external_proposal')
+          assert idea_id and idea_id.startswith('yti-gemini:'), (idea_id, guidance)
+          assert 'YouTube Intelligence external hypothesis' in guidance
+          assert 'UNVERIFIED' in guidance
+          assert 'independently test' in guidance
+          assert 'claimed return' not in guidance.lower()
+          brain=y.YouTubeAtlasBridge(
+              '/tmp/atlas-real-youtube/youtube.db',
+              feed_path='/tmp/atlas-real-youtube/feed.jsonl',
+              track_id='real_feed_probe__forex__private',
+              domain='forex:real_feed_probe:private',
+              published_cutoff='2020-12-31',
+          )
+          try:
+              snap=brain.snapshot()
+              assert snap['ideas'] >= 1, snap
+              assert snap['eligible'] >= 1, snap
+              assert snap['hidden_validation_access'] is False
+              assert snap['final_oos_access'] is False
+              print({'selected_idea_id':idea_id,'snapshot':snap,'guidance_preview':guidance[:600]})
+          finally:
+              brain.close()
