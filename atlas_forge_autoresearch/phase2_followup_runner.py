@@ -513,12 +513,15 @@ def build_promotion(rows, selection):
     for item in queue:
         track = lookup.get(item["track_id"])
         if track is not None:
+            routing = track.get("routing") or p2.phase2_routing(
+                track["family"], track["target"]
+            )
             item["bars_per_year"] = int(track["target"]["bars_per_year"])
             item["commission"] = float(track["target"]["commission"])
             item["margin"] = float(track["target"]["margin"])
-            item["tested_timeframe"] = track["routing"]["tested_timeframe"]
-            item["route_stage"] = track["routing"]["stage"]
-            item["routing"] = track["routing"]
+            item["tested_timeframe"] = routing["tested_timeframe"]
+            item["route_stage"] = routing["stage"]
+            item["routing"] = routing
         if not item["ready_for_v4_replay"]:
             continue
         if track is None:
