@@ -88,7 +88,8 @@ def classify_track(
         not spec["native_instruments"] or symbol in spec["native_instruments"]
     )
     source_native_match = bool(
-        native_market_match
+        spec["source_route_verified"]
+        and native_market_match
         and native_timeframe_match
         and native_instrument_match
     )
