@@ -12,6 +12,8 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+import strategy_routing
+
 HERE = Path(__file__).resolve().parent
 SRC = HERE / "dashboard_src"
 ACTIVE_PROTOCOL = "nested_chronological_v3"
@@ -39,6 +41,51 @@ def load_jsonl(path, limit=120):
             except Exception:
                 continue
     return rows[-limit:]
+
+
+def source_routing_snapshot(config_path):
+    registry = load_json(HERE / "strategy_library" / "registry.json", {}) or {}
+    config = load_json(config_path, {}) or {}
+    allowlists = {
+        market: set(ids)
+        for market, ids in (config.get("family_allowlist_by_market") or {}).items()
+    }
+    counts = {
+        "reproduction": 0,
+        "transfer": 0,
+        "atlas_variant": 0,
+        "blocked": 0,
+    }
+    timeframes = {}
+    by_track = {}
+    families = [
+        row for row in registry.get("families", [])
+        if row.get("status") == "runnable"
+    ]
+    targets = [row for row in config.get("targets", []) if row.get("enabled")]
+    for family in families:
+        allowed = set(family.get("markets", []))
+        for target in targets:
+            if allowed and target.get("market") not in allowed:
+                continue
+            allow = allowlists.get(target.get("market"))
+            if allow is not None and family.get("id") not in allow:
+                continue
+            routing = strategy_routing.classify_track(family, target)
+            for profile in ("prop", "private"):
+                track_id = "__".join(
+                    (str(family["id"]), str(target["id"]), profile)
+                )
+                by_track[track_id] = routing
+                counts[routing["stage"]] += 1
+                tf = routing["tested_timeframe"]
+                timeframes[tf] = timeframes.get(tf, 0) + 1
+    return {
+        "counts": counts,
+        "timeframes": timeframes,
+        "tracks": sum(counts.values()),
+        "by_track": by_track,
+    }
 
 
 def finite(v):
@@ -202,6 +249,8 @@ def main():
     v4_state = HERE / args.v4_state_dir
     tournament_state = HERE / args.tournament_state_dir
     runtime = HERE / args.runtime_dir
+    core_routing = source_routing_snapshot(HERE / "continuous_config.json")
+    stock_fx_routing = source_routing_snapshot(HERE / "stock_fx_config.json")
     output = HERE / args.output_dir
     output.mkdir(parents=True, exist_ok=True)
 
@@ -355,6 +404,10 @@ def main():
         "state_is_active": state_is_active,
         "stale_state": stale_state,
         "phase": progress.get("phase"),
+        "routing": {
+            "core": core_routing,
+            "stock_fx": stock_fx_routing,
+        },
         "progress": progress,
         "progress_derived": summarize_progress(progress),
         "leaderboard": normalize_leaderboard(board, state),
