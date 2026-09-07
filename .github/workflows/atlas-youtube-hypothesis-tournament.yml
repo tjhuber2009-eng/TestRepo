@@ -22,7 +22,7 @@ jobs:
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
       GH_TOKEN: ${{ github.token }}
-      ATLAS_SOURCE_SHA: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
+      ATLAS_SOURCE_SHA: 509155f9ed3f9d1b9c7b508b6fec5e4ba5e6a259
     defaults:
       run:
         working-directory: atlas_forge_autoresearch
@@ -30,7 +30,7 @@ jobs:
       - name: Checkout pinned Atlas source
         uses: actions/checkout@v7
         with:
-          ref: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
+          ref: 509155f9ed3f9d1b9c7b508b6fec5e4ba5e6a259
           fetch-depth: 0
 
       - uses: actions/setup-python@v7
@@ -132,7 +132,7 @@ jobs:
           AUTORESEARCH_VALIDATION_START: "2022-01-01"
           AUTORESEARCH_VALIDATION_END: "2022-12-31"
           AUTORESEARCH_PROTOCOL: nested_chronological_v3
-          AUTORESEARCH_SOURCE_SHA: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
+          AUTORESEARCH_SOURCE_SHA: 509155f9ed3f9d1b9c7b508b6fec5e4ba5e6a259
           AUTORESEARCH_TRACK_ID: youtube_tournament__sentinel63__eurusd__private
           AUTORESEARCH_EVOMIND_ENABLED: "1"
           AUTORESEARCH_EVOMIND_DB: youtube_tournament_state/evomind.db
