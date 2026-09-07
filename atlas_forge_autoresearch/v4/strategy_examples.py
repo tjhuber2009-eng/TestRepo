@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Mapping, Sequence
 
+import numpy as np
 import pandas as pd
 
 
@@ -205,3 +206,147 @@ def leveraged_defensive_rotation(
         return out
 
     return strategy
+
+
+def rolling_pair_reversion(
+    *,
+    left_symbol: str,
+    right_symbol: str,
+    formation_window: int = 252,
+    z_window: int = 60,
+    entry_z: float = 2.0,
+    exit_z: float = 0.5,
+    stop_z: float = 4.0,
+    gross_weight: float = 1.0,
+):
+    """Causal rolling-hedge-ratio pair mean reversion.
+
+    Rules are deliberately fixed and transparent: estimate beta from trailing
+    log closes, z-score the resulting spread, enter outside +/-entry_z, exit
+    inside +/-exit_z or beyond stop_z, and execute through the v4 engine on the
+    next bar open. Pair gross exposure is normalized to gross_weight.
+    """
+    if formation_window < 20 or z_window < 10:
+        raise ValueError("formation_window>=20 and z_window>=10 required")
+    if not (0.0 <= exit_z < entry_z < stop_z):
+        raise ValueError("require 0 <= exit_z < entry_z < stop_z")
+    if gross_weight <= 0.0:
+        raise ValueError("gross_weight must be positive")
+
+    def strategy(data: Mapping[str, pd.DataFrame], features=None) -> pd.DataFrame:
+        if left_symbol not in data or right_symbol not in data:
+            raise KeyError("pair symbols missing from market data")
+        index = data[left_symbol].index
+        out = pd.DataFrame(0.0, index=index, columns=sorted(data))
+        a = np.log(data[left_symbol]["Close"].astype(float))
+        b = np.log(data[right_symbol]["Close"].astype(float))
+        cov = a.rolling(formation_window, min_periods=formation_window).cov(b)
+        var = b.rolling(formation_window, min_periods=formation_window).var()
+        beta = (cov / var.replace(0.0, np.nan)).replace([np.inf, -np.inf], np.nan)
+        spread = a - beta * b
+        mean = spread.rolling(z_window, min_periods=z_window).mean()
+        std = spread.rolling(z_window, min_periods=z_window).std(ddof=0)
+        z = ((spread - mean) / std.replace(0.0, np.nan)).replace(
+            [np.inf, -np.inf], np.nan
+        )
+
+        state = 0
+        for ts in index:
+            zi = z.loc[ts]
+            bi = beta.loc[ts]
+            if not np.isfinite(zi) or not np.isfinite(bi):
+                state = 0
+                continue
+            if state == 0:
+                if zi >= entry_z:
+                    state = -1
+                elif zi <= -entry_z:
+                    state = 1
+            elif abs(zi) <= exit_z or abs(zi) >= stop_z:
+                state = 0
+            if state:
+                left_raw = float(state)
+                right_raw = float(-state * bi)
+                gross = abs(left_raw) + abs(right_raw)
+                if gross > 0.0:
+                    scale = float(gross_weight) / gross
+                    out.loc[ts, left_symbol] = left_raw * scale
+                    out.loc[ts, right_symbol] = right_raw * scale
+        return out
+
+    return strategy
+
+
+def overnight_gap_reversal_diagnostic(
+    frame: pd.DataFrame,
+    *,
+    gap_threshold: float = 0.01,
+    one_way_cost_bps: float = 3.0,
+    cost_stress_multiplier: float = 3.0,
+    periods_per_year: float = 252.0,
+) -> dict:
+    """Causal open-to-close reversal using only the opening gap known at entry.
+
+    A positive gap above threshold is shorted from that day's open to close; a
+    negative gap below -threshold is bought. The signal uses open[t] and
+    close[t-1] only. This is a daily-OHLC session engine, not a next-open proxy.
+    """
+    if not isinstance(frame.index, pd.DatetimeIndex):
+        raise ValueError("DatetimeIndex required")
+    if not {"Open", "Close"}.issubset(frame.columns):
+        raise ValueError("Open and Close required")
+    if gap_threshold < 0.0:
+        raise ValueError("gap_threshold must be non-negative")
+
+    open_ = pd.to_numeric(frame["Open"], errors="coerce")
+    close = pd.to_numeric(frame["Close"], errors="coerce")
+    prev_close = close.shift(1)
+    gap = open_ / prev_close - 1.0
+    weight = pd.Series(0.0, index=frame.index)
+    weight.loc[gap >= gap_threshold] = -1.0
+    weight.loc[gap <= -gap_threshold] = 1.0
+    intraday = close / open_ - 1.0
+    base_cost = weight.abs() * 2.0 * float(one_way_cost_bps) / 10_000.0
+    ret = (weight * intraday - base_cost).fillna(0.0)
+    stress_ret = (
+        weight * intraday
+        - base_cost * float(cost_stress_multiplier)
+    ).fillna(0.0)
+
+    def summarize(series: pd.Series) -> tuple[float, float, float]:
+        eq = (1.0 + series).cumprod()
+        if len(eq) < 2:
+            return 0.0, 0.0, 0.0
+        elapsed = max(
+            (eq.index[-1] - eq.index[0]).total_seconds() / 86400.0,
+            1.0,
+        )
+        years = elapsed / 365.2425
+        cagr = (
+            (float(eq.iloc[-1]) ** (1.0 / years) - 1.0) * 100.0
+            if float(eq.iloc[-1]) > 0.0 else -100.0
+        )
+        peak = eq.cummax()
+        dd = float((eq / peak - 1.0).min() * 100.0)
+        sd = float(series.std(ddof=0))
+        sharpe = (
+            float(series.mean()) / sd * np.sqrt(float(periods_per_year))
+            if sd > 0.0 else 0.0
+        )
+        return float(cagr), dd, sharpe
+
+    cagr, dd, sharpe = summarize(ret)
+    stress_cagr, _, _ = summarize(stress_ret)
+    return {
+        "policy": "open_gap_known_at_entry_open_to_same_day_close_v1",
+        "gap_threshold": float(gap_threshold),
+        "one_way_cost_bps": float(one_way_cost_bps),
+        "cost_stress_multiplier": float(cost_stress_multiplier),
+        "cagr_pct": cagr,
+        "max_dd_pct": dd,
+        "sharpe": sharpe,
+        "cost_stress_cagr_pct": stress_cagr,
+        "trades": int((weight != 0.0).sum()),
+        "active_fraction": float((weight != 0.0).mean()),
+        "causality": "signal uses open[t] and close[t-1]; exit is close[t]",
+    }
