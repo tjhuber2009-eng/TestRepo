@@ -1,0 +1,5 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-07T01:55:11Z	1	REJECTED	-0.18277	-0.114457	-9.09	-0.863	-0.3401	2.463	40	-12.932	0.125688	0.858283	B	-9.325	guard: development robustness gate failed	Add long-term trend filter: only enter when price is above its 200-period SMA
+2026-09-07T01:55:49Z	2	REJECTED	-0.090833	-0.114457	-3.941	-0.365	-0.1409	2.396	40	-7.138	0.319516	0.688623	B	-4.175	guard: development robustness gate failed	Add rising SMA50 trend filter to entry condition (require SMA50 to be increasing)
+2026-09-07T01:56:24Z	3	REJECTED	-0.139638	-0.114457	-8.152	-0.771	-0.3395	2.21	34	-9.281	0.12735	0.866267	B	-8.345	guard: development robustness gate failed	Add low volatility regime filter: only enter when current realized volatility is below its 30-period moving average
+2026-09-07T01:57:52Z	4	REJECTED	-0.189179	-0.114457	-10.622	-1.017	-0.4435	2.25	34	-12.606	0.064983	0.934132	B	-10.807	guard: development robustness gate failed	Add ADX trend strength filter to entry condition (require ADX > 20)

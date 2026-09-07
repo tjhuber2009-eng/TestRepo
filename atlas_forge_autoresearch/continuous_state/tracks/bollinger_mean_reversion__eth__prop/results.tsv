@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:13:10Z	1	PARAMETER_ONLY	nan	-0.254499	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Increase Bollinger entry threshold from 2.0 to 2.5 standard deviations to require stronger deviation before entering mean-reversion trades.
+2026-09-05T23:13:47Z	2	REJECTED	-0.127534	-0.254499	-1.431	-0.426	-0.2683	1.547	26	-5.132	0.310939	0.704591	B	-1.619	guard: development robustness gate failed	Add a Bollinger band cross-down entry and cross-up middle exit to require price to cross the bands rather than just be beyond them.

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:57:08Z	1	REJECTED	-0.15691	-0.089302	-5.378	-0.502	0.0179	11.914	28	-34.713	0.523665	0.500998	C	-4.79	guard: development robustness gate failed	Add ADX trend filter: only enter long when ADX > 20 indicating a strong trend
+2026-09-05T23:57:41Z	2	REJECTED	-0.099783	-0.089302	73.307	5.131	0.4138	14.743	45	-30.536	0.911526	0.093812	A	67.673	paired chronological folds did not show a median/majority improvement over baseline	Add volatility regime filter: only enter long when current realized volatility exceeds its 20-bar simple moving average, targeting higher volatility trending regimes.

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T17:17:13Z	1	REJECTED	-0.03514	0.03528	313.876	13.797	0.7752	19.033	37	-30.696	0.994243	0.007984	A	297.854	paired chronological folds did not show a median/majority improvement over baseline	Add a 200-day SMA trend filter to only enter long positions when price is above the long-term SMA, reducing false breakouts in bearish regimes.
+2026-09-05T17:18:03Z	2	PARAMETER_ONLY	nan	0.03528	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Make the Donchian channel symmetric by using a 20-period low for exit instead of 10-period low.

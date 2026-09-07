@@ -1,0 +1,5 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T12:07:52Z	1	REJECTED	-0.026322	-0.014418	19.036	1.598	0.5112	3.204	41	-7.53	0.960287	0.01996	A	18.306	paired chronological folds did not show a median/majority improvement over baseline	Add upward slope filter for 200-day SMA to entry condition
+2026-09-05T12:08:26Z	2	REJECTED	-0.001509	-0.014418	12.257	1.058	0.4849	2.222	25	-5.659	0.950677	0.033932	B	11.803	paired chronological folds did not show a median/majority improvement over baseline	Add a low-volatility regime filter: only enter when realized volatility is below its 20-bar simple moving average.
+2026-09-06T02:24:28Z	3	RISK_CONTROL_CHANGE	nan	-0.014418	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop loss to long entries
+2026-09-06T02:24:52Z	4	PARAMETER_ONLY	nan	-0.014418	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten entry RSI2 threshold from <5 to <3 to require deeper pullbacks before buying

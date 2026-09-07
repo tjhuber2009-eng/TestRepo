@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T19:30:36Z	1	REJECTED	-0.051511	-0.014513	408.586	15.951	0.8919	18.5	18	-29.408	0.998952	0.003992	B	406.777	guard: development robustness gate failed	Add a low-volatility regime filter: only enter when current realized volatility is below its 60-day SMA.
+2026-09-05T19:31:28Z	2	DUPLICATE	nan	-0.014513	nan	nan	nan	nan	0	nan	nan	nan		nan	semantic AST duplicate of a previously generated candidate	Tighten the ATR-based stop loss from 5× to 3× to reduce drawdown and improve risk-adjusted robustness

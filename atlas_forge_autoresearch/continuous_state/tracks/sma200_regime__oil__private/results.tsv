@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T15:27:59Z	1	RISK_CONTROL_CHANGE	nan	-0.168111	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add ATR-based stop loss to long entries
+2026-09-05T15:28:39Z	2	REJECTED	-0.10137	-0.168111	-9.023	-0.857	-0.1024	6.406	34	-23.809	0.367084	0.606786	B	-9.39	guard: development robustness gate failed	Add upward slope filter to SMA200 regime: only enter long when price above SMA200 and SMA200 is rising.

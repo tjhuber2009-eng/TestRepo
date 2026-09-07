@@ -1,0 +1,5 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-07T01:22:26Z	1	REJECTED	-0.049121	-0.012954	16.758	1.42	0.1809	11.444	43	-25.573	0.724056	0.255489	B	14.16	guard: development robustness gate failed	Add a low-volatility filter to entry: only enter when current ATR is below its 20-bar SMA.
+2026-09-07T01:22:48Z	2	REJECTED	-0.048788	-0.012954	28.466	2.305	0.2471	12.345	47	-25.176	0.79067	0.199601	B	25.171	paired chronological folds did not show a median/majority improvement over baseline	Add a 200-period SMA trend filter to entry: only enter when price is above its 200-period SMA.
+2026-09-07T01:24:48Z	3	REJECTED	-0.045011	-0.012954	39.307	3.062	0.3032	12.602	46	-17.638	0.838884	0.131737	B	35.846	paired chronological folds did not show a median/majority improvement over baseline	Add a rising SMA50 filter to entry: only enter when the 50-period SMA is increasing.
+2026-09-07T01:25:33Z	4	CRASH	nan	-0.012954	nan	nan	nan	nan	0	nan	nan	nan		nan	harness exited 1; see logs/run_4.txt	Add volume confirmation to entry: only enter when current volume exceeds its 20-period average.

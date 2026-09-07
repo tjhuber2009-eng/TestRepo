@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T21:30:00Z	1	REJECTED	0.128848	0.128848	20.177	14.157	1.3563	10.14	3	-6.503	0.923863	0.041916	C	20.162	guard: development robustness gate failed	Add ADX trend filter to entry condition, requiring ADX > 20 to avoid false breakouts
+2026-09-05T21:35:20Z	2	REJECTED	0.128848	0.128848	20.177	14.157	1.3563	10.14	3	-6.503	0.923863	0.043912	C	20.162	guard: development robustness gate failed	Add 100-day SMA trend filter to entry condition, requiring price above long-term SMA to trade in direction of longer-term trend

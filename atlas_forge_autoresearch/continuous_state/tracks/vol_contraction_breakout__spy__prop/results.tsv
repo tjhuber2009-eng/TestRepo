@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T01:03:25Z	1	REJECTED	-0.004203	-0.003982	16.305	1.384	0.5759	2.44	53	-5.747	0.969465	0.027944	A	15.133	paired chronological folds did not show a median/majority improvement over baseline	Require two consecutive bars of volatility contraction before entering a breakout trade.
+2026-09-06T01:03:48Z	2	REJECTED	-0.003982	-0.003982	17.594	1.486	0.5959	2.53	55	-5.787	0.9737	0.013972	A	16.368	paired chronological folds did not show a median/majority improvement over baseline	Add a 50-day simple moving average trend filter to only take breakouts when price is above its medium-term average.

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T22:35:01Z	1	PARAMETER_ONLY	nan	-0.11597	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Increase entry breakout threshold from 1.5*ATR to 2.0*ATR to require stronger trend confirmation.
+2026-09-05T22:35:25Z	2	REJECTED	-0.189907	-0.11597	-9.98	-0.952	-0.4609	2.033	22	-12.104	0.06007	0.934132	C	-10.104	guard: development robustness gate failed	Add ADX trend strength filter to only enter when ADX > 25, indicating a strong trend.

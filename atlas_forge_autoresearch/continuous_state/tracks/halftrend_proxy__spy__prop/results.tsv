@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:54:26Z	1	REJECTED	-0.009919	-0.053409	21.383	1.779	0.6102	2.963	36	-6.473	0.97492	0.01996	A	20.794	paired chronological folds did not show a median/majority improvement over baseline	Add a volatility regime filter: only enter long when realized volatility is below its 30‑bar simple moving average.
+2026-09-05T23:56:25Z	2	REJECTED	-0.005706	-0.053409	16.097	1.367	0.4986	2.804	33	-5.664	0.945296	0.061876	A	15.587	paired chronological folds did not show a median/majority improvement over baseline	Add a 20‑bar breakout filter: only enter long when price exceeds the highest high of the prior 20 bars.

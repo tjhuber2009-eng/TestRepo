@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T01:26:59Z	1	REJECTED	-0.018805	-0.012249	19.499	1.634	0.4701	3.587	70	-7.53	0.937972	0.043912	A	17.922	paired chronological folds did not show a median/majority improvement over baseline	Add a long-term trend filter: only enter long when price is above its 200-day SMA to avoid buying in strong downtrends.
+2026-09-06T01:27:22Z	2	CRASH	nan	-0.012249	nan	nan	nan	nan	0	nan	nan	nan		nan	harness exited 1; see logs/run_2.txt	Add a volatility regime filter: only enter long when current volatility is below its 20-day mean to avoid high-volatility regimes where mean reversion may fail.

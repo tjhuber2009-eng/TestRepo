@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T15:45:46Z	1	REJECTED	-0.079257	-0.032695	39.674	3.117	0.4843	6.826	28	-13.415	0.941337	0.061876	B	39.496	guard: development robustness gate failed	Add a volatility regime filter: only enter long when current realized volatility is below its longer-term average, based on the hypothesis that trend following works better in low volatility environme
+2026-09-05T15:48:34Z	2	REJECTED	-0.045469	-0.032695	46.486	3.569	0.5788	6.422	27	-10.386	0.969244	0.01996	B	46.31	guard: development robustness gate failed	Add entry condition requiring the 200-day SMA to be rising (current SMA > previous SMA) to trade only in strengthening uptrends

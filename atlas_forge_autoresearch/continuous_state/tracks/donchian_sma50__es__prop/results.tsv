@@ -1,0 +1,5 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-07T01:20:26Z	1	REJECTED	-0.056977	-0.003098	2.746	0.247	0.1001	2.882	37	-8.254	0.629049	0.327345	B	2.224	paired chronological folds did not show a median/majority improvement over baseline	Add ADX trend strength filter to entry condition (require ADX > 20)
+2026-09-07T01:21:05Z	2	PARAMETER_ONLY	nan	-0.003098	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Change exit Donchian lookback from 10 to 20 for symmetric channel
+2026-09-07T01:21:36Z	3	REJECTED	-0.027881	-0.003098	7.96	0.699	0.2312	3.246	47	-7.184	0.77554	0.235529	B	7.248	paired chronological folds did not show a median/majority improvement over baseline	Add longer-term SMA200 trend filter to entry condition
+2026-09-07T01:21:57Z	4	REJECTED	-0.015776	-0.003098	10.339	0.899	0.2868	3.318	46	-4.879	0.825591	0.125749	B	9.635	paired chronological folds did not show a median/majority improvement over baseline	Add rising SMA50 trend filter to entry condition (require SMA50 to be increasing)

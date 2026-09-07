@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:53:11Z	1	REJECTED	0.669022	0.669022	111.032	71.262	1.7268	34.739	4	-23.612	0.967239	0.025948	C	110.939	guard: development robustness gate failed	Add an ADX trend strength filter requiring ADX > 20 on the previous bar to enter long trades.
+2026-09-05T23:53:37Z	2	REJECTED	0.747991	0.669022	103.608	66.9	1.712	33.204	4	-21.775	0.967794	0.01996	C	103.518	guard: development robustness gate failed	Add a persistence filter requiring the fast EMA to have been above the slow EMA for two consecutive bars before entering a long trade.

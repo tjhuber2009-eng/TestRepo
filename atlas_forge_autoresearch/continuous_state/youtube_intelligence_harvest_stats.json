@@ -1,0 +1,185 @@
+{
+  "schema": 2,
+  "startedAt": "2026-09-07T01:19:28.591Z",
+  "channels": [
+    {
+      "channel": "@tradewithpat",
+      "discovered": 393,
+      "relevant": 0,
+      "chronologyEligible": 0,
+      "selected": 0,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": []
+    },
+    {
+      "channel": "@tradernick",
+      "discovered": 3000,
+      "relevant": 359,
+      "chronologyEligible": 359,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 2,
+      "ideas": 0,
+      "failures": []
+    },
+    {
+      "channel": "@nononsenseforex",
+      "discovered": 688,
+      "relevant": 102,
+      "chronologyEligible": 102,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "gemini_video",
+          "videoId": "co6S15oh22k",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "JYVOQaaENkE",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        }
+      ]
+    },
+    {
+      "channel": "@tradingwithrayner",
+      "discovered": 853,
+      "relevant": 257,
+      "chronologyEligible": 257,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "gemini_video",
+          "videoId": "7dPtaBt6-f0",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "8eySq32HN8s",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        }
+      ]
+    },
+    {
+      "channel": "@TRADINGRUSH",
+      "discovered": 201,
+      "relevant": 85,
+      "chronologyEligible": 85,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "gemini_video",
+          "videoId": "bxhvf49dBEk",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "duPbac_fs4k",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        }
+      ]
+    },
+    {
+      "channel": "@thetradingchannel",
+      "discovered": 423,
+      "relevant": 166,
+      "chronologyEligible": 166,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "gemini_video",
+          "videoId": "1U4VX7WQ-GI",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "6rqfqC79DTY",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        }
+      ]
+    },
+    {
+      "channel": "@themovingaverage",
+      "discovered": 1199,
+      "relevant": 43,
+      "chronologyEligible": 43,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "gemini_video",
+          "videoId": "10SNAXJkgbg",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "444IwI9i6JA",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        }
+      ]
+    },
+    {
+      "channel": "@smbcapital",
+      "discovered": 2536,
+      "relevant": 212,
+      "chronologyEligible": 212,
+      "selected": 2,
+      "captured": 0,
+      "geminiAnalyzed": 0,
+      "ideas": 0,
+      "failures": [
+        {
+          "stage": "gemini_video",
+          "videoId": "2-nq9IwW1QQ",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "2bWZyNHqJNg",
+          "code": "GEMINI_HTTP_429",
+          "message": "Gemini video analysis HTTP 429: {\"error\":{\"message\":\"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, hea"
+        }
+      ]
+    }
+  ],
+  "existingIdeas": 8,
+  "newIdeas": 0,
+  "transcriptsAttempted": 0,
+  "transcriptsCaptured": 0,
+  "geminiVideosAnalyzed": 2,
+  "geminiMinutesEstimated": 21.9,
+  "geminiIdeas": 0,
+  "blocked": true,
+  "cloudRunner": true,
+  "geminiConfigured": true,
+  "needsGeminiKey": false,
+  "completedAt": "2026-09-07T01:33:04.526Z",
+  "totalIdeas": 8
+}

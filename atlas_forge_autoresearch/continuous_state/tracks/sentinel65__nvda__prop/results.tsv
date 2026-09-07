@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T14:27:42Z	1	REJECTED	-0.016957	-0.035181	25.825	2.112	0.6635	3.231	23	-7.555	0.989602	0.033932	B	25.716	paired chronological folds did not show a median/majority improvement over baseline	Add an ADX trend filter: only enter long when price is above EMA by 0.5 standard deviations and ADX exceeds 20.
+2026-09-05T14:28:11Z	2	RISK_CONTROL_CHANGE	nan	-0.035181	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add a volatility-based stop loss using ATR when entering long positions

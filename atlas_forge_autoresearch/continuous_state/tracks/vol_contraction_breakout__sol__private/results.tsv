@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T01:01:28Z	1	REJECTED	1.945567	1.945567	275.347	159.311	2.6463	38.897	6	-21.501	0.998375	0.013972	C	274.398	guard: development robustness gate failed	Add a 50-period simple moving average trend filter to require price above SMA for entry.
+2026-09-06T01:02:45Z	2	REJECTED	1.846804	1.945567	403.436	220.391	2.5347	51.073	4	-21.501	0.99873	0.015968	C	402.711	guard: development robustness gate failed	Change exit logic to a trailing stop based on the highest high since entry, using a 3× ATR buffer.

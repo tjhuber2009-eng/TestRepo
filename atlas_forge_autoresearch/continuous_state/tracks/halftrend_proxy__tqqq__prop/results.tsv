@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:59:58Z	1	REJECTED	-0.040361	-0.022522	25.478	2.107	0.5279	4.113	41	-9.618	0.95524	0.057884	A	25.256	paired chronological folds did not show a median/majority improvement over baseline	Add long-term trend filter: require price above 200-day SMA for entry
+2026-09-06T00:02:18Z	2	REJECTED	-0.041794	-0.022522	24.58	2.039	0.5215	4.031	36	-9.681	0.95338	0.03992	A	24.387	paired chronological folds did not show a median/majority improvement over baseline	Add trend strength filter: require fast EMA to exceed slow EMA by at least half the ATR for entry

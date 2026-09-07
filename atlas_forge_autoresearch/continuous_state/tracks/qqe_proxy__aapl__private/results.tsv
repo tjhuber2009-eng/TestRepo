@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T00:07:11Z	1	REJECTED	0.006257	0.010574	248.121	12.019	0.7572	16.901	215	-22.219	0.992768	0.013972	A	196.868	paired chronological folds did not show a median/majority improvement over baseline	Add 50-day SMA trend filter to only enter longs when price above its SMA50
+2026-09-06T00:09:31Z	2	REJECTED	-0.008467	0.010574	200.435	10.528	0.6781	16.889	218	-22.88	0.985971	0.021956	A	155.897	paired chronological folds did not show a median/majority improvement over baseline	Add rising RSI condition to entry: only enter long when RSI is above 55, above its 5-period SMA, and rising compared to previous bar.

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T18:53:21Z	1	PARAMETER_ONLY	nan	-0.024969	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten ATR-based stop loss multiplier from 5.0 to 3.0 to reduce losses and improve drawdown control.
+2026-09-05T18:53:52Z	2	REJECTED	-0.037837	-0.024969	59.46	4.337	0.7154	6.208	22	-9.997	0.991524	0.007984	B	59.289	guard: development robustness gate failed	Add a low-volatility regime filter: only enter long when realized volatility is below its 20-bar moving average.

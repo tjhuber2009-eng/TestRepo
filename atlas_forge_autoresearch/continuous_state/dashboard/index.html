@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071018">
+  <title>Atlas Forge Command Center</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark">AF</div>
+        <div>
+          <div class="eyebrow">ATLAS FORGE · AUTORESEARCH V3</div>
+          <h1>Research Command Center</h1>
+          <p id="subtitle">Loading research state…</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span id="freshness" class="pill neutral">snapshot</span>
+        <button id="refreshBtn" class="refresh-btn" type="button">
+          <span class="refresh-icon">↻</span>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <section id="alertBar" class="alert hidden"></section>
+
+    <section class="command-strip">
+      <div class="strip-item">
+        <span>Protocol</span>
+        <strong id="protocolTop">—</strong>
+      </div>
+      <div class="strip-item">
+        <span>Current phase</span>
+        <strong id="phaseTop">—</strong>
+      </div>
+      <div class="strip-item">
+        <span>Hidden validation</span>
+        <strong id="hiddenTop" class="text-good">SEALED</strong>
+      </div>
+      <div class="strip-item">
+        <span>Final 2023+ OOS</span>
+        <strong class="text-good">SEALED</strong>
+      </div>
+      <div class="strip-item">
+        <span>Risk caps</span>
+        <strong>10% / 32%</strong>
+      </div>
+    </section>
+
+    <main>
+      <section id="decisionSummary" class="decision-summary section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">START HERE</span>
+            <h2>What matters right now</h2>
+            <p>Current development conclusions, research maturity, and the next decision in plain English.</p>
+          </div>
+          <span id="maturityBadge" class="pill warn">development</span>
+        </div>
+        <div id="decisionCards" class="decision-grid"></div>
+        <div id="nextAction" class="next-action"></div>
+      </section>
+
+      <section class="hero-layout">
+        <article class="hero-panel">
+          <div class="hero-copy">
+            <span class="kicker">SEARCH PIPELINE</span>
+            <h2 id="phaseTitle">—</h2>
+            <p id="phaseDescription">Adaptive development research remains isolated from hidden validation and final OOS.</p>
+          </div>
+
+          <div class="hero-progress">
+            <div class="ring-xl" id="progressRing">
+              <div class="ring-core">
+                <strong id="progressPct">0%</strong>
+                <span>breadth</span>
+              </div>
+            </div>
+            <div class="hero-progress-copy">
+              <span>Valid candidates</span>
+              <strong id="validCandidates">0</strong>
+              <small id="breadthGoal">of 0 breadth candidates</small>
+            </div>
+          </div>
+
+          <div class="phase-rail" id="phaseRail">
+            <div class="phase-step active" data-phase="breadth"><i>1</i><span>Breadth</span></div>
+            <div class="phase-line"></div>
+            <div class="phase-step" data-phase="depth"><i>2</i><span>Depth</span></div>
+            <div class="phase-line"></div>
+            <div class="phase-step" data-phase="elite"><i>3</i><span>Elite</span></div>
+            <div class="phase-line"></div>
+            <div class="phase-step sealed" data-phase="validation"><i>4</i><span>Hidden validation</span></div>
+            <div class="phase-line"></div>
+            <div class="phase-step sealed" data-phase="oos"><i>5</i><span>2023+ OOS</span></div>
+          </div>
+        </article>
+
+        <aside class="hero-side">
+          <article class="glass-card integrity-card">
+            <div class="card-title-row">
+              <div>
+                <span class="kicker">RESEARCH INTEGRITY</span>
+                <h3>Separation gates</h3>
+              </div>
+              <span class="shield-badge">LOCKED</span>
+            </div>
+            <div class="integrity-list">
+              <div><span class="dot safe"></span><span>Development search only</span><b id="protocolValue">—</b></div>
+              <div><span id="hiddenDot" class="dot safe"></span><span>Hidden pre-OOS validation</span><b id="hiddenState">SEALED</b></div>
+              <div><span class="dot safe"></span><span>Final 2023+ OOS</span><b>SEALED</b></div>
+              <div><span class="dot safe"></span><span>Cost stress</span><b>2× / 3×</b></div>
+              <div><span class="dot safe"></span><span>DD caps</span><b>10% / 32%</b></div>
+            </div>
+          </article>
+
+          <article class="glass-card workflow-card">
+            <div class="card-title-row">
+              <div>
+                <span class="kicker">AUTOMATION</span>
+                <h3>Workflow health</h3>
+              </div>
+              <span class="pulse-indicator"><i></i>LIVE</span>
+            </div>
+            <div id="workflowSummary" class="workflow-summary"></div>
+          </article>
+        </aside>
+      </section>
+
+      <section class="kpi-grid">
+        <article class="kpi-card">
+          <span>Touched tracks</span>
+          <strong id="touchedTracks">0</strong>
+          <small id="touchedShare">0% of universe</small>
+        </article>
+        <article class="kpi-card">
+          <span>Runnable tracks</span>
+          <strong id="runnableTracks">0</strong>
+          <small>active search universe</small>
+        </article>
+        <article class="kpi-card">
+          <span>Tracks ≥1 valid</span>
+          <strong id="validTracks">0</strong>
+          <small id="validShare">candidate coverage</small>
+        </article>
+        <article class="kpi-card">
+          <span>PBO-ready tracks</span>
+          <strong id="pboReadyTracks">0</strong>
+          <small id="pboReadyShare">baseline + 4 unique candidates</small>
+        </article>
+        <article class="kpi-card accent-kpi">
+          <span>Keepers promoted</span>
+          <strong id="keepersKpi">0</strong>
+          <small>survived admission gates</small>
+        </article>
+        <article class="kpi-card">
+          <span>Guard pass rate</span>
+          <strong id="guardRateKpi">—</strong>
+          <small>of valid candidates</small>
+        </article>
+      </section>
+
+      <section id="expansionPanel" class="section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">MARKET EXPANSION</span>
+            <h2>30-stock + 7-FX parallel research lane</h2>
+            <p>Isolated from the frozen 514-track core. Stock and FX development use market-specific sealed holdout boundaries.</p>
+          </div>
+          <span id="expansionState" class="pill neutral">waiting</span>
+        </div>
+        <div id="expansionContent"></div>
+      </section>
+
+      <section id="v4Panel" class="section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">ATLAS FORGE V4</span>
+            <h2>Private portfolio & prop-firm frontiers</h2>
+            <p>Authoritative development-only V4 state. Signal-only proxy transfers are labeled and excluded from authoritative recommendations.</p>
+          </div>
+          <span id="v4State" class="pill neutral">waiting</span>
+        </div>
+        <div id="v4Content"></div>
+      </section>
+
+      <section class="section-block leaderboard-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">LEADERBOARD</span>
+            <h2>Development champions</h2>
+            <p>Ranked using development-period evidence only.</p>
+          </div>
+          <div class="filters">
+            <select id="profileFilter">
+              <option value="all">All profiles</option>
+              <option value="prop">Prop ≤10% DD</option>
+              <option value="private">Private ≤32% DD</option>
+            </select>
+            <select id="marketFilter"><option value="all">All markets</option></select>
+            <select id="eligibilityFilter">
+              <option value="eligible">Eligible only</option>
+              <option value="all">Include weak seeds</option>
+            </select>
+            <select id="evidenceFilter">
+              <option value="all">All evidence</option>
+              <option value="A">Evidence A</option>
+              <option value="B">Evidence B+</option>
+              <option value="C">Evidence C+</option>
+            </select>
+            <select id="rankMetric">
+              <option value="development_score">Rank: Robust K</option>
+              <option value="development_cagr_pct">Rank: CAGR</option>
+              <option value="excess_cagr_vs_buyhold_pct">Rank: Excess CAGR</option>
+              <option value="development_calmar">Rank: Calmar</option>
+              <option value="development_psr_zero">Rank: PSR</option>
+              <option value="selection_score">Rank: Overfit-adjusted K</option>
+            </select>
+            <input id="championSearch" type="search" placeholder="Search family / target">
+          </div>
+        </div>
+
+        <div id="podium" class="podium"></div>
+
+        <div class="analytics-grid">
+          <article class="chart-card">
+            <div class="chart-head">
+              <div>
+                <span class="kicker">RISK / RETURN MAP</span>
+                <h3>CAGR vs drawdown</h3>
+              </div>
+              <span class="chart-note">bubble size = Robust K</span>
+            </div>
+            <div id="scatterPlot" class="scatter-wrap"></div>
+          </article>
+
+          <article class="chart-card">
+            <div class="chart-head">
+              <div>
+                <span class="kicker">SEARCH FUNNEL</span>
+                <h3>Candidate survival</h3>
+              </div>
+            </div>
+            <div id="outcomeBars" class="outcomes"></div>
+          </article>
+        </div>
+
+        <details class="detail-panel">
+          <summary><span><b>Full champion ranking</b><small>Open the detailed development metrics table</small></span><span class="detail-hint">Show details</span></summary>
+          <div class="table-wrap champion-table-wrap">
+          <table id="championsTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Family</th><th>Target</th><th>Profile</th>
+                <th class="num">Robust K</th><th class="num">CAGR</th><th class="num">Excess CAGR</th>
+                <th class="num">B&H CAGR</th><th class="num">Years</th><th class="num">Sharpe</th>
+                <th class="num">PF</th><th class="num">DD</th><th class="num">PSR</th>
+                <th class="num">FDR q</th><th class="num">PBO</th><th>Evidence</th><th>Data</th>
+                <th class="num">Trades/yr</th><th class="num">3× cost ret</th><th class="num">Valid</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          </div>
+        </details>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">MODEL TOURNAMENT</span>
+              <h2>Zero-fee AI tournament</h2>
+            </div>
+            <span id="tournamentState" class="pill neutral">waiting</span>
+          </div>
+          <div id="tournamentPanel"></div>
+        </article>
+
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">COVERAGE</span>
+              <h2>Search depth</h2>
+            </div>
+          </div>
+          <div id="coveragePanel"></div>
+        </article>
+
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">ACTIVITY</span>
+              <h2>Recent research cycles</h2>
+            </div>
+          </div>
+          <div id="activityList" class="activity-list"></div>
+        </article>
+
+        <article class="section-block">
+          <div class="section-head">
+            <div>
+              <span class="kicker">MODEL OPERATIONS</span>
+              <h2>Agent performance</h2>
+            </div>
+          </div>
+          <div id="modelPerformancePanel"></div>
+        </article>
+      </section>
+
+      <section class="section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker">DATA QUALITY</span>
+            <h2>Evidence fidelity</h2>
+            <p>Know exactly what kind of market data supports each result.</p>
+          </div>
+        </div>
+        <div id="dataQualityPanel"></div>
+      </section>
+
+      <details class="section-block detail-section">
+        <summary class="section-summary">
+          <span><span class="kicker">FULL UNIVERSE</span><b>Track explorer</b><small>514-track drill-down for audit and search</small></span>
+          <span class="detail-hint">Show details</span>
+        </summary>
+        <div class="detail-section-body">
+        <div class="section-head">
+          <div>
+            <h2>Track explorer</h2>
+            <p>Search every active family × target × risk-profile track.</p>
+          </div>
+          <div class="filters">
+            <select id="trackProfileFilter">
+              <option value="all">All profiles</option>
+              <option value="prop">Prop</option>
+              <option value="private">Private</option>
+            </select>
+            <input id="trackSearch" type="search" placeholder="Search all tracks">
+          </div>
+        </div>
+        <div class="table-wrap tall">
+          <table id="tracksTable">
+            <thead>
+              <tr>
+                <th>Track</th><th>Status</th><th class="num">K</th><th class="num">CAGR</th><th class="num">Years</th>
+                <th class="num">Attempts</th><th class="num">Valid</th><th>Depth</th><th>Elite</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        </div>
+      </details>
+    </main>
+
+    <footer>
+      <span>Snapshot generated <b id="generatedAt">—</b></span>
+      <span>Development evidence only unless explicitly marked otherwise · hidden validation and 2023+ OOS remain sealed.</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

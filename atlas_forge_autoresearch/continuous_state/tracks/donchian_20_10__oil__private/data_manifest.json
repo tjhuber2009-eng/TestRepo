@@ -1,0 +1,22 @@
+{
+  "csv_sha256": "07aa3ac483eeaefed9498245ba5fd1ef83a39dc409229d0f23b54084c6b34334",
+  "first": "2010-01-04T05:00:00+00:00",
+  "id": "oil",
+  "last": "2020-12-31T05:00:00+00:00",
+  "normalization": {
+    "changed_fraction": 0.0,
+    "changed_rows": 0,
+    "changes": [],
+    "interpretation": "Open and Close are preserved exactly; High/Low are widened only where required to contain provider-reported OHLC. Development-only continuous-futures proxy, not contract-exact evidence.",
+    "policy": "explicit_settlement_envelope_v1",
+    "total_rows": 2767
+  },
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2767,
+  "source": "yahoo_futures_proxy",
+  "symbol": "CL=F",
+  "version": 1
+}

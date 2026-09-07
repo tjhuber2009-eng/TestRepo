@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:25:17Z	1	REJECTED	-0.085	0.005396	0.0	0.0	0.0	0.0	0	0.0	0.0	1.0	D	0.0	guard: development robustness gate failed	Add a low-volatility filter: only enter when ATR as a fraction of price is below 0.02.
+2026-09-05T23:25:52Z	2	REJECTED	0.038653	0.005396	4.848	3.469	1.164	2.966	7	-2.177	0.92237	0.063872	C	4.756	guard: development robustness gate failed	Add an ADX-based trend filter: only enter mean-reversion trades when ADX is below 20, indicating a ranging market.

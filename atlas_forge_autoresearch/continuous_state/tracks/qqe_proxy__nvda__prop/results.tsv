@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T00:17:00Z	1	REJECTED	-0.024859	-0.025971	19.473	1.632	0.5596	2.973	215	-8.706	0.978902	0.055888	A	18.113	paired chronological folds did not show a median/majority improvement over baseline	Add a 50-day simple moving average trend filter to only enter longs when price is above its trend.
+2026-09-06T00:17:28Z	2	REJECTED	-0.048176	-0.025971	8.454	0.741	0.3469	2.199	143	-9.089	0.882687	0.173653	B	7.583	paired chronological folds did not show a median/majority improvement over baseline	Add a volatility filter to only enter longs when current realized volatility is below its 20-period SMA, avoiding high-volatility regimes.

@@ -1,0 +1,5 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T12:01:37Z	1	REJECTED	-0.022218	-0.073105	7.323	0.645	0.1305	6.64	12	-12.711	0.664903	0.253493	D	5.248	paired chronological folds did not show a median/majority improvement over baseline	Add ADX trend strength filter to entry condition (require ADX > 20)
+2026-09-05T12:02:51Z	2	REJECTED	-0.071596	-0.073105	2.567	0.231	0.077	11.033	26	-26.003	0.599977	0.363273	C	-0.487	guard: development robustness gate failed	Add realized volatility filter to entry condition, trading only when annualized realized volatility is below the strategy's volatility target.
+2026-09-06T02:16:09Z	3	REJECTED	-0.050072	-0.073105	-0.128	-0.012	0.015	3.61	4	-10.951	0.519804	0.536926	D	-0.42	guard: development robustness gate failed	Add bullish candle confirmation (close > open) to entry condition
+2026-09-06T02:17:42Z	4	REJECTED	-0.07675	-0.073105	1.01	0.091	0.0645	11.076	26	-26.003	0.584182	0.419162	C	-0.869	guard: development robustness gate failed	Change exit condition from price above 5-day SMA to RSI2 above 60 (overbought)

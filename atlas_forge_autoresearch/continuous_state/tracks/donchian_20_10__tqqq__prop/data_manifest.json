@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "7003034327438aee8ad054ce4960f440986a2fb797d6ba0284a4ca8f4aae483d",
+  "first": "2010-02-11T14:30:00+00:00",
+  "id": "tqqq",
+  "last": "2020-12-31T14:30:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-02-11",
+  "rows": 2742,
+  "source": "yahoo",
+  "symbol": "TQQQ",
+  "version": 1
+}

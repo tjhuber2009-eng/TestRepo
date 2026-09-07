@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T21:03:13Z	1	REJECTED	-0.142133	-0.082138	9.708	0.855	0.1339	10.603	57	-37.263	0.669133	0.331337	B	8.757	guard: development robustness gate failed	Only enter long positions on pullbacks to the EMA20 from above (price below EMA20) within 0.4*ATR, rather than allowing pullbacks in either direction.
+2026-09-05T21:04:10Z	2	REJECTED	-0.052856	-0.082138	5.425	0.487	0.1029	7.41	22	-15.563	0.631708	0.413174	C	5.037	guard: development robustness gate failed	Add ADX trend strength filter requiring ADX >= 20 for entry.

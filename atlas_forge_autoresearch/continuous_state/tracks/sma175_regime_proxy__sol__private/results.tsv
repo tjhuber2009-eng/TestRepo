@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T19:09:33Z	1	REJECTED	0.511068	0.511068	100.899	65.297	1.4015	42.297	2	-25.939	0.946414	0.047904	C	100.833	guard: development robustness gate failed	Tighten ATR-based stop loss from 5.0 to 3.0 to reduce losses and improve drawdown
+2026-09-05T19:10:19Z	2	REJECTED	0.511068	0.511068	100.899	65.297	1.4015	42.297	2	-25.939	0.946414	0.037924	C	100.833	guard: development robustness gate failed	Add rising SMA condition to entry filter to confirm trend strength and reduce false breakouts

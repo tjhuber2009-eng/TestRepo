@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T21:43:39Z	1	REJECTED	-0.065287	-0.019971	2.991	0.269	0.1146	2.648	22	-8.543	0.646575	0.363273	C	2.548	guard: development robustness gate failed	Add volatility regime filter: only enter long when current realized volatility exceeds its own moving average (above-average volatility).
+2026-09-05T21:44:24Z	2	REJECTED	-0.046131	-0.019971	13.664	1.172	0.3557	3.445	31	-9.557	0.875989	0.129741	C	12.989	paired chronological folds did not show a median/majority improvement over baseline	Add rising trend filter: only enter long when the 55-day high is higher than its previous value.

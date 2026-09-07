@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T14:12:22Z	1	REJECTED	-0.098802	-0.070243	220.804	11.302	0.5669	24.093	25	-37.519	0.966215	0.031936	B	218.843	guard: development robustness gate failed	Add an ADX trend filter requiring ADX > 20 before entering long positions.
+2026-09-05T14:13:01Z	2	RISK_CONTROL_CHANGE	nan	-0.070243	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add a volatility-based stop-loss to limit downside on long entries.

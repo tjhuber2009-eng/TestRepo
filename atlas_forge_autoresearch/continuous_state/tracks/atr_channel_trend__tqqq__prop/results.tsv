@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T22:48:18Z	1	PARAMETER_ONLY	nan	-0.04523	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Increase entry breakout threshold from 1.5*ATR to 2.0*ATR to require stronger momentum and reduce false signals.
+2026-09-05T22:48:43Z	2	REJECTED	-0.029062	-0.04523	8.01	0.71	0.2369	3.208	23	-6.721	0.778519	0.203593	C	7.883	paired chronological folds did not show a median/majority improvement over baseline	Add ADX trend strength filter requiring ADX > 20 for entry to avoid whipsaws

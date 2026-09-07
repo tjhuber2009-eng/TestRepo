@@ -1,0 +1,68 @@
+{
+  "csv_sha256": "f52de50d0f6153dd35d21c46dcee4bdf76f85dff3d4f3105ed86f6460953f829",
+  "first": "2010-01-04T05:00:00+00:00",
+  "id": "nq",
+  "last": "2020-12-31T05:00:00+00:00",
+  "normalization": {
+    "changed_fraction": 0.0018070112034694614,
+    "changed_rows": 5,
+    "changes": [
+      {
+        "Date": "2010-03-19T04:00:00+00:00",
+        "close": 1955.8299560546875,
+        "normalized_high": 1955.8299560546875,
+        "normalized_low": 1941.5,
+        "open": 1944.5,
+        "original_high": 1952.0,
+        "original_low": 1941.5
+      },
+      {
+        "Date": "2010-03-23T04:00:00+00:00",
+        "close": 1962.25,
+        "normalized_high": 1962.25,
+        "normalized_low": 1940.5,
+        "open": 1948.0,
+        "original_high": 1962.0,
+        "original_low": 1940.5
+      },
+      {
+        "Date": "2010-09-27T04:00:00+00:00",
+        "close": 2007.25,
+        "normalized_high": 2032.0,
+        "normalized_low": 2007.25,
+        "open": 2018.75,
+        "original_high": 2032.0,
+        "original_low": 2007.75
+      },
+      {
+        "Date": "2011-06-17T04:00:00+00:00",
+        "close": 2225.780029296875,
+        "normalized_high": 2225.780029296875,
+        "normalized_low": 2191.75,
+        "open": 2199.75,
+        "original_high": 2220.0,
+        "original_low": 2191.75
+      },
+      {
+        "Date": "2011-07-27T04:00:00+00:00",
+        "close": 2357.75,
+        "normalized_high": 2425.75,
+        "normalized_low": 2357.75,
+        "open": 2424.5,
+        "original_high": 2425.75,
+        "original_low": 2358.25
+      }
+    ],
+    "interpretation": "Open and Close are preserved exactly; High/Low are widened only where required to contain provider-reported OHLC. Development-only continuous-futures proxy, not contract-exact evidence.",
+    "policy": "explicit_settlement_envelope_v1",
+    "total_rows": 2767
+  },
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2767,
+  "source": "yahoo_futures_proxy",
+  "symbol": "NQ=F",
+  "version": 1
+}

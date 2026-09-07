@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T21:45:54Z	1	REJECTED	-0.01991	-0.032402	12.156	1.059	0.4192	2.597	15	-8.032	0.909514	0.103792	D	12.09	guard: development robustness gate failed	Add a volatility regime filter: only enter long positions when current realized volatility exceeds its 60‑day simple moving average, based on the hypothesis that breakouts are more effective during vo
+2026-09-05T21:46:23Z	2	RISK_CONTROL_CHANGE	nan	-0.032402	nan	nan	nan	nan	0	nan	nan	nan		nan	host-owned sizing controls (_units/vol_target/f_max/vol_lookback) changed	Add a 200-day simple moving average trend filter: only enter long when price exceeds both the 55-day high and the 200-day SMA.

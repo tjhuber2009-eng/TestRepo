@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:31:33Z	1	REJECTED	0.047012	-0.021402	192.116	10.349	0.8978	11.741	37	-18.399	0.998874	0.003992	A	189.272	paired chronological folds did not show a median/majority improvement over baseline	Add a low-volatility regime filter: only enter mean-reversion longs when current realized volatility is below its 20-period SMA.
+2026-09-05T23:34:28Z	2	REJECTED	-0.140135	-0.021402	30.176	2.452	0.2346	15.461	54	-30.982	0.778872	0.203593	B	28.622	guard: development robustness gate failed	Add a high-volatility regime filter: only enter mean-reversion longs when current realized volatility exceeds its 20-period SMA.

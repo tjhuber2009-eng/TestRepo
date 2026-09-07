@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T22:37:29Z	1	REJECTED	-0.167993	-0.13739	-29.717	-3.158	-0.2745	9.907	40	-32.724	0.179337	0.842315	B	-30.311	guard: development robustness gate failed	Add volume confirmation to entry: require current volume above its 20-period SMA to avoid low-volume breakouts.
+2026-09-05T22:37:48Z	2	REJECTED	-0.151409	-0.13739	-23.12	-2.364	-0.1932	9.869	42	-31.995	0.260126	0.730539	B	-23.814	guard: development robustness gate failed	Enter only when EMA is upward sloping to trade in strengthening uptrends.

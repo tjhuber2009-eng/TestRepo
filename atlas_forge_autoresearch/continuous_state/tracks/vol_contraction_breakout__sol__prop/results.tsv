@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T00:59:41Z	1	REJECTED	0.483533	0.483533	53.315	36.049	2.411	13.123	6	-7.587	0.995686	0.015968	C	53.2	guard: development robustness gate failed	Add a 50-period simple moving average trend filter to require price above SMA for entry
+2026-09-06T01:00:33Z	2	REJECTED	0.481411	0.483533	52.068	35.251	2.3721	13.088	6	-7.587	0.995173	0.017964	C	51.954	guard: development robustness gate failed	Add volume expansion filter requiring current volume above its 20-period moving average for entry

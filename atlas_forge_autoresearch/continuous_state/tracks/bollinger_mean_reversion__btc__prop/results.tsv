@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:10:04Z	1	PARAMETER_ONLY	nan	-0.200855	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten Bollinger entry threshold from 2.0 to 2.5 standard deviations to reduce false signals.
+2026-09-05T23:10:21Z	2	REJECTED	-0.198471	-0.200855	-5.458	-1.65	-0.8663	1.898	34	-7.386	0.053869	0.89022	B	-5.84	guard: development robustness gate failed	Add a volatility regime filter: only enter long when realized volatility exceeds a threshold (0.10) to avoid low-volatility choppy markets.

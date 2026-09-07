@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T19:08:35Z	1	PARAMETER_ONLY	nan	0.077145	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten ATR-based stop loss from 5.0 to 3.0 to reduce average loss per trade
+2026-09-05T19:09:07Z	2	REJECTED	0.077534	0.077145	20.597	14.445	1.1027	12.999	2	-8.523	0.896852	0.091816	C	20.586	guard: development robustness gate failed	Add rising SMA filter to entry condition: only buy when price > SMA175 and SMA175 is increasing.

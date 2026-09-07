@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:03:02Z	1	REJECTED	-0.073424	-0.059527	1.056	0.096	0.049	7.203	33	-19.319	0.564784	0.419162	B	-0.519	guard: development robustness gate failed	Relax the entry requirement from four consecutive up days to three consecutive up days to increase signal frequency while preserving the mean-reversion hypothesis.
+2026-09-05T23:03:52Z	2	REJECTED	-0.028777	-0.059527	0.272	0.025	0.0425	0.629	2	-0.976	0.557421	0.341317	D	0.153	guard: development robustness gate failed	Add a volatility regime filter: only enter short when realized volatility is below its 20-period moving average (low volatility regime).

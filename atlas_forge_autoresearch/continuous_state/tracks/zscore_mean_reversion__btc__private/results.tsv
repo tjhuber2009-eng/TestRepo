@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T01:15:46Z	1	REJECTED	-0.11109	-0.215568	-2.604	-0.779	-0.3219	2.343	5	-7.088	0.269859	0.734531	D	-2.793	guard: development robustness gate failed	Add a 50-period simple moving average trend filter to only enter long when price is above its SMA, reducing entries during downtrends.
+2026-09-06T01:16:21Z	2	REJECTED	-0.142672	-0.215568	-9.71	-2.983	-0.3967	7.008	23	-14.806	0.23178	0.802395	B	-10.894	guard: development robustness gate failed	Add a realized volatility regime filter: only enter long when current realized volatility is below its 50-period simple moving average, trading in low-volatility mean-reversion regimes.

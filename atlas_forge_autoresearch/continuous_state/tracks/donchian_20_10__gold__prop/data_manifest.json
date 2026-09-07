@@ -1,0 +1,248 @@
+{
+  "csv_sha256": "684d7bffa0b17c875d51d88d0c699bf1a77eaeea6b36d4051825cf518f694b48",
+  "first": "2010-01-04T05:00:00+00:00",
+  "id": "gold",
+  "last": "2020-12-31T05:00:00+00:00",
+  "normalization": {
+    "changed_fraction": 0.009038322487346349,
+    "changed_rows": 25,
+    "changes": [
+      {
+        "Date": "2010-11-01T04:00:00+00:00",
+        "close": 1350.199951171875,
+        "normalized_high": 1360.300048828125,
+        "normalized_low": 1350.199951171875,
+        "open": 1360.300048828125,
+        "original_high": 1360.300048828125,
+        "original_low": 1350.699951171875
+      },
+      {
+        "Date": "2010-11-19T05:00:00+00:00",
+        "close": 1352.199951171875,
+        "normalized_high": 1352.199951171875,
+        "normalized_low": 1344.5,
+        "open": 1350.699951171875,
+        "original_high": 1352.0,
+        "original_low": 1344.5
+      },
+      {
+        "Date": "2010-11-24T05:00:00+00:00",
+        "close": 1372.9000244140625,
+        "normalized_high": 1377.800048828125,
+        "normalized_low": 1372.9000244140625,
+        "open": 1377.800048828125,
+        "original_high": 1377.800048828125,
+        "original_low": 1377.800048828125
+      },
+      {
+        "Date": "2010-11-26T14:30:00+00:00",
+        "close": 1362.300048828125,
+        "normalized_high": 1372.0999755859375,
+        "normalized_low": 1362.300048828125,
+        "open": 1372.0999755859375,
+        "original_high": 1372.0999755859375,
+        "original_low": 1372.0999755859375
+      },
+      {
+        "Date": "2010-12-29T05:00:00+00:00",
+        "close": 1413.0999755859375,
+        "normalized_high": 1413.0999755859375,
+        "normalized_low": 1402.9000244140625,
+        "open": 1403.4000244140625,
+        "original_high": 1412.199951171875,
+        "original_low": 1402.9000244140625
+      },
+      {
+        "Date": "2011-01-12T05:00:00+00:00",
+        "close": 1385.699951171875,
+        "normalized_high": 1385.699951171875,
+        "normalized_low": 1378.0,
+        "open": 1382.5999755859375,
+        "original_high": 1385.5,
+        "original_low": 1378.0
+      },
+      {
+        "Date": "2011-01-25T05:00:00+00:00",
+        "close": 1332.300048828125,
+        "normalized_high": 1332.300048828125,
+        "normalized_low": 1323.5999755859375,
+        "open": 1330.4000244140625,
+        "original_high": 1331.5,
+        "original_low": 1323.5999755859375
+      },
+      {
+        "Date": "2011-03-17T04:00:00+00:00",
+        "close": 1404.0,
+        "normalized_high": 1404.0,
+        "normalized_low": 1387.699951171875,
+        "open": 1387.699951171875,
+        "original_high": 1393.5999755859375,
+        "original_low": 1387.699951171875
+      },
+      {
+        "Date": "2011-03-21T04:00:00+00:00",
+        "close": 1426.199951171875,
+        "normalized_high": 1433.5,
+        "normalized_low": 1426.199951171875,
+        "open": 1433.5,
+        "original_high": 1433.5,
+        "original_low": 1430.800048828125
+      },
+      {
+        "Date": "2011-03-22T04:00:00+00:00",
+        "close": 1427.5,
+        "normalized_high": 1430.4000244140625,
+        "normalized_low": 1427.5,
+        "open": 1430.4000244140625,
+        "original_high": 1430.4000244140625,
+        "original_low": 1430.4000244140625
+      },
+      {
+        "Date": "2011-03-24T04:00:00+00:00",
+        "close": 1434.800048828125,
+        "normalized_high": 1446.9000244140625,
+        "normalized_low": 1434.800048828125,
+        "open": 1437.699951171875,
+        "original_high": 1446.9000244140625,
+        "original_low": 1437.5
+      },
+      {
+        "Date": "2011-03-25T04:00:00+00:00",
+        "close": 1426.0999755859375,
+        "normalized_high": 1436.0,
+        "normalized_low": 1426.0999755859375,
+        "open": 1436.0,
+        "original_high": 1436.0,
+        "original_low": 1436.0
+      },
+      {
+        "Date": "2011-03-28T04:00:00+00:00",
+        "close": 1419.800048828125,
+        "normalized_high": 1419.800048828125,
+        "normalized_low": 1413.199951171875,
+        "open": 1413.199951171875,
+        "original_high": 1415.5999755859375,
+        "original_low": 1413.199951171875
+      },
+      {
+        "Date": "2011-04-27T04:00:00+00:00",
+        "close": 1516.699951171875,
+        "normalized_high": 1516.699951171875,
+        "normalized_low": 1505.199951171875,
+        "open": 1507.0999755859375,
+        "original_high": 1512.800048828125,
+        "original_low": 1505.199951171875
+      },
+      {
+        "Date": "2011-05-12T04:00:00+00:00",
+        "close": 1506.5999755859375,
+        "normalized_high": 1506.5999755859375,
+        "normalized_low": 1484.800048828125,
+        "open": 1492.0999755859375,
+        "original_high": 1498.5,
+        "original_low": 1484.800048828125
+      },
+      {
+        "Date": "2011-05-18T04:00:00+00:00",
+        "close": 1495.5999755859375,
+        "normalized_high": 1497.0,
+        "normalized_low": 1495.5999755859375,
+        "open": 1496.4000244140625,
+        "original_high": 1497.0,
+        "original_low": 1496.300048828125
+      },
+      {
+        "Date": "2011-05-19T04:00:00+00:00",
+        "close": 1492.199951171875,
+        "normalized_high": 1492.199951171875,
+        "normalized_low": 1491.5,
+        "open": 1491.5,
+        "original_high": 1491.5,
+        "original_low": 1491.5
+      },
+      {
+        "Date": "2011-05-23T04:00:00+00:00",
+        "close": 1515.300048828125,
+        "normalized_high": 1515.300048828125,
+        "normalized_low": 1507.0,
+        "open": 1510.5,
+        "original_high": 1512.300048828125,
+        "original_low": 1507.0
+      },
+      {
+        "Date": "2011-05-26T04:00:00+00:00",
+        "close": 1522.800048828125,
+        "normalized_high": 1522.800048828125,
+        "normalized_low": 1519.5,
+        "open": 1521.199951171875,
+        "original_high": 1521.199951171875,
+        "original_low": 1519.5
+      },
+      {
+        "Date": "2011-07-27T04:00:00+00:00",
+        "close": 1615.0,
+        "normalized_high": 1619.699951171875,
+        "normalized_low": 1615.0,
+        "open": 1619.699951171875,
+        "original_high": 1619.699951171875,
+        "original_low": 1617.0
+      },
+      {
+        "Date": "2011-09-19T04:00:00+00:00",
+        "close": 1776.4000244140625,
+        "normalized_high": 1818.9000244140625,
+        "normalized_low": 1776.4000244140625,
+        "open": 1814.699951171875,
+        "original_high": 1818.9000244140625,
+        "original_low": 1788.0
+      },
+      {
+        "Date": "2011-09-27T04:00:00+00:00",
+        "close": 1650.5999755859375,
+        "normalized_high": 1665.4000244140625,
+        "normalized_low": 1650.5999755859375,
+        "open": 1653.800048828125,
+        "original_high": 1665.4000244140625,
+        "original_low": 1653.699951171875
+      },
+      {
+        "Date": "2011-09-28T04:00:00+00:00",
+        "close": 1616.300048828125,
+        "normalized_high": 1650.0,
+        "normalized_low": 1616.300048828125,
+        "open": 1650.0,
+        "original_high": 1650.0,
+        "original_low": 1650.0
+      },
+      {
+        "Date": "2011-10-27T04:00:00+00:00",
+        "close": 1746.699951171875,
+        "normalized_high": 1746.699951171875,
+        "normalized_low": 1717.800048828125,
+        "open": 1717.800048828125,
+        "original_high": 1735.5,
+        "original_low": 1717.800048828125
+      },
+      {
+        "Date": "2011-11-14T05:00:00+00:00",
+        "close": 1777.800048828125,
+        "normalized_high": 1779.0,
+        "normalized_low": 1777.800048828125,
+        "open": 1779.0,
+        "original_high": 1779.0,
+        "original_low": 1779.0
+      }
+    ],
+    "interpretation": "Open and Close are preserved exactly; High/Low are widened only where required to contain provider-reported OHLC. Development-only continuous-futures proxy, not contract-exact evidence.",
+    "policy": "explicit_settlement_envelope_v1",
+    "total_rows": 2766
+  },
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2766,
+  "source": "yahoo_futures_proxy",
+  "symbol": "GC=F",
+  "version": 1
+}

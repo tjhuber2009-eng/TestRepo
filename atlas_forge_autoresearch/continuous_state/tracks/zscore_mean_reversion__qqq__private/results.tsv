@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T01:28:01Z	1	REJECTED	-0.024859	0.011155	78.217	5.398	0.4557	13.572	55	-19.303	0.932879	0.051896	A	72.239	paired chronological folds did not show a median/majority improvement over baseline	Tighten z-score entry threshold from -1.5 to -2.0 to require more extreme deviations before entering long positions.
+2026-09-06T01:29:45Z	2	CRASH	nan	0.011155	nan	nan	nan	nan	0	nan	nan	nan		nan	harness exited 1; see logs/run_2.txt	Add ADX trend filter to only enter long positions when ADX is below 20, indicating non‑trending market.

@@ -1,0 +1,41 @@
+{
+  "csv_sha256": "640b2075b2d46a754a7010fc0d18528df6d739ab91d1fdae0d83aef086e9d49e",
+  "first": "2010-01-04T05:00:00+00:00",
+  "id": "es",
+  "last": "2020-12-31T05:00:00+00:00",
+  "normalization": {
+    "changed_fraction": 0.0007228044813877846,
+    "changed_rows": 2,
+    "changes": [
+      {
+        "Date": "2010-03-19T04:00:00+00:00",
+        "close": 1172.949951171875,
+        "normalized_high": 1172.949951171875,
+        "normalized_low": 1164.75,
+        "open": 1166.25,
+        "original_high": 1170.0,
+        "original_low": 1164.75
+      },
+      {
+        "Date": "2011-09-16T04:00:00+00:00",
+        "close": 1216.739990234375,
+        "normalized_high": 1216.739990234375,
+        "normalized_low": 1201.5,
+        "open": 1210.0,
+        "original_high": 1216.0,
+        "original_low": 1201.5
+      }
+    ],
+    "interpretation": "Open and Close are preserved exactly; High/Low are widened only where required to contain provider-reported OHLC. Development-only continuous-futures proxy, not contract-exact evidence.",
+    "policy": "explicit_settlement_envelope_v1",
+    "total_rows": 2767
+  },
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2767,
+  "source": "yahoo_futures_proxy",
+  "symbol": "ES=F",
+  "version": 1
+}

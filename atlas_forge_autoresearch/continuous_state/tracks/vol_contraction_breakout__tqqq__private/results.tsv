@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-06T01:06:47Z	1	REJECTED	-0.052627	-0.052053	65.853	4.757	0.473	11.164	60	-29.24	0.935555	0.051896	A	63.79	paired chronological folds did not show a median/majority improvement over baseline	Add a 50-period simple moving average trend filter to only take long breakouts when price is above its 50-day SMA.
+2026-09-06T01:07:15Z	2	REJECTED	-0.08533	-0.052053	20.776	1.749	0.2248	9.944	40	-31.698	0.766813	0.199601	B	19.628	guard: development robustness gate failed	Add volume confirmation to entry: require breakout volume above its 20-period moving average.

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T14:43:07Z	1	REJECTED	0.219351	0.314208	35.011	24.142	1.144	20.824	3	-19.266	0.894598	0.057884	C	34.988	guard: development robustness gate failed	Add ADX trend filter to entry condition (require ADX > 25) to avoid ranging markets.
+2026-09-05T14:43:54Z	2	REJECTED	0.314208	0.314208	56.236	37.911	1.2449	29.36	3	-26.934	0.912519	0.041916	C	56.21	guard: development robustness gate failed	Add upward EMA slope filter to entry condition to avoid entering in downtrends

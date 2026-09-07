@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T14:51:30Z	1	REJECTED	-0.083909	-0.083909	135.019	8.166	0.5178	18.515	36	-28.959	0.952824	0.045908	A	133.484	paired chronological folds did not show a median/majority improvement over baseline	Add upward EMA65 slope filter to long entry condition
+2026-09-05T14:51:56Z	2	REJECTED	-0.085	-0.083909	0.0	0.0	0.0	0.0	0	0.0	0.0	1.0	D	0.0	guard: development robustness gate failed	Add low-volatility filter to long entry condition (only enter when realized volatility < 0.15)

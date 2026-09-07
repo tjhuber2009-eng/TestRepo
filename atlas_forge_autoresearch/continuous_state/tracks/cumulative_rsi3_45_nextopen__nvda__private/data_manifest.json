@@ -1,0 +1,14 @@
+{
+  "csv_sha256": "54967143af67b9e71606ead03ef5d0b6d9707bb331b154b466e1ef373f8a4a2a",
+  "first": "2010-01-04T14:30:00+00:00",
+  "id": "nvda",
+  "last": "2020-12-31T14:30:00+00:00",
+  "oos_included": false,
+  "provider_integrity": "provider response snapshotted by generated CSV SHA256; Yahoo publishes no archive checksum",
+  "requested_end": "2020-12-31",
+  "requested_start": "2010-01-01",
+  "rows": 2769,
+  "source": "yahoo",
+  "symbol": "NVDA",
+  "version": 1
+}

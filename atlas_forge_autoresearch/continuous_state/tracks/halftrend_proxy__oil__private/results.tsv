@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T23:47:06Z	1	REJECTED	-0.162317	-0.139878	-19.762	-1.983	-0.301	6.053	31	-28.79	0.157581	0.824351	C	-20.123	guard: development robustness gate failed	Add ADX trend strength filter to entry condition
+2026-09-05T23:47:26Z	2	REJECTED	-0.096308	-0.139878	-3.29	-0.304	-0.2054	1.434	2	-5.051	0.244987	0.724551	D	-3.351	guard: development robustness gate failed	Add volatility filter: only enter when realized volatility is at or below the target volatility

@@ -1,0 +1,3 @@
+ts	iter	verdict	score	base_score	ret_pct	cagr_pct	sharpe	ann_vol	trades	max_dd	psr_zero	boot_p	evidence	extreme_ret_pct	guard	desc
+2026-09-05T20:37:19Z	1	PARAMETER_ONLY	nan	-0.06263	nan	nan	nan	nan	0	nan	nan	nan		nan	numeric-only parameter mutation rejected by hardened anti-curve-fit policy	Tighten pullback threshold from 0.40*ATR to 0.30*ATR to seek higher-quality entries.
+2026-09-05T20:37:43Z	2	REJECTED	-0.145483	-0.06263	-10.081	-0.962	-0.06	9.14	46	-28.539	0.421132	0.57485	B	-11.218	guard: development robustness gate failed	Add a volume filter requiring current volume to exceed its vol_lookback-bar moving average to ensure trades occur with sufficient participation.
