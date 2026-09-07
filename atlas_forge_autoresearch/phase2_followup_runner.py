@@ -544,7 +544,7 @@ def build_promotion(rows, selection):
                 f"{source_sha} != {expected_sha}"
             )
         item["promotion_source_path"] = (
-            f"atlasforge_autoresearch_reconstruction/phase2_state/"
+            f"atlas_forge_autoresearch/phase2_state/"
             f"promotion_sources/{item['track_id']}.py"
         )
         item["promotion_source_sha256"] = source_sha
