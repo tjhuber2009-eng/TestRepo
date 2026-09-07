@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "startedAt": "2026-09-07T00:50:18.849Z",
+  "startedAt": "2026-09-07T01:00:34.225Z",
   "channels": [
     {
       "channel": "@tradewithpat",
@@ -11,13 +11,7 @@
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
-      "failures": [
-        {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
-        }
-      ]
+      "failures": []
     },
     {
       "channel": "@tradernick",
@@ -30,9 +24,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "_cF3GrbFVcY",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "_SZGq9HVwSo",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     },
@@ -47,9 +48,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "2XAIHVbwX30",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "7bUI4Mw9FBU",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     },
@@ -64,9 +72,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "1BX5Bkgl038",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "1xrDFPxy4d0",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     },
@@ -81,9 +96,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "--AkI5rmtg4",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "7-Ntn-5cw1U",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     },
@@ -98,9 +120,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "_SUTvm1SLPI",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "-nzRFcya3To",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     },
@@ -115,9 +144,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "-MDuzmLXXhA",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "-za-CIJbwxs",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     },
@@ -132,9 +168,16 @@
       "ideas": 0,
       "failures": [
         {
-          "stage": "cloud_video_analysis",
-          "code": "GEMINI_KEY_MISSING",
-          "message": "GitHub-hosted YouTube caption retrieval is challenged; configure the free-tier GEMINI_API_KEY to use direct public YouTube URL video understanding."
+          "stage": "gemini_video",
+          "videoId": "1iZXnYpOgT0",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
+        },
+        {
+          "stage": "gemini_video",
+          "videoId": "1l2ae7bcYmo",
+          "code": "GEMINI_HTTP_400",
+          "message": "Gemini video analysis HTTP 400: {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Invalid value at 'generation_config.response_format.text.mime_type' (type.googleapis.com/google.ai.generativelanguage.v1beta.TextResponseFormat.MimeType), \\\"application/json\\\"\",\n  "
         }
       ]
     }
@@ -146,10 +189,10 @@
   "geminiVideosAnalyzed": 0,
   "geminiMinutesEstimated": 0,
   "geminiIdeas": 0,
-  "blocked": false,
+  "blocked": true,
   "cloudRunner": true,
-  "geminiConfigured": false,
-  "needsGeminiKey": true,
-  "completedAt": "2026-09-07T00:52:18.517Z",
+  "geminiConfigured": true,
+  "needsGeminiKey": false,
+  "completedAt": "2026-09-07T01:03:00.428Z",
   "totalIdeas": 0
 }
