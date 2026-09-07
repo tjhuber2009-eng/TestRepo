@@ -22,7 +22,7 @@ jobs:
       NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
       TIINGO_API_TOKEN: ${{ secrets.TIINGO_API_TOKEN }}
       GH_TOKEN: ${{ github.token }}
-      ATLAS_SOURCE_SHA: bbca5a8c69f18e46bd9c11a0a5709e1e3084f688
+      ATLAS_SOURCE_SHA: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
     defaults:
       run:
         working-directory: atlas_forge_autoresearch
@@ -30,7 +30,7 @@ jobs:
       - name: Checkout pinned Atlas source
         uses: actions/checkout@v7
         with:
-          ref: bbca5a8c69f18e46bd9c11a0a5709e1e3084f688
+          ref: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
           fetch-depth: 0
 
       - uses: actions/setup-python@v7
@@ -112,6 +112,7 @@ jobs:
           AUTORESEARCH_PROGRAM: program_robust.md
           AUTORESEARCH_FAMILY: sentinel63
           AUTORESEARCH_SYMBOL: EURUSD
+          AUTORESEARCH_TIMEFRAME: "1D"
           AUTORESEARCH_MARKET: forex
           AUTORESEARCH_DATA_FILE: data/eurusd_1d.csv
           AUTORESEARCH_COMMISSION: "0.0001"
@@ -131,7 +132,7 @@ jobs:
           AUTORESEARCH_VALIDATION_START: "2022-01-01"
           AUTORESEARCH_VALIDATION_END: "2022-12-31"
           AUTORESEARCH_PROTOCOL: nested_chronological_v3
-          AUTORESEARCH_SOURCE_SHA: bbca5a8c69f18e46bd9c11a0a5709e1e3084f688
+          AUTORESEARCH_SOURCE_SHA: aade8c5a941d8fa955c0c97b22f83d5c28a52e8d
           AUTORESEARCH_TRACK_ID: youtube_tournament__sentinel63__eurusd__private
           AUTORESEARCH_EVOMIND_ENABLED: "1"
           AUTORESEARCH_EVOMIND_DB: youtube_tournament_state/evomind.db
@@ -141,6 +142,8 @@ jobs:
           AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB: youtube_tournament_state/youtube_intelligence.db
           AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED: youtube_tournament_state/youtube_intelligence_feed.jsonl
           AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF: "2021-12-31"
+          AUTORESEARCH_YOUTUBE_ROUTING_STAGE: reproduction
+          AUTORESEARCH_YOUTUBE_MULTI_TIMEFRAME_CAPABLE: "0"
         run: |
           python -m unittest -v test_atlas_evomind.py test_atlas_youtube_intelligence.py
           python loop.py --iters 8 --model nvidia/nemotron-3-super-120b-a12b
