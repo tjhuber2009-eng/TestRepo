@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updatedAt": "2026-09-07T00:50:00.678Z",
+  "updatedAt": "2026-09-07T00:52:18.517Z",
   "videos": {
     "UC04-HvUvHG4hpMnQx07ObYQ:__Z7jayHzzU": {
       "status": "error",
@@ -151,7 +151,7 @@
     "UC04-HvUvHG4hpMnQx07ObYQ": {
       "channel": "@tradewithpat",
       "title": "Trade with Pat",
-      "lastRunAt": "2026-09-07T00:48:11.022Z",
+      "lastRunAt": "2026-09-07T00:50:25.845Z",
       "discovered": 393,
       "relevant": 0,
       "chronologyEligible": 0
@@ -159,58 +159,58 @@
     "UCPCPE5MoI7DS1WiVB_-mzNw": {
       "channel": "@tradernick",
       "title": "TraderNick",
-      "lastRunAt": "2026-09-07T00:48:44.311Z",
+      "lastRunAt": "2026-09-07T00:51:00.635Z",
       "discovered": 3000,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "relevant": 359,
+      "chronologyEligible": 359
     },
     "UCc8IRYpgBr4NGbaQFnd2b-A": {
       "channel": "@nononsenseforex",
       "title": "No Nonsense Forex",
-      "lastRunAt": "2026-09-07T00:48:53.472Z",
+      "lastRunAt": "2026-09-07T00:51:09.170Z",
       "discovered": 688,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "relevant": 102,
+      "chronologyEligible": 102
     },
     "UCFSn-h8wTnhpKJMteN76Abg": {
       "channel": "@tradingwithrayner",
       "title": "Rayner Teo",
-      "lastRunAt": "2026-09-07T00:49:06.843Z",
+      "lastRunAt": "2026-09-07T00:51:21.195Z",
       "discovered": 853,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "relevant": 257,
+      "chronologyEligible": 257
     },
     "UCgY_eHY4NCTcRnU6CCZXWng": {
       "channel": "@TRADINGRUSH",
       "title": "TRADING RUSH",
-      "lastRunAt": "2026-09-07T00:49:11.453Z",
+      "lastRunAt": "2026-09-07T00:51:25.071Z",
       "discovered": 201,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "relevant": 85,
+      "chronologyEligible": 85
     },
     "UCGL9ubdGcvZh_dvSV2z1hoQ": {
       "channel": "@thetradingchannel",
       "title": "The Trading Channel (The Trading Channel)",
-      "lastRunAt": "2026-09-07T00:49:18.260Z",
+      "lastRunAt": "2026-09-07T00:51:31.921Z",
       "discovered": 423,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "relevant": 166,
+      "chronologyEligible": 166
     },
     "UCYFQzaZyTUzY-Tiytyv3HhA": {
       "channel": "@themovingaverage",
       "title": "The Moving Average",
-      "lastRunAt": "2026-09-07T00:49:32.490Z",
+      "lastRunAt": "2026-09-07T00:51:49.733Z",
       "discovered": 1199,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "relevant": 43,
+      "chronologyEligible": 43
     },
     "UCg3B_joekBGJ1s_4fRjsMKA": {
       "channel": "@smbcapital",
       "title": "SMB Capital",
-      "lastRunAt": "2026-09-07T00:50:00.678Z",
-      "discovered": 2528,
-      "relevant": 0,
-      "chronologyEligible": 0
+      "lastRunAt": "2026-09-07T00:52:18.517Z",
+      "discovered": 2536,
+      "relevant": 212,
+      "chronologyEligible": 212
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "startedAt": "2026-09-07T00:48:03.345Z",
+  "startedAt": "2026-09-07T00:50:18.849Z",
   "channels": [
     {
       "channel": "@tradewithpat",
@@ -22,9 +22,9 @@
     {
       "channel": "@tradernick",
       "discovered": 3000,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "relevant": 359,
+      "chronologyEligible": 359,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -39,9 +39,9 @@
     {
       "channel": "@nononsenseforex",
       "discovered": 688,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "relevant": 102,
+      "chronologyEligible": 102,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -56,9 +56,9 @@
     {
       "channel": "@tradingwithrayner",
       "discovered": 853,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "relevant": 257,
+      "chronologyEligible": 257,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -73,9 +73,9 @@
     {
       "channel": "@TRADINGRUSH",
       "discovered": 201,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "relevant": 85,
+      "chronologyEligible": 85,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -90,9 +90,9 @@
     {
       "channel": "@thetradingchannel",
       "discovered": 423,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "relevant": 166,
+      "chronologyEligible": 166,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -107,9 +107,9 @@
     {
       "channel": "@themovingaverage",
       "discovered": 1199,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "relevant": 43,
+      "chronologyEligible": 43,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -123,10 +123,10 @@
     },
     {
       "channel": "@smbcapital",
-      "discovered": 2528,
-      "relevant": 0,
-      "chronologyEligible": 0,
-      "selected": 0,
+      "discovered": 2536,
+      "relevant": 212,
+      "chronologyEligible": 212,
+      "selected": 2,
       "captured": 0,
       "geminiAnalyzed": 0,
       "ideas": 0,
@@ -150,6 +150,6 @@
   "cloudRunner": true,
   "geminiConfigured": false,
   "needsGeminiKey": true,
-  "completedAt": "2026-09-07T00:50:00.678Z",
+  "completedAt": "2026-09-07T00:52:18.517Z",
   "totalIdeas": 0
 }
