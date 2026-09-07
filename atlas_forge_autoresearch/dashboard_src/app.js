@@ -581,7 +581,7 @@ function filteredChampions(){
     (market==="all"||r.market===market)&&
     (eligibility==="all"||r.development_guard_ok!==false)&&
     (evidence==="all"||(gradeRank[r.evidence_grade]||99)<=(gradeRank[evidence]||99))&&
-    (!q||`${r.family} ${r.target} ${r.track_id}`.toLowerCase().includes(q))
+    (!q||`${r.family} ${r.target} ${r.track_id} ${r.route_stage||""} ${r.tested_timeframe||""}`.toLowerCase().includes(q))
   );
   rows.sort((a,b)=>{
     const av=finite(a[metric]),bv=finite(b[metric]);
@@ -603,10 +603,15 @@ function renderChampions(){
     const qv=r.multiple_test_qvalue==null?"—":`${(100*Number(r.multiple_test_qvalue)).toFixed(1)}%`;
     const pbo=r.pbo==null?"—":`${(100*Number(r.pbo)).toFixed(1)}%`;
     const eg=String(r.evidence_grade||"—").toLowerCase();
+    const fallback=DATA.routing?.core?.by_track?.[r.track_id]||{};
+    const tf=r.tested_timeframe||fallback.tested_timeframe||"—";
+    const route=r.route_stage||fallback.stage||"—";
     return `<tr>
       <td>${i+1}</td>
       <td><b>${esc(r.family)}</b><div class="muted">${esc(r.exactness||"")}</div></td>
       <td>${esc(String(r.target||"").toUpperCase())}</td>
+      <td>${esc(tf)}</td>
+      <td><span class="status-chip">${esc(route.replace("_"," "))}</span></td>
       <td><span class="profile-chip ${esc(r.profile)}">${esc(r.profile)}</span></td>
       <td class="num ${scoreClass}">${fmt(r.development_score,6)}</td>
       <td class="num score-pos">${pct(r.development_cagr_pct,1)}</td>
@@ -638,7 +643,7 @@ function renderPodium(rows){
   wrap.innerHTML=top.map((r,i)=>`<article class="podium-card">
     <div class="podium-rank">#${i+1} DEVELOPMENT CHAMPION</div>
     <div class="podium-name">${esc(r.family||r.track_id||"—")}</div>
-    <div class="podium-meta">${esc(String(r.target||"").toUpperCase())} · ${esc(r.profile||"—")} · evidence ${esc(r.evidence_grade||"—")}</div>
+    <div class="podium-meta">${esc(String(r.target||"").toUpperCase())} · ${esc(r.tested_timeframe||DATA.routing?.core?.by_track?.[r.track_id]?.tested_timeframe||"—")} · ${esc(r.route_stage||DATA.routing?.core?.by_track?.[r.track_id]?.stage||"—")} · ${esc(r.profile||"—")} · evidence ${esc(r.evidence_grade||"—")}</div>
     <div class="podium-metrics">
       <div><span>Robust K</span><strong>${fmt(r.development_score,5)}</strong></div>
       <div><span>CAGR</span><strong class="metric-good">${pct(r.development_cagr_pct,1)}</strong></div>
