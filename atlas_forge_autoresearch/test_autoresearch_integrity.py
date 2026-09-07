@@ -814,7 +814,7 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertNotIn("OTHER_SECRET", clean)
         self.assertEqual(clean["AUTORESEARCH_SYMBOL"], "BTCUSDT")
 
-    def test_target_env_enables_lane_scoped_evomind_memory(self):
+    def test_target_env_enables_lane_scoped_research_intelligence(self):
         track = {
             "id": "test_family__btc__private",
             "family": {"id": "test_family"},
@@ -849,6 +849,26 @@ class AutoresearchIntegrityTests(unittest.TestCase):
         self.assertEqual(
             Path(env["AUTORESEARCH_EVOMIND_DB"]).parent,
             continuous_runner.STATE,
+        )
+        self.assertEqual(
+            env["AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED"],
+            "1",
+        )
+        self.assertEqual(
+            Path(env["AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB"]).name,
+            "youtube_intelligence.db",
+        )
+        self.assertEqual(
+            Path(env["AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB"]).parent,
+            continuous_runner.STATE,
+        )
+        self.assertEqual(
+            Path(env["AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED"]).name,
+            "youtube_intelligence_feed.jsonl",
+        )
+        self.assertEqual(
+            env["AUTORESEARCH_YOUTUBE_PUBLISHED_CUTOFF"],
+            "2020-12-31",
         )
 
     def test_successive_halving_targets_are_monotonic(self):
