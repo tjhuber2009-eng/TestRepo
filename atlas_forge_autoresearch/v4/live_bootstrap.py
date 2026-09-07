@@ -34,6 +34,8 @@ from .strategy_examples import (
     cross_sectional_momentum_rotation,
     independent_trend_basket,
     leveraged_defensive_rotation,
+    overnight_gap_reversal_diagnostic,
+    rolling_pair_reversion,
 )
 
 
@@ -1243,6 +1245,55 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         )
 
     # ------------------------------------------------------------------
+    # Frozen backlog family: causal SPY/QQQ rolling pair mean reversion.
+    # This is evaluated as a development diagnostic only until it earns its
+    # own multiple-testing/PBO history; it cannot enter the portfolio merely
+    # because the engine now exists.
+    # ------------------------------------------------------------------
+    pair_assets = {s: data[s] for s in ("SPY", "QQQ") if s in data}
+    stat_arb_raw = None
+    if set(pair_assets) == {"SPY", "QQQ"}:
+        pair_eng = MultiAssetBacktester(
+            pair_assets,
+            limits=PortfolioLimits(
+                gross_leverage=1.0,
+                net_min=-1.0,
+                net_max=1.0,
+                per_asset_abs_weight=1.0,
+            ),
+            periods_per_year=252.0,
+        )
+        stat_arb_raw = pair_eng.run(
+            rolling_pair_reversion(
+                left_symbol="QQQ",
+                right_symbol="SPY",
+                formation_window=252,
+                z_window=60,
+                entry_z=2.0,
+                exit_z=0.5,
+                stop_z=4.0,
+                gross_weight=1.0,
+            ),
+            risk_policy=private,
+            num_trials=1,
+            cost_stress_multiplier=cost_stress,
+        )
+
+    # Daily OHLC is sufficient to decompose overnight gap and same-session
+    # open-to-close return. This uses a dedicated open-known signal diagnostic,
+    # not the ordinary next-open execution engine.
+    overnight_reversal = (
+        None
+        if "SPY" not in data
+        else overnight_gap_reversal_diagnostic(
+            data["SPY"],
+            gap_threshold=0.01,
+            one_way_cost_bps=3.0,
+            cost_stress_multiplier=cost_stress,
+        )
+    )
+
+    # ------------------------------------------------------------------
     # Portfolio-level optimization only uses fully eligible families.
     # ------------------------------------------------------------------
     eligible_returns = {}
@@ -1712,6 +1763,10 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
         "cash_rotation_raw_diagnostic": cash_raw.summary(),
         "cross_asset_momentum_raw_diagnostic": momentum_raw.summary(),
         "long_history_cross_asset_trend_raw_diagnostic": trend_raw.summary(),
+        "stat_arb_spy_qqq_raw_diagnostic": (
+            None if stat_arb_raw is None else stat_arb_raw.summary()
+        ),
+        "overnight_gap_reversal_spy_diagnostic": overnight_reversal,
     }
     if rotation_optimized is not None:
         strategies["rotation_risk_budgeted"] = rotation_optimized.summary()
@@ -1763,6 +1818,32 @@ def run(data_dir: str | Path, output: str | Path) -> dict:
             "cost_stress_multiplier": cost_stress,
         },
         "feature_manifest": store.manifest,
+        "backlog_engine_status": {
+            "stat_arb_pairs": {
+                "status": "v4_family_runnable",
+                "pair_universe": [["QQQ", "SPY"]],
+                "formation_window": 252,
+                "z_window": 60,
+                "entry_z": 2.0,
+                "exit_z": 0.5,
+                "stop_z": 4.0,
+                "rebalance": "daily_next_open",
+                "portfolio_eligible": False,
+                "eligibility_reason": "diagnostic_only_until_family_PBO_is_established",
+            },
+            "overnight_intraday_reversal": {
+                "status": "v4_daily_session_engine_runnable",
+                "instrument": "SPY",
+                "gap_threshold": 0.01,
+                "execution": "same_day_open_to_close",
+                "portfolio_eligible": False,
+                "eligibility_reason": "diagnostic_only_until_family_PBO_is_established",
+            },
+            "pead": {
+                "status": "v4_event_engine_available_data_blocked",
+                "event_engine": "v4.strategy_examples.pead_event_weights",
+            },
+        },
         "strategies": strategies,
         "selection_diagnostics": {
             "rotation_pbo": rotation_pbo,
