@@ -71,7 +71,60 @@ jobs:
       - name: Compile and run integrity tests
         run: |
           python -m compileall -q .
-          python -m unittest -v test_autoresearch_integrity.py
+          python -m unittest -v test_autoresearch_integrity.py test_atlas_evomind.py
+
+      - name: Exercise EvoMind persistent research intelligence
+        shell: bash
+        env:
+          AUTORESEARCH_EVOMIND_ENABLED: "1"
+          AUTORESEARCH_EVOMIND_DB: "/tmp/atlas-evomind-smoke.db"
+          AUTORESEARCH_TRACK_ID: "smoke__btc__private"
+          AUTORESEARCH_PROTOCOL: "nested_chronological_v3"
+          AUTORESEARCH_MARKET: "crypto"
+          AUTORESEARCH_FAMILY: "smoke"
+          AUTORESEARCH_PROFILE: "private"
+        run: |
+          rm -f "$AUTORESEARCH_EVOMIND_DB" "$AUTORESEARCH_EVOMIND_DB-wal" "$AUTORESEARCH_EVOMIND_DB-shm"
+          python - <<'PY'
+          import atlas_evomind as e
+          guidance, arm=e.prompt_guidance(1)
+          assert arm in e.ProposalPortfolioBandit.ARMS
+          assert "advisory only" in guidance
+          result={
+              "guard_ok":True,
+              "cagr_pct":25.0,
+              "sharpe":1.5,
+              "pf":2.0,
+              "bootstrap_mean_positive_pvalue":0.05,
+              "evidence_grade":"A",
+              "paired_vs_baseline":{
+                  "improved_fold_fraction":0.75,
+                  "median_fold_delta_k":0.02,
+                  "comparable_folds":8,
+              },
+          }
+          learned=e.learn_from_atlas(
+              iteration=1,
+              arm=arm,
+              verdict="KEPT",
+              description="Use causal momentum regime confirmation",
+              result=result,
+              base_score=0.5,
+              candidate_score=0.6,
+              evidence_id="smoke-candidate",
+          )
+          assert learned["reward"] == 1.0, learned
+          guidance2, arm2=e.prompt_guidance(2)
+          assert "Strong local development concepts" in guidance2
+          assert arm2 in e.ProposalPortfolioBandit.ARMS
+          print({
+              "evomind_version":e.EVOMIND_VERSION,
+              "first_arm":arm,
+              "second_arm":arm2,
+              "reward":learned["reward"],
+              "tags":learned["tags"],
+          })
+          PY
 
       - name: Generate and compile every runnable family
         shell: python
@@ -93,6 +146,7 @@ jobs:
           print(f"runnable_families={len(runnable)}")
 
       - name: Verify authenticated Tiingo EOD stock primary
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           test -n "$TIINGO_API_TOKEN"
@@ -206,4 +260,4 @@ jobs:
         if: success()
         shell: bash
         run: |
-          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. All runnable seeds compile; protocol-v3 development harness, 2x/3x cost stress, prefix-invariance lookahead audit, integrity tests, and >=3 continuous-path folds passed. Hidden validation and 2023+ OOS were not opened."
+          gh pr comment 13 --repo tjhuber2009-eng/TestRepo --body             "Continuous AUTORESEARCH smoke: PASS. EvoMind v0.10 research-memory/proposal routing, all runnable seeds, protocol-v3 development harness, 2x/3x cost stress, prefix-invariance lookahead audit, integrity tests, and >=3 continuous-path folds passed. Hidden validation and 2023+ OOS were not opened."
