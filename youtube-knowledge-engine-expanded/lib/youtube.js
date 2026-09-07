@@ -348,6 +348,7 @@ export async function discoverChannelYtdlp(input, { maxVideos = 50000 } = {}) {
     try {
       ({ stdout } = await runYtdlp([
         ...ytdlpCommonArgs(), '--flat-playlist', '--dump-single-json', '--quiet', '--no-warnings',
+        '--extractor-args', 'youtubetab:approximate_date',
         '--playlist-end', String(maxVideos), url,
       ], { timeout: 10 * 60_000, maxBuffer: 64 * 1024 * 1024 }));
     } catch (error) {
@@ -360,7 +361,7 @@ export async function discoverChannelYtdlp(input, { maxVideos = 50000 } = {}) {
       const id = item?.id; if (!/^[A-Za-z0-9_-]{11}$/.test(String(id || ''))) continue;
       const kind = tab === 'shorts' ? 'short' : tab === 'streams' ? 'stream' : 'video';
       const uploadDate=/^\d{8}$/.test(String(item.upload_date||''))?`${String(item.upload_date).slice(0,4)}-${String(item.upload_date).slice(4,6)}-${String(item.upload_date).slice(6,8)}`:(item.upload_date||'');
-      const incoming={id,title:item.title||`YouTube video ${id}`,published:item.timestamp?new Date(item.timestamp*1000).toISOString():uploadDate,duration:item.duration_string||(Number.isFinite(item.duration)?formatDuration(item.duration):''),views:item.view_count?String(item.view_count):'',thumbnail:item.thumbnail||item.thumbnails?.at?.(-1)?.url||'',url:`https://www.youtube.com/watch?v=${id}`,kind};
+      const incoming={id,title:item.title||`YouTube video ${id}`,published:item.timestamp?new Date(item.timestamp*1000).toISOString():uploadDate,publishedBasis:(item.timestamp||uploadDate)?'approximate_youtubetab':'',duration:item.duration_string||(Number.isFinite(item.duration)?formatDuration(item.duration):''),views:item.view_count?String(item.view_count):'',thumbnail:item.thumbnail||item.thumbnails?.at?.(-1)?.url||'',url:`https://www.youtube.com/watch?v=${id}`,kind};
       videos.set(id, mergeCatalogVideo(videos.get(id), incoming, kind));
       if (videos.size >= maxVideos) break;
     }
