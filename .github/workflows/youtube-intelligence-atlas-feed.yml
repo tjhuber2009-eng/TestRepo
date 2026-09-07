@@ -2,6 +2,10 @@ name: YouTube Intelligence → Atlas feed
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/youtube-intelligence-atlas-kick"
   schedule:
     - cron: "23 10 * * *"
 
