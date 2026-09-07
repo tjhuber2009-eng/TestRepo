@@ -22223,7 +22223,7 @@
     "stock_track_count": 900,
     "target_count": 37
   },
-  "generated_at": "2026-09-07T02:23:37Z",
+  "generated_at": "2026-09-07T03:33:51Z",
   "leaderboard": [
     {
       "benchmark_cagr_pct": 1611.594,
@@ -143676,14 +143676,25 @@
     "continuous_runs": [
       {
         "conclusion": null,
+        "created_at": "2026-09-07T03:33:35Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34080046180",
+        "id": 34080046180,
+        "name": "Atlas Forge Continuous AUTORESEARCH",
+        "run_number": 127,
+        "status": "in_progress",
+        "updated_at": "2026-09-07T03:33:41Z"
+      },
+      {
+        "conclusion": "cancelled",
         "created_at": "2026-09-07T02:23:25Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34076121445",
         "id": 34076121445,
         "name": "Atlas Forge Continuous AUTORESEARCH",
         "run_number": 126,
-        "status": "in_progress",
-        "updated_at": "2026-09-07T02:23:32Z"
+        "status": "completed",
+        "updated_at": "2026-09-07T03:18:49Z"
       },
       {
         "conclusion": "success",
@@ -143750,20 +143761,20 @@
         "run_number": 120,
         "status": "completed",
         "updated_at": "2026-09-06T23:03:37Z"
-      },
-      {
-        "conclusion": "success",
-        "created_at": "2026-09-06T22:11:03Z",
-        "event": "workflow_dispatch",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34063268410",
-        "id": 34063268410,
-        "name": "Atlas Forge Continuous AUTORESEARCH",
-        "run_number": 119,
-        "status": "completed",
-        "updated_at": "2026-09-06T22:36:50Z"
       }
     ],
     "stock_fx_runs": [
+      {
+        "conclusion": null,
+        "created_at": "2026-09-07T03:33:37Z",
+        "event": "workflow_dispatch",
+        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34080047175",
+        "id": 34080047175,
+        "name": "Atlas Forge Stock + FX AUTORESEARCH",
+        "run_number": 15,
+        "status": "in_progress",
+        "updated_at": "2026-09-07T03:33:43Z"
+      },
       {
         "conclusion": "failure",
         "created_at": "2026-09-06T23:36:06Z",
@@ -143840,17 +143851,6 @@
         "run_number": 8,
         "status": "completed",
         "updated_at": "2026-09-06T20:45:17Z"
-      },
-      {
-        "conclusion": "cancelled",
-        "created_at": "2026-09-06T20:09:51Z",
-        "event": "push",
-        "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34057125151",
-        "id": 34057125151,
-        "name": "Atlas Forge Stock + FX AUTORESEARCH",
-        "run_number": 7,
-        "status": "completed",
-        "updated_at": "2026-09-06T20:11:08Z"
       }
     ],
     "tournament_jobs": [
@@ -144019,15 +144019,15 @@
     ],
     "v4_runs": [
       {
-        "conclusion": null,
+        "conclusion": "failure",
         "created_at": "2026-09-07T02:23:22Z",
         "event": "workflow_dispatch",
         "html_url": "https://github.com/tjhuber2009-eng/TestRepo/actions/runs/34076118302",
         "id": 34076118302,
         "name": "Atlas Forge V4 promotion cycle",
         "run_number": 41,
-        "status": "in_progress",
-        "updated_at": "2026-09-07T02:23:32Z"
+        "status": "completed",
+        "updated_at": "2026-09-07T02:24:30Z"
       },
       {
         "conclusion": "failure",
