@@ -1,5 +1,5 @@
 Atlas Forge source smoke
-Source head: 02de599d9ed1bbdc7f769d3ff4bfde1901563e3d
-Purpose: rerun project-wide instrument/timeframe routing after backward-compatibility fixes for synthetic legacy tracks
+Source head: 974596964d513482167ea51e708823d7d39ad71d
+Purpose: final project-wide instrument/timeframe routing smoke including dashboard route labels
 Hidden validation: sealed
 Final 2023+ OOS: sealed
