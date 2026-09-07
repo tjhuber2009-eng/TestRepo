@@ -35,6 +35,7 @@ jobs:
       - name: Verify Atlas consumes real feed
         working-directory: atlas_forge_autoresearch
         env:
+          PYTHONPATH: "${{ github.workspace }}/atlas_forge_autoresearch"
           AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED: "1"
           AUTORESEARCH_YOUTUBE_INTELLIGENCE_DB: "/tmp/atlas-real-youtube/youtube.db"
           AUTORESEARCH_YOUTUBE_INTELLIGENCE_FEED: "/tmp/atlas-real-youtube/feed.jsonl"
