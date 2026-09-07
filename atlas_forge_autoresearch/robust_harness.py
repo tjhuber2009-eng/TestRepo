@@ -49,6 +49,15 @@ SEED_FACTORY_FILE = HERE / "seed_factory.py"
 
 SYMBOL = os.environ["AUTORESEARCH_SYMBOL"]
 MARKET = os.environ["AUTORESEARCH_MARKET"]
+TIMEFRAME = os.environ.get("AUTORESEARCH_TIMEFRAME", "1D")
+ROUTE_STAGE = os.environ.get("AUTORESEARCH_ROUTE_STAGE", "atlas_variant")
+SOURCE_ROUTE_VERIFIED = (
+    os.environ.get("AUTORESEARCH_SOURCE_ROUTE_VERIFIED", "0") == "1"
+)
+SOURCE_NATIVE_MATCH = (
+    os.environ.get("AUTORESEARCH_SOURCE_NATIVE_MATCH", "0") == "1"
+)
+SIGNAL_CADENCE = os.environ.get("AUTORESEARCH_SIGNAL_CADENCE", "bar")
 DATA_FILE = HERE / os.environ["AUTORESEARCH_DATA_FILE"]
 CASH = float(os.environ.get("AUTORESEARCH_CASH", "10000000"))
 COMMISSION = float(os.environ["AUTORESEARCH_COMMISSION"])
@@ -862,6 +871,11 @@ def common_metadata(summary, stage):
     summary.update({
         "symbol": SYMBOL,
         "market": MARKET,
+        "timeframe": TIMEFRAME,
+        "route_stage": ROUTE_STAGE,
+        "source_route_verified": SOURCE_ROUTE_VERIFIED,
+        "source_native_match": SOURCE_NATIVE_MATCH,
+        "signal_cadence": SIGNAL_CADENCE,
         "profile": PROFILE,
         "commission": COMMISSION,
         "cost_stress_multiplier": COST_STRESS_MULT,
