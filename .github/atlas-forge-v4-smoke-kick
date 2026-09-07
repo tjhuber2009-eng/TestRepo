@@ -1,2 +1,2 @@
-Source head: e3418cf965320ee2edc9ba8f7bca7cf001f5a790
-Purpose: final audit verification of V4 routing provenance fallback and propagation
+Source head: d43bc7b090ac066a9497971ce3b69b4131742ae0
+Purpose: verify runnable stat-arb pair engine, overnight session engine, PEAD engine-status correction, and sealed OOS boundaries
