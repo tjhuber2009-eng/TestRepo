@@ -26,7 +26,7 @@ const OUTPUT_SCHEMA={
 };
 
 function clean(v,limit=1600){return String(v||'').replace(/\s+/g,' ').trim().slice(0,limit)}
-function uniq(v,limit=16){const out=[];for(const x of Array.isArray(v)?v:[]){const s=clean(x,120);if(s&&!out.some(y=>y.toLowerCase()===s.toLowerCase()))out.push(s);if(out.length>=limit)break}return out}
+function uniq(v,limit=16,itemLimit=120){const out=[];for(const x of Array.isArray(v)?v:[]){const s=clean(x,itemLimit);if(s&&!out.some(y=>y.toLowerCase()===s.toLowerCase()))out.push(s);if(out.length>=limit)break}return out}
 function clamp(v,lo=0,hi=1){const n=Number(v);return Number.isFinite(n)?Math.max(lo,Math.min(hi,n)):0}
 function fnv32(text){let h=2166136261;for(const ch of String(text||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
 
@@ -80,7 +80,7 @@ export async function analyzeYouTubeVideoWithGemini({
       const raw=await res.text();
       if(!res.ok){
         const err=Object.assign(new Error(`Gemini video analysis HTTP ${res.status}: ${raw.slice(0,500)}`),{code:`GEMINI_HTTP_${res.status}`,status:res.status});
-        if((res.status===429||res.status>=500)&&attempt<3){last=err;await new Promise(r=>setTimeout(r,1000*attempt));continue}
+        if((res.status===429||res.status>=500)&&attempt<3){last=err;const delay=res.status===429?15000*attempt:1000*attempt;await new Promise(r=>setTimeout(r,delay));continue}
         throw err;
       }
       let payload;try{payload=JSON.parse(raw)}catch{throw Object.assign(new Error('Gemini API returned malformed JSON envelope.'),{code:'GEMINI_ENVELOPE_INVALID'})}
@@ -103,7 +103,7 @@ export async function analyzeYouTubeVideoWithGemini({
 export function sanitizeGeminiAnalysis(raw,{model=DEFAULT_MODEL}={}){
   const ideas=[];
   for(const x of Array.isArray(raw?.ideas)?raw.ideas:[]){
-    const summary=clean(x?.summary,1800),rules=uniq(x?.rules,16);
+    const summary=clean(x?.summary,1800),rules=uniq(x?.rules,16,500);
     if(!summary||!rules.length)continue;
     ideas.push({
       summary,
