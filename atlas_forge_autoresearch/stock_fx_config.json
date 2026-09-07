@@ -93,7 +93,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "amzn",
@@ -110,7 +111,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "googl",
@@ -127,7 +129,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "avgo",
@@ -144,7 +147,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "amd",
@@ -161,7 +165,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "tsla",
@@ -178,7 +183,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "jpm",
@@ -195,7 +201,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "bac",
@@ -212,7 +219,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "v",
@@ -229,7 +237,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "ma",
@@ -246,7 +255,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "unh",
@@ -263,7 +273,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "lly",
@@ -280,7 +291,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "cost",
@@ -297,7 +309,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "wmt",
@@ -314,7 +327,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "hd",
@@ -331,7 +345,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "cat",
@@ -348,7 +363,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "xom",
@@ -365,7 +381,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "cvx",
@@ -382,7 +399,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "brkb",
@@ -399,7 +417,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "qcom",
@@ -416,7 +435,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "txn",
@@ -433,7 +453,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "jnj",
@@ -450,7 +471,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "mrk",
@@ -467,7 +489,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "mcd",
@@ -484,7 +507,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "ge",
@@ -501,7 +525,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "hon",
@@ -518,7 +543,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "cop",
@@ -535,7 +561,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "ko",
@@ -552,7 +579,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "pep",
@@ -569,7 +597,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "gs",
@@ -586,7 +615,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo EOD adjusted OHLCV; provider-cleaned corporate actions; raw response and canonical CSV SHA256 recorded",
       "instrument_fidelity": "tiingo_adjusted_eod",
-      "universe_role": "2026_fixed_seed_basket"
+      "universe_role": "2026_fixed_seed_basket",
+      "timeframe": "1D"
     },
     {
       "id": "eurusd",
@@ -603,7 +633,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     },
     {
       "id": "gbpusd",
@@ -620,7 +651,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     },
     {
       "id": "usdjpy",
@@ -637,7 +669,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     },
     {
       "id": "audusd",
@@ -654,7 +687,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     },
     {
       "id": "usdcad",
@@ -671,7 +705,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     },
     {
       "id": "usdchf",
@@ -688,7 +723,8 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     },
     {
       "id": "nzdusd",
@@ -705,7 +741,21 @@
       "data_quality_grade": "B",
       "data_quality_note": "Authenticated Tiingo Forex API daily OHLC; raw response and canonical CSV SHA256 recorded; provider states FX history begins in 2020",
       "instrument_fidelity": "tiingo_fx_daily_ohlc",
-      "volume_semantics": "not used; volume-dependent strategy families excluded"
+      "volume_semantics": "not used; volume-dependent strategy families excluded",
+      "timeframe": "1D"
     }
-  ]
+  ],
+  "version": 4,
+  "routing_policy": {
+    "version": 1,
+    "tested_timeframe_field": "targets[].timeframe",
+    "evidence_stages": [
+      "reproduction",
+      "transfer",
+      "atlas_variant",
+      "blocked"
+    ],
+    "existing_daily_evidence_policy": "retain and reclassify; do not discard solely because source-native timeframe was previously implicit",
+    "source_fidelity_policy": "only source_route_verified native market/instrument/timeframe matches may be labeled reproduction"
+  }
 }
