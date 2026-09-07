@@ -85,5 +85,8 @@
         "execution"
       ]
     }
-  ]
+  ],
+  "legacy_only": true,
+  "max_gemini_minutes_per_run": 180,
+  "include_streams": false
 }
