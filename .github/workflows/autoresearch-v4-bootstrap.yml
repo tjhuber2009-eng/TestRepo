@@ -104,7 +104,10 @@ jobs:
                       and str(m.get("symbol","")).upper()==symbol.upper()
                       and m.get("requested_start")==start
                       and m.get("requested_end")==end
-                      and m.get("final_oos_included") is False
+                      and (
+                          m.get("final_oos_included") is False
+                          or m.get("oos_included") is False
+                      )
                       and m.get("hidden_validation_included",False) is False
                       and m.get("csv_sha256")==sha256(csv_path)
                   )
