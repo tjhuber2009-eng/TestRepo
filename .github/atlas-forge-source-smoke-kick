@@ -1,5 +1,5 @@
 Atlas Forge source smoke
-Source head: b9868c950998cd3f5062892ada3165e6dfcd0501
-Purpose: validate project-wide instrument/timeframe routing, source-faithful reproduction vs transfer vs Atlas-variant labeling, Phase-2 provenance, and Phase-3 timeframe admission gates
+Source head: 02de599d9ed1bbdc7f769d3ff4bfde1901563e3d
+Purpose: rerun project-wide instrument/timeframe routing after backward-compatibility fixes for synthetic legacy tracks
 Hidden validation: sealed
 Final 2023+ OOS: sealed
