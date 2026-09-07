@@ -1018,6 +1018,21 @@ def main():
                 f"{youtube_exc}",
                 file=sys.stderr,
             )
+        if (
+            os.environ.get("AUTORESEARCH_CONTROLLED_TOURNAMENT", "0") == "1"
+            and os.environ.get(
+                "AUTORESEARCH_FORCED_PROPOSAL_ARM", ""
+            ).strip() == "external_proposal"
+            and os.environ.get(
+                "AUTORESEARCH_YOUTUBE_INTELLIGENCE_ENABLED", "0"
+            ) == "1"
+            and not youtube_idea_id
+        ):
+            print(
+                "[YouTube Intelligence] no route-compatible external idea "
+                "remains; ending controlled tournament cleanly"
+            )
+            break
         research_guidance = "\n\n".join(
             x for x in (evomind_guidance, youtube_guidance) if x
         )
