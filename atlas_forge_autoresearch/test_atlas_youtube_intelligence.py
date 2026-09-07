@@ -98,6 +98,42 @@ class AtlasYouTubeIntelligenceTests(unittest.TestCase):
             finally:
                 brain.close()
 
+    def test_selection_rechecks_cutoff_even_if_shared_db_flag_is_stale(self):
+        with tempfile.TemporaryDirectory() as td:
+            feed = Path(td) / "feed.jsonl"
+            write_feed(feed)
+            db = Path(td) / "youtube.db"
+            newer = ayi.YouTubeAtlasBridge(
+                db,
+                feed_path=feed,
+                track_id="newer__btc__private",
+                domain="crypto:newer:private",
+                published_cutoff="2025-12-31",
+            )
+            try:
+                newer.ingest_feed()
+                row = newer.conn.execute(
+                    "SELECT eligible FROM ideas WHERE idea_id='future-leak'"
+                ).fetchone()
+                self.assertEqual(int(row["eligible"]), 1)
+            finally:
+                newer.close()
+
+            older = ayi.YouTubeAtlasBridge(
+                db,
+                feed_path=None,
+                track_id="older__btc__private",
+                domain="crypto:older:private",
+                published_cutoff="2020-12-31",
+            )
+            try:
+                idea = older.choose(1, "external_proposal")
+                self.assertIsNotNone(idea)
+                self.assertEqual(idea.idea_id, "old-qqe")
+                self.assertLessEqual(idea.published_at[:10], "2020-12-31")
+            finally:
+                older.close()
+
     def test_creator_claims_are_stored_but_withheld_from_prompt(self):
         with tempfile.TemporaryDirectory() as td:
             feed = Path(td) / "feed.jsonl"
