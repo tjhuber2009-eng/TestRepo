@@ -12,11 +12,12 @@ async function readJsonl(path){try{return (await readFile(path,'utf8')).split(/\
 async function atomicWrite(path,text){await mkdir(dirname(path),{recursive:true});const tmp=path+'.tmp';await writeFile(tmp,text,'utf8');try{await rename(tmp,path)}catch{await writeFile(path,text,'utf8')}}
 function iso(){return new Date().toISOString()}
 function isoDay(ms){return new Date(ms).toISOString().slice(0,10)}
-function publicationBound(value,anchor=Date.now()){
+function publicationBound(value,sourceBasis='',anchor=Date.now()){
   const s=String(value||'').trim();if(!s)return null;
-  if(/^\d{8}$/.test(s)){const t=Date.parse(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T00:00:00Z`);return Number.isFinite(t)?{date:isoDay(t),basis:'exact'}:null}
-  if(/^\d{4}-\d{2}-\d{2}(?:T|$)/.test(s)){const t=Date.parse(s);return Number.isFinite(t)?{date:isoDay(t),basis:'exact'}:null}
-  const direct=Date.parse(s);if(Number.isFinite(direct)&&/\d{4}/.test(s))return{date:isoDay(direct),basis:'exact'};
+  const approximate=sourceBasis==='approximate_youtubetab';
+  if(/^\d{8}$/.test(s)){const t=Date.parse(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}T00:00:00Z`);return Number.isFinite(t)?{date:isoDay(t),basis:approximate?'relative_upper_bound':'exact'}:null}
+  if(/^\d{4}-\d{2}-\d{2}(?:T|$)/.test(s)){const t=Date.parse(s);return Number.isFinite(t)?{date:isoDay(t),basis:approximate?'relative_upper_bound':'exact'}:null}
+  const direct=Date.parse(s);if(Number.isFinite(direct)&&/\d{4}/.test(s))return{date:isoDay(direct),basis:approximate?'relative_upper_bound':'exact'};
   const m=s.toLowerCase().match(/(?:streamed|premiered)?\s*(\d+)\s*(day|week|month|year)s?\s+ago/);if(!m)return null;
   const n=Number(m[1]),d=new Date(anchor);
   if(m[2]==='year')d.setUTCFullYear(d.getUTCFullYear()-n);
@@ -65,7 +66,7 @@ function mergeDiscovery(primary,secondary){
     channel:{...(primary.channel||{}),...(secondary.channel||{})},
     videos:(primary.videos||[]).map(v=>{
       const x=extra.get(v.id)||{};
-      return{...v,published:v.published||x.published||'',duration:v.duration||x.duration||'',views:v.views||x.views||'',thumbnail:v.thumbnail||x.thumbnail||''};
+      return{...v,published:v.published||x.published||'',publishedBasis:v.publishedBasis||x.publishedBasis||'',duration:v.duration||x.duration||'',views:v.views||x.views||'',thumbnail:v.thumbnail||x.thumbnail||''};
     }),
   };
 }
@@ -117,7 +118,7 @@ for(const entry of config.channels){
   const candidates=(discovered.videos||[])
     .filter(v=>v?.id&&titleLooksStrategyRelevant(v.title||''))
     .filter(v=>config.include_streams===true||((v.kind||'')!=='stream'&&!/\blive\b/i.test(String(v.title||''))))
-    .map(v=>{const pub=publicationBound(v.published);return{...v,_publication:pub,_date:pub?.date||''}})
+    .map(v=>{const pub=publicationBound(v.published,v.publishedBasis||'');return{...v,_publication:pub,_date:pub?.date||''}})
     .filter(v=>!legacyOnly||Boolean(v._date&&v._date<=maxLegacyCutoff));
   cs.relevant=candidates.length;
   cs.chronologyEligible=candidates.filter(v=>Boolean(v._date&&v._date<=maxLegacyCutoff)).length;
