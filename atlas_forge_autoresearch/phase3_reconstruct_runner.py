@@ -107,7 +107,19 @@ def append_result(row):
 def rule_hash(spec):
     payload = {
         "markets": sorted(str(x).strip().lower() for x in spec.get("markets", [])),
+        "instruments": sorted(
+            str(x).strip().lower() for x in spec.get("instruments", [])
+        ),
         "timeframe": str(spec.get("timeframe", "")).strip().lower(),
+        "timeframes": sorted(
+            str(x).strip().lower() for x in spec.get("timeframes", [])
+        ),
+        "requires_multi_timeframe": bool(
+            spec.get("requires_multi_timeframe", False)
+        ),
+        "requires_session_clock": bool(
+            spec.get("requires_session_clock", False)
+        ),
         "universe": [str(x).strip().lower() for x in spec.get("universe_rules", [])],
         "entry": [str(x).strip().lower() for x in spec.get("entry_rules", [])],
         "exit": [str(x).strip().lower() for x in spec.get("exit_rules", [])],
@@ -140,7 +152,11 @@ def reconstruct(row, model, hydrated_text=""):
         "spec_status": "complete_spec|incomplete_spec|not_a_strategy",
         "title": "",
         "markets": [],
+        "instruments": [],
         "timeframe": "unknown",
+        "timeframes": [],
+        "requires_multi_timeframe": false,
+        "requires_session_clock": false,
         "universe_rules": [],
         "entry_rules": [],
         "exit_rules": [],
@@ -156,7 +172,11 @@ def reconstruct(row, model, hydrated_text=""):
     prompt = (
         "Extract a mechanical trading-strategy specification ONLY from the source "
         "text below. Never infer missing thresholds, timing, exits, sizing, stops, "
-        "targets, universes, or execution rules. If anything needed for a causal "
+        "targets, universes, instruments, bar timeframes, session timing, or "
+        "execution rules. Preserve every explicitly named instrument and timeframe. "
+        "If a strategy combines multiple timeframes, set requires_multi_timeframe=true. "
+        "If it depends on a named market session/open/close or clock window, set "
+        "requires_session_clock=true. If anything needed for a causal "
         "implementation is absent, set spec_status=incomplete_spec and list it in "
         "missing_rules. Source performance is only a reported claim. Do not optimize "
         "or improve the strategy. Return JSON only with exactly this schema:\n"
