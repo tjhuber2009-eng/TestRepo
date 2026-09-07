@@ -275,14 +275,13 @@ class V4AlphaGenerationTests(unittest.TestCase):
             "promotion_source_sha256": "a" * 64,
             "tested_timeframe": "1D",
             "route_stage": "atlas_variant",
-            "source_route_verified": False,
             "source_native_match": False,
-            "signal_cadence": "bar",
             "routing": {
                 "stage": "atlas_variant",
                 "tested_timeframe": "1D",
                 "source_route_verified": False,
                 "source_native_match": False,
+                "signal_cadence": "bar",
             },
         }
         ret = pd.Series(
