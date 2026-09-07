@@ -20,6 +20,9 @@ jobs:
   harvest:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ATLAS_YOUTUBE_GEMINI_MODEL: gemini-3.8-flash
     steps:
       - name: Checkout YouTube Intelligence integration source
         uses: actions/checkout@v4
