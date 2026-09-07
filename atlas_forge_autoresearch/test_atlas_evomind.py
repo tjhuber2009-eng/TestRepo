@@ -144,6 +144,41 @@ class AtlasEvoMindTests(unittest.TestCase):
             finally:
                 brain.close()
 
+    def test_forced_arm_requires_controlled_tournament(self):
+        with tempfile.TemporaryDirectory() as td:
+            env = {
+                "AUTORESEARCH_EVOMIND_ENABLED": "1",
+                "AUTORESEARCH_EVOMIND_DB": str(Path(td) / "evomind.db"),
+                "AUTORESEARCH_TRACK_ID": "forced__test__private",
+                "AUTORESEARCH_PROTOCOL": "nested_chronological_v3",
+                "AUTORESEARCH_MARKET": "forex",
+                "AUTORESEARCH_FAMILY": "sentinel63",
+                "AUTORESEARCH_PROFILE": "private",
+                "AUTORESEARCH_FORCED_PROPOSAL_ARM": "external_proposal",
+            }
+            with mock.patch.dict(os.environ, env, clear=True):
+                with self.assertRaises(RuntimeError):
+                    ae.prompt_guidance(1)
+
+    def test_controlled_tournament_can_force_external_proposal(self):
+        with tempfile.TemporaryDirectory() as td:
+            env = {
+                "AUTORESEARCH_EVOMIND_ENABLED": "1",
+                "AUTORESEARCH_EVOMIND_DB": str(Path(td) / "evomind.db"),
+                "AUTORESEARCH_TRACK_ID": "forced__test__private",
+                "AUTORESEARCH_PROTOCOL": "nested_chronological_v3",
+                "AUTORESEARCH_MARKET": "forex",
+                "AUTORESEARCH_FAMILY": "sentinel63",
+                "AUTORESEARCH_PROFILE": "private",
+                "AUTORESEARCH_CONTROLLED_TOURNAMENT": "1",
+                "AUTORESEARCH_FORCED_PROPOSAL_ARM": "external_proposal",
+            }
+            with mock.patch.dict(os.environ, env, clear=True):
+                guidance, arm = ae.prompt_guidance(1)
+                self.assertEqual(arm, "external_proposal")
+                self.assertIn("Proposal mode: external_proposal", guidance)
+                self.assertIn("advisory only", guidance)
+
     def test_environment_entrypoint_never_needs_market_or_oos_paths(self):
         with tempfile.TemporaryDirectory() as td:
             env = {
