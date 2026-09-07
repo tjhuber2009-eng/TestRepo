@@ -244,6 +244,8 @@ class AtlasYouTubeIntelligenceTests(unittest.TestCase):
                 markets = ("Gold (XAU/USD)", "Forex")
                 self.assertTrue(gold._market_compatible(markets))
                 self.assertFalse(eur._market_compatible(markets))
+                self.assertTrue(gold._market_compatible(("Gold",)))
+                self.assertFalse(eur._market_compatible(("Gold",)))
             finally:
                 gold.close()
                 eur.close()
