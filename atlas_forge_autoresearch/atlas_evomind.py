@@ -510,7 +510,12 @@ class EvoMindAtlasBrain:
             for row in rows
         ]
 
-    def guidance(self, iteration: int) -> tuple[str, str]:
+    def guidance(
+        self,
+        iteration: int,
+        *,
+        forced_arm: str | None = None,
+    ) -> tuple[str, str]:
         local = self._concepts(
             same_domain=True,
             limit=5,
@@ -525,8 +530,16 @@ class EvoMindAtlasBrain:
         ]
         if transfer:
             allowed.append("skill_transfer")
-        arm = self.bandit.choose(tuple(allowed), exploration=0.40)
-        self._persist_bandit()
+        if forced_arm is not None:
+            if forced_arm not in allowed:
+                raise ValueError(
+                    f"forced proposal arm {forced_arm!r} is not allowed "
+                    f"for this research context"
+                )
+            arm = forced_arm
+        else:
+            arm = self.bandit.choose(tuple(allowed), exploration=0.40)
+            self._persist_bandit()
         with self.conn:
             self.conn.execute(
                 "INSERT OR REPLACE INTO metadata(key,value) VALUES (?,?)",
@@ -823,8 +836,15 @@ def prompt_guidance(iteration: int) -> tuple[str, str | None]:
     brain = _brain(iteration)
     if brain is None:
         return "", None
+    forced_arm = os.environ.get("AUTORESEARCH_FORCED_PROPOSAL_ARM") or None
+    if forced_arm and os.environ.get("AUTORESEARCH_CONTROLLED_TOURNAMENT") != "1":
+        brain.close()
+        raise RuntimeError(
+            "forced proposal arms are permitted only in an explicitly "
+            "controlled development tournament"
+        )
     try:
-        return brain.guidance(iteration)
+        return brain.guidance(iteration, forced_arm=forced_arm)
     finally:
         brain.close()
 
