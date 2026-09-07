@@ -229,6 +229,14 @@ def replay_private_promotions(
                     "promotion_source_sha256"
                 ),
             }
+            replay["source_routing"] = {
+                "tested_timeframe": row.get("tested_timeframe"),
+                "route_stage": row.get("route_stage"),
+                "source_route_verified": row.get("source_route_verified"),
+                "source_native_match": row.get("source_native_match"),
+                "signal_cadence": row.get("signal_cadence"),
+                "routing": row.get("routing"),
+            }
             replay["replay_status"] = "completed"
             audit.append(replay)
             if replay["portfolio_eligible"]:
@@ -298,12 +306,25 @@ def prop_transfer_candidates(
                 "source_artifact_sha256": str(
                     row["promotion_source_sha256"]
                 ),
+                "source_tested_timeframe": row.get("tested_timeframe"),
+                "source_route_stage": row.get("route_stage"),
+                "source_route_verified": row.get("source_route_verified"),
+                "source_native_match": row.get("source_native_match"),
+                "source_signal_cadence": row.get("signal_cadence"),
             }
             supported.append(params)
             record["transfer_status"] = "supported"
             record["transfer_reason"] = "exact_signed_daily_signal_adapter"
             record["adapter"] = adapter
             record["strict_pbo"] = strict_pbo
+            record["source_routing"] = {
+                "tested_timeframe": row.get("tested_timeframe"),
+                "route_stage": row.get("route_stage"),
+                "source_route_verified": row.get("source_route_verified"),
+                "source_native_match": row.get("source_native_match"),
+                "signal_cadence": row.get("signal_cadence"),
+                "routing": row.get("routing"),
+            }
             audit.append(record)
         except Exception as exc:
             record["transfer_status"] = "error"
