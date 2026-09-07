@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "product": "YouTube Intelligence",
+  "version": "3.1.0",
+  "source_repository": "tjhuber2009-eng/TestRepo",
+  "source_branch": "yke-v3.1-windows-build",
+  "source_commit": "1f7673b00994fb321fda0b7077c5405529441691",
+  "verified_release": {
+    "platform": "Windows desktop / Tauri",
+    "tests_passed": 147,
+    "tests_failed": 0
+  },
+  "atlas_integration": {
+    "role": "external_hypothesis_source_only",
+    "direct_network_access_from_atlas": false,
+    "may_keep_or_promote_strategies": false,
+    "may_change_risk_controls": false,
+    "may_open_hidden_validation": false,
+    "may_open_final_oos": false,
+    "creator_claims_are_evidence": false,
+    "chronology_policy": "published_at must be <= adaptive development cutoff for the active track; later ideas are quarantined"
+  },
+  "supported_input": {
+    "format": "JSON or JSONL",
+    "required_for_chronology": [
+      "published_at"
+    ],
+    "useful_fields": [
+      "idea_id",
+      "video_id",
+      "channel_id",
+      "channel_title",
+      "published_at",
+      "title",
+      "summary",
+      "strategy_rules",
+      "markets",
+      "timeframes",
+      "tags",
+      "source_kind",
+      "specification_quality",
+      "claimed_metrics"
+    ]
+  },
+  "known_capability_boundary": {
+    "transcript_and_channel_analysis": true,
+    "captionless_audio_transcription": true,
+    "visual_frame_video_understanding": false
+  }
+}
